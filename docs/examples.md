@@ -35,9 +35,13 @@ This is a good way to learn about how to manage a state in a conversation.
 [Music Nerd Pro Sly](./examples/music_nerd_pro_sly.md) that uses
 a **tool-calling** LLM that runs locally with Ollama.
 
+## CrewAI Research Report
+
+[CrewAI Research Report](./examples/crewai_research_report.md) is an agentic system that calls CrewAI to do website search and write a report. It serves as an example of how to connect to CrewAI in coded tools.
+
 ## MCP BMI SSE
 
-[MCP BMI SSE](./examples/mcp_bmi_sse.md) is an agent that call a tool in MCP server via server-sent events (sse) to calculate BMI. It serves as an example of how to connect to mcp servers in coded tools.
+[MCP BMI SSE](./examples/mcp_bmi_sse.md) is an agent that calls a tool in MCP server via server-sent events (sse) to calculate BMI. It serves as an example of how to connect to mcp servers in coded tools.
 
 ## Agentic RAG Assistant
 

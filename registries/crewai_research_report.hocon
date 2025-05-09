@@ -1,0 +1,58 @@
+
+# Copyright (C) 2023-2025 Cognizant Digital Business, Evolutionary AI.
+# All Rights Reserved.
+# Issued under the Academic Public License.
+#
+# You can be released from the terms, and requirements of the Academic Public
+# License by purchasing a commercial license.
+# Purchase of a commercial license is mandatory for any use of the
+# neuro-san SDK Software in commercial settings.
+#
+# END COPYRIGHT
+{
+    "llm_config": {
+        "model_name": "gpt-4o",
+    },
+    "tools": [
+        # These tool definitions do not have to be in any particular order
+        # How they are linked and call each other is defined within their
+        # own specs.  This could be a graph, potentially even with cycles.
+
+        # This first guy is the "Front Man".  He is identified as such because
+        # he is the only one with no parameters in his function definition,
+        # and therefore he needs to talk to the outside world to get things rolling.
+        {
+            "name": "research_supervisor",
+
+            # Note that there are no parameters defined for this guy's "function" key.
+            # This is the primary way to identify this tool as a front-man,
+            # distinguishing it from the rest of the tools.
+
+            "function": {
+                "description": "Connect to CrewAI agents to get a report on a topic.",
+            },
+
+            "instructions": """Use your tool to to get a report on a specifying topic.""",
+            "tools": ["research_report"]
+        },
+        # This coded tool connects to CrewAI.
+        # "function" is required since CrewAI is called in the coded tool.
+        {
+            "name": "research_report",
+            "function": {
+                "description": "Conduct research through website search and write a brief report.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "topic": {
+                            "type": "string",
+                            "description": "Topic to do research and write report on."
+                        }
+                    },
+                    "required": ["topic"]
+                }
+            },
+            "class": "crewai_research_report.CrewaiResearchReport"
+        },
+    ]
+}

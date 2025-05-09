@@ -37,6 +37,11 @@
     "telco_network_support.hocon": true,
     "agentic_rag.hocon": true,
     "kwik_agents.hocon": true,
+
+    # Before turn on and run the following agent network, make sure that:
+    # crewai is installed
+    "crewai_research_report.hocon": false,
+
     # Before turn on and run the following agent network, make sure that:
     # The mcp server is running.
     # The server can be found at custom_mcp_servers/mcp_bmi_sse/bmi_server.py and run by command
