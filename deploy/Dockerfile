@@ -93,6 +93,8 @@ COPY --from=builder /install /usr/local
 #       The coded_tools directory where agent code lives is optional
 COPY ./registries ${APP_SOURCE}/registries
 COPY ./coded_tool[s] ${APP_SOURCE}/coded_tools
+COPY ./deploy/entrypoint.sh ${APP_SOURCE}/deploy/entrypoint.sh
+COPY ./deploy/logging.json ${APP_SOURCE}/deploy/logging.json
 
 # Set up the entry point for when the container is run
 USER ${USERNAME}
@@ -101,19 +103,18 @@ WORKDIR ${APP_SOURCE}
 # RUN echo "$(pip show neuro-san | grep Location | awk '{print $2}')"
 # This value below comes from the above RUN command. Cannot set ENV vars in Dockerfiles based on shell output.
 ENV PACKAGE_INSTALL=/usr/local/lib/python3.12/site-packages
-ENV PACKAGE_DEPLOY=${PACKAGE_INSTALL}/neuro_san/deploy
-ENV APP_ENTRYPOINT=${PACKAGE_DEPLOY}/entrypoint.sh
+ENV APP_ENTRYPOINT=${APP_SOURCE}/deploy/entrypoint.sh
 
 #
 # Server configuration
 #
 
-# Run as a neuro-san only server to server 'default' demo agents (registries and coded_tools)
-ENV PYTHONPATH=${PACKAGE_INSTALL}
+# Point to the root folder of the app
+ENV PYTHONPATH=${APP_SOURCE}
 
 # Where to find the tool registry manifest file which lists all the agent hocon
 # files to serve up from this server instance.
-ENV AGENT_MANIFEST_FILE=${PACKAGE_INSTALL}/neuro_san/registries/manifest.hocon
+ENV AGENT_MANIFEST_FILE=${APP_SOURCE}/registries/manifest.hocon
 
 # An llm_info hocon file with user-provided llm descriptions that are to be used
 # in addition to the neuro-san defaults.
@@ -121,13 +122,13 @@ ENV AGENT_LLM_INFO_FILE=""
 
 # Where to find the classes for CodedTool class implementations
 # that are used by specific agent networks.
-ENV AGENT_TOOL_PATH=${PACKAGE_INSTALL}/neuro_san/coded_tools
+ENV AGENT_TOOL_PATH=${APP_SOURCE}/coded_tools
 
 # Where to find the configuration file for Python logging.
 # See https://docs.python.org/3/library/logging.config.html#dictionary-schema-details
 # as to how this file can be configured for your own needs.  Examples there are provided in YAML,
 # but these can be easily translated to JSON (which we prefer).
-ENV AGENT_SERVICE_LOG_JSON=${PACKAGE_DEPLOY}/logging.json
+ENV AGENT_SERVICE_LOG_JSON=${APP_SOURCE}/deploy/logging.json
 
 # Threshold for logging.
 # See https://docs.python.org/3/library/logging.html#logging.Handler.setLevel
@@ -167,4 +168,3 @@ ENV AGENT_REQUEST_LIMIT=1000000
 
 # ENTRYPOINT ls ${APP_SOURCE}
 ENTRYPOINT "${APP_ENTRYPOINT}"
-
