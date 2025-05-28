@@ -258,13 +258,15 @@ class NeuroSanRunner:
             "-m",
             "uvicorn",
             "nsflow.backend.main:app",
+            "--host",
+            self.args["nsflow_host"],
             "--port",
             str(self.args["nsflow_port"]),
             "--reload",
         ]
 
         self.nsflow_process = self.start_process(command, "nsflow", "logs/nsflow.log")
-        print("nsflow client started on port: ", self.args["nsflow_port"])
+        print(f"nsflow client started on host: {self.args['nsflow_host']}, port: {self.args['nsflow_port']}")
 
     def start_flask_web_client(self):
         """Start the Flask web client."""

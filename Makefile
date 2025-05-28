@@ -26,35 +26,19 @@ activate: ## Activate the venv
 	fi
 
 lint: ## Run code formatting and linting tools on source
-	@if [ -z "$$VIRTUAL_ENV" ]; then \
-		echo ""; \
-		echo "Error: Linting must be run using a Python virtual environment"; \
-		echo "Please activate the correct environment for example:"; \
-		echo "  source venv/bin/activate"; \
-		echo ""; \
-		exit 1; \
-	fi
 	isort run.py apps/ coded_tools/ --force-single-line
 	black run.py apps/ coded_tools/
 	flake8 run.py apps/ coded_tools/
 	pylint run.py apps/ coded_tools/
 
 lint-tests: ## Run code formatting and linting tools on tests
-	@if [ -z "$$VIRTUAL_ENV" ]; then \
-		echo ""; \
-		echo "Error: Linting must be run using a Python virtual environment"; \
-		echo "Please activate the correct environment for example:"; \
-		echo "  source venv/bin/activate"; \
-		echo ""; \
-		exit 1; \
-	fi
 	isort tests/ --force-single-line
 	black tests/
 	flake8 tests/
 	pylint tests/
 
 test: lint lint-tests ## Run tests with coverage
-	python -m pytest tests/ -v --cov=coded_tools,run.py
+	python -m pytest tests/ -v --cov=coded_tools --cov=apps
 
 .PHONY: help venv install activate lint lint-tests test
 .DEFAULT_GOAL := help

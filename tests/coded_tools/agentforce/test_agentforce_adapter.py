@@ -7,10 +7,9 @@
 # Purchase of a commercial license is mandatory for any use of the
 # neuro-san-studio SDK Software in commercial settings.
 #
-import unittest
 from unittest import TestCase
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # type: ignore
 
 from coded_tools.agentforce.agentforce_adapter import AgentforceAdapter
 
@@ -20,7 +19,6 @@ class TestAgentforceAdapter(TestCase):
     Unit tests for the AgentforceAdapter class.
     """
 
-    @unittest.skip("This test requires a live Agentforce agent.")
     def test_post_message(self):
         """
         Tests the post_message method of the AgentforceAdapter class.

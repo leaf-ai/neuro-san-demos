@@ -15,3 +15,6 @@ aiofiles>=24.1.0
 
 # For MCP servers and clients
 langchain-mcp-adapters>=0.0.9
+
+# For parsing grammars in neuro-san
+pyparsing>=3.0.0

@@ -48,7 +48,7 @@ testpaths = ["tests"]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
-addopts = "--verbose --cov=. --cov-report=term-missing --no-cov-on-fail"
+addopts = "--verbose --cov=coded_tools --cov=apps --cov-report=term-missing --no-cov-on-fail"
 
 [tool.coverage.run]
 omit = ["tests/*", "*/venv/*"]
