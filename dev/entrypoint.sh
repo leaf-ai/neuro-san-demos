@@ -17,10 +17,6 @@ echo "hello from entrypoint, let's install requirements and run the app"
 python -m pip install -r requirements.txt
 python -m pip install -r requirements-build.txt
 
-# Set NSFLOW_HOST to bind to all interfaces for external access
-export NSFLOW_HOST=0.0.0.0
-export NSFLOW_PORT=4173
-
 python -m run
 # 3) drop into interactive bash
 exec /bin/bash -i
