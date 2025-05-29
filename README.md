@@ -202,37 +202,15 @@ Go to dir:
 cd neuro-san-studio
 ```
 
-Ensure you have a supported version of python (3.12 at this time):
+Supported version of python (3.12 at this time), but you do not need to worry container has everythign tailor made for you:
 
 ```bash
-python --version
+For Linux and WSL ubuntu run build_local (find it at the root)
+For Windows (Git Bash) run build_local
+For Windows (PowerShell) run build_local.ps1 under dev folder
 ```
 
-Create a dedicated Python virtual environment:
 
-```bash
-python -m venv venv
-```
-
-Source it:
-
-- For Windows:
-
-  ```bash
-  .\venv\Scripts\activate && export PYTHONPATH=`pwd`
-  ```
-
-- For Mac:
-
-  ```bash
-  source venv/bin/activate && export PYTHONPATH=`pwd`
-  ```
-
-Install the requirements:
-
-```bash
-pip install -r requirements.txt
-```
 
 **IMPORTANT**: By default the server relies on OpenAI's `gpt-4o` model. Set the OpenAI API key, and add it to your shell configuration so it's available in future sessions.
 
