@@ -95,3 +95,10 @@ jobs:
           git add "neuro-san/values-${{ needs.build-and-push.outputs.target_environment }}.yaml"
           git commit -m "Update image tag to ${{ github.sha }}"
           git push
+
+      # Commenting out Slack notification step
+      # - name: Notify Slack
+      #   uses: some/slack-action@v1
+      #   with:
+      #     webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+      #     message: "Build complete!"
