@@ -1,0 +1,17 @@
+#!/bin/sh
+# Cross-platform launcher for NeuroSan Studio local build
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+case "$(uname -s)" in
+    Linux*|Darwin*)
+        exec "$SCRIPT_DIR/dev/build_local.sh"
+        ;;
+    CYGWIN*|MINGW*|MSYS*|Windows_NT)
+        powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$SCRIPT_DIR/dev/build_local.ps1"
+        ;;
+    *)
+        echo "Unsupported OS: $(uname -s)"
+        exit 1
+        ;;
+esac
