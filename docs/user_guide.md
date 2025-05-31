@@ -297,9 +297,125 @@ For a full reference, please check the [neuro-san documentation](https://github.
 
 ## Toolbox
 
+The **Toolbox** is a flexible and extensible system for managing tools that can be used by agents. It simplifies the integration of **LangChain** and **custom-coded tools** in a agent network configuration.
+
+### Default tools in toolbox
+
+#### Langchain tools
+
+| Name               | Description                                           |
+| ------------------ | ----------------------------------------------------- |
+| `bing_search`      | Web search via Bing. Requires `BingSearchAPIWrapper`. |
+| `tavily_search`    | Web search via Tavily. |
+| `requests_get`     | HTTP GET requests.                                    |
+| `requests_post`    | HTTP POST requests.                                   |
+| `requests_patch`   | HTTP PATCH requests.                                  |
+| `requests_put`     | HTTP PUT requests.                                    |
+| `requests_delete`  | HTTP DELETE requests.                                 |
+| `requests_toolkit` | Bundle of all above request tools.                    |
+
+#### Coded tools
+
+| Name             | Description                                                    |
+| ---------------- | -------------------------------------------------------------- |
+| `website_search` | Searches the internet via DuckDuckGo. |
+| `rag_retriever`  | Performs RAG (retrieval-augmented generation) from given URLs. |
+
+
+
+### Usage in agent network config
+
+To use tools from toolbox in your agent network, simply call them with field `toolbox`:
+```json
+    {
+        "name": "name_of_the_agent",
+        "toolbox": "name_of_the_tool_from_toolbox"
+    }
+```
+
+### Adding tools in toolbox
+1. Create the toolbox configuration file. This can be either HOCON or JSON files.
+2. Define the tools
+    - langchain tools
+        - Each tool or toolkit must have a `class` key.
+        - The specified class must be available in the server's `PYTHONPATH`.
+        - Additional dependencies (outside of `langchain_community`) must be installed separately.
+        
+        Example:
+        ```hocon
+            "bing_search": {
+                # Fully qualified class path of the tool to be instantiated.
+                "class": "langchain_community.tools.bing_search.BingSearchResults",
+
+                # (Optional) URL for reference documentation about this tool.
+                "base_tool_info_url": "https://python.langchain.com/docs/integrations/tools/bing_search/",
+
+                # Arguments for the tool's constructor.
+                "args": {
+                    "api_wrapper": {
+                        # If the argument should be instantiated as a class, specify it using the "class" key.
+                        # This tells the system to create an instance of the provided class instead of passing it as-is.
+                        "class": "langchain_community.utilities.BingSearchAPIWrapper"
+                    },
+                }
+            }
+        ```
+    - coded tools
+        - Similar to how one can define it in agent network config file
+        - `description` let the agent know what the tool does.
+        - `parameters` are arguments' definitions and types. This is optional.
+        - `class` specifies the tool's implementation as **module.ClassName** where the module can be found in `AGENT_TOOL_PATH`.
+
+        Example:
+        ```json
+            "rag_retriever": {
+                "class": "rag.Rag",
+                "description": "Retrieve information on the given urls",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "urls": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "List of url to retrieve info from"
+                        },
+                        "query": {
+                            "type": "string",
+                            "description": "Query for retrieval"
+                        }
+                    },
+                    "required": ["urls", "query"]
+                },
+            }
+        ```
+
+        For more examples, please see [https://github.com/cognizant-ai-lab/neuro-san/blob/main/neuro_san/internals/run_context/langchain/toolbox_info.hocon](https://github.com/cognizant-ai-lab/neuro-san/blob/main/neuro_san/internals/run_context/langchain/toolbox_info.hocon)
+
+3. Point to the config file by setting the environment variable `AGENT_TOOLBOX_INFO_FILE` to your custom config:
+
+    ```bash
+    export AGENT_TOOLBOX_INFO_FILE=/path/to/my_toolbox_config.hocon
+    ```
+
 ## Logging and debugging
 
 ## Advanced
+
+- Tools' arguments can be overidden in the agent network config file using the `args` key.
+Example:
+```hocon
+{
+    "name": "web_searcher",
+    "toolbox": "bing_search",
+    "args": {
+                # This will override the number of search results to 3
+                "num_results": 3
+            }
+}
+```
+
 
 ### Subnetworks
 
