@@ -34,11 +34,11 @@ ${PYTHON} --version
 ${PIP} --version
 ${PIP} freeze
 
-# PACKAGE_INSTALL=${PACKAGE_INSTALL:-.}
-# echo "PACKAGE_INSTALL is ${PACKAGE_INSTALL}"
+PACKAGE_INSTALL=${PACKAGE_INSTALL:-.}
+echo "PACKAGE_INSTALL is ${PACKAGE_INSTALL}"
 
-# echo "Starting grpc service with args '$1'..."
-# ${PYTHON} "${PACKAGE_INSTALL}"/neuro_san/service/agent_main_loop.py "$@"
+echo "Starting grpc service with args '$1'..."
+${PYTHON} "${PACKAGE_INSTALL}"/neuro_san/service/agent_main_loop.py "$@"
 echo "Starting grpc service with args '$@'..."
 exec "${PYTHON}" -m neuro_san.service.agent_main_loop "$@"
 echo "Done."
