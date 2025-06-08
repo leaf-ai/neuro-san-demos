@@ -43,5 +43,26 @@ echo "PACKAGE_INSTALL is ${PACKAGE_INSTALL}"
 # ${PYTHON} "${PACKAGE_INSTALL}"/neuro_san/service/agent_main_loop.py "$@"
 # echo "Starting grpc service with args '$@'..."
 echo "Starting grpc service with args $@..."
+# Patch a known bug in neuro-san 0.5.31 where a quoting error
+# prevents the server from starting. If the file exists, fix it.
+NS_PATCH_FILE="$(${PYTHON} - <<'EOF'
+import pathlib, importlib.util, sys
+spec = importlib.util.find_spec('neuro_san')
+path = pathlib.Path(spec.origin).parent / 'internals/run_context/langchain/langchain_run_context.py'
+print(path)
+EOF
+)"
+if [ -f "${NS_PATCH_FILE}" ]; then
+    sed -i "s/agent_spec.name={agent_spec.get(\"name\")}/agent_spec.name={agent_spec.get('name')}/" "${NS_PATCH_FILE}"
+fi
+
+# Start the nsflow web client so the dashboard is available.
+NSFLOW_PORT=${NSFLOW_PORT:-${PORT:-8080}}
+echo "Starting nsflow on port ${NSFLOW_PORT}..."
+"${PYTHON}" -m uvicorn nsflow.backend.main:app --host 0.0.0.0 --port "${NSFLOW_PORT}" &
+
+# Display and forward all provided arguments
+echo "Starting grpc service with args $@..."
+# Directly invoke the installed module
 exec "${PYTHON}" -m neuro_san.service.agent_main_loop "$@"
 echo "Done."
