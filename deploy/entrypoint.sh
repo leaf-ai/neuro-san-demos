@@ -42,7 +42,14 @@ echo "PACKAGE_INSTALL is ${PACKAGE_INSTALL}"
 # echo "Starting grpc service with args '$1'..."
 # ${PYTHON} "${PACKAGE_INSTALL}"/neuro_san/service/agent_main_loop.py "$@"
 # echo "Starting grpc service with args '$@'..."
-echo "Starting grpc service with args $@..."
+# echo "Starting grpc service with args $@..."
+# Ensure nsflow knows how to reach the NeuroSan server. Default to the
+# agent port if provided.
+NEURO_SAN_SERVER_HOST=${NEURO_SAN_SERVER_HOST:-localhost}
+NEURO_SAN_SERVER_PORT=${NEURO_SAN_SERVER_PORT:-${AGENT_PORT:-30013}}
+export NEURO_SAN_SERVER_HOST NEURO_SAN_SERVER_PORT
+echo "NEURO_SAN_SERVER_HOST=${NEURO_SAN_SERVER_HOST}"
+echo "NEURO_SAN_SERVER_PORT=${NEURO_SAN_SERVER_PORT}"
 # Patch a known bug in neuro-san 0.5.31 where a quoting error
 prevents the server from starting. If the file exists, fix it.
 NS_PATCH_FILE="$(${PYTHON} - <<'EOF'
