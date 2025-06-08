@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: neuro-san-service
+    env: docker
+    plan: free
+    dockerfilePath: ./deploy/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: PORT
+        value: "8080"
+      - key: AGENT_MANIFEST_FILE
+        value: /usr/local/neuro-san/myapp/registries/manifest.hocon
+      - key: AGENT_TOOL_PATH
+        value: /usr/local/neuro-san/myapp/coded_tools
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
