@@ -22,62 +22,53 @@
         # he is the only one with no parameters in his function definition,
         # and therefore he needs to talk to the outside world to get things rolling.
         {
-            "name": "Agentic RAG Assistant",
+            "name": "searcher",
 
             # Note that there are no parameters defined for this guy's "function" key.
             # This is the primary way to identify this tool as a front-man,
             # distinguishing it from the rest of the tools.
 
             "function": {
-                "description": "Answer caller's query with answers from tools.",
+                "description": "Assist caller with searching a url.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "user_inquiry": {
+                            "type": "string",
+                            "description": """
+                            An inquiry from a user.
+                            """
+                        },
+                    },
+                    "required": ["user_inquiry"]
+                }
             },
 
-            "instructions": """Use your tool to respond to the inquiry.""",
-            "tools": ["website_search", "rag_retriever", "slack_tool"]
+            "instructions": """
+Use your tool to respond to the inquiry.
+""",
+            "tools": ["brave_search"]
         },
-        # LangChain search tool using Bing; no need to define "function" since "args_schema" is pre-defined.
         {
-            "name": "website_search",
-            "toolbox": "bing_search"
-            "args": {
-                "num_results": 3
-            }
-        },
-        # RAG tool that loads data from a PDF URL into an in-memory vectorstore and answers queries.
-        {
-            "name": "rag_retriever",
+            "name": "brave_search",
             "function": {
-                "description": "Retrieve information from the given rfp documents",
+                "description": """
+Assist caller with searching an url on the web by using your tool.
+```
+                """,
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "query": {
+                        "search_terms": {
                             "type": "string",
-                            "description": "Query for retrieval"
-                        }
+                            "description": "Search terms to return options."
+                        },
                     },
-                    "required": ["query"]
+                    "required": ["search_terms"]
                 }
             },
-            "class": "rag.Rag"
-        },
-        # Retrieves messages from a specified Slack channel.
-        {
-            "name": "slack_tool",
-            "function": {
-                "description": "Retrieve messages from the given slack channel",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "channel_name": {
-                            "type": "string",
-                            "description": "slack channel to get messages from"
-                        }
-                    },
-                    "required": ["channel_name"]
-                }
-            },
-            "class": "slack.Slack"
+            "class": "brave_search.BraveSearch",
+            "command": "Call the Brave search API to get a list of URLs for available options."
         },
     ]
 }

@@ -176,21 +176,27 @@ See [./examples/music_nerd.md](./examples/music_nerd.md) for an example.
 
 ### AzureOpenAI
 
-If you are using Azure OpenAI in your hocon file, you might need to set the llm_config to use the right model.<br>
-For example, define the key "use_model_name" with the value of the model you want to use:
+If you are using Azure OpenAI in your hocon file, you might need to set the `llm_config` to use the right model.<br>
+
+For example:
 ```hocon
 "llm_config": {
-        "use_model_name": "azure-gpt-4o",
-    },
+        "model_name": "azure-gpt-4o",
+        "openai_api_version": "your_api_version",
+        "azure_endpoint": "your_end_point",
+        "deployment_name": "your_deployment_name"
+},
 ```
 
-You might have to set these environment variables or add them in your .env file in order to use Azure OpenAI:  
+You can set some of these as environment variables or add them in your .env file in order to use Azure OpenAI:  
 AZURE_OPENAI_ENDPOINT="https://your_base_url.openai.azure.com"  
 OPENAI_API_VERSION="<your Azure OpenAI API version e.g. 2024-12-01-preview>"  
-AZURE_OPENAI_API_KEY="your Azure OpenAI API key"  
-AZURE_DEPLOYMENT="your deployment name"
+OPENAI_API_KEY="your Azure OpenAI API key"  
 
-See https://azure.microsoft.com/en-us/products/ai-services/openai-service/ for more information.
+> **Note**: Some Azure OpenAI deployments may have a lower `max_tokens` limit than the default associated with the `model_name` in Neuro-San.
+If the `max_tokens` value in your `llm_config` exceeds the actual limit of the model specified by `deployment_name`, the LLM will fail to return a response — even if the prompt itself is within limits. To fix this, explicitly set a `max_tokens` value in your `llm_config` that matches the deployed model’s actual capacity.
+
+See [Azure OpenAI Quickstart](https://learn.microsoft.com/en-us/azure/ai-services/openai/chatgpt-quickstart?tabs=keyless%2Ctypescript-keyless%2Cpython-new%2Ccommand-line&pivots=programming-language-python) for more information.
 
 
 ### Ollama
@@ -220,9 +226,15 @@ see [this page](https://python.langchain.com/docs/integrations/chat/ollama/)
 
 ## Coded tools
 
+Coded tools are coded functionalities that extend agent's capabilities beyond its core reasoning capabilities and allow it to interact with databases, APIs, and external services.
+
 ### Simple tool
 
+[music_nerd_pro](https://github.com/cognizant-ai-lab/neuro-san-studio/blob/main/docs/examples.md#music-nerd-pro) is a simple agent that helps with music-related inquiries. It uses a simple coded tool which is implemented in Python -- The coded tool does not call an API.
+
 ### API calling tool
+
+[intranet_agents_with_tools](https://github.com/cognizant-ai-lab/neuro-san-studio/blob/main/docs/examples.md#intranet-agents-with-tools) is a multi-agent system that mimics the intranet of a major corporation. It allows you to interact with and get information from various departments such as IT, Finance, Legal, HR, etc. The HR agent calls a coded tool implemented in Python that calls HCM APIs.
 
 ### Sly data
 
@@ -297,9 +309,145 @@ For a full reference, please check the [neuro-san documentation](https://github.
 
 ## Toolbox
 
+The **Toolbox** is a flexible and extensible system for managing tools that can be used by agents. It simplifies the integration of **LangChain** and **custom-coded tools** in a agent network configuration.
+
+### Default tools in toolbox
+
+#### Langchain tools
+
+| Name               | Description                                           |
+| ------------------ | ----------------------------------------------------- |
+| `bing_search`      | Web search via Bing. Requires `BingSearchAPIWrapper`. |
+| `tavily_search`    | Web search via Tavily. |
+| `requests_get`     | HTTP GET requests.                                    |
+| `requests_post`    | HTTP POST requests.                                   |
+| `requests_patch`   | HTTP PATCH requests.                                  |
+| `requests_put`     | HTTP PUT requests.                                    |
+| `requests_delete`  | HTTP DELETE requests.                                 |
+| `requests_toolkit` | Bundle of all above request tools.                    |
+
+#### Coded tools
+
+| Name             | Description                                                    |
+| ---------------- | -------------------------------------------------------------- |
+| `website_search` | Searches the internet via DuckDuckGo. |
+| `rag_retriever`  | Performs RAG (retrieval-augmented generation) from given URLs. |
+
+
+
+### Usage in agent network config
+
+To use tools from toolbox in your agent network, simply call them with field `toolbox`:
+```json
+    {
+        "name": "name_of_the_agent",
+        "toolbox": "name_of_the_tool_from_toolbox"
+    }
+```
+
+### Adding tools in toolbox
+1. Create the toolbox configuration file. This can be either HOCON or JSON files.
+2. Define the tools
+    - langchain tools
+        - Each tool or toolkit must have a `class` key.
+        - The specified class must be available in the server's `PYTHONPATH`.
+        - Additional dependencies (outside of `langchain_community`) must be installed separately.
+        
+        Example:
+        ```hocon
+            "bing_search": {
+                # Fully qualified class path of the tool to be instantiated.
+                "class": "langchain_community.tools.bing_search.BingSearchResults",
+
+                # (Optional) URL for reference documentation about this tool.
+                "base_tool_info_url": "https://python.langchain.com/docs/integrations/tools/bing_search/",
+
+                # Arguments for the tool's constructor.
+                "args": {
+                    "api_wrapper": {
+                        # If the argument should be instantiated as a class, specify it using the "class" key.
+                        # This tells the system to create an instance of the provided class instead of passing it as-is.
+                        "class": "langchain_community.utilities.BingSearchAPIWrapper"
+                    },
+                }
+            }
+        ```
+    - coded tools
+        - Similar to how one can define it in agent network config file
+        - `description` let the agent know what the tool does.
+        - `parameters` are arguments' definitions and types. This is optional.
+        - `class` specifies the tool's implementation as **module.ClassName** where the module can be found in `AGENT_TOOL_PATH`.
+
+        Example:
+        ```json
+            "rag_retriever": {
+                "class": "rag.Rag",
+                "description": "Retrieve information on the given urls",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "urls": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "List of url to retrieve info from"
+                        },
+                        "query": {
+                            "type": "string",
+                            "description": "Query for retrieval"
+                        }
+                    },
+                    "required": ["urls", "query"]
+                },
+            }
+        ```
+
+        For more examples, please see [https://github.com/cognizant-ai-lab/neuro-san/blob/main/neuro_san/internals/run_context/langchain/toolbox/toolbox_info.hocon](https://github.com/cognizant-ai-lab/neuro-san/blob/main/neuro_san/internals/run_context/langchain/toolbox/toolbox_info.hocon)
+
+3. Point to the config file by setting the environment variable `AGENT_TOOLBOX_INFO_FILE` to your custom config:
+
+    ```bash
+    export AGENT_TOOLBOX_INFO_FILE=/path/to/my_toolbox_config.hocon
+    ```
+
 ## Logging and debugging
 
+To debug your code, set up your environment per instructions [here](https://github.com/cognizant-ai-lab/neuro-san-studio).
+Furthermore, please install the build requirements in your virtual environment via the following commands:
+
+```
+. ./venv/bin/activate
+pip install -r requirements-build.txt
+```
+
+2. Suppose you want to debug the coded tool for `music_nerd_pro` agent network. Add the following lines of code to the `music_nerd_pro`'s coded tool Python file (E.g., to the first line of `invoke` method in `Accountant` [class](https://github.com/cognizant-ai-lab/neuro-san-studio/blob/main/coded_tools/music_nerd_pro/accounting.py)
+
+```
+import pytest
+pytest.set_trace()
+```
+
+3. Start the client and server via `python3 -m run`, select `music_berd_pro` agent network, and ask a question like `Where was John Lennon born?`.
+The code execution stops at the line where you added `pytest.set_trace` statement. You can step through the code, view variable values, etc. by typing commands in the terminal. For all the debugger options, please refer to pdb documentation [here](https://ugoproto.github.io/ugo_py_doc/pdf/Python-Debugger-Cheatsheet.pdf)
+
+The client and server logs will be saved to `logs/nsflow.log` and `logs/server.log` respectively.
+
 ## Advanced
+
+- Tools' arguments can be overidden in the agent network config file using the `args` key.
+Example:
+```hocon
+{
+    "name": "web_searcher",
+    "toolbox": "bing_search",
+    "args": {
+                # This will override the number of search results to 3
+                "num_results": 3
+            }
+}
+```
+
 
 ### Subnetworks
 

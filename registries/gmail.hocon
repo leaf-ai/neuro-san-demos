@@ -1,0 +1,51 @@
+# Copyright (C) 2023-2025 Cognizant Digital Business, Evolutionary AI.
+# All Rights Reserved.
+# Issued under the Academic Public License.
+#
+# You can be released from the terms, and requirements of the Academic Public
+# License by purchasing a commercial license.
+# Purchase of a commercial license is mandatory for any use of the
+# neuro-san SDK Software in commercial settings.
+#
+# END COPYRIGHT
+
+# To use this agent network, you will need to
+# - pip install -U langchain-google-community\[gmail\]
+# - set up your credentials explained in 
+# https://developers.google.com/workspace/gmail/api/quickstart/python#authorize_credentials_for_a_desktop_application.
+# Once you've downloaded the credentials.json file and put it in the top level of this repo,
+# you can start using the agent network.
+
+{
+    "llm_config": {
+        "model_name": "gpt-4o",
+    },
+    "tools": [
+        {
+            name = "Gmail Assistant",
+            function = {
+                description = "An assistant that helps the user manage their Gmail inbox, including reading, searching, drafting, and sending emails."
+            },
+            instructions = """
+            You can use the Gmail Toolkit (via the 'gmail_handler' tool) to interact with the user's Gmail account. Available actions include:
+
+            - GmailSearch: Search for emails by query
+            - GmailGetMessage: Retrieve the content of a specific email
+            - GmailGetThread: Retrieve an entire email thread
+            - GmailCreateDraft: Create a draft email
+            - GmailSendMessage: Send an email
+
+            Use these tools to carry out tasks requested by the user related to their Gmail account.
+            """,
+            tools = ["gmail_handler"]
+        },
+
+        {
+            name = "gmail_handler",
+
+            # "gmail_toolkit" is a tool from the toolbox located at toolbox/toolbox_info.hocon
+            # Detailed information on the gmail_toolkit can be found at https://python.langchain.com/docs/integrations/tools/gmail/.
+            toolbox = "gmail_toolkit"
+        }
+    ]
+}

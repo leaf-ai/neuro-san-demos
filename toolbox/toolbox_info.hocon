@@ -1,0 +1,29 @@
+# Copyright (C) 2023-2025 Cognizant Digital Business, Evolutionary AI.
+# All Rights Reserved.
+# Issued under the Academic Public License.
+#
+# You can be released from the terms, and requirements of the Academic Public
+# License by purchasing a commercial license.
+# Purchase of a commercial license is mandatory for any use of the
+# neuro-san SDK Software in commercial settings.
+#
+# END COPYRIGHT
+
+# This is a toolbox that allows user to add tools from langchain or shared coded tools for easy access.
+# For more information about tools in the default toolbox and how to use them in the agent network hocon, see
+# https://github.com/cognizant-ai-lab/neuro-san-studio/blob/main/docs/user_guide.md#toolbox
+
+{
+    "gmail_toolkit": {
+        # This is the class of the tool to use
+        # Before using this tool make sure to
+        # pip install -U langchain-google-community\[gmail\]
+        # and get the credentials.json by following instructions from
+        # https://developers.google.com/workspace/gmail/api/quickstart/python#authorize_credentials_for_a_desktop_application
+        "class": "langchain_google_community.gmail.toolkit.GmailToolkit",
+
+        # This is where more info on the tool can be found.
+        "base_tool_info_url": "https://python.langchain.com/docs/integrations/tools/gmail/",
+    },
+
+}

@@ -29,11 +29,14 @@ Welcome to the **Neuro AI Multi-Agent Accelerator** tutorial. In this guide, we 
     * [Setting Up Ollama Locally](#setting-up-ollama-locally)
     * [Adding Endpoint URL for Any Cloud-Hosted LLM](#adding-endpoint-url-for-any-cloud-hosted-llm)
   * [7. How to use tools in Neuro-San](#7-how-to-use-tools-in-neuro-san)
-    * [Prebuilt Tools](#prebuilt-tools)
     * [Custom Tools](#custom-tools)
       * [Defining Functions in Agent Network (HOCON)](#defining-functions-in-agent-network-hocon)
       * [Schema of Parameters](#schema-of-parameters)
       * [Defining Tool in Python (Coded Tool)](#defining-tool-in-python-coded-tool)
+    * [Prebuilt Tools (via toolbox)](#prebuilt-tools-via-toolbox)
+      * [Using Toolbox Tools in Agent Network](#using-toolbox-tools-in-agent-network)
+      * [Toolbox Configuration](#toolbox-configuration)
+      * [Extending the Toolbox](#extending-the-toolbox)
   * [8. How to Access the Logs](#8-how-to-access-the-logs)
   * [9. How to Stop the servers](#9-how-to-stop-the-servers)
   * [10. Key Aspects of Neuro AI Multi-Agent Accelerator](#10-key-aspects-of-neuro-ai-multi-agent-accelerator)
@@ -425,12 +428,14 @@ If you use other providers (e.g., Anthropic, OpenAI, Azure, etc.), simply adjust
 
 Neuro-San supports two types of tools that agents can call during execution:
 
-1. **Prebuilt Tools** – Based on LangChain's `BaseTool`. These come with predefined behavior and do **not** require you to implement `CodedTool`.
-2. **Custom Tools** – Built using Neuro-San’s `CodedTool` interface. These allow you to define your own logic in Python and integrate it with the agent.
+1. **Custom Tools** – Built using Neuro-San’s `CodedTool` interface. These allow you to define your own logic in Python and integrate it with the agent.
+2. **Prebuilt Tools (via toolbox)** – Tools that are already implemented and configured for reuse. These include:
+
+LangChain’s `BaseTool` implementations (e.g., `bing_search`, `requests_get`)
+
+Shared `CodedTool` implementations that are registered in the toolbox config file
 
 Use **Custom Tools** when your application needs behavior that isn't covered by the prebuilt options — such as accessing APIs, performing custom calculations, or interacting with internal systems.
-
-### Prebuilt Tools
 
 ### Custom Tools
 
@@ -591,6 +596,73 @@ class DateTime(CodedTool):
 
         return str(now)
 ```
+
+### Prebuilt Tools (via Toolbox)
+
+Neuro-San includes a powerful **Toolbox** system that allows you to reuse existing tools across agent networks without redefining them every time.
+
+These tools are already integrated and can be plugged into agents directly via configuration.
+
+Toolbox tools come in two forms:
+
+- LangChain Tools – Built-in tools like bing_search, requests_get, etc., implemented using LangChain’s BaseTool.
+
+- Shared Coded Tools – Predefined tools using the CodedTool interface (Python classes) that are already available and registered in your Toolbox config.
+
+These are called prebuilt because you can use them right away without defining their logic or schema again in the agent network config.
+
+#### Using Toolbox Tools in Agent Network
+To use any tool from the Toolbox, simply reference it in the toolbox field of your agent config:
+```json
+{
+  "name": "search_agent",
+  "instructions": "Use web search to find information for the user.",
+  "toolbox": "bing_search"
+}
+```
+ > You do **not** need to define `function`, `parameters`, or `class` for toolbox tools — that information is already included in the langchain tools class or the Toolbox config file.
+
+#### Toolbox Configuration
+Toolbox tools are defined in a centralized configuration file.
+This [file](https://github.com/cognizant-ai-lab/neuro-san/blob/main/neuro_san/internals/run_context/langchain/toolbox/toolbox_info.hocon) includes definitions for both LangChain tools and shared coded tools. If the tool is defined in the toolbox config, you don’t need to redefine it in the agent network — just reference it by name.
+
+**LangChain Example**
+```json
+"bing_search": {
+  "class": "langchain_community.tools.bing_search.BingSearchResults",
+  "args": {
+    "api_wrapper": {
+      "class": "langchain_community.utilities.BingSearchAPIWrapper"
+    }
+  }
+}
+```
+
+**Coded Tool Example**
+```json
+"rag_retriever": {
+  "class": "rag.Rag",
+  "description": "Retrieve information on the given urls",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "urls": { "type": "array", "items": { "type": "string" } },
+      "query": { "type": "string" }
+    },
+    "required": ["urls", "query"]
+  }
+}
+```
+
+#### Extending the Toolbox
+If you want to add your own tools to the Toolbox (so they can be reused easily):
+
+- For coded tools, create your tool using the CodedTool interface in Python.
+
+- Add an entry to your toolbox config file similar to examples in the previous section.
+
+- Set the `AGENT_TOOLBOX_INFO_FILE` environment variable to point to this config.
+
 ---
 
 ## 8. How to Access the Logs

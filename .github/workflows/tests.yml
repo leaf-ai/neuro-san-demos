@@ -19,6 +19,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      
+      - name: Check if PR is from a fork
+        id: fork_check
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            if [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+              echo "is_fork=true" >> $GITHUB_OUTPUT
+            else
+              echo "is_fork=false" >> $GITHUB_OUTPUT
+            fi
+          else
+          # Not a PR — so it's not a fork
+            echo "is_fork=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Install dependencies
         shell: bash
@@ -53,7 +67,6 @@ jobs:
           source venv/bin/activate 
           make test
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           AGENT_TOOL_PATH: "./neuro_san/coded_tools"
           PYTHONPATH: ${{ env.PYTHONPATH }}:"."
 
@@ -65,7 +78,7 @@ jobs:
           python -m readme_renderer README.md
 
       - name: Notify Slack on success
-        if: success()
+        if: success() && steps.fork_check.outputs.is_fork == 'false'
         uses: slackapi/slack-github-action@v1.24.0
         with:
           payload: |
@@ -76,7 +89,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: Notify Slack on failure
-        if: failure()
+        if: failure() && steps.fork_check.outputs.is_fork == 'false'
         uses: slackapi/slack-github-action@v1.24.0
         with:
           payload: |
