@@ -1,32 +1,15 @@
 #!/bin/bash
 
-# Copyright (C) 2023-2025 Cognizant Digital Business, Evolutionary AI.
-# All Rights Reserved.
-# Issued under the Academic Public License.
-#
-# You can be released from the terms, and requirements of the Academic Public
-# License by purchasing a commercial license.
-# Purchase of a commercial license is mandatory for any use of the
-# neuro-san SDK Software in commercial settings.
-#
-# END COPYRIGHT
-
-# Entry point script which manages the transition from
-# Docker bash to Python
-
+# --- System Setup ---
 cat /etc/os-release
-
 PYTHON=python3
-# Use Python 3.12 by default as newer f-string syntax requires it
-# PYTHON=${PYTHON:-python3.12}
-echo "Using python ${PYTHON}"
-
 PIP=pip3
+
+echo "Using python ${PYTHON}"
 echo "Using pip ${PIP}"
 
 echo "Preparing app..."
-if [ -z "${PYTHONPATH}" ]
-then
+if [ -z "${PYTHONPATH}" ]; then
     PYTHONPATH=$(pwd)
 fi
 export PYTHONPATH
@@ -39,21 +22,16 @@ ${PIP} freeze
 PACKAGE_INSTALL=${PACKAGE_INSTALL:-.}
 echo "PACKAGE_INSTALL is ${PACKAGE_INSTALL}"
 
-# echo "Starting grpc service with args '$1'..."
-# ${PYTHON} "${PACKAGE_INSTALL}"/neuro_san/service/agent_main_loop.py "$@"
-# echo "Starting grpc service with args '$@'..."
-# echo "Starting grpc service with args $@..."
-# Ensure nsflow knows how to reach the NeuroSan server. Default to the
-# agent port if provided.
-NEURO_SAN_SERVER_HOST=${NEURO_SAN_SERVER_HOST:-localhost}
-NEURO_SAN_SERVER_PORT=${NEURO_SAN_SERVER_PORT:-${AGENT_PORT:-30013}}
+# --- NeuroSan Agent Config ---
+NEURO_SAN_SERVER_HOST=localhost
+NEURO_SAN_SERVER_PORT=30015
 export NEURO_SAN_SERVER_HOST NEURO_SAN_SERVER_PORT
 echo "NEURO_SAN_SERVER_HOST=${NEURO_SAN_SERVER_HOST}"
 echo "NEURO_SAN_SERVER_PORT=${NEURO_SAN_SERVER_PORT}"
-# Patch a known bug in neuro-san 0.5.31 where a quoting error
-prevents the server from starting. If the file exists, fix it.
+
+# Patch neuro-san bug if needed
 NS_PATCH_FILE="$(${PYTHON} - <<'EOF'
-import pathlib, importlib.util, sys
+import pathlib, importlib.util
 spec = importlib.util.find_spec('neuro_san')
 path = pathlib.Path(spec.origin).parent / 'internals/run_context/langchain/langchain_run_context.py'
 print(path)
@@ -63,9 +41,18 @@ if [ -f "${NS_PATCH_FILE}" ]; then
     sed -i "s/agent_spec.name={agent_spec.get(\"name\")}/agent_spec.name={agent_spec.get('name')}/" "${NS_PATCH_FILE}"
 fi
 
-# Start the nsflow web client so the dashboard is available.
+# --- Start NeuroSan Agent in Background ---
+echo "Starting NeuroSan agent on port ${NEURO_SAN_SERVER_PORT}..."
+${PYTHON} -m neuro_san.service.agent_main_loop --port ${NEURO_SAN_SERVER_PORT} &
+
+# --- Start FastAPI API Gateway ---
+API_PORT=10000
+echo "Starting Concierge FastAPI API on port ${API_PORT}..."
+${PYTHON} -m fastapi_grpc_endpoints.main --host 0.0.0.0 --port ${API_PORT} &
+
+# --- Start nsflow UI (optional) ---
 NSFLOW_PORT=${NSFLOW_PORT:-${PORT:-8080}}
-echo "Starting nsflow on port ${NSFLOW_PORT}..."
+echo "Starting nsflow UI on port ${NSFLOW_PORT}..."
 if ${PYTHON} - <<'EOF' >/dev/null 2>&1
 import importlib.util
 exit(0) if importlib.util.find_spec('nsflow.backend.main') else exit(1)
@@ -77,8 +64,6 @@ else
     "${PYTHON}" -m http.server "${NSFLOW_PORT}" --bind 0.0.0.0 &
 fi
 
-# Display and forward all provided arguments
-echo "Starting grpc service with args $@..."
-# Directly invoke the installed module
-exec "${PYTHON}" -m neuro_san.service.agent_main_loop "$@"
-echo "Done."
+# --- Wait on foreground process ---
+# Tail logs or block to keep container alive
+wait
