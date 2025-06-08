@@ -95,6 +95,7 @@ COPY ./registries ${APP_SOURCE}/registries
 COPY ./coded_tool[s] ${APP_SOURCE}/coded_tools
 COPY ./deploy/entrypoint.sh ${APP_SOURCE}/deploy/entrypoint.sh
 COPY ./deploy/logging.json ${APP_SOURCE}/deploy/logging.json
+COPY ./start.sh ${APP_SOURCE}/start.sh
 
 # Set up the entry point for when the container is run
 USER ${USERNAME}
