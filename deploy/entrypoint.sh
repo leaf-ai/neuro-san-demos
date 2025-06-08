@@ -16,9 +16,9 @@
 
 cat /etc/os-release
 
-# PYTHON=python3
+PYTHON=python3
 # Use Python 3.12 by default as newer f-string syntax requires it
-PYTHON=${PYTHON:-python3.12}
+# PYTHON=${PYTHON:-python3.12}
 echo "Using python ${PYTHON}"
 
 PIP=pip3
