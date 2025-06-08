@@ -59,7 +59,16 @@ fi
 # Start the nsflow web client so the dashboard is available.
 NSFLOW_PORT=${NSFLOW_PORT:-${PORT:-8080}}
 echo "Starting nsflow on port ${NSFLOW_PORT}..."
-"${PYTHON}" -m uvicorn nsflow.backend.main:app --host 0.0.0.0 --port "${NSFLOW_PORT}" &
+if ${PYTHON} - <<'EOF' >/dev/null 2>&1
+import importlib.util
+exit(0) if importlib.util.find_spec('nsflow.backend.main') else exit(1)
+EOF
+then
+    "${PYTHON}" -m uvicorn nsflow.backend.main:app --host 0.0.0.0 --port "${NSFLOW_PORT}" &
+else
+    echo "nsflow not installed, starting fallback HTTP server"
+    "${PYTHON}" -m http.server "${NSFLOW_PORT}" --bind 0.0.0.0 &
+fi
 
 # Display and forward all provided arguments
 echo "Starting grpc service with args $@..."
