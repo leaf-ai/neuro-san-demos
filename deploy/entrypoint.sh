@@ -45,10 +45,7 @@ fi
 echo "Starting NeuroSan agent on port ${NEURO_SAN_SERVER_PORT}..."
 ${PYTHON} -m neuro_san.service.agent_main_loop --port ${NEURO_SAN_SERVER_PORT} &
 
-# --- Start FastAPI API Gateway ---
-API_PORT=10000
-echo "Starting Concierge FastAPI API on port ${API_PORT}..."
-${PYTHON} -m fastapi_grpc_endpoints.main --host 0.0.0.0 --port ${API_PORT} &
+
 
 # --- Start nsflow UI (optional) ---
 NSFLOW_PORT=${NSFLOW_PORT:-${PORT:-8080}}
