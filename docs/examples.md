@@ -18,6 +18,7 @@ Here are a few examples ordered by level of complexity.
     * [MCP BMI STREAMABLE HTTP](#mcp-bmi-streamable-http)
     * [A2A RESEARCH REPORT](#a2a-research-report)
     * [PDF RAG Assistant](#pdf-rag-assistant)
+    * [Confluence RAG Assistant](#confluence-rag-assistant)
     * [Agentic RAG Assistant](#agentic-rag-assistant)
   * [🏢 Industry-Specific Examples](#-industry-specific-examples)
     * [Intranet Agents](#intranet-agents)
@@ -125,6 +126,12 @@ from specified PDF files using Retrieval-Augmented Generation (RAG). It processe
 PDF retrieval tool, enabling accurate responses from static documents.
 
 **Tags:** `tool`, `RAG`
+
+### Confluence RAG Assistant
+
+[Confluence RAG Assistant](./examples/confluence_rag.md) answers user queries using RAG over Confluence pages by loading page content (and optional attachments), building a vector store, and retrieving relevant info to respond.
+
+**Tags** `tool`, `RAG`
 
 ### Agentic RAG Assistant
 

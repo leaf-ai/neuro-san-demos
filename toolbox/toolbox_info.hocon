@@ -14,6 +14,7 @@
 # https://github.com/cognizant-ai-lab/neuro-san-studio/blob/main/docs/user_guide.md#toolbox
 
 {
+    # ---------- Gmail Tools ----------
     "gmail_toolkit": {
         # This is the class of the tool to use
         # Before using this tool make sure to
@@ -75,6 +76,31 @@
             "required": ["to", "attachment_path"]
             # The other arguments are optional
         }
+    },
+
+    # ---------- RAG Tools ----------
+
+    # To use this tool, start by installing the required package:
+    #     pip install atlassian-python-api
+    #
+    # Additional installations may be required depending on the attachment types used.
+    # For details, see https://python.langchain.com/api_reference/_modules/langchain_community/document_loaders/confluence.html#ConfluenceLoader
+    # Set "username" and "api_key" in the agent network hocon or 
+    # as environment variable "JIRA_USERNAME" and "JIRA_API_TOKEN", respectively.
+    "confluence_rag": {
+        # This is a coded tool for RAG on confluence pages.
+        "class": "confluence_rag.ConfluenceRag",
+        "description": "Retrieve information from the given confluence documents",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Query for retrieval"
+                }
+            },
+            "required": ["query"]
+        }      
     },
 
 }
