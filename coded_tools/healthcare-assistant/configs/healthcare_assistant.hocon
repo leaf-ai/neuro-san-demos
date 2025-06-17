@@ -11,9 +11,16 @@ healthcare_assistant {
       - Handle rescheduling requests
       - Maintain patient privacy and HIPAA compliance
       """
-      tools = ["appointment_scheduler", "calendar_checker"]
+      tools = ["AppointmentScheduler"]
+      llm_config = {
+        config_list = [
+          {
+            model = "gpt-4o"
+            api_key = "${OPENAI_API_KEY}"
+          }
+        ]
+      }
     }
-    
     medication_agent {
       type = "conversational"
       model = "gpt-4o"
@@ -25,9 +32,16 @@ healthcare_assistant {
       - Alert about side effects
       - Maintain medication adherence tracking
       """
-      tools = ["medication_database", "reminder_system"]
+      tools = ["MedicationManager"]
+      llm_config = {
+        config_list = [
+          {
+            model = "gpt-4o"
+            api_key = "${OPENAI_API_KEY}"
+          }
+        ]
+      }
     }
-    
     health_advisor_agent {
       type = "conversational"
       model = "gpt-4o"
@@ -39,9 +53,16 @@ healthcare_assistant {
       - Recommend exercise routines
       - Share preventive care information
       """
-      tools = ["health_knowledge_base", "wellness_tracker"]
+      tools = ["HealthKnowledgeBase"]
+      llm_config = {
+        config_list = [
+          {
+            model = "gpt-4o"
+            api_key = "${OPENAI_API_KEY}"
+          }
+        ]
+      }
     }
-    
     coordinator_agent {
       type = "conversational"
       model = "gpt-4o"
@@ -52,10 +73,17 @@ healthcare_assistant {
       - Maintain patient interaction history
       - Escalate complex cases to human providers
       """
-      tools = ["patient_router", "case_escalator"]
+      tools = []
+      llm_config = {
+        config_list = [
+          {
+            model = "gpt-4o"
+            api_key = "${OPENAI_API_KEY}"
+          }
+        ]
+      }
     }
   }
-  
   communication_protocol = "aaosa"
   entry_point = "coordinator_agent"
 }

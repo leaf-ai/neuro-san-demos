@@ -1,68 +1,63 @@
 import autogen
-from tools.healthcare_tools import AppointmentScheduler, MedicationManager, HealthKnowledgeBase
+from coded_tools.healthcare_assistant.tools.healthcare_tools import AppointmentScheduler, MedicationManager, HealthKnowledgeBase
 
 class HealthcareMultiAgentSystem:
     def __init__(self, config):
+        """Initialize the Healthcare Multi-Agent System with HOCON configuration."""
         self.config = config
         self.appointment_scheduler = AppointmentScheduler()
         self.medication_manager = MedicationManager()
         self.health_kb = HealthKnowledgeBase()
         
-        # Initialize agents
+        # Initialize agents with HOCON config
         self.scheduler_agent = autogen.AssistantAgent(
             name="SchedulerAgent",
-            system_message="""You are a Healthcare Scheduling Agent. 
-            Handle appointment scheduling, rescheduling, and availability checks.
-            Always maintain patient privacy and provide clear communication.""",
-            llm_config={"model": "gpt-4o"}
+            system_message=config["healthcare_assistant.agents.scheduler_agent.system_message"],
+            llm_config=config["healthcare_assistant.agents.scheduler_agent.llm_config"]
         )
-        
         self.medication_agent = autogen.AssistantAgent(
-            name="MedicationAgent", 
-            system_message="""You are a Medication Management Agent.
-            Provide medication reminders, check interactions, and maintain adherence.
-            Always remind users to consult healthcare providers for medical decisions.""",
-            llm_config={"model": "gpt-4o"}
+            name="MedicationAgent",
+            system_message=config["healthcare_assistant.agents.medication_agent.system_message"],
+            llm_config=config["healthcare_assistant.agents.medication_agent.llm_config"]
         )
-        
         self.health_advisor = autogen.AssistantAgent(
             name="HealthAdvisor",
-            system_message="""You are a Health Advisory Agent.
-            Provide general health tips, wellness advice, and preventive care information.
-            Always include disclaimers about consulting healthcare professionals.""",
-            llm_config={"model": "gpt-4o"}
+            system_message=config["healthcare_assistant.agents.health_advisor_agent.system_message"],
+            llm_config=config["healthcare_assistant.agents.health_advisor_agent.llm_config"]
         )
-        
         self.coordinator = autogen.AssistantAgent(
             name="Coordinator",
-            system_message="""You are the Healthcare Coordinator.
-            Route patient queries to appropriate agents and ensure comprehensive care.
-            Maintain conversation context and escalate complex cases.""",
-            llm_config={"model": "gpt-4o"}
+            system_message=config["healthcare_assistant.agents.coordinator_agent.system_message"],
+            llm_config=config["healthcare_assistant.agents.coordinator_agent.llm_config"]
         )
         
         # Register functions with agents
         self.register_functions()
     
     def register_functions(self):
-        """Register healthcare functions with appropriate agents"""
+        """Register healthcare functions with appropriate agents."""
         @self.scheduler_agent.register_for_execution()
-        @self.coordinator.register_for_llm(description="Schedule medical appointments")
+        @self.coordinator.register_for_llm(name="schedule_appointment", description="Schedule medical appointments")
         def schedule_appointment(patient_id: str, doctor_id: str, preferred_date: str, appointment_type: str):
             return self.appointment_scheduler.schedule_appointment(patient_id, doctor_id, preferred_date, appointment_type)
         
         @self.medication_agent.register_for_execution()
-        @self.coordinator.register_for_llm(description="Get medication reminders")
+        @self.coordinator.register_for_llm(name="add_medication", description="Add medication reminders")
+        def add_medication(patient_id: str, medication: dict):
+            return self.medication_manager.add_medication(patient_id, medication)
+        
+        @self.medication_agent.register_for_execution()
+        @self.coordinator.register_for_llm(name="get_medication_reminders", description="Get medication reminders")
         def get_medication_reminders(patient_id: str):
             return self.medication_manager.get_medication_reminders(patient_id)
         
         @self.health_advisor.register_for_execution()
-        @self.coordinator.register_for_llm(description="Get health tips")
+        @self.coordinator.register_for_llm(name="get_health_tips", description="Get health tips")
         def get_health_tips(category: str = "general"):
             return self.health_kb.get_health_tips(category)
 
     def start_conversation(self, user_message: str):
-        """Start a conversation with the healthcare system"""
+        """Start a conversation with the healthcare system."""
         user_proxy = autogen.UserProxyAgent(
             name="Patient",
             human_input_mode="NEVER",
@@ -78,7 +73,10 @@ class HealthcareMultiAgentSystem:
             max_round=10
         )
         
-        manager = autogen.GroupChatManager(groupchat=groupchat, llm_config={"model": "gpt-4o"})
+        manager = autogen.GroupChatManager(
+            groupchat=groupchat,
+            llm_config=self.config["healthcare_assistant.agents.coordinator_agent.llm_config"]
+        )
         
         # Start the conversation
         user_proxy.initiate_chat(manager, message=user_message)
