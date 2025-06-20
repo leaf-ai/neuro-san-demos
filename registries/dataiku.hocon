@@ -62,9 +62,8 @@ Here are the user details that are passed as context:
 
 USER DETAILS:
 * User ID = 100
-* Name = Gordon
-* Family Name = Banks
-* DataIQ ID = 300
+* Name = Gordon Banks
+* DataIku ID = 300
 * Location = England
 
 
@@ -146,83 +145,66 @@ ERROR HANDLING:
         },
         {
             "name": "training_requirements_tool",
-            "function": "aaosa_call",
-            "instructions": """
-{instructions_prefix}
-The name of this tool is training_requirements_tool.
-
-TODO make it actually access and readjson file
-For now, return this hardcoded .json file:
-
-{
-    "DEV": {
-        "training_name": "Dev_training",
-        "training_url": "https://www.training_platform.com/train_dev"
-    },
-    "QA": {
-        "training_name": "QA_training",
-        "training_url": "https://www.training_platform.com/train_qa"
-    },
-    "PROD": {
-        "training_name": "Prod_training",
-        "training_url": "https://www.training_platform.com/train_prod"
-    },
-    "CORE++": {
-        "training_name": "CORE++_training",
-        "training_url": "https://www.training_platform.com/train_core++"
-    }
-}
-
-            """,
-            "llm_config": {
-                "model_name": "gpt-4o",
-                "temperature": 0.3
-            }
+            "function": {
+                "description": "Return training requirements for a specific environment.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "env": {
+                            "type": "string",
+                            "description": "Environment type (DEV, QA, PROD, CORE++)"
+                        }
+                    },
+                    "required": ["env"]
+                }
+            },
+            "class": "dataiku.training_requirements_tool.TrainingRequirementsTool"
         },
                {
             "name": "training_completions_tool",
-            "function": "aaosa_call",
-            "instructions": """
-{instructions_prefix}
-The name of this tool is training_completions_tool.
-
-TODO - make it read the training_completions.csv file
-
-            """,
-            "llm_config": {
-                "model_name": "gpt-4o",
-                "temperature": 0.3
-            }
+                        "function": {
+                "description": "Check if a user completed a training.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "user_id": {"type": "string", "description": "User ID"},
+                        "training_name": {"type": "string", "description": "Training name"},
+                        "certificate_id": {"type": "string", "description": "Certificate ID"}
+                    },
+                    "required": ["user_id", "training_name", "certificate_id"]
+                }
+            },
+            "class": "dataiku.training_completions_tool.TrainingCompletionsTool"
         },
         {
             "name": "user_verification_tool",
-            "function": "aaosa_call",
-            "instructions": """
-{instructions_prefix}
-The name of this tool is user_verification_tool. You are responsbile for verifying whether user info matches the context.
-
-TODO - make it read the users.csv file
-
-            """,
-            "llm_config": {
-                "model_name": "gpt-4o",
-                "temperature": 0.3
-            }
+                        "function": {
+                "description": "Verify a user's identity from the users table.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "user_id": {"type": "string", "description": "User ID"},
+                        "dataiku_id": {"type": "string", "description": "Dataiku ID"}
+                    },
+                    "required": ["user_id", "dataiku_id"]
+                }
+            },
+            "class": "dataiku.user_verification_tool.UserVerificationTool"
         },
         {
             "name": "approvals_required_tool",
-            "function": "aaosa_call",
-            "instructions": """
-{instructions_prefix}
-The name of this tool is approvals_required tool.
-
-TODO - make it read the .md file
-
-            """,
-            "llm_config": {
-                "model_name": "gpt-4o",
-                "temperature": 0.3
-            }
+            "function": {
+                "description": "Check if access is permitted based on policies.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "env": {"type": "string", "description": "Environment"},
+                        "access_type": {"type": "string", "description": "Access type"}
+                    },
+                    "required": ["env", "access_type"]
+                }
+            },
+            "class": "dataiku.approvals_required_tool.ApprovalsRequiredTool"
         },
         {
             "name": "ons_agent",
@@ -245,33 +227,25 @@ TODO - if user has not provided a ticket number, it should ask the user to provi
         },
                 {
             "name": "ons_ticket_verification_tool",
-            "function": "aaosa_call",
-            "instructions": """
-{instructions_prefix}
-The name of this agent is ons_ticket_verification_tool.
-
-TODO - this tool should verify if a user has a ticket
-
-            """,
-            "llm_config": {
-                "model_name": "gpt-4o",
-                "temperature": 0.3
-            }
+            "function": {
+                "description": "Simple validator for ServiceNow ticket numbers.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "ticket_number": {"type": "string", "description": "Ticket number"}
+                    },
+                    "required": ["ticket_number"]
+                }
+            },
+            "class": "dataiku.ons_ticket_verification_tool.ONSTicketVerificationTool"
         },
                 {
             "name": "ons_ticket_creator_tool",
-            "function": "aaosa_call",
-            "instructions": """
-{instructions_prefix}
-The name of this agent is ons_ticket_creator_tool.
-
-TODO - this tool should create a ticket if user has not created one
-
-            """,
-            "llm_config": {
-                "model_name": "gpt-4o",
-                "temperature": 0.3
-            }
+            "function": {
+                "description": "Generate a mock ServiceNow ticket number.",
+                "parameters": {"type": "object", "properties": {}}
+            },
+            "class": "dataiku.ons_ticket_creator_tool.ONSTicketCreatorTool"
         },
     ]
 }
