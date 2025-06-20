@@ -14,6 +14,7 @@
 # https://github.com/cognizant-ai-lab/neuro-san-studio/blob/main/docs/user_guide.md#toolbox
 
 {
+    # ---------- Gmail Tools ----------
     "gmail_toolkit": {
         # This is the class of the tool to use
         # Before using this tool make sure to
@@ -24,6 +25,119 @@
 
         # This is where more info on the tool can be found.
         "base_tool_info_url": "https://python.langchain.com/docs/integrations/tools/gmail/",
+
+        # Note that these tools do not support file attachment.
+    },
+
+    "send_gmail_message_with_attachment": {
+        # This is the coded tool for sending an email with attachment
+        "class": "gmail_attachment.GmailAttachment"
+        "description": "Send an email with attachment",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "to": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of recipient email addresses"
+                },
+                "attachment_paths": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of absolute paths of the attached files"
+                },
+                "cc": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of CC email addresses"
+                },
+                "bcc": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of BCC email addresses"
+                },
+                "subject": {
+                    "type": "string",
+                    "description": "Subject of the email"
+                },
+                "message": {
+                    "type": "string",
+                    "description": "Message or body of the email"
+                }
+            },
+            "required": ["to", "attachment_path"]
+            # The other arguments are optional
+        }
+    },
+        
+    # ---------- RAG Tools ----------
+
+    # To use this tool, start by installing the required package:
+    #     pip install atlassian-python-api
+    #
+    # Additional installations may be required depending on the attachment types used.
+    # For details, see https://python.langchain.com/api_reference/_modules/langchain_community/document_loaders/confluence.html#ConfluenceLoader
+    # Set "username" and "api_key" in the agent network hocon or 
+    # as environment variable "JIRA_USERNAME" and "JIRA_API_TOKEN", respectively.
+    "confluence_rag": {
+        # This is a coded tool for RAG on confluence pages.
+        "class": "confluence_rag.ConfluenceRag",
+        "description": "Retrieve information from the given confluence documents",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Query for retrieval"
+                }
+            },
+            "required": ["query"]
+        }      
+    },
+
+    # ---------- Agent Network Tools ----------
+
+    "call_agent": {
+        "class": "call_agent.CallAgent",
+        "description": "Call the agent to response to inquiry.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "agent_name": {
+                    "type": "string",
+                    "description": "Name of the agent to call. Do not include file extension such as '.hocon' in the name."
+                },
+                "inquiry": {
+                    "type": "string",
+                    "description": "The inquiry"
+                },
+            },
+            "required": ["inquiry"]
+        } 
+    },
+
+    # This tool uses pyvis to generate a html, and open it in chrome browser.
+    "agent_network_html_generator": {
+        "class": "agent_network_html_generator.AgentNetworkHtmlGenerator"
+        "description": "Generate a html file from agent network hocon",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "agent_name": {
+                    "type": "string",
+                    "description": "Name of the agent to create html for. Do not include file extension such as '.hocon' in the name."
+                }
+            },
+            "required": ["agent_name"]
+        }
     },
 
 }

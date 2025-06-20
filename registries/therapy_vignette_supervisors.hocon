@@ -1,7 +1,6 @@
 {
     "llm_config": {
-        "model_name": "gpt-4o",
-        "verbose": true
+        "model_name": "gpt-4o"
     },
     "commondefs": {
         "replacement_strings": {

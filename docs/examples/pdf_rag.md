@@ -45,7 +45,7 @@ These criteria are used to assess the suitability of proposals and ensure they m
 
 #### User-Defined Arguments
 *Required*
-- `url` (list): List of PDF URLs to use for RAG.
+- `urls` (list): List of PDF URLs to use for RAG.
 
 *Optional*
 - `save_vector_store` (bool): Save the vector store to a JSON file.

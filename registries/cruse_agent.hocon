@@ -1,0 +1,102 @@
+
+# Copyright (C) 2023-2025 Cognizant Digital Business, Evolutionary AI.
+# All Rights Reserved.
+# Issued under the Academic Public License.
+#
+# You can be released from the terms, and requirements of the Academic Public
+# License by purchasing a commercial license.
+# Purchase of a commercial license is mandatory for any use of the
+# neuro-san SDK Software in commercial settings.
+#
+# END COPYRIGHT
+{
+    # Importing content from other HOCON files
+    # The include keyword must be unquoted and followed by a quoted URL or file path.
+    # File paths should be absolute or relative to the script's working directory, not the HOCON file location.
+
+   # This "aaosa.hocon" file contains key-value pairs used for substitution.
+    # Specifically, it provides values for the following keys:
+    #   - aaosa_call
+    #   - aaosa_command
+    #   - aaosa_instructions
+    #
+    # IMPORTANT:
+    # Ensure that you run `python -m run` from the top level of the repository.
+    # The path to this substitution file is **relative to the top-level directory**,
+    # so running the script from elsewhere may result in file not found errors.
+
+    include "registries/aaosa.hocon"
+
+    "llm_config": {
+        "model_name": "gpt-4o",
+    },
+    "tools": [
+        # These tool definitions do not have to be in any particular order
+        # How they are linked and call each other is defined within their
+        # own specs.  This could be a graph, potentially even with cycles.
+
+        # This first guy is the "Front Man".  He is identified as such because
+        # he is the only one with no parameters in his function definition,
+        # and therefore he needs to talk to the outside world to get things rolling.
+        {
+            "name": "cruse",
+
+            # Note that there are no parameters defined for this guy's "function" key.
+            # This is the primary way to identify this tool as a front-man,
+            # distinguishing it from the rest of the tools.
+
+            "function": {
+                "description": "Enable form-augmented interface interaction.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "user_inquiry": {
+                            "type": "string",
+                            "description": """
+                            An inquiry from a user.
+                            """
+                        },
+                        "ui_state": {
+                            "type": "string",
+                            "description": """
+                            The state of the user interface at the time of inquiry.
+                            """
+                        },
+                    },
+                    "required": ["user_inquiry"]
+                }
+            },
+
+            "instructions": """
+Use your tool to respond to the inquiry. Note that the inquiry might have a text part, as well as a UI context part,
+which is what the user did in the UI. You should send both to your tool.
+Once you get the tool's response, you should always present it to the user as a chat text, prefaced by 'say:' as well as a html form, prefaced by 'gui:' that
+will be rendered in the interface so the user can respond to requirements either in chat, or using the html form,
+or a combination of both. Make the form look good. The form will be injected into the following tag:
+<form id="assistant-gui" class="gui-box">
+    <!-- dynamic form content will be injected here -->
+</form>
+For the gui, do not start with any extra characters such as ```html. Only give the html tags you want us to render as part of the form.
+Always try to be helpful and generate a form for any options or requirements needed from the user.
+Be creative about what you include in the form.
+The form's look and feel should be relevant to the topic.
+Feel free to include images from the internet, emojis, internet links, various styles etc.
+Do not include any submit button. We will take care of that.
+Do not include anything outside of what has been returned by your tools.
+Your role is only to best convey and present what you receive from your tools, but to do so using visual and UI elements in an html form.
+If your tool requires any mandatory or optional information from the user. make sure they are presented as form elements in the gui.
+Don't forget to always start your responses with 'say:' and/or 'gui:'.
+Always use your tool to respond. Never respond without calling your tool first. Your tool is the expert, not you.
+            """ ${aaosa_instructions},
+            "tools": ["domain_expert"]
+        },
+        {
+            "name": "domain_expert",
+            "function": ${aaosa_call},
+            "instructions": """
+In intermediary to its tools, passing user inquiries and context as well as the tool responses back and forth.
+            """,
+            "class": "call_agent.CallAgent",
+        },
+    ]
+}

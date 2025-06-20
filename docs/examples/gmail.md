@@ -60,19 +60,29 @@ Yes, you received an email from Jane yesterday at 3:47 PM with the subject "Proj
 
 ---
 
-## Tools from toolbox: gmail_handler
+### Tools from toolbox:
 
-These tools are defined in the `gmail_toolkit`, a langchain toolkit that is implemented via `toolbox` and are called as needed by the assistant:
+- #### gmail_handler_no_attachment
 
-- Email Search (GmailSearch)
+    These tools are defined in the `gmail_toolkit`, a langchain toolkit that is implemented via `toolbox` and are called as needed by the assistant:
 
-- Email Reader (GmailGetMessage)
+    - Email Search (GmailSearch)
 
-- Thread Reader (GmailGetThread)
+    - Email Reader (GmailGetMessage)
 
-- Draft Composer (GmailCreateDraft)
+    - Thread Reader (GmailGetThread)
 
-- Email Sender (GmailSendMessage)
+    - Draft Composer (GmailCreateDraft)
+
+    - Email Sender (GmailSendMessage)
+
+    > Note that these tools do not support file attachment.
+
+- #### gmail_handler_with_attachment
+
+    This handler includes a single specialized tool designed specifically to send emails **with file attachments**.
+
+
 
 ---
 
@@ -80,7 +90,7 @@ These tools are defined in the `gmail_toolkit`, a langchain toolkit that is impl
 
 When developing or debugging the Gmail Assistant, keep the following in mind:
 
-- Make sure the `gmail_handler` tool is correctly registered and mapped to the gmail_toolkit.
+- Make sure both of the `gmail_handler_no_attachment` and `gmail_handler_with_attachment` are correctly registered and mapped to the valid tool in toolbox.
 
 - Confirm that the Gmail API credentials and OAuth flow are correctly configured.
 

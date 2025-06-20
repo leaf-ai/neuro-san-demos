@@ -59,20 +59,24 @@ class BmiCalculator(CodedTool):
         # and a server can also have multiple tools.
         # Note that mcp server can contain tools, resources, and prompts
         # but langchain-mcp-adapter only works with **tools**.
-        async with MultiServerMCPClient(
+        client = MultiServerMCPClient(
             {
                 # This key only used as a reference here and may be different
                 # from the actual name in mcp server.
                 "bmi": {
-                    # sse is prefered over stdio as transport method.
-                    # make sure the port here matches the one in  your server.
-                    "url": "http://localhost:8000/sse",
-                    "transport": "sse",
+                    # streamable_http is prefered over stdio as transport method.
+                    # make sure the port here matches the one in your server.
+                    "url": "http://localhost:8000/mcp/",
+                    "transport": "streamable_http",
                 }
             }
-        ) as client:
-            # `get_tools` method returns a list of StructuredTool ordered by
-            # server and tool's order in the server, respectively.
-            # Note that to `invoke` or `ainvoke` for StructureTool require
-            # dictionary input.
-            return await client.get_tools()[0].ainvoke({"weight": weight, "height": height})
+        )
+
+        # `get_tools` method returns a list of StructuredTool ordered by
+        # server and tool's order in the server, respectively.
+        # In this example, there is only one server and one tool in the server.
+        tools = await client.get_tools()
+
+        # Note that to `invoke` or `ainvoke` for StructureTool require
+        # dictionary input.
+        return await tools[0].ainvoke({"weight": weight, "height": height})

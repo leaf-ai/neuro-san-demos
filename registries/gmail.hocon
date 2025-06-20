@@ -22,30 +22,45 @@
     },
     "tools": [
         {
-            name = "Gmail Assistant",
-            function = {
+            "name": "Gmail Assistant",
+            "function": {
                 description = "An assistant that helps the user manage their Gmail inbox, including reading, searching, drafting, and sending emails."
             },
-            instructions = """
-            You can use the Gmail Toolkit (via the 'gmail_handler' tool) to interact with the user's Gmail account. Available actions include:
+            "instructions": """
+            You can use the Gmail Tools to interact with the user's Gmail account. Available actions include:
 
-            - GmailSearch: Search for emails by query
-            - GmailGetMessage: Retrieve the content of a specific email
-            - GmailGetThread: Retrieve an entire email thread
-            - GmailCreateDraft: Create a draft email
-            - GmailSendMessage: Send an email
+            - Search for emails by query
+            - Retrieve the content of a specific email
+            - Retrieve an entire email thread
+            - Create a draft email
+            - Send an email
+            - Send an email message with attachment
 
             Use these tools to carry out tasks requested by the user related to their Gmail account.
             """,
-            tools = ["gmail_handler"]
+            "tools": ["gmail_handler_no_attachment", "gmail_handler_with_attachment"]
         },
 
         {
-            name = "gmail_handler",
+            "name": "gmail_handler_no_attachment",
 
             # "gmail_toolkit" is a tool from the toolbox located at toolbox/toolbox_info.hocon
+            # Tools in "gmail_toolkit" cannot attach files to the email.
             # Detailed information on the gmail_toolkit can be found at https://python.langchain.com/docs/integrations/tools/gmail/.
-            toolbox = "gmail_toolkit"
+            "toolbox": "gmail_toolkit"
+        },
+
+        {
+            "name": "gmail_handler_with_attachment",
+
+            # "send_gmail_message_with_attachment" is a coded tool from the toolbox located at toolbox/toolbox_info.hocon
+            # This tool is solely for sending an email with attachment.
+            # The code of this tool can be found at coded_tools/gmail_attachment.py
+            "toolbox": "send_gmail_message_with_attachment"
+            "args": {
+                # This is an optional argument for sending the message as html. Default is False.
+                "html": false
+            }
         }
     ]
 }

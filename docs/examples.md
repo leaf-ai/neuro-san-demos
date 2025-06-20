@@ -15,9 +15,10 @@ Here are a few examples ordered by level of complexity.
     * [Gmail Assistant](#gmail-assistant)
     * [Agentforce](#agentforce)
     * [Agentspace](#agentspace)
-    * [MCP BMI SSE](#mcp-bmi-sse)
+    * [MCP BMI STREAMABLE HTTP](#mcp-bmi-streamable-http)
     * [A2A RESEARCH REPORT](#a2a-research-report)
     * [PDF RAG Assistant](#pdf-rag-assistant)
+    * [Confluence RAG Assistant](#confluence-rag-assistant)
     * [Agentic RAG Assistant](#agentic-rag-assistant)
   * [🏢 Industry-Specific Examples](#-industry-specific-examples)
     * [Intranet Agents](#intranet-agents)
@@ -29,6 +30,7 @@ Here are a few examples ordered by level of complexity.
   * [🧪 Experimental and Research](#-experimental-and-research)
     * [Agent Network Designer](#agent-network-designer)
     * [KWIK Agents](#kwik-agents)
+    * [CRUSE](#cruse)
     * [Conscious Assistant](#conscious-assistant)
     * [Log Analyzer](#log-analyzer)
 <!-- TOC -->
@@ -102,9 +104,9 @@ interact with different datastore connectors on Google Cloud.
 
 **Tags:** `tool`, `API`
 
-### MCP BMI SSE
+### MCP BMI STREAMABLE HTTP
 
-[MCP BMI SSE](./examples/mcp_bmi_sse.md) is an agent that calls a tool in MCP server via server-sent events (sse) to
+[MCP BMI STREAMABLE HTTP](./examples/mcp_bmi_streamable_http.md) is an agent that calls a tool in MCP server via streamable http to
 calculate BMI. It serves as an example of how to connect to MCP servers in coded tools.
 
 **Tags:** `tool`, `MCP`
@@ -124,6 +126,12 @@ from specified PDF files using Retrieval-Augmented Generation (RAG). It processe
 PDF retrieval tool, enabling accurate responses from static documents.
 
 **Tags:** `tool`, `RAG`
+
+### Confluence RAG Assistant
+
+[Confluence RAG Assistant](./examples/confluence_rag.md) answers user queries using RAG over Confluence pages by loading page content (and optional attachments), building a vector store, and retrieving relevant info to respond.
+
+**Tags** `tool`, `RAG`
 
 ### Agentic RAG Assistant
 
@@ -201,6 +209,12 @@ your registries directory and give you some usage examples.
 [KWIK_agents](examples/kwik_agents.md) is a basic multi-agent system with memory.
 
 **Tags:** `tool`, `memory`
+
+### CRUSE
+
+[CRUSE](examples/cruse.md) is an agent that can dynamically attach to any agent in your registry and make it run with a context reactive user experience. This is a good example of how to switch down-chain agents dynamically using coded tools and sly_data.
+
+**Tags:** `tool`, `ui`, `app`
 
 ### Conscious Assistant
 

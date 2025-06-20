@@ -59,7 +59,8 @@ Neuro SAN enables multiple large language model (LLM)-powered agents to collabor
 ---
 
 ### Use Cases:
-A number of examples that can be built using Neuro SAN:
+Here are a few examples of use-cases that have been implemented with Neuro SAN.
+For more examples, check out [docs/examples.md](docs/examples.md).
 <table>
   <thead>
     <tr>
@@ -105,16 +106,6 @@ A number of examples that can be built using Neuro SAN:
       <td>Handles customer inquiries, inventory management, and supports sales processes to optimize operations and service quality.</td>
     </tr>
     <tr>
-      <td>🧠 <strong>Six Thinking Hats</strong></td>
-      <td>Structured decision-making and brainstorming.</td>
-      <td>Emulates Edward de Bono's methodology, assigning distinct perspectives (logical, emotional, creative) to specialized agents.</td>
-    </tr>
-    <tr>
-      <td>🏠 <strong>Smart Home Management</strong></td>
-      <td>Home automation and device control.</td>
-      <td>Coordinates smart home devices, allowing users to control lighting, temperature, and security via natural language.</td>
-    </tr>
-    <tr>
       <td>📞 <strong>Telco Network Support</strong></td>
       <td>Technical support and network issue resolution.</td>
       <td>Diagnoses network problems, guides troubleshooting, and escalates complex issues, reducing downtime and enhancing customer service.</td>
@@ -124,56 +115,10 @@ A number of examples that can be built using Neuro SAN:
       <td>Generates treatment plan for a given therapy vignette.</td>
       <td>A good example of using multiple different expert agents working together to come up with a single plan.</td>
     </tr>
-    <tr>
-      <td>📝 <strong>Kwik Memory Agent</strong></td>
-      <td>Enhanced memory retention and retrieval.</td>
-      <td>Improves agent capability in storing and recalling information, enhancing long-term contextual awareness.</td>
-    </tr>
-    <tr>
-      <td>📄 <strong>PDF_RAG Agent</strong></td>
-      <td>Retrieval-Augmented Generation from PDF documents.</td>
-      <td>Processes and extracts accurate information from PDF files for analysis and summarization tasks.</td>
-    </tr>
-    <tr>
-      <td>🚀 <strong>Agentforce Agent</strong></td>
-      <td>Integration with Salesforce's AgentForce for enterprise workflows.</td>
-      <td>Allows Neuro-SAN agents to interact with Salesforce AgentForce, automating customer relationship management processes.</td>
-    </tr>
-    <tr>
-      <td>🔌 <strong>Agentspace Adapter</strong></td>
-      <td>Connecting agents across different platforms.</td>
-      <td>Acts as a communication bridge between Neuro-SAN and other agent ecosystems, enhancing interoperability.</td>
-    </tr>
-    <tr>
-      <td>🤝 <strong>CrewAI Agent</strong></td>
-      <td>Integration with CrewAI for collaborative tasks.</td>
-      <td>Enables seamless coordination between Neuro-SAN agents and CrewAI, facilitating cross-framework collaboration.</td>
-    </tr>
-    <tr>
-      <td>🧰 <strong>MCP Agent</strong></td>
-      <td>Utilization of Model Context Protocol for tool integration.</td>
-      <td>Integrates external tools and services into agent workflows, expanding capabilities using the Model Context Protocol.</td>
-    </tr>
-    <tr>
-      <td>🔄 <strong>A2A based Agent</strong></td>
-      <td>Agent-to-Agent communication via Google A2A protocol.</td>
-      <td>Enables efficient, decentralized agent communication and task delegation using the A2A protocol.</td>
-    </tr>
-    <tr>
-      <td>🔍 <strong>Log Analyzer</strong></td>
-      <td>An example agent network that is run against agent network logs via the log_analyzer app.</td>
-      <td>This is an example of how to run agents to validate and analyze other agents via their interaction logs.</td>
-    </tr>
-    <tr>
-      <td>💭 <strong>Conscious Agent</strong></td>
-      <td>An example agent network that is run continuously via the conscious_assistant flask app.</td>
-      <td>This is an example of how to run agents continuously, initiating them from code, and how to make tool calls to non-default packages.</td>
-    </tr>
-    <tr>
-      <td colspan="3"><strong>And Many More...</strong></td>
-    </tr>
   </tbody>
 </table>
+
+And many more: check out [docs/examples.md](docs/examples.md).
 
 ---
 
@@ -223,8 +168,8 @@ Source it:
 
 - For Windows:
 
-  ```bash
-  .\venv\Scripts\activate && export PYTHONPATH=`pwd`
+  ```cmd
+  .\venv\Scripts\activate.bat && set PYTHONPATH=%CD%
   ```
 
 - For Mac:
@@ -255,13 +200,13 @@ You can get your OpenAI API key from <https://platform.openai.com/signup>. After
 - For Windows:
   - On Command Prompt:
 
-    ```bash
+    ```cmd
     set OPENAI_API_KEY=XXX
     ```
 
   - On PowerShell:
 
-    ```bash
+    ```powershell
     $env:OPENAI_API_KEY="XXX"
     ```
 

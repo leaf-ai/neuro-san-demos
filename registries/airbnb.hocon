@@ -1,7 +1,6 @@
 {
     "llm_config": {
-        "model_name": "gpt-4o",
-        "verbose": true
+        "model_name": "gpt-4o"
     },
     "max_iterations": 2000,
     "max_execution_seconds": 600,

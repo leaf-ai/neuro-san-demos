@@ -16,5 +16,5 @@ def calculate_bmi(weight: float, height: float) -> float:
 
 
 if __name__ == "__main__":
-    # sse is prefered over stdio as transport method.
-    mcp.run(transport="sse")
+    # streamable http is prefered over stdio as transport method.
+    mcp.run(transport="streamable-http")

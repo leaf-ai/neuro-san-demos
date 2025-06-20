@@ -23,9 +23,10 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Versions (please complete the following information):**
+ - OS: [e.g. Windows, macOS, Unix...]
  - Python version: [e.g. 3.12.9]
- - Repo version [e.g. 0.0.7]
-- or neuro-san version [e.g. 0.5.18]
+ - Repo version: [e.g. 0.1.5]
+ - or neuro-san version [e.g. 0.5.18]
 
 **Additional context**
 Add any other context about the problem here.

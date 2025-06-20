@@ -1,33 +1,37 @@
 # User guide
 
-<!--TOC-->
-
-- [User guide](#user-guide)
-  - [Simple agent network](#simple-agent-network)
-  - [Hocon files](#hocon-files)
-    - [Import and Substitution](#import-and-substitution)
-    - [Manifest](#manifest)
-    - [Agent network](#agent-network)
-      - [Agent specifications](#agent-specifications)
-      - [Tool specifications](#tool-specifications)
-      - [LLM specifications](#llm-specifications)
-  - [LLM configuration](#llm-configuration)
-    - [OpenAI](#openai)
-    - [AzureOpenAI](#azureopenai)
-    - [Ollama](#ollama)
-  - [Multi-agent networks](#multi-agent-networks)
-  - [Coded tools](#coded-tools)
-    - [Simple tool](#simple-tool)
-    - [API calling tool](#api-calling-tool)
-    - [Sly data](#sly-data)
-  - [Toolbox](#toolbox)
-  - [Logging and debugging](#logging-and-debugging)
-  - [Advanced](#advanced)
-    - [Subnetworks](#subnetworks)
-    - [AAOSA](#aaosa)
-  - [Connect with other agent frameworks](#connect-with-other-agent-frameworks)
-
-<!--TOC-->
+<!-- TOC -->
+* [User guide](#user-guide)
+  * [Simple agent network](#simple-agent-network)
+  * [Hocon files](#hocon-files)
+    * [Import and Substitution](#import-and-substitution)
+    * [Manifest](#manifest)
+    * [Agent network](#agent-network)
+      * [Agent specifications](#agent-specifications)
+      * [Tool specifications](#tool-specifications)
+      * [LLM specifications](#llm-specifications)
+  * [LLM configuration](#llm-configuration)
+    * [OpenAI](#openai)
+    * [AzureOpenAI](#azureopenai)
+    * [Anthropic](#anthropic)
+    * [Ollama](#ollama)
+  * [Multi-agent networks](#multi-agent-networks)
+  * [Coded tools](#coded-tools)
+    * [Simple tool](#simple-tool)
+    * [API calling tool](#api-calling-tool)
+    * [Sly data](#sly-data)
+  * [Toolbox](#toolbox)
+    * [Default tools in toolbox](#default-tools-in-toolbox)
+      * [Langchain tools](#langchain-tools)
+      * [Coded tools](#coded-tools-1)
+    * [Usage in agent network config](#usage-in-agent-network-config)
+    * [Adding tools in toolbox](#adding-tools-in-toolbox)
+  * [Logging and debugging](#logging-and-debugging)
+  * [Advanced](#advanced)
+    * [Subnetworks](#subnetworks)
+    * [AAOSA](#aaosa)
+  * [Connect with other agent frameworks](#connect-with-other-agent-frameworks)
+<!-- TOC -->
 
 ## Simple agent network
 
@@ -176,7 +180,7 @@ See [./examples/music_nerd.md](./examples/music_nerd.md) for an example.
 
 ### AzureOpenAI
 
-If you are using Azure OpenAI in your hocon file, you might need to set the `llm_config` to use the right model.<br>
+If you are using Azure OpenAI in your hocon file, make sure to **set `deployment_name`** in the `llm_config` to use the right model.<br>
 
 For example:
 ```hocon
@@ -198,6 +202,27 @@ If the `max_tokens` value in your `llm_config` exceeds the actual limit of the m
 
 See [Azure OpenAI Quickstart](https://learn.microsoft.com/en-us/azure/ai-services/openai/chatgpt-quickstart?tabs=keyless%2Ctypescript-keyless%2Cpython-new%2Ccommand-line&pivots=programming-language-python) for more information.
 
+### Anthropic
+
+To use Anthropic models, set the `ANTHROPIC_API_KEY` environment variable to your Anthropic API key
+and specify which model to use in the `model_name` field of the `llm_config` section of an agent network hocon file:
+```hocon
+    "llm_config": {
+        "model_name": "claude-3-5-haiku",
+    },
+```
+You can get an Anthropic API key [here](https://console.anthropic.com/settings/keys)
+
+### Gemini
+
+To use Gemini models, set the `GOOGLE_API_KEY` environment variable to your Google Gemini API key
+and specify which model to use in the `model_name` field of the `llm_config` section of an agent network hocon file:
+```hocon
+    "llm_config": {
+        "model_name": "gemini-2.0-flash",
+    },
+```
+You can get an Google Gemini API key [here](https://ai.google.dev/gemini-api/docs/api-key)
 
 ### Ollama
 

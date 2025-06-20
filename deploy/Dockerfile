@@ -115,7 +115,7 @@ ENV PYTHONPATH=${APP_SOURCE}
 
 # Where to find the tool registry manifest file which lists all the agent hocon
 # files to serve up from this server instance.
-ENV AGENT_MANIFEST_FILE=${APP_SOURCE}/registries/manifest.hocon
+ENV AGENT_MANIFEST_FILE=${APP_SOURCE}/registries/manifest_deploy.hocon
 
 # An llm_info hocon file with user-provided llm descriptions that are to be used
 # in addition to the neuro-san defaults.
