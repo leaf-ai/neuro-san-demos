@@ -120,4 +120,5 @@
     #   For example, you can run:
     #     python -m run --server-grpc-port 30012 --server-http-port 8081 --nsflow-port 4174
     "agent_network_architect.hocon": false,
+    "dataiku.hocon": true,
 }
