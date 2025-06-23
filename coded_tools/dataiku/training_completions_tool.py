@@ -8,7 +8,8 @@ class TrainingCompletionsTool(CodedTool):
     """Check if a user completed a training."""
 
     def invoke(self, args: Dict[str, Any], sly_data: Dict[str, Any]) -> Union[bool, str]:
-        user_id = str(args.get("user_id", "")).strip()
+        # user_id = str(args.get("user_id", "")).strip()
+        user_id = sly_data.get("user_id", "").strip()
         training_name = str(args.get("training_name", "")).strip()
         certificate_id = str(args.get("certificate_id", "")).strip()
 
