@@ -9,8 +9,10 @@ class UserVerificationTool(CodedTool):
     """Verify a user's identity from the users table."""
 
     def invoke(self, args: Dict[str, Any], sly_data: Dict[str, Any]) -> Union[bool, str]:
-        user_id = str(args.get("user_id", "")).strip()
-        dataiku_id = str(args.get("dataiku_id", "")).strip()
+        # user_id = str(args.get("user_id", "")).strip()
+        # dataiku_id = str(args.get("dataiku_id", "")).strip()
+        user_id = sly_data.get("user_id", "").strip()
+        dataiku_id = sly_data.get("dataiku_id", "").strip()
 
         logging.info(f"[UserVerificationTool] Input user_id={user_id}, dataiku_id={dataiku_id}")
 
