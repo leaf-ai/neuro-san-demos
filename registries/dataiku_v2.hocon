@@ -124,12 +124,15 @@ Follow these steps in order for each access request:
      * Proceed to step 5 for approval workflow
 
 5. HANDLE APPROVAL WORKFLOW (MANDATORY STEP)
-   - You MUST call the ons_agent function with the user's inquiry about ServiceNow ticket processing
-   - Use the ons_agent function call to delegate the ticket verification/creation workflow
-   - Pass the complete context about the user's access request to ons_agent
-   - Wait for ons_agent's response before proceeding
-   - Based on ons_agent's response, either grant access (if ticket approved) or inform user of next steps
-   - Do NOT provide generic responses about ticket processing - you must actually call ons_agent
+   - You MUST call ons_agent with the following parameters:
+     * inquiry: "User requesting access approval for [environment] [access_type] access"
+     * mode: "response"
+   - Wait for ons_agent to complete the ServiceNow ticket verification/creation process
+   - Do NOT proceed until ons_agent returns its response
+   - Based on ons_agent's response:
+     * If ticket is approved/created: Grant the access
+     * If ticket process fails: Inform user of required next steps
+   - CRITICAL: You must actually invoke the ons_agent function - do NOT provide responses about ticket processing without calling ons_agent first
 
 COMMUNICATION GUIDELINES:
 - Be clear and professional in all interactions
@@ -243,7 +246,7 @@ When called by the compliance validation agent, follow these steps:
 
 3. TICKET CREATION (if user needs a new ticket)
    - Inform user that a new ServiceNow ticket will be created for their access request
-   - Call ons_ticket_creator_tool to generate a new ticket
+   - Call ons_ticket_creator_tool with access_request_details parameter containing the environment and access type information
    - Provide the new ticket number to the user
    - Explain the approval process and estimated timeline
    - Return the ticket status to the calling agent
@@ -285,8 +288,17 @@ ERROR HANDLING:
                 {
             "name": "ons_ticket_creator_tool",
             "function": {
-                "description": "Generate a mock ServiceNow ticket number.",
-                "parameters": {"type": "object", "properties": {}}
+                "description": "Generate a mock ServiceNow ticket number for access requests.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "access_request_details": {
+                            "type": "string",
+                            "description": "Details of the access request including environment and access type"
+                        }
+                    },
+                    "required": ["access_request_details"]
+                }
             },
             "class": "dataiku.ons_ticket_creator_tool.ONSTicketCreatorTool"
         },
