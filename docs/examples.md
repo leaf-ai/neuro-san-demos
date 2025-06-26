@@ -35,6 +35,7 @@ Here are a few examples ordered by level of complexity.
     * [CRUSE](#cruse)
     * [Conscious Assistant](#conscious-assistant)
     * [Log Analyzer](#log-analyzer)
+    * [WWAW](#wwaw)
 <!-- TOC -->
 
 ## 🔰 Basic Examples
@@ -253,3 +254,9 @@ serves as a good example of how to run an agent permanently.
 good example of how to run an agent network on an agent network log for various validations.
 
 **Tags:** `AAOSA`, `app`
+
+### WWAW
+
+[wwaw.md](examples/wwaw.md) stands for worldwide agentic web, and is an app to generate an arbitrarily sized agent
+network using the web as the template for the agent connections and content.
+**Tags:** `scale`, `app`
