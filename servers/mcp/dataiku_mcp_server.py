@@ -1,7 +1,7 @@
 # servers/mcp/dataiku_mcp_server.py
 from flask import Flask, jsonify, request
 from docstring_parser import parse
-from servers.mcp.dataiku_tool_functions import AVAILABLE_MCP_TOOLS
+from dataiku_tool_functions import AVAILABLE_MCP_TOOLS
 
 app = Flask(__name__)
 
