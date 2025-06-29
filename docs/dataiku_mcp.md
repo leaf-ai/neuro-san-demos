@@ -1,6 +1,6 @@
-# Dataiku MCP Migration Project
+# Dataiku MCP Migration 
 
-This repository contains the migrated implementation of your Dataiku-based application to a modern, scalable Microservices Communication Protocol (MCP) architecture.
+This documentation is for the migrated implementation of the Dataiku-based application to MCP architecture.
 
 
 ## Structure
@@ -68,7 +68,7 @@ The MCP server starts on port `5002`.
 2. **Launch Neuro SAN Application:**
 
 ```bash
-python run.py
+python -m run.py
 ```
 
 3. **Interact with the Application:**
