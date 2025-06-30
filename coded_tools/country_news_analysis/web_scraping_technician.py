@@ -8,7 +8,6 @@ from bs4 import BeautifulSoup
 import os 
 import time
 import logging
-import json
 from typing import Dict, Any
 import feedparser
 import backoff
@@ -199,7 +198,7 @@ class WebScrapingTechnician(CodedTool):
             "aljazeera": self.scrape_aljazeera(keywords, save_dir)
         }
 
-        combined_filename = os.path.join(save_dir, f"all_articles.txt")
+        combined_filename = os.path.join(save_dir, "all_articles.txt")
         total_articles = 0
         with open(combined_filename, "w", encoding="utf-8") as f:
             for source, result in results.items():
