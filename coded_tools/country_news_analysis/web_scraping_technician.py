@@ -5,8 +5,7 @@
 import requests
 from newspaper import Article
 from bs4 import BeautifulSoup
-import os
-from datetime import datetime
+import os 
 import time
 import logging
 import json
@@ -116,7 +115,7 @@ class WebScrapingTechnician(CodedTool):
             except Exception as e:
                 logger.error(f"Error in NYT section '{section}': {e}")
 
-        filename = os.path.join(save_dir, f"nyt_articles.txt")
+        filename = os.path.join(save_dir, "nyt_articles.txt")
         with open(filename, "w", encoding="utf-8") as f:
             for article in all_articles:
                 f.write(article + "\n")
@@ -148,7 +147,7 @@ class WebScrapingTechnician(CodedTool):
             except Exception as e:
                 logger.error(f"Guardian error for keyword '{keyword}': {e}")
 
-        filename = os.path.join(save_dir, f"guardian_articles.txt")
+        filename = os.path.join(save_dir, "guardian_articles.txt")
         with open(filename, "w", encoding="utf-8") as f:
             for article in all_articles:
                 f.write(article + "\n")
@@ -181,7 +180,7 @@ class WebScrapingTechnician(CodedTool):
             except Exception as e:
                 logger.error(f"Al Jazeera feed '{feed_name}' error: {e}")
 
-        filename = os.path.join(save_dir, f"aljazeera_articles.txt")
+        filename = os.path.join(save_dir, "aljazeera_articles.txt")
         with open(filename, "w", encoding="utf-8") as f:
             for article in all_articles:
                 f.write(article + "\n")
