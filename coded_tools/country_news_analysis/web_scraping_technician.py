@@ -1,3 +1,7 @@
+#need api keys for NYT and Guardian
+# NYT API Key: https://developer.nytimes.com/get-started
+# Guardian API Key: https://open-platform.theguardian.com/documentation/
+# Al Jazeera does not require an API key for RSS feeds
 import requests
 from newspaper import Article
 from bs4 import BeautifulSoup
@@ -9,12 +13,8 @@ import json
 from typing import Dict, Any
 import feedparser
 import backoff
-
 from neuro_san.interfaces.coded_tool import CodedTool
-
 import os
-retries = int(os.getenv("MAX_AGENT_RETRIES", 0))
-
 # Setup logger
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -24,8 +24,8 @@ class WebScrapingTechnician(CodedTool):
     """A class to scrape news articles from NYT, Guardian, and Al Jazeera."""
 
     def __init__(self):
-        self.NYT_API_KEY = "YAz3Px9LvYat5a3pRurGUJbSCM3kkRVw"
-        self.GUARDIAN_API_KEY = "fa5d7cdb-9442-42f8-926f-d36315d6fae3"
+        self.NYT_API_KEY = os.getenv("NYT_API_KEY")
+        self.GUARDIAN_API_KEY = os.getenv("GUARDIAN_API_KEY")
         self.nyt_sections = [
             "arts", "business", "climate", "education", "health", "jobs", "opinion",
             "politics", "realestate", "science", "technology", "travel", "us", "world"
