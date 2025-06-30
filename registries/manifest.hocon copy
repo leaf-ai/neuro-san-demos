@@ -1,0 +1,126 @@
+# Copyright (C) 2023-2025 Cognizant Digital Business, Evolutionary AI.
+# All Rights Reserved.
+# Issued under the Academic Public License.
+#
+# You can be released from the terms, and requirements of the Academic Public
+# License by purchasing a commercial license.
+# Purchase of a commercial license is mandatory for any use of the
+# neuro-san SDK Software in commercial settings.
+#
+# END COPYRIGHT
+{
+    # Currently we list each hocon file we want to serve as a key with a boolean value.
+    # Eventually we might have a dictionary value with server specifications for each.
+
+
+    # Basic examples
+    "music_nerd.hocon": true,
+    "music_nerd_local.hocon": true,
+    "music_nerd_pro.hocon": true,
+    "music_nerd_pro_local.hocon": true,
+    "music_nerd_pro_sly.hocon": true,
+    "music_nerd_pro_sly_local.hocon": true,
+    "hello_world.hocon": true,
+    "advanced_calculator.hocon": false,
+    "smart_home.hocon": true,
+
+    # Tool integration examples
+    "brave_search.hocon": false,
+    "agent_network_html_creator.hocon": true,
+    "agentforce.hocon": true,
+    "agentspace_adapter.hocon": false,
+    "pdf_rag.hocon": true,
+    "agentic_rag.hocon": false,
+    "kwik_agents.hocon": false,
+
+    # To use this agent network, start by installing the required package:
+    #     pip install atlassian-python-api
+    #
+    # Additional installations may be required depending on the attachment types used.
+    # For details, see https://python.langchain.com/api_reference/_modules/langchain_community/document_loaders/confluence.html#ConfluenceLoader
+    # Set "username" and "api_key" in the agent network hocon or 
+    # as environment variable "JIRA_USERNAME" and "JIRA_API_TOKEN", respectively.
+    "confluence_rag.hocon": false,
+    
+    # Before turning on and running the following agent network, make sure that:
+    # The MCP server is running.
+    # The server can be found at servers/MCP/bmi_server.py and run using the following command
+    # python bmi_server.py
+    "mcp_bmi_streamable_http.hocon": false,
+
+    # The following agent network is an example of Agent2Agent (A2A) Protocol implementation:
+    # Make sure to start the A2A server before turning the agent on.
+    # The A2Aserver can be found at cservers/A2A/server.py and run by command
+    # python server.py
+    "a2a_research_report.hocon": false,
+
+    # To use this agent network, you will need to
+    # - pip install -U langchain-google-community\[gmail\]
+    # - set up your credentials explained in
+    # https://developers.google.com/workspace/gmail/api/quickstart/python#authorize_credentials_for_a_desktop_application.
+    # Once you've downloaded the credentials.json file and put it in the top level of this repo,
+    # you can start using the agent network.
+    "gmail.hocon": false,
+
+
+    # Use cases
+    "airline_policy.hocon": true,
+    "banking_ops.hocon": true,
+    "cpg_agents.hocon": true,
+    "insurance_agents.hocon": false,  # This is a deprecated version of insurance_underwriting_agents.hocon
+    "insurance_underwriting_agents.hocon": true,
+    "intranet_agents.hocon": false,  # This is a deprecated version of intranet_agents_with_tools.hocon
+    "intranet_agents_with_tools.hocon": true,
+    "real_estate.hocon": false,
+    "retail_ops_and_customer_service.hocon": true,
+    "telco_network_support.hocon": true,
+    "therapy_vignette_supervisors.hocon": true,
+    "consumer_decision_assistant.hocon": true,
+    # The following agent networks are used as sub-networkds by consumer_decision_assistant.hocon
+    "airbnb.hocon": true,
+    "booking.hocon": true,
+    "carmax.hocon": true,
+    "expedia.hocon": true,
+    "macys.hocon": true,
+    "LinkedInJobSeekerSupportNetwork.hocon": true
+    "website_search.hocon": true,
+
+    # Experimental and research
+    "agent_network_designer.hocon": true,
+    "six_thinking_hats.hocon": true,
+    # Set the following agent network to true before running apps/cruse/interface_flask.py
+    "cruse_agent.hocon": false,
+    # Set the following agent network to true before running apps/conscious_assistant/interface_flask.py
+    "conscious_agent.hocon": false,
+    # Set the following agent network to true before running apps/log_analyzer/log_analyzer.py
+    "log_analysis_agents.hocon": false,
+
+    # Demos
+
+    # This agent network performs the following actions:
+    # 1. Calls "agent_network_designer" as an external agent to generate a .hocon configuration file.
+    # 2. Uses the "agent_network_html_generator" tool (from the toolbox) to create an HTML visualization of the network.
+    # 3. Demonstrates how the generated network works by calling the coded tool "NsflowSelenium".
+    # 4. Sends an email with the .hocon and HTML files attached using the "gmail_with_attachment" tool (also from the toolbox).
+    #
+    # Requirements:
+    # - neuro-san>=0.5.38
+    # - Install Gmail support:
+    #     pip install -U langchain-google-community\[gmail\]
+    # - Set up Gmail API credentials:
+    #     Follow the instructions at
+    #     https://developers.google.com/workspace/gmail/api/quickstart/python#authorize_credentials_for_a_desktop_application
+    #     Then download the `credentials.json` file and place it at the top level of this repo.
+    # - Install Selenium and WebDriver Manager:
+    #     pip install selenium webdriver-manager
+    #
+    # Additional setup for running the "NsflowSelenium" coded tool:
+    # - Start the nsflow service in a separate terminal.
+    # - Use non-default ports for the neuro-san gRPC, HTTP, and nsflow servers.
+    #   The default ports are 30011 for gRPC, 8080 for HTTP, and 4173 for nsflow.
+    #   For example, you can run:
+    #     python -m run --server-grpc-port 30012 --server-http-port 8081 --nsflow-port 4174
+    "agent_network_architect.hocon": false,
+    "country_news_analysis.hocon": true
+
+    "hotel_bookings_and_reservations.hocon": true,}
