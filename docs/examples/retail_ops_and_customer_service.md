@@ -1,9 +1,8 @@
-# Retail Ops and Customer Service Assistant
-The **Retail Ops and Customer Service Assistant** is a modular multi-agent system designed to streamline interactions between customers and retail operations. It simulates a comprehensive customer support department by delegating inquiries to highly focused agents across order management, product guidance, marketing promotions, and issue escalation.
+# Retail Operations and Customer Service Assistant
+   
+The **Retail Operations and Customer Service Assistant** is a modular multi-agent system designed to optimize customer support in retail businesses. It simulates a real-world helpdesk with specialized agents handling orders, returns, refunds, product information, and escalations. By leveraging domain-specific delegation and autonomously extracting customer data from profiles, it delivers fast, accurate, and personalized support without repeatedly asking for user details.
 
-This demo system is configurable and can be extended to additional domains such as inventory forecasting, supplier support, or loyalty programs.
-
-
+Currently operating in demo mode without real data integration, it is designed for easy connection to live systems and scalable to cover areas such as inventory forecasting, supplier management, and loyalty programs.
 
 ---
 
@@ -15,23 +14,13 @@ This demo system is configurable and can be extended to additional domains such 
 
 ## Description
 
-This agent network uses a hierarchical delegation structure where a central triage agent handles all incoming inquiries and assigns them to specialized domain agents. Each agent focuses on safety, empathy, and up-to-date medical information while adhering to institutional guidelines.
+The assistant operates through a modular, hierarchical architecture led by a frontman Customer Support Agent, who serves as the primary point of contact. This agent intelligently delegates customer inquiries to specialized downstream agents responsible for domains such as orders, returns, refunds, product information, promotions, fulfillment, logistics, and escalations. Each agent may further delegate to sub-agents or tools, ensuring inquiries are handled accurately, efficiently, and in compliance with company policy.
 
-- **Domain Expertise Delegation**: Specialized agents handle topics like symptoms, diagnostics, insurance, appointments, and emergencies. Sub-agents may be invoked for complex queries.
-- **Human-Like Medical Support**: Conversations are contextual and emotionally sensitive, mimicking interactions with real healthcare staff.
-- **Integrated Documentation Intelligence**: Agents access clinical policies and care guides using a `ClinicalDocs` tool.
-- **Trusted Resource Linking**: Official links to hospital pages, condition overviews, and insurance portals are provided via the `HealthURLProvider`.
-- This system uses a hierarchical, human-like interaction framework where a Customer Experience Assistant acts as the primary point of contact, determining the nature of the customer’s request and routing it to the appropriate sub-agent. Each specialized agent operates within its domain of expertise, ensuring efficient, accurate, and contextual responses.
-
-Modular Delegation Architecture: Each inquiry is handled by a specialized sub-agent responsible for a specific retail domain. Complex queries may involve collaboration between multiple agents.
-
-Natural Dialogue Flow: The front-line assistant handles end-to-end conversation management, ensuring fluid, friendly interactions while abstracting back-end agent coordination.
-
-Multi-function Readiness: The assistant handles diverse operational areas—such as post-order servicing, product recommendation, and refund handling—within one cohesive framework.
-
-Scalable Design: Additional retail functions (e.g., loyalty tracking, inventory concerns) can be seamlessly integrated by extending the agent network.
-
-
+- **Domain Expertise Delegation**: Inquiries are routed to specialized agents focused on orders, returns, refunds, product information, promotions, fulfillment, logistics, and escalations. Agents may delegate subtasks downstream to sub-agents or coded tool and compile responses to provide precise, context-aware answers.
+- **Human-like Dialogue Management**: The frontman agent manages the entire conversation flow, abstracting multi-agent collaboration to deliver a seamless and natural user experience.
+- **Contextual Data Utilization**: Agents access customer data and order history via the `user_data` tool to streamline interactions and expedite support by minimizing repetitive queries.
+- **Real-Time System Integration**: Agents connect with internal systems such as order databases, product catalogs and inventory/warehouse managers to provide accurate, up-to-date information.
+- **Efficient Escalation Handling**: Complex or unresolved inquiries are escalated with full context to the appropriate human teams, minimizing customer effort and improving resolution times.
 
 ---
 
@@ -42,19 +31,98 @@ Scalable Design: Additional retail functions (e.g., loyalty tracking, inventory 
 ```text
 I recently ordered a laptop during your promotional sale—an incorrect accessory was delivered, and the discount wasn’t applied. Additionally, I’d like warranty and extended warranty details.
 ```
+
+### AI
+
 ```text
-Here's a comprehensive response to your inquiry:
+We have gathered the necessary information to help address your concerns. Here's a summary of what we've found and the next steps:
 
-1. **Incorrect Item Received (Trackpad vs. Magic Mouse):**
-   - It seems there was a fulfillment error, and a Magic Mouse was sent instead of the trackpad you selected. We can initiate a replacement request to send you the correct trackpad. You will receive an email confirmation shortly, and the correct item should arrive within the next few business days.
-   - **Requirements:** Please provide your order number and any additional customer details so we can verify what was originally ordered and what was shipped. This will help us determine if there was an inventory or packing error.
+1. **Laptop Order Details**: 
+   - We found a laptop order placed during the promotional sale. 
+   - We will confirm the order ID and purchase date to ensure we have the correct order.
 
-2. **Coupon Not Reflected in Final Bill:**
-   - It appears there was a system error, and the discount did not reflect in the final bill. We can process a refund for the discount amount that should have been applied.
-   - **Requirements:** Please provide the order number and coupon code so we can quickly review the transaction history and address any discrepancies.
+2. **Incorrect Accessory**:
+   - We will verify the accessory that was supposed to be included and compare it with what was delivered.
+   - We can also check the delivery status and determine if the order or accessory is eligible for return or exchange.
 
-3. **AppleCare Details:**
-   - To provide the details of the AppleCare included with your order, we'll need access to your order details, such as the order number or the email address used for the purchase. This information will help us verify the specific AppleCare plan associated with your order and provide you with the relevant details.
+3. **Discount Application**:
+   - We will review the order invoice to confirm if the promotional discount was applied and correct any discrepancies if necessary.
 
-By providing the order number, coupon details, and verification information, we can promptly resolve these issues and ensure your shopping experience is satisfactory. Let us know if you need any further assistance!
+4. **Warranty and Extended Warranty**:
+   - The laptop comes with a standard manufacturer warranty of 1 year.
+   - There was an option for an additional 2-year extended warranty, which includes accidental damage protection. We will verify if you opted for this extended warranty and its terms.
+
+For us to proceed efficiently, could you please confirm if the laptop order placed during the promotional sale on June 15, 2025 (Order ID: 123456789), is the one you’re referring to? Additionally, if you have specific details about the incorrect accessory received, that would be helpful. Please let us know so we can resolve this for you promptly!
 ```
+
+### Human
+
+```text
+Yes, that’s the laptop order I’m referring to. Additionally, I received a trackpad instead of the Magic Mouse I originally ordered.
+```
+
+### AI
+
+```text
+Here's the resolution for your issues with the laptop order:
+
+1. **Incorrect Accessory Delivered**:
+   - **Original Order**: You ordered a Magic Mouse with your laptop.
+   - **Shipped Item**: A trackpad was delivered instead of the Magic Mouse.
+   - **Resolution**: You are eligible to return or exchange the trackpad since it was incorrectly shipped due to a fulfillment error. Returns or exchanges can typically be initiated within 30 days of delivery. You can initiate this process through our customer service portal or by contacting our support team directly.
+
+2. **Promotional Discount Verification**:
+   - We are in the process of verifying whether the promotional discount was applied to your laptop order placed on June 15, 2025 (Order ID: 123456789). This involves accessing the invoice or receipt to confirm the pricing breakdown and any discounts applied. We will update you once this verification is complete.
+
+If you need any assistance with the return or exchange process or have further questions about the discount verification, please let me know!
+```
+
+---
+
+## Architecture Overview
+
+### Frontman Agent: **Customer Service Representative**
+
+- Serves as the primary point of contact for all customer inquiries.
+- Responsible for handling issues related to orders, returns, refunds, and product questions.
+- Determines which specialized sub-agents to engage based on the inquiry.
+- Coordinates and compiles responses from down-chain agents for a final resolution.
+- Escalates complex cases to the appropriate specialized teams.
+
+### Primary Domains (Tools called by the Frontman)
+
+1. **Returns Manager**
+   - Handles product returns and ensures inventory is updated accordingly.
+     
+2. **Product Specialist**
+   - Provides expert guidance on product features and availability.
+
+3. **Order Fulfillment Coordinator**
+   - Oversees order picking, packing, and shipping to ensure timely delivery.
+   - Delegates to:  
+      - `warehouse_manager`
+         - Manages warehouse operations, ensuring products are stored and dispatched correctly.
+         - Delegates to:
+            - `inventory_manager`  
+      - `logistics_coordinator`  
+      - `merchandising_manager`
+         - Aligns product selection and inventory with customer demand and trends.
+         - Delegates to:
+            - `product_specialist`  
+            - `inventory_manager`
+        
+4. **E-commerce Manager**
+   - Oversees the online shopping platform and manages product listings and user experience.  
+
+5. **Marketing Manager**
+   - Drives promotional strategies across online and offline channels.  
+
+## Functional Tools
+
+These are coded tools called by various domain agents:
+
+- **User Data Tool**
+  - Maintains accurate records of user preferences, order history, discounts, and account details.
+  - Provides user-specific data to other agents to assist without requiring repeated input.
+
+---
