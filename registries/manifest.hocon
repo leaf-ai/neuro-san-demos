@@ -128,7 +128,7 @@
     #   For example, you can run:
     #     python -m run --server-grpc-port 30012 --server-http-port 8081 --nsflow-port 4174
     "agent_network_architect.hocon": false,
-    "country_news_analysis.hocon": false
+    "news_sentimental_analysis.hocon": false
 }
 
     
