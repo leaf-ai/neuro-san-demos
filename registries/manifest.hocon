@@ -25,14 +25,7 @@
     "smart_home.hocon": true,
 
     # Tool integration examples
-
-    # To use this agent network with Brave Search, obtain an API key from: https://brave.com/search/api/
-    # Once you have the API key, set it using the BRAVE_API_KEY environment variable.
-    # You can optionally set a custom search URL via the BRAVE_URL environment variable.
-    # If BRAVE_URL is not set, the default is: https://api.search.brave.com/res/v1/web/search?q=
-    # You can also configure the request timeout (in seconds) using BRAVE_TIMEOUT; the default is 30 seconds.
     "brave_search.hocon": false,
-
     "agent_network_html_creator.hocon": true,
     "agentforce.hocon": true,
     "agentspace_adapter.hocon": false,
@@ -128,4 +121,5 @@
     #   For example, you can run:
     #     python -m run --server-grpc-port 30012 --server-http-port 8081 --nsflow-port 4174
     "agent_network_architect.hocon": false,
-}
+    "news_sentimental_analysis.hocon": true
+    }
