@@ -38,6 +38,9 @@ export NYT_API_KEY=your_nyt_key
 export GUARDIAN_API_KEY=your_guardian_key
 ```
 
+### 4. Update the manifest.hocon file
+- Set `news_sentimental_analysis = false` to `news_sentimental_analysis = true`.
+  
 ---
 
 ## Description
