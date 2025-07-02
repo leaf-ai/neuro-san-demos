@@ -4,6 +4,8 @@ import logging
 from typing import Dict, List, Tuple, Any
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from nltk import sent_tokenize
+from datetime import datetime
+import tiktoken
 
 from neuro_san.interfaces.coded_tool import CodedTool
 
@@ -33,6 +35,13 @@ class SentimentAnalysis(CodedTool):
                     return True
             return False
 
+    def count_tokens(self, text: str, model: str = "gpt-4") -> int:
+        try:
+            tokenizer = tiktoken.encoding_for_model(model)
+        except KeyError:
+            tokenizer = tiktoken.get_encoding("cl100k_base")
+        return len(tokenizer.encode(text))
+    
     def analyze_keyword_sentiment(self, text: str, keywords: List[str]) -> Tuple[List[Dict], bool]:
         try:
             sentences = sent_tokenize(text)
@@ -88,11 +97,14 @@ class SentimentAnalysis(CodedTool):
             txt_files = [f for f in os.listdir(self.input_dir) if f.endswith(".txt")]
 
             for file_name in txt_files:
-                if file_name.startswith("aljazeera_articles_"):
+                if file_name.startswith("aljazeera_articles"):
                     source_name = "aljazeera"
-                elif file_name.startswith("all_articles_"):
-                    parts = file_name.split("_")
-                    source_name = parts[2] if len(parts) > 2 else "unknown"
+                elif file_name.startswith("guardian_articles"):
+                    source_name = "guardian"
+                elif file_name.startswith("nyt_articles"):
+                    source_name = "nyt"
+                elif file_name.startswith("all_news_articles"):
+                    source_name = "all"
                 else:
                     source_name = "unknown"
 
@@ -136,7 +148,6 @@ class SentimentAnalysis(CodedTool):
                         **avg_scores
                     }
 
-                    results["articles"].append(article_data)
                     file_stats[file_name]["articles"].append(article_data)
                     file_stats[file_name]["matched"] += 1
                     file_stats[file_name]["compound_sum"] += avg_scores["avg_compound"]
@@ -144,11 +155,13 @@ class SentimentAnalysis(CodedTool):
                     file_stats[file_name]["negative_sum"] += avg_scores["avg_negative"]
                     file_stats[file_name]["neutral_sum"] += avg_scores["avg_neutral"]
 
-                    total_compound += avg_scores["avg_compound"]
-                    total_positive += avg_scores["avg_positive"]
-                    total_negative += avg_scores["avg_negative"]
-                    total_neutral += avg_scores["avg_neutral"]
-                    results["total_matched"] += 1
+                    if file_name != "all_news_articles.txt":
+                        results["articles"].append(article_data)
+                        results["total_matched"] += 1
+                        total_compound += avg_scores["avg_compound"]
+                        total_positive += avg_scores["avg_positive"]
+                        total_negative += avg_scores["avg_negative"]
+                        total_neutral += avg_scores["avg_neutral"]
 
             matched = results["total_matched"]
             if matched:
@@ -169,11 +182,7 @@ class SentimentAnalysis(CodedTool):
                     "avg_neutral": stats["neutral_sum"] / file_matched if file_matched else 0.0
                 }
 
-            output_path = os.path.join(
-                self.output_dir,
-                f"sentiment_{source}.json"
-            )
-
+            output_path = os.path.join(self.output_dir, f"sentiment_{source}.json")
             with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(results, f, indent=2)
 
