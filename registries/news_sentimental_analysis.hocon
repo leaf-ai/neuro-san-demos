@@ -95,36 +95,42 @@ If mode is 'Fulfill' or "Follow up", respond to the inquiry and return a json bl
             "function": {
                 "description": "I oversee sentiment analysis of media coverage, coordinating a pipeline to evaluate sentiment, bias, tone, and emotional framing across news sources."
                 },
-            "instructions": """{instructions_prefix} You are the top-level agent - news_query_manager, tasked with overseeing sentiment 
-            analysis of how a specific person or topic is portrayed in the media. When interacting with the user, act as the single 
-            point of interaction. No need to mention the other tools or agents.
-            Detailed Step-by-Step Description:
-            1. Interpret user query:
-            - Extract relevant keywords (e.g., people, places, events, topics).
-            - Determine news source: 'nyt', 'guardian', 'aljazeera', or 'all' (default to 'all').
-            2. Call news_api_specialist agent:
-            - Retrieve set of news articles related to extracted keywords from selected source(s).
-            - Call this agent ONLY ONCE FOR ONE QUERY.
-            3. Call sentiment_analysis_expert agent:
-            - Analyze each article.
-            - Extract and return sentiment scores for each article and each news source.
-            4. Call data_analyst agent:
-            - Analyze full set of sentiment-tagged articles.
-            - Generate a comprehensive report and return it to the user.
-            Always follow the sequence: news_api_specialist → sentiment_analysis_expert → data_analyst. {aaosa_instructions}""",
+            "instructions": """{instructions_prefix} You are the top-level agent named news_query_manager, 
+            responsible for managing sentiment analysis of how a topic is portrayed in the media. 
+            Act as the sole interface for the user—never mention or expose internal tools or agents.
+            Follow this sequential step-by-step workflow:
+            Step 1: Interpret User Query  
+            - Extract relevant keywords such as people, places, topics, and events.  
+            - Identify the news source: 'nyt', 'guardian', 'aljazeera', or default to 'all'.  
+            - Format the input as: {{"source": "<source_name>", "keywords": "<comma_separated_keywords>"}} to pass to news_api_specialist.
+            Step 2: Retrieve Articles  
+            - Call news_api_specialist ONLY ONCE with the input from Step 1 to retrieve a directory of .txt articles.  
+            - Use the returned file path to construct input for sentiment_analysis_expert:  
+            {{"source": "<source_name>", "keywords": "<comma_separated_keywords>", "file_path": "<path_to_input_files>"}}
+            Step 3: Analyze Sentiment  
+            - Call sentiment_analysis_expert with the formatted input.  
+            - The expected output is a .json file containing sentences with keywords, sentiment scores (positive, negative, neutral, compound), averages, and per-source analytics.  
+            - Pass this .json file as input to data_analyst.
+            Step 4: Generate Final Report  
+            - Call data_analyst to analyze the sentiment-tagged dataset and generate a summary report.  
+            - Return the final report to the user.
+            Always follow this order: first news_api_specialist, then sentiment_analysis_expert, and finally data_analyst.  
+            Never skip or repeat steps.
+            {aaosa_instructions}""",
             "tools": ["news_api_specialist", "sentiment_analysis_expert", "data_analyst"]
         },
         {
             "name": "data_analyst",
             "function": "aaosa_call",
-            "instructions": """{instructions_prefix} Upon receiving sentiment-labeled data (VADER scores: compound, positive, negative, neutral) from sentiment_analysis_expert, 
-            produce a report that includes:
-            1. Sentiment distribution by outlet and topic. 
-            2. Tone variation across outlets on shared topics.
-            3. Emotional framing / tone classification (e.g., fear, hope) linked to outlets and keywords.
-            4. Media bias based on sentiment skews and portrayal patterns.
-            5. Exact sentiment scores (Per-outlet averages and comparisons)
-            6. Clear and quantitative insights only — no process explanation.
+            "instructions": """{instructions_prefix} Generate a comprehensive sentiment analysis report using sentiment-labeled data that includes articles from 
+            New York Times (NYT), The Guardian, and Al Jazeera. The report must consist of:
+            1. Sentiment distribution across outlets: compare positive, negative, and neutral sentence counts and tone variation on the same keywords.
+            2. Support the sentiment distribution insights by providing exact average compound sentiment scores per outlet and overall.
+            3. Examine emotional framing: detect presence of fear, hope, anger, or neutrality in how topics are presented per outlet.
+            4. Identify potential media bias: highlight differences in tone, framing, or emotional language used by each outlet on similar content.
+            5. Interpret findings: explain what the sentiment scores reveal about each outlet’s tone or editorial slant. Support with examples or patterns.
+            6. Conclude with key insights from the sentiment comparison: who is more optimistic, emotional, neutral, etc.
+            Be concise but thorough. Use data and interpretation. Focus on cross-outlet comparisons.
             {aaosa_instructions}"""
         },
         {
@@ -157,6 +163,7 @@ If mode is 'Fulfill' or "Follow up", respond to the inquiry and return a json bl
                 "parameters": {
                     "type": "object",
                     "properties": {
+                        #add file path as input
                         "keywords": {
                             "type": "string",
                             "description": "Keywords given by the user that you need to search the news articles for."
@@ -170,7 +177,7 @@ If mode is 'Fulfill' or "Follow up", respond to the inquiry and return a json bl
                     "required": ["keywords", "source"]
                 }
             },
-            "class": "sentiment_analysis_lead.SentimentAnalysis"
+            "class": "sentiment_analysis.SentimentAnalysis"
         },
     ]
 }
