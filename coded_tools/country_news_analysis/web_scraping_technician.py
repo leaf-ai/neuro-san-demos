@@ -2,28 +2,29 @@
 # NYT API Key: https://developer.nytimes.com/get-started
 # Guardian API Key: https://open-platform.theguardian.com/documentation/
 # Al Jazeera does not require an API key for RSS feeds
+
 import requests
 from newspaper import Article
 from bs4 import BeautifulSoup
-import os 
+import os
 import time
 import logging
 from typing import Dict, Any
 import feedparser
 import backoff
+    
 from neuro_san.interfaces.coded_tool import CodedTool
-import os
+
 # Setup logger
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-
 
 class WebScrapingTechnician(CodedTool):
     """A class to scrape news articles from NYT, Guardian, and Al Jazeera."""
 
     def __init__(self):
-        self.NYT_API_KEY = os.getenv("NYT_API_KEY")
-        self.GUARDIAN_API_KEY = os.getenv("GUARDIAN_API_KEY")
+        self.NYT_API_KEY = "YAz3Px9LvYat5a3pRurGUJbSCM3kkRVw"
+        self.GUARDIAN_API_KEY = "fa5d7cdb-9442-42f8-926f-d36315d6fae3"
         self.nyt_sections = [
             "arts", "business", "climate", "education", "health", "jobs", "opinion",
             "politics", "realestate", "science", "technology", "travel", "us", "world"
@@ -128,7 +129,9 @@ class WebScrapingTechnician(CodedTool):
     def scrape_guardian(self, keywords: list, save_dir: str = "guardian_articles_output", page_size: int = 50) -> Dict[str, Any]:
         logger.info("Guardian scraping started")
         keywords = [kw.lower() for kw in keywords]
+        
         os.makedirs(save_dir, exist_ok=True)
+
         all_articles = []
 
         for keyword in keywords:
@@ -190,31 +193,37 @@ class WebScrapingTechnician(CodedTool):
             "status": "success" if all_articles else "failed"
         }
 
-    def scrape_all(self, keywords: list, save_dir: str = "news_articles_output") -> Dict[str, Any]:
+    def scrape_all(self, keywords: list, save_dir: str = "all_articles_output") -> Dict[str, Any]:
         os.makedirs(save_dir, exist_ok=True)
-        results = {
-            "nyt": self.scrape_nyt(keywords, save_dir),
-            "guardian": self.scrape_guardian(keywords, save_dir),
-            "aljazeera": self.scrape_aljazeera(keywords, save_dir)
-        }
 
-        combined_filename = os.path.join(save_dir, "all_articles.txt")
-        total_articles = 0
+        nyt_result = self.scrape_nyt(keywords, save_dir)
+        guardian_result = self.scrape_guardian(keywords, save_dir)
+        aljazeera_result = self.scrape_aljazeera(keywords, save_dir)
+
+        # Combine all articles into a single file
+        all_articles = []
+        for result in [nyt_result, guardian_result, aljazeera_result]:
+            file_path = result.get("file")
+            if file_path and os.path.exists(file_path):
+                with open(file_path, "r", encoding="utf-8") as f:
+                    articles = f.readlines()
+                    all_articles.extend([article.strip() for article in articles if article.strip()])
+
+        combined_filename = os.path.join(save_dir, "all_news_articles.txt")
         with open(combined_filename, "w", encoding="utf-8") as f:
-            for source, result in results.items():
-                if result.get("status") == "success":
-                    with open(result["file"], "r", encoding="utf-8") as rf:
-                        lines = rf.readlines()
-                        total_articles += len(lines)
-                        for line in lines:
-                            f.write(f"[{source.upper()}] {line}")
+            for article in all_articles:
+                f.write(article + "\n")
 
-        results["combined_output"] = {
+        total_articles = len(all_articles)
+
+        return {
             "saved_articles": total_articles,
-            "file": combined_filename,
+            "nyt_file": nyt_result.get("file"),
+            "guardian_file": guardian_result.get("file"),
+            "aljazeera_file": aljazeera_result.get("file"),
+            "combined_file": combined_filename,
             "status": "success" if total_articles else "failed"
         }
-        return results
 
     def invoke(self, arguments: Dict[str, Any], sly_data: Dict[str, Any]) -> Dict[str, Any]:
         source = arguments.get("source", "all").lower().strip()
@@ -225,30 +234,16 @@ class WebScrapingTechnician(CodedTool):
         if not keyword_list:
             return {"error": "Keywords cannot be empty"}
 
-        if source == "all":
-            return self.scrape_all(keyword_list, save_dir)
-        elif source == "nyt":
+        if source == "nyt":
             return self.scrape_nyt(keyword_list, save_dir)
         elif source == "guardian":
             return self.scrape_guardian(keyword_list, save_dir)
         elif source == "aljazeera":
             return self.scrape_aljazeera(keyword_list, save_dir)
+        elif source == "all":
+            return self.scrape_all(keyword_list, save_dir)
         else:
             return {"error": f"Invalid source '{source}'. Must be one of: nyt, guardian, aljazeera, all"}
 
     async def async_invoke(self, arguments: Dict[str, Any], sly_data: Dict[str, Any]) -> Dict[str, Any]:
         return self.invoke(arguments, sly_data)
-
-
-'''if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Scrape news articles from multiple sources")
-    parser.add_argument("--source", type=str, default="all", help="Source: nyt, guardian, aljazeera, or all")
-    parser.add_argument("--keywords", type=str, default="india", help="Comma-separated keywords")
-
-    args = parser.parse_args()
-
-    technician = WebScrapingTechnician()
-    result = technician.invoke(source=args.source, keywords=args.keywords)
-    print(json.dumps(result, indent=2))'''
