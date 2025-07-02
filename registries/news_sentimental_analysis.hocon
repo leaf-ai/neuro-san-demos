@@ -11,7 +11,7 @@
 # END COPYRIGHT
 
 #Add NYT and Guardian API Keys as environment variables
-#Install newspaper3k, vaderSentiment, backoff, lxml-html-cleans
+#Install newspaper3k, vaderSentiment, backoff, lxml-html-clean
 
 {
     "llm_config": {
