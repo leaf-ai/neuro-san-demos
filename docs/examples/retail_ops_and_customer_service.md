@@ -100,26 +100,20 @@ If you need any assistance with the return or exchange process or have further q
 3. **Order Fulfillment Coordinator**
    - Oversees order picking, packing, and shipping to ensure timely delivery.
    - Delegates to:  
-      - `warehouse_manager`
-         - Manages warehouse operations, ensuring products are stored and dispatched correctly.
-         - Delegates to:
-            - `inventory_manager`  
+      - `warehouse_manager` 
       - `logistics_coordinator`  
       - `merchandising_manager`
-         - Aligns product selection and inventory with customer demand and trends.
-         - Delegates to:
-            - `product_specialist`  
-            - `inventory_manager`
+      - `inventory_manager`
         
 4. **E-commerce Manager**
    - Oversees the online shopping platform and manages product listings and user experience.  
 
 5. **Marketing Manager**
-   - Drives promotional strategies across online and offline channels.  
+   - Drives promotional strategies across online and offline channels.
+  
+---
 
 ## Functional Tools
-
-These are coded tools called by various domain agents:
 
 - **User Data Tool**
   - Maintains accurate records of user preferences, order history, discounts, and account details.
