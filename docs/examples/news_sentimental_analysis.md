@@ -67,47 +67,43 @@ It orchestrates the execution pipeline by sequentially invoking agents, managing
 ### Human
 
 ```text
-Perform sentimental analysis on news related to trump in different sources across the globe.
+Perform sentimental analysis on news related to Space exploration in different sources across the globe.
 ```
 
 ### AI
 
 ```text
-### Sentiment Analysis Report on "Trump" Across News Sources
+The sentiment analysis report on "Space exploration" articles from various news sources has been generated. Here is the detailed summary:
 
-#### 1. Sentiment Distribution Across Outlets
-- **New York Times (NYT)**: Exhibits a majority of negative sentences with a moderate number of neutral and few positive sentences, indicating a critical tone particularly around controversies.
-- **The Guardian**: Displays similar trends with slightly higher neutral sentences, suggesting balanced reporting but still predominantly negative.
-- **Al Jazeera**: Shows more evenly distributed sentiment with noticeable neutral tones, suggesting a more objective stance.
+### Sentiment Distribution Across Outlets
+1. **New York Times (NYT):**
+   - Sentiment is predominantly positive, with frequent association of keywords like "innovation" and "discovery."
+   - Average compound score: 0.65, indicating a generally positive outlook.
 
-#### 2. Average Compound Sentiment Scores
-- **NYT**: Average Compound Score: -0.45
-- **The Guardian**: Average Compound Score: -0.35
-- **Al Jazeera**: Average Compound Score: -0.20
-- **Overall**: Reflects a general negative tone across all outlets, with Al Jazeera being the least negative.
+2. **The Guardian:**
+   - Displays a balanced tone with a slightly higher count of neutral sentences. Keywords like "budget" and "policy" tend to have a neutral or slightly negative tone.
+   - Average compound score: 0.35, suggesting a balanced to slightly positive sentiment.
 
-#### 3. Emotional Framing
-- **NYT**: Predominantly uses fear and anger in framing topics related to Trump, highlighting potential risks and controversies.
-- **The Guardian**: Balances fear with elements of hope, especially in articles discussing political resolutions or reforms.
-- **Al Jazeera**: Mixes neutrality and mild anger, often providing a more global perspective on Trump's policies and actions.
+3. **Al Jazeera:**
+   - Shows a mix with a notable count of negative sentiments, especially around the political aspects of space exploration, with keywords like "conflict" and "competition."
+   - Average compound score: 0.20, reflecting a more critical tone overall.
 
-#### 4. Potential Media Bias
-- **NYT**: More inclined towards highlighting negative aspects and controversies, possibly due to an editorial slant against Trump's policies.
-- **The Guardian**: Critical but provides a balanced view by incorporating hopeful perspectives, indicating a slightly less biased approach.
-- **Al Jazeera**: Maintains a neutral tone, focusing on factual reporting rather than emotional language, thus minimizing bias.
+### Emotional Framing
+- **NYT:** Predominantly hopeful, framing space exploration as a frontier of human achievement.
+- **The Guardian:** Neutral, focusing on factual reporting, though hopeful when discussing technological advancements.
+- **Al Jazeera:** Mix of fear and neutrality, with discussions around geopolitical implications.
 
-#### 5. Interpretation of Findings
-- **NYT**: Displays a critical editorial stance towards Trump, focusing on negative aspects.
-- **The Guardian**: Offers a more balanced view with some positive outlooks, suggesting comprehensive coverage.
-- **Al Jazeera**: Adopts a neutral and fact-based approach, presenting a global perspective without excessive emotional influence.
+### Potential Media Bias
+- **NYT:** Highlights positive aspects, possibly reflecting a pro-science editorial slant.
+- **The Guardian:** Balanced approach, slight bias towards neutral or critical reporting on financial and policy matters.
+- **Al Jazeera:** Often presents space exploration in a global politics context, adding a critical or wary tone.
 
-#### 6. Conclusion
-- **Optimism**: The Guardian shows the most optimism with balanced reporting.
-- **Emotion**: NYT is the most emotional, with frequent use of fear and anger.
-- **Neutrality**: Al Jazeera is the most neutral, focusing on objective reporting.
-- The analysis reveals nuanced differences in how each outlet reports on Trump, reflecting their editorial policies and target audiences.
+### Key Insights
+- **Optimism:** NYT is the most optimistic, focusing on progress and discovery.
+- **Neutrality:** The Guardian provides a balanced view, often relying on factual and policy-oriented discourse.
+- **Emotion:** Al Jazeera's critical stance highlights geopolitical concerns, reflecting its global news focus.
 
-This report synthesizes data-driven insights to provide an understanding of varying media portrayals and sentiments towards Trump across major international news outlets.
+This analysis provides a nuanced view of how space exploration is portrayed across different media outlets, revealing distinct editorial slants and potential biases.
 ```
 
 ---
