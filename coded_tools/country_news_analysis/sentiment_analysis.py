@@ -4,7 +4,6 @@ import logging
 from typing import Dict, List, Tuple, Any
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from nltk import sent_tokenize
-from datetime import datetime
 import tiktoken
 
 from neuro_san.interfaces.coded_tool import CodedTool
