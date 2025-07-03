@@ -2,6 +2,7 @@
 from flask import Flask, jsonify, request
 from docstring_parser import parse
 from dataiku_tool_functions import AVAILABLE_MCP_TOOLS
+from dataiku_prompts import get_prompt, list_prompts
 
 app = Flask(__name__)
 
@@ -46,6 +47,59 @@ def invoke_tool(tool_name):
         func = AVAILABLE_MCP_TOOLS[tool_name]
         result = func(args=args, sly_data=sly_data)
         return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/dataiku_mcp/prompts', methods=['GET'])
+def get_prompts():
+    """Lists all available prompt templates with metadata."""
+    try:
+        prompts_info = list_prompts()
+        return jsonify({
+            "prompts": prompts_info,
+            "count": len(prompts_info)
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/dataiku_mcp/prompts/<prompt_name>', methods=['GET'])
+def get_prompt_by_name(prompt_name):
+    """Retrieves a specific prompt template, optionally formatted with query parameters."""
+    try:
+        # Get formatting parameters from query string
+        format_params = dict(request.args)
+        
+        prompt_content = get_prompt(prompt_name, **format_params)
+        
+        return jsonify({
+            "prompt_name": prompt_name,
+            "content": prompt_content,
+            "formatted": bool(format_params)
+        })
+    except KeyError as e:
+        return jsonify({"error": str(e)}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/dataiku_mcp/prompts/<prompt_name>/format', methods=['POST'])
+def format_prompt(prompt_name):
+    """Formats a prompt template with provided parameters."""
+    try:
+        payload = request.get_json()
+        if not payload:
+            payload = {}
+        
+        format_params = payload.get('parameters', {})
+        prompt_content = get_prompt(prompt_name, **format_params)
+        
+        return jsonify({
+            "prompt_name": prompt_name,
+            "content": prompt_content,
+            "parameters_used": format_params
+        })
+    except KeyError as e:
+        return jsonify({"error": str(e)}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
