@@ -1,0 +1,113 @@
+{
+    "llm_config": {
+        "model_name": "azure-gpt-4o",
+        "temperature": 0.3
+    },
+    "max_iterations": 15000,
+    "max_execution_seconds": 300,
+    "commondefs": {
+        "mcp_prompt_config": {
+            "default_base_url": "http://127.0.0.1:5002/dataiku_mcp",
+            "timeout": 10
+        },
+        "replacement_values": {
+            "aaosa_call": {
+                "description": "Depending on the mode, returns a natural language string in response.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "inquiry": {
+                            "type": "string",
+                            "description": "The user's inquiry"
+                        },
+                        "mode": {
+                            "type": "string",
+                            "description": "Mode to determine responsibility, gather requirements, or return a response."
+                        }
+                    },
+                    "required": ["inquiry", "mode"]
+                }
+            },
+            "aaosa_command": "Explain if you can respond to all or parts of the inquiry and what you need in order to respond, if anything."
+        }
+    },
+    "tools": [
+                {
+            "name": "access_request_orchestrator_agent",
+            "function": {
+                "description": "Main agent for company employees' access requests."
+            },
+            "instructions": "",
+            "mcp_prompt": {
+                "prompt_name": "access_request_orchestrator_agent",
+                "base_url": "http://127.0.0.1:5002/dataiku_mcp"
+            },
+            "tools": [
+                "dataiku_validation_service_mcp",
+                "ons_agent"
+            ],
+            "llm_config": {
+                "model_name": "azure-gpt-4o",
+                "temperature": 0.3
+            }
+        },        // --- NEW MCP ADAPTER DEFINITION ---
+        {
+            "name": "dataiku_validation_service_mcp",
+            "description": "A remote service for handling all Dataiku-related validation checks, including user identity, training, and policy compliance.",
+            // This is a generic class from the neuro-san library
+            "class": "neuro_san.coded_tools.mcp.MCPToolAdapter",
+            "config": {
+                // The URL points to our new MCP server
+                "base_url": "http://127.0.0.1:5002/dataiku_mcp"
+            }
+        },
+        {
+            "name": "ons_agent",
+            "function": "aaosa_call",
+            "instructions": "",
+            "mcp_prompt": {
+                "prompt_name": "ons_agent", 
+                "base_url": "http://127.0.0.1:5002/dataiku_mcp"
+            },
+            "llm_config": {
+                "model_name": "azure-gpt-4o",
+                "temperature": 0.3
+            },
+            "tools": [
+                "ons_ticket_verification_tool",
+                "ons_ticket_creator_tool"
+            ]
+        },
+                {
+            "name": "ons_ticket_verification_tool",
+            "function": {
+                "description": "Simple validator for ServiceNow ticket numbers.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "ticket_number": {"type": "string", "description": "Ticket number"}
+                    },
+                    "required": ["ticket_number"]
+                }
+            },
+            "class": "dataiku.ons_ticket_verification_tool.ONSTicketVerificationTool"
+        },
+                {
+            "name": "ons_ticket_creator_tool",
+            "function": {
+                "description": "Generate a mock ServiceNow ticket number for access requests.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "access_request_details": {
+                            "type": "string",
+                            "description": "Details of the access request including environment and access type"
+                        }
+                    },
+                    "required": ["access_request_details"]
+                }
+            },
+            "class": "dataiku.ons_ticket_creator_tool.ONSTicketCreatorTool"
+        },
+    ]
+}
