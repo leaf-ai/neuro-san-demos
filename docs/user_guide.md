@@ -135,7 +135,7 @@ In this example the server will load agent networks A and C but not B.
 When you start the server, you can see which agent networks have been loaded by looking at the logs:
 
 ```bash
-> python -m neuro_san.service.agent_main_loop --port 30011
+> python -m neuro_san.service.main_loop.server_main_loop --port 30011
 
 tool_registries found: ['agent_network_A', 'agent_network_C']
 ```

@@ -1,0 +1,94 @@
+
+# Copyright (C) 2023-2025 Cognizant Digital Business, Evolutionary AI.
+# All Rights Reserved.
+# Issued under the Academic Public License.
+#
+# You can be released from the terms, and requirements of the Academic Public
+# License by purchasing a commercial license.
+# Purchase of a commercial license is mandatory for any use of the
+# neuro-san SDK Software in commercial settings.
+#
+# END COPYRIGHT
+
+# To use this agent network with Brave Search, obtain an API key from: https://brave.com/search/api/
+# Once you have the API key, set it using the BRAVE_API_KEY environment variable.
+# You can optionally set a custom search URL via the BRAVE_URL environment variable.
+# If BRAVE_URL is not set, the default is: https://api.search.brave.com/res/v1/web/search?q=
+# You can also configure the request timeout (in seconds) using BRAVE_TIMEOUT; the default is 30 seconds.
+
+{
+    "llm_config": {
+        "model_name": "gpt-4o",
+    },
+    "tools": [
+        # These tool definitions do not have to be in any particular order
+        # How they are linked and call each other is defined within their
+        # own specs.  This could be a graph, potentially even with cycles.
+
+        # This first agent definition is regarded as the "Front Man", which
+        # does all the talking to the outside world/client.
+        # It is identified as such because it is either:
+        #   A) The only one with no parameters in his function definition,
+        #      and therefore he needs to talk to the outside world to get things rolling.
+        #   B) The first agent listed, regardless of function parameters.
+        #
+        # Some disqualifications from being a front man:
+        #   1) Cannot use a CodedTool "class" definition
+        #   2) Cannot use a Tool "toolbox" definition
+        {
+            "name": "searcher",
+
+            "function": {
+                "description": "Assist caller with searching a url.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "user_inquiry": {
+                            "type": "string",
+                            "description": """
+                            An inquiry from a user.
+                            """
+                        },
+                    },
+                    "required": ["user_inquiry"]
+                }
+            },
+
+            "instructions": """
+Use your tool to respond to the inquiry.
+""",
+            "tools": ["google_search"]
+        },
+        {
+            "name": "google_search",
+            "toolbox": "google_search",
+            "args": {
+                # --- Optional Arguments ---
+
+                # --- Request Configuration ---
+
+                # Google Search API endpoint
+                # This will override the env var GOOGLE_URL
+                # (defaults to https://www.googleapis.com/customsearch/v1)
+                "google_url": "https://www.googleapis.com/customsearch/v1",
+
+                # Request timeout in seconds
+                # This will override the env var GOOGLE_TIMEOUT
+                # (default: 30.0)
+                "google_timeout": 10.0,
+
+                # --- Search Query Parameters ---
+
+                # Search query string
+                # "q": "<what_to_search_for>"
+                # If specified, this will override the query provided by the LLM
+
+                # Maximum number of search results to return
+                "num": 5,
+
+                # For more query parameter options, see:
+                # https://developers.google.com/custom-search/v1/reference/rest/v1/cse/list#request
+            }
+        },
+    ]
+}

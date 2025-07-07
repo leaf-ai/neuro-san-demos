@@ -265,7 +265,7 @@ class NeuroSanRunner:
             sys.executable,
             "-u",
             "-m",
-            "neuro_san.service.agent_main_loop",
+            "neuro_san.service.main_loop.server_main_loop",
             "--port",
             str(self.args["server_grpc_port"]),
             "--http_port",

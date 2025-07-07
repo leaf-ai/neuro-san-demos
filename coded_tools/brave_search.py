@@ -10,6 +10,7 @@
 # END COPYRIGHT
 
 import asyncio
+import json
 import logging
 import os
 from typing import Any
@@ -19,6 +20,9 @@ from typing import Optional
 from typing import Union
 
 import requests
+from requests import HTTPError
+from requests import JSONDecodeError
+from requests import RequestException
 from neuro_san.interfaces.coded_tool import CodedTool
 
 BRAVE_URL = "https://api.search.brave.com/res/v1/web/search"
@@ -89,7 +93,11 @@ class BraveSearch(CodedTool):
         logger = logging.getLogger(self.__class__.__name__)
         logger.info(">>>>>>>>>>>>>>>>>>>BraveSearch>>>>>>>>>>>>>>>>>>")
         logger.info("BraveSearch Terms: %s", brave_search_params.get("q"))
+        logger.info("BraveSearch URL: %s", brave_url)
+        logger.info("BraveSearch Timeout: %s", brave_timeout)
+
         results: Dict[str, Any] = self.brave_search(brave_search_params, brave_url, brave_timeout)
+        logger.info("BraveSearch Results: %s", json.dumps(results, indent=4))
 
         results_list: List[Dict[str, Any]] = []
         # If there are results from search, get "title", "url", "description", and "extra_snippets"
@@ -128,12 +136,21 @@ class BraveSearch(CodedTool):
             "Accept": "application/json",
             "X-Subscription-Token": self.brave_api_key,
         }
+        results: Dict[str, Any] = {}
+        try:
+            response = requests.get(
+                brave_url,
+                headers=headers,
+                params=brave_search_params,
+                timeout=brave_timeout
+            )
+            response.raise_for_status()
+            results = response.json()
+        except HTTPError as http_err:
+            logging.error("HTTP error occurred: %s - Status code: %s", http_err, response.status_code)
+        except JSONDecodeError as json_err:
+            logging.error("JSON decode error: %s", json_err)
+        except RequestException as req_err:
+            logging.error("Request error: %s", req_err)
 
-        response = requests.get(
-            brave_url,
-            headers=headers,
-            params=brave_search_params,
-            timeout=brave_timeout
-        )
-        results = response.json()
         return results
