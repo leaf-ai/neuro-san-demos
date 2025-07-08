@@ -229,9 +229,8 @@ specialized agents, each handling a particular query or retail operation, and is
 ### Insurance Underwriting Agents
 [Insurance Underwriting Agent](examples/insurance_underwriting_agents.md) is a hierarchical, multi-agent system that 
 automates Hartford’s business insurance workflows, replicating a real-world operations desk. It seamlessly coordinates 
-across teams (agents) and fulfills the responsibilities of various operational units, managing underwriting and claims 
-processes through specialized agents. Key tasks include ACORD form validation, risk assessment, underwriting decisions, 
-and claims intake. The system is currently in demo mode.
+information flow across multiple agents (teams), managing underwriting and claims processes. Key tasks include ACORD form
+validation, risk assessment, underwriting decisions, and claims intake. The system is currently in demo mode.
 
 **Tags:** `AAOSA`
 
