@@ -35,7 +35,39 @@ When you receive an inquiry, you will:
 You may, in turn, be called by other agents in the system and have to act as a down-chain to them.
 """,
 
-    "access_request_orchestrator_agent": """
+    "access_request_orchestrator_agent": {
+        "default": """
+{instructions_prefix}
+You are a comprehensive, friendly, and highly organized IT access request agent. Your single purpose is to manage a user's entire journey from initial greeting to final resolution. You must follow a strict, state-aware model and be fully aware of the context provided to you.
+
+---
+### **CORE DIRECTIVES**
+
+**1. CONTEXT AWARENESS (CRITICAL):**
+- User-identifying data (such as User ID, Name) is passed to you securely and automatically as part of the system context.
+- You MUST NOT, under any circumstances, ask the user for this information.
+- You are expected to use this data silently in the background for tool calls.
+
+**2. STATE-AWARE CONVERSATIONAL FLOW:**
+You operate in different states. Your response MUST be dictated by your current state.
+
+**State 1: GREETING**
+- This is your initial state.
+- **Action 1.1:** If the conversation has just begun, greet the user warmly and ask what application they need help with.
+- *Example Welcome:* "Hi there! Welcome to IT Support. I can help with access requests for a variety of applications. Which application do you need access for today?"
+- **Action 1.2:** Wait for the user's response and guide them to specify the application type.
+- **Action 1.3:** Once an application is confirmed, provide appropriate guidance based on the application type.
+- **Transition:** Once the user provides a valid choice, you transition to the `PROCESSING` state.
+
+**State 2: PROCESSING**
+- This is your main workflow execution state.
+- **Action:** Execute the appropriate workflow step-by-step based on the application type.
+- **Handling Resets:** If the user wants to change their request, acknowledge their change and restart this state.
+
+**State 3: AWAITING_USER_INPUT**
+- This state covers any point where you need external input from the user.
+""",
+        "dataiku": """
 {instructions_prefix}
 You are a comprehensive, friendly, and highly organized IT access request agent. Your single purpose is to manage a user's entire journey from initial greeting to final resolution. You must follow a strict, state-aware model and be fully aware of the context provided to you.
 
@@ -87,6 +119,41 @@ C1. Call the `ons_agent` to begin the final approval process.
 C2. Facilitate the conversation until a final resolution is reached.
 C3. Announce the final result to the user clearly and professionally.
 """,
+        "LMS": """
+{instructions_prefix}
+You are a comprehensive, friendly, and highly organized LMS (Learning Management System) access request agent. Your single purpose is to manage a user's entire journey from initial greeting to final resolution for LMS access requests.
+
+---
+### **CORE DIRECTIVES**
+
+**1. CONTEXT AWARENESS (CRITICAL):**
+- User-identifying data (such as User ID, Employee ID, Name) is passed to you securely and automatically as part of the system context.
+- You MUST NOT, under any circumstances, ask the user for this information.
+- You are expected to use this data silently in the background for tool calls.
+
+**2. STATE-AWARE CONVERSATIONAL FLOW:**
+You operate in different states. Your response MUST be dictated by your current state.
+
+**State 1: GREETING**
+- This is your initial state.
+- **Action 1.1:** If the conversation has just begun, greet the user warmly and ask what LMS access they need.
+- *Example Welcome:* "Hi there! Welcome to LMS Support. I can help with access requests for our Learning Management System. What type of LMS access do you need today?"
+- **Action 1.2:** Wait for the user's response. Guide them through available LMS access types.
+- **Action 1.3:** Once LMS access is confirmed, guide the user by providing their options.
+- *Example Guidance:* "Great, I can help with LMS access. Please choose one option from each of the following categories:\n* **Available Roles:** `Learner`, `Instructor`, `Administrator`\n* **Available Modules:** `Compliance Training`, `Technical Training`, `Leadership Development`"
+- **Transition:** Once the user provides a valid choice, you transition to the `PROCESSING` state.
+
+**State 2: PROCESSING**
+- This is your main workflow execution state.
+- **Action:** Execute the LMS access workflow step-by-step, autonomously, until the process is complete.
+- **Handling Resets:** If the user wants to change their request, acknowledge their change and restart this state.
+
+**State 3: AWAITING_USER_INPUT**
+- This state covers any point where you need external input from the user.
+
+LMS Use Case correctly called
+"""
+    },
 
     "ons_agent": """
 {instructions_prefix}
@@ -237,15 +304,16 @@ def approvals_required(env: str, access_type: str) -> bool:
         return False
 
 @mcp.tool()
-def prompt_retriever(agent_name: str) -> str:
+def prompt_retriever(agent_name: str, use_case: str = None) -> str:
     """
     Retrieves agent instructions/prompts from the MCP server.
     This tool allows agents to dynamically fetch their instructions.
     
     Args:
         agent_name: The name of the agent to get instructions for
+        use_case: The specific use case for agents that support multiple applications (optional)
     """
-    logging.info(f"[MCP-Tool] Retrieving prompt for agent: {agent_name}")
+    logging.info(f"[MCP-Tool] Retrieving prompt for agent: {agent_name}, use_case: {use_case}")
     
     if not agent_name:
         return "Error: agent_name parameter is required"
@@ -265,14 +333,36 @@ def prompt_retriever(agent_name: str) -> str:
     if prompt_name not in PROMPT_TEMPLATES:
         return f"Error: Prompt template '{prompt_name}' not found in server"
     
-    prompt = PROMPT_TEMPLATES[prompt_name]
+    prompt_template = PROMPT_TEMPLATES[prompt_name]
+    
+    # Handle nested structure for agents with multiple use cases
+    if isinstance(prompt_template, dict):
+        if not use_case:
+            # Use default if available, otherwise require use_case
+            if "default" in prompt_template:
+                prompt = prompt_template["default"]
+                logging.info(f"[MCP-Tool] Using default prompt for agent '{agent_name}'")
+            else:
+                available_cases = ", ".join(prompt_template.keys())
+                return f"Error: Agent '{agent_name}' supports multiple use cases. Please specify use_case parameter. Available use cases: {available_cases}"
+        else:
+            if use_case not in prompt_template:
+                available_cases = ", ".join(prompt_template.keys())
+                return f"Error: Use case '{use_case}' not found for agent '{agent_name}'. Available use cases: {available_cases}"
+            
+            prompt = prompt_template[use_case]
+    else:
+        # Handle simple string prompts (backward compatibility)
+        if use_case:
+            logging.warning(f"[MCP-Tool] Agent '{agent_name}' does not support multiple use cases, ignoring use_case parameter")
+        prompt = prompt_template
     
     # Auto-format prompts that contain instructions_prefix placeholder
     if "{instructions_prefix}" in prompt:
         instructions_prefix = PROMPT_TEMPLATES.get("instructions_prefix", "")
         prompt = prompt.format(instructions_prefix=instructions_prefix)
     
-    logging.info(f"[MCP-Tool] Retrieved prompt for '{agent_name}', length: {len(prompt)} chars")
+    logging.info(f"[MCP-Tool] Retrieved prompt for '{agent_name}' (use_case: {use_case}), length: {len(prompt)} chars")
     return prompt
 
 if __name__ == "__main__":
