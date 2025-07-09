@@ -54,7 +54,7 @@ You may, in turn, be called by other agents in the system and have to act as a d
             "function": {
                 "description": "Main agent for company employees' access requests."
             },
-            "instructions": "IMPORTANT: Before processing any inquiry, call dataiku_validation_service with tool_name='prompt_retriever' and agent_name='access_request_orchestrator_agent' to get your detailed instructions. Once you have retrieved your full instructions, follow them completely for all subsequent interactions.",
+            "instructions": "IMPORTANT: Before processing any inquiry, call dataiku_validation_service with tool_name='prompt_retriever' and agent_name='access_request_orchestrator_agent' to get your basic instructions. Once the user specifies their application (Dataiku or LMS), call dataiku_validation_service again with tool_name='prompt_retriever', agent_name='access_request_orchestrator_agent', and use_case='dataiku' or use_case='LMS' to get specialized instructions for that workflow.",
             "tools": [
                 "dataiku_validation_service",
                 "ons_agent"
@@ -67,7 +67,7 @@ You may, in turn, be called by other agents in the system and have to act as a d
         // --- MCP ADAPTER FOR DATAIKU VALIDATION SERVICE ---
         {
             "name": "dataiku_validation_service",
-            "description": "A remote service for handling all Dataiku-related validation checks, including user identity, training, and policy compliance. Available tools: user_verification, training_requirements, training_completions, approvals_required, prompt_retriever.",
+            "description": "A remote service for handling all Dataiku-related validation checks, including user identity, training, and policy compliance. Available tools: user_verification, training_requirements, training_completions, approvals_required, prompt_retriever. For prompt_retriever, use use_case='dataiku' or use_case='LMS' when calling for access_request_orchestrator_agent to get specialized instructions.",
             "function": {
                 "description": "Access Dataiku validation tools via MCP server. Use tool_name parameter to specify which tool to invoke.",
                 "parameters": {
@@ -96,6 +96,10 @@ You may, in turn, be called by other agents in the system and have to act as a d
                         "agent_name": {
                             "type": "string",
                             "description": "Agent name - required for prompt_retriever"
+                        },
+                        "use_case": {
+                            "type": "string",
+                            "description": "Use case for agents that support multiple applications - for now only 'dataiku' or 'LMS', always choose one of them or None if you are not sure"
                         }
                     },
                     "required": ["tool_name"]
