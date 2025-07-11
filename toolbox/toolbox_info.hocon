@@ -103,6 +103,37 @@
         }      
     },
 
+    "pdf_rag": {
+        # This is a coded tool for RAG on PDF files.
+        "class": "pdf_rag.PdfRag", 
+        "description": "Retrieve information from the given PDF files",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Query for retrieval"
+                },
+                "urls": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of local file paths of PDF files"
+                },
+                "save_vector_store": {
+                    "type": "boolean",
+                    "description": "Whether to save the vector store to disk as a JSON file"
+                },
+                "vector_store_path": {
+                    "type": "string",
+                    "description": "Path to save/load the vector store JSON file"
+                }
+            },
+            "required": ["query", "urls"]
+        }
+    },
+
     # ---------- Agent Network Tools ----------
 
     "call_agent": {
