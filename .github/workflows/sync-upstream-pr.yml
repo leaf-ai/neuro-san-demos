@@ -28,9 +28,9 @@ jobs:
         run: |
           git checkout main
           git pull origin main
-          git merge upstream/main || true
+          git merge upstream/main --allow-unrelated-histories || true
           git checkout -b sync-upstream
-          git remote set-url origin https://github.com/${{ github.repository }}.git
+          git remote set-url origin https://github.com/${{ github.repository }}.git  # ← 自分のforkを明示！
           git push origin sync-upstream
           git checkout main
 
