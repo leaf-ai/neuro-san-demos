@@ -2,7 +2,7 @@ name: Create PR to sync with upstream
 
 on:
   schedule:
-    - cron: '0 0 * * 1'  # Run automatically every Monday at 00:00 UTC (09:00 JST)
+    - cron: '0 0 * * 1'  # 毎週月曜 0:00 UTC（＝日本時間 月曜 9:00）
   workflow_dispatch:
 
 jobs:
@@ -19,26 +19,25 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Add upstream remote
-        run: git remote add upstream https://github.com/cognizant-ai-lab/neuro-san-studio.git
+        run: |
+          git remote add upstream https://github.com/cognizant-ai-lab/neuro-san-studio.git
+          git fetch upstream
 
-      - name: Fetch upstream
-        run: git fetch upstream
-
-      - name: Merge upstream into local main and create sync branch
+      - name: Create branch from main
         run: |
           git checkout main
           git pull origin main
-          git merge upstream/main --allow-unrelated-histories || true
           git checkout -b sync-upstream
-          git remote set-url origin https://github.com/${{ github.repository }}.git  # ← 自分のforkを明示！
-          git push origin sync-upstream
-          git checkout main
+          git merge upstream/main --allow-unrelated-histories || true
+          git remote set-url origin https://github.com/${{ github.repository }}.git
+          git push origin sync-upstream --force
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           branch: sync-upstream
-          base: main  # 🔸← これを明示してもOK（省略してもmainがデフォルト）
+          base: main
           title: "🔄 Sync fork with upstream"
           body: |
             This PR merges the latest changes from the upstream repository into this fork.
