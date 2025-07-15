@@ -28,9 +28,11 @@ jobs:
         run: |
           git checkout main
           git pull origin main
-          git merge upstream/main --allow-unrelated-histories || true
+          git merge upstream/main || true
           git checkout -b sync-upstream
+          git remote set-url origin https://github.com/${{ github.repository }}.git
           git push origin sync-upstream
+          git checkout main
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
