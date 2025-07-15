@@ -28,7 +28,7 @@ jobs:
         run: |
           git checkout main
           git pull origin main
-          git merge upstream/main || true
+          git merge upstream/main --allow-unrelated-histories || true
           git checkout -b sync-upstream
           git push origin sync-upstream
 
