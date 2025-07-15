@@ -25,10 +25,11 @@ jobs:
           git remote add upstream https://github.com/cognizant-ai-lab/neuro-san-studio.git
           git fetch upstream
 
-      - name: Create sync branch and merge upstream
+      - name: Create and push sync branch
         run: |
           git checkout -b sync-upstream origin/main
           git merge upstream/main --no-edit || echo "Merge conflicts may exist"
+          git push origin sync-upstream
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
