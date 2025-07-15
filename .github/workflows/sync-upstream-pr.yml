@@ -10,27 +10,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout fork
+      - name: Checkout main branch
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history needed for merge
 
       - name: Set up Git config
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Add upstream remote
+      - name: Add upstream and fetch
         run: |
           git remote add upstream https://github.com/cognizant-ai-lab/neuro-san-studio.git
           git fetch upstream
 
-      - name: Create branch from main
+      - name: Create sync branch and merge upstream
         run: |
-          git checkout main
-          git pull origin main
-          git checkout -b sync-upstream
-          git merge upstream/main --allow-unrelated-histories || true
-          git remote set-url origin https://github.com/${{ github.repository }}.git
-          git push origin sync-upstream --force
+          git checkout -b sync-upstream origin/main
+          git merge upstream/main --no-edit || echo "Merge conflicts may exist"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
@@ -41,6 +39,6 @@ jobs:
           title: "🔄 Sync fork with upstream"
           body: |
             This PR merges the latest changes from the upstream repository into this fork.
-            Please review and merge if everything looks good.
+            Please review the changes and resolve any merge conflicts if necessary.
           commit-message: "chore: sync with upstream"
           delete-branch: true
