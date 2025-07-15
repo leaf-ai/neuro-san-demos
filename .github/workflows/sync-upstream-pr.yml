@@ -24,17 +24,19 @@ jobs:
       - name: Fetch upstream
         run: git fetch upstream
 
-      - name: Create sync branch
+      - name: Merge upstream into local main and create sync branch
         run: |
           git checkout main
           git pull origin main
           git merge upstream/main || true
           git checkout -b sync-upstream
+          git push origin sync-upstream
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
           branch: sync-upstream
+          base: main  # 🔸← これを明示してもOK（省略してもmainがデフォルト）
           title: "🔄 Sync fork with upstream"
           body: |
             This PR merges the latest changes from the upstream repository into this fork.
