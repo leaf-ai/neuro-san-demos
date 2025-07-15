@@ -26,8 +26,10 @@ jobs:
 
       - name: Create sync branch
         run: |
-          git checkout -b sync-upstream
+          git checkout main
+          git pull origin main
           git merge upstream/main || true
+          git checkout -b sync-upstream
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
