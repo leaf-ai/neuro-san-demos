@@ -2,7 +2,7 @@ name: Create PR to sync with upstream
 
 on:
   schedule:
-    - cron: '0 0 * * 1'  # 毎週月曜 0:00 UTC（＝日本時間 月曜 9:00）
+    - cron: '0 0 * * 1'  # 毎週月曜 0:00 UTC（日本時間 月曜 9:00）
   workflow_dispatch:
 
 jobs:
@@ -13,7 +13,7 @@ jobs:
       - name: Checkout main branch
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # full history needed for merge
+          fetch-depth: 0  # フル履歴が必要
 
       - name: Set up Git config
         run: |
