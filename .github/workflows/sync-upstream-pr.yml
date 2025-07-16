@@ -5,6 +5,9 @@ on:
     - cron: '0 0 * * 1'  # 毎週月曜 0:00 UTC（日本時間 月曜 9:00）
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -12,8 +15,6 @@ jobs:
     steps:
       - name: Checkout main branch
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # フル履歴が必要
 
       - name: Set up Git config
         run: |
@@ -22,6 +23,7 @@ jobs:
 
       - name: Add upstream and fetch
         run: |
+          git remote remove upstream || true
           git remote add upstream https://github.com/cognizant-ai-lab/neuro-san-studio.git
           git fetch upstream
 
