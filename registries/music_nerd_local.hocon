@@ -11,7 +11,7 @@
 # END COPYRIGHT
 {
     "llm_config": {
-        "model_name": "mistral",
+        "model_name": "qwen3:0.6b",
     },
     "tools": [
         # These tool definitions do not have to be in any particular order

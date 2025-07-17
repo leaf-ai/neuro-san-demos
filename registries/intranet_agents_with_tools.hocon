@@ -23,7 +23,7 @@
     include "registries/aaosa.hocon"
 
     "llm_config": {
-        "model_name": "gpt-4o"
+        "model_name": "qwen3:0.6b"
     },
     "instructions_prefix": """
     You are in charge of a portion of company's intranet. The intranet is also known as MyIntranet.

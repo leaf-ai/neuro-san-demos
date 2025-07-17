@@ -11,8 +11,8 @@
 # END COPYRIGHT
 {
     "llm_config": {
-        "model_name": "gpt-4o",
-        # "model_name": "claude-3-5-haiku",
+        "model_name": "qwen3:0.6b",
+        # "model_name": "qwen3:0.6b",
     },
     "tools": [
         # These tool definitions do not have to be in any particular order

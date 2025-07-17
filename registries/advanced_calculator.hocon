@@ -20,7 +20,7 @@
         # Ollama: ['llama2', 'llama3', 'llama3.1', 'llama3:70b', 'llava', 'mistral', 'mistral-nemo', 'mixtral', 'qwen2.5:14b', 'deepseek-r1:14b']
         # ChatNvidia: ['nvidia-llama-3.1-405b-instruct', 'nvidia-llama-3.3-70b-instruct', 'nvidia-deepseek-r1']
 
-        "model_name": "gpt-4o",
+        "model_name": "qwen3:0.6b",
     },
     "commondefs":{
         "replacement_strings":{

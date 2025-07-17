@@ -34,7 +34,7 @@ Do not mention what you can NOT do. Only mention what you can do.
 """,
 
     "llm_config": {
-        "model_name": "gpt-4o",
+        "model_name": "qwen3:0.6b",
     },
 
     "tools": [

@@ -14,7 +14,7 @@
 
 {
     "llm_config": {
-        "model_name": "gpt-4o",
+        "model_name": "qwen3:0.6b",
     },
     "max_iterations": 40000,
     "max_execution_seconds": 6000

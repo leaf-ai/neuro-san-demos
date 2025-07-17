@@ -11,7 +11,7 @@
 # END COPYRIGHT
 {
     "llm_config": {
-        "model_name": "gpt-4o"
+        "model_name": "qwen3:0.6b"
     },
     "commondefs": {
         "replacement_strings": {
