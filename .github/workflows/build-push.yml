@@ -24,6 +24,8 @@ on:
 
 jobs:
   build-and-push:
+    # don't run this job in sync'd clones
+    if: github.repository == 'cognizant-ai-lab/neuro-san-studio'
     runs-on: ubuntu-latest
     outputs:
       image_tag: ${{ steps.set-vars.outputs.image_tag }}
