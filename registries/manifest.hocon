@@ -123,4 +123,5 @@
     "dataiku.hocon": true,
     "dataiku_v3.hocon": true,
     "dataiku_mcp.hocon": true,
-}
+
+    "GEO.hocon": true,}
