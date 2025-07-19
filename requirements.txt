@@ -17,3 +17,8 @@ aiofiles>=24.1.0
 langchain-mcp-adapters>=0.1.7
 docstring-parser
 # Flask
+flask>=2.3.0
+
+# Web scraping and content extraction
+crawl4ai>=0.7.1
+playwright>=1.53.0
