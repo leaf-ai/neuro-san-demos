@@ -18,7 +18,7 @@ if platform.system() == "Windows":
 # Constants
 # -------------------------------------------------------------------------- #
 DEFAULT_URL   = "https://www.rabobank.com/products/finance-my-business"
-MAX_RETRIES   = 5
+MAX_RETRIES   = 10
 RETRY_DELAY_S = 2
 
 COOKIE_JS = r"""
@@ -76,6 +76,7 @@ async def rabobank_scrape(
     delay_seconds: float = RETRY_DELAY_S,
 ) -> str:
     """Return markdown for any Rabobank `/products/*` page."""
+    logging.info("[MCP-Tool] Scraping URL => %s", url)
     for attempt in range(1, retries + 1):
         markdown = await _crawl_once(url)
         if markdown:
