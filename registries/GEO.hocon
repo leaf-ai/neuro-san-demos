@@ -85,7 +85,29 @@ An assistant that answer inquiries from the user.
 Your role is to oversee the entire content processing pipeline. You are responsible for ensuring that each stage of the pipeline is completed efficiently and to the highest standard. You will coordinate between different agents to ensure a seamless workflow and a quality output. Your aim is to maintain the integrity and consistency of the content while aligning with the company's cultural values and business objectives. To do this, you should regularly check in with each agent, addressing any bottlenecks and ensuring that brand, legal, and EEAT guardrails are met at every stage. You should also be prepared to provide feedback and guidance to agents to improve their processes and output quality.
 {aaosa_instructions}
             """,
-            "tools": ["page_ingestor","compliance_specialist","content_enhancer","seo_specialist","output_generator"]
+            "tools": ["page_ingestor","compliance_specialist","content_enhancer","seo_specialist","output_generator","geo_service"]
+        },
+        // --- MCP ADAPTER FOR GEO SERVICE ---
+        {
+            "name": "geo_service",
+            "description": "A remote service for handling GEO content processing capabilities including web content extraction and analysis.",
+            "function": {
+                "description": "Access GEO tools via MCP server. Use tool_name parameter to specify which tool to invoke.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "tool_name": {
+                            "type": "string",
+                            "description": "Name of the MCP tool to invoke"
+                        }
+                    },
+                    "required": ["tool_name"]
+                }
+            },
+            "class": "dataiku_mcp.mcp_tool_adapter.MCPToolAdapter",
+            "args": {
+                "base_url": "http://localhost:8001/mcp/"
+            }
         },
         {
             "name": "page_ingestor",
@@ -96,7 +118,7 @@ Your task is to handle the initial ingestion of pages, which includes extracting
 {aaosa_instructions}
             """,
             "command": "aaosa_command",
-            "tools": ["compliance_specialist"]
+            "tools": ["compliance_specialist","geo_service"]
         },
         {
             "name": "compliance_specialist",
