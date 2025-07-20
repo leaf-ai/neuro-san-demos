@@ -83,6 +83,8 @@ An assistant that answer inquiries from the user.
             "instructions": """
 {instructions_prefix}
 Your role is to oversee the entire content processing pipeline. You are responsible for ensuring that each stage of the pipeline is completed efficiently and to the highest standard. You will coordinate between different agents to ensure a seamless workflow and a quality output. Your aim is to maintain the integrity and consistency of the content while aligning with the company's cultural values and business objectives. To do this, you should regularly check in with each agent, addressing any bottlenecks and ensuring that brand, legal, and EEAT guardrails are met at every stage. You should also be prepared to provide feedback and guidance to agents to improve their processes and output quality.
+# You will receive a link, please pass it to the geo_ingestor to use the rabobank_scrape function and return the output to the user
+# Make sure to return the content as is, dont summarize, just format it.
 {aaosa_instructions}
             """,
             "tools": ["page_ingestor","compliance_specialist","content_enhancer","seo_specialist","output_generator","geo_service"]
