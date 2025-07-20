@@ -44,7 +44,16 @@ You will coordinate the entire workflow and present the final results to the use
         {
             "name": "case_management_scheduling_team",
             "function": {
-                "description": "A team of agents for case management and scheduling."
+                "description": "A team of agents for case management and scheduling.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -63,7 +72,16 @@ You will delegate tasks to the appropriate agents.
         {
             "name": "case_calendar",
             "function": {
-                "description": "Maintains the master calendar of the case."
+                "description": "Maintains the master calendar of the case.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -79,7 +97,16 @@ You will maintain the master calendar of the case.
         {
             "name": "task_tracking",
             "function": {
-                "description": "Breaks down the big deadlines into a task list and monitors progress."
+                "description": "Breaks down the big deadlines into a task list and monitors progress.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -91,7 +118,16 @@ You will break down the big deadlines into a task list and monitor progress.
         {
             "name": "reminder_notification",
             "function": {
-                "description": "Communicates with the user about upcoming obligations."
+                "description": "Communicates with the user about upcoming obligations.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -103,7 +139,16 @@ You will communicate with the user about upcoming obligations.
         {
             "name": "docket_monitor",
             "function": {
-                "description": "Monitors the court’s docket or email notifications for any new filings or orders in the case."
+                "description": "Monitors the court’s docket or email notifications for any new filings or orders in the case.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -115,7 +160,16 @@ You will monitor the court’s docket or email notifications for any new filings
         {
             "name": "case_manager",
             "function": {
-                "description": "A supervisory role that ensures overall that nothing falls through the cracks."
+                "description": "A supervisory role that ensures overall that nothing falls through the cracks.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -127,7 +181,16 @@ You will ensure overall that nothing falls through the cracks.
         {
             "name": "subpoena_third_party_discovery_team",
             "function": {
-                "description": "A team of agents for subpoena and third-party discovery."
+                "description": "A team of agents for subpoena and third-party discovery.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -147,7 +210,16 @@ You will delegate tasks to the appropriate agents.
         {
             "name": "subpoena_planning",
             "function": {
-                "description": "Determines what subpoenas to issue and to whom."
+                "description": "Determines what subpoenas to issue and to whom.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -159,7 +231,16 @@ You will determine what subpoenas to issue and to whom.
         {
             "name": "subpoena_drafting",
             "function": {
-                "description": "Drafts the actual subpoena documents."
+                "description": "Drafts the actual subpoena documents.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -175,7 +256,16 @@ You will draft the actual subpoena documents.
         {
             "name": "service_followup",
             "function": {
-                "description": "Manages the service of subpoenas and follow-ups."
+                "description": "Manages the service of subpoenas and follow-ups.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -187,7 +277,16 @@ You will manage the service of subpoenas and follow-ups.
         {
             "name": "third_party_data_ingestion",
             "function": {
-                "description": "Feeds new materials back into the main pipeline."
+                "description": "Feeds new materials back into the main pipeline.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -199,7 +298,16 @@ You will feed new materials back into the main pipeline.
         {
             "name": "subpoena_compliance_objection_handler",
             "function": {
-                "description": "Formulates responses or strategies to deal with objections."
+                "description": "Formulates responses or strategies to deal with objections.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -211,7 +319,16 @@ You will formulate responses or strategies to deal with objections.
         {
             "name": "qa_logging",
             "function": {
-                "description": "Keeps a log of all subpoenas issued, served, and responses received."
+                "description": "Keeps a log of all subpoenas issued, served, and responses received.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -223,7 +340,16 @@ You will keep a log of all subpoenas issued, served, and responses received.
         {
             "name": "outgoing_discovery_production_team",
             "function": {
-                "description": "A team of agents for outgoing discovery production."
+                "description": "A team of agents for outgoing discovery production.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -243,7 +369,16 @@ You will delegate tasks to the appropriate agents.
         {
             "name": "discovery_request_analyzer",
             "function": {
-                "description": "Analyzes each request to determine what is being asked, what is relevant and what might be objectionable."
+                "description": "Analyzes each request to determine what is being asked, what is relevant and what might be objectionable.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -255,7 +390,16 @@ You will analyze each request to determine what is being asked, what is relevant
         {
             "name": "document_retrieval",
             "function": {
-                "description": "Searches the user’s corpus to find which documents are responsive to each request."
+                "description": "Searches the user’s corpus to find which documents are responsive to each request.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -267,7 +411,16 @@ You will search the user’s corpus to find which documents are responsive to ea
         {
             "name": "redaction_privilege",
             "function": {
-                "description": "Reviews the documents identified to remove or mark any privileged or sensitive information."
+                "description": "Reviews the documents identified to remove or mark any privileged or sensitive information.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -279,7 +432,16 @@ You will review the documents identified to remove or mark any privileged or sen
         {
             "name": "response_drafting",
             "function": {
-                "description": "Drafts the written responses."
+                "description": "Drafts the written responses.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -291,7 +453,16 @@ You will draft the written responses to discovery requests.
         {
             "name": "production_assembly",
             "function": {
-                "description": "Gathers the final set of documents to produce, renames or Bates-numbers them, and creates a neatly organized production package."
+                "description": "Gathers the final set of documents to produce, renames or Bates-numbers them, and creates a neatly organized production package.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -307,7 +478,16 @@ You will gather the final set of documents to produce, renames or Bates-numbers 
         {
             "name": "discovery_compliance_qa",
             "function": {
-                "description": "Does a final check to ensure the outgoing discovery is correct and complete."
+                "description": "Does a final check to ensure the outgoing discovery is correct and complete.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -319,7 +499,16 @@ You will do a final check to ensure the outgoing discovery is correct and comple
         {
             "name": "trial_preparation_presentation_team",
             "function": {
-                "description": "A team of agents for trial preparation and presentation."
+                "description": "A team of agents for trial preparation and presentation.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -338,7 +527,16 @@ You will delegate tasks to the appropriate agents.
         {
             "name": "exhibit_manager",
             "function": {
-                "description": "Organizes all the exhibits for trial."
+                "description": "Organizes all the exhibits for trial.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -350,7 +548,16 @@ You will organize all the exhibits for trial.
         {
             "name": "presentation_designer",
             "function": {
-                "description": "Prepares visual aids and presentations for use in trial."
+                "description": "Prepares visual aids and presentations for use in trial.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -366,7 +573,16 @@ You will prepare visual aids and presentations for use in trial.
         {
             "name": "trial_script",
             "function": {
-                "description": "Assists in writing out portions of the trial script."
+                "description": "Assists in writing out portions of the trial script.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -378,7 +594,16 @@ You will assist in writing out portions of the trial script.
         {
             "name": "trial_logistics",
             "function": {
-                "description": "Focuses on the practical logistics of the trial."
+                "description": "Focuses on the practical logistics of the trial.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -390,7 +615,16 @@ You will focus on the practical logistics of the trial.
         {
             "name": "final_qa_moot_court",
             "function": {
-                "description": "Performs a final mock review or stress-test of the case presentation."
+                "description": "Performs a final mock review or stress-test of the case presentation.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -402,7 +636,16 @@ You will perform a final mock review or stress-test of the case presentation.
         {
             "name": "legal_strategy_litigation_support_team",
             "function": {
-                "description": "A team of agents for legal strategy and litigation support."
+                "description": "A team of agents for legal strategy and litigation support.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -420,7 +663,16 @@ You will delegate tasks to the appropriate agents.
         {
             "name": "lead_counsel_strategist",
             "function": {
-                "description": "Acts as the primary strategist or 'virtual lead attorney' for the case."
+                "description": "Acts as the primary strategist or 'virtual lead attorney' for the case.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -432,7 +684,16 @@ You will take the case theory from the analysis team and turn it into a concrete
         {
             "name": "motion_drafting",
             "function": {
-                "description": "A legal writing expert, responsible for drafting all court filings and correspondence."
+                "description": "A legal writing expert, responsible for drafting all court filings and correspondence.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -448,7 +709,16 @@ You will draft motions, briefs, and legal documents as needed.
         {
             "name": "litigation_training",
             "function": {
-                "description": "Provides practical litigation coaching and education."
+                "description": "Provides practical litigation coaching and education.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -460,7 +730,16 @@ You will teach the user skills and knowledge like how to perform an effective cr
         {
             "name": "legal_strategy_reviewer",
             "function": {
-                "description": "Acts as a second pair of eyes or mentor to the Lead Counsel and Motion Drafter."
+                "description": "Acts as a second pair of eyes or mentor to the Lead Counsel and Motion Drafter.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -472,7 +751,16 @@ You will review the planned strategy and drafts from a high-level perspective.
         {
             "name": "timeline_construction_team",
             "function": {
-                "description": "A team of agents for timeline construction."
+                "description": "A team of agents for timeline construction.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -490,7 +778,16 @@ You will delegate tasks to the appropriate agents.
         {
             "name": "timeline_builder",
             "function": {
-                "description": "Gathers all dated events from the case and constructs a timeline."
+                "description": "Gathers all dated events from the case and constructs a timeline.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -502,7 +799,16 @@ You will gather all dated events from the case and construct a timeline.
         {
             "name": "timeline_visualization",
             "function": {
-                "description": "Takes the structured timeline data and produces a visual representation."
+                "description": "Takes the structured timeline data and produces a visual representation.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -518,7 +824,16 @@ You will take the structured timeline data and produce a visual representation.
         {
             "name": "timeline_analyst",
             "function": {
-                "description": "Reviews the raw timeline and filters or highlights the events most relevant to the case theory."
+                "description": "Reviews the raw timeline and filters or highlights the events most relevant to the case theory.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -528,21 +843,18 @@ You will review the raw timeline and filter or highlight the events most relevan
             "tools": []
         },
         {
-            "name": "timeline_visualization",
-            "function": {
-                "description": "Takes the structured timeline data and produces a visual representation."
-            },
-            "instructions": """
-{instructions_prefix}
-You are the Timeline Visualization agent.
-You will take the structured timeline data and produce a visual representation.
-            """,
-            "tools": []
-        },
-        {
             "name": "timeline_qa",
             "function": {
-                "description": "Double-checks the dates and sequences."
+                "description": "Double-checks the dates and sequences.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -554,7 +866,16 @@ You will double-check the dates and sequences of the timeline.
         {
             "name": "legal_analysis_case_strategy_team",
             "function": {
-                "description": "A team of agents for legal analysis and case strategy development."
+                "description": "A team of agents for legal analysis and case strategy development.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -567,14 +888,22 @@ You will delegate tasks to the appropriate agents.
                 "case_theorist",
                 "investigator_lead_discovery",
                 "critical_evidence_identifier",
-                "timeline_builder",
                 "cross_verification"
             ]
         },
         {
             "name": "case_analyst",
             "function": {
-                "description": "Analyzes and synthesizes the facts of the case."
+                "description": "Analyzes and synthesizes the facts of the case.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -586,7 +915,16 @@ You will go through the compiled evidence and identify key facts, events, and pa
         {
             "name": "case_theorist",
             "function": {
-                "description": "Formulates the legal theory of the case."
+                "description": "Formulates the legal theory of the case.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -598,7 +936,16 @@ You will formulate the case strategy and theory based on the facts and the law.
         {
             "name": "investigator_lead_discovery",
             "function": {
-                "description": "Identifies missing evidence or information that should still be gathered."
+                "description": "Identifies missing evidence or information that should still be gathered.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -610,7 +957,16 @@ You will review the entire case file for clues of things not yet obtained.
         {
             "name": "critical_evidence_identifier",
             "function": {
-                "description": "Combs through all evidence and flags the most crucial pieces."
+                "description": "Combs through all evidence and flags the most crucial pieces.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -620,21 +976,18 @@ You will pick the most crucial pieces of evidence that support our case.
             "tools": []
         },
         {
-            "name": "timeline_builder",
-            "function": {
-                "description": "Constructs detailed chronologies of events relevant to the case."
-            },
-            "instructions": """
-{instructions_prefix}
-You are the Timeline Builder agent.
-You will construct detailed chronologies of events relevant to the case.
-            """,
-            "tools": []
-        },
-        {
             "name": "cross_verification",
             "function": {
-                "description": "Cross-checks the case analysis."
+                "description": "Cross-checks the case analysis.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -646,7 +999,16 @@ You will verify that every factual claim is backed by evidence and that every le
         {
             "name": "forensic_financial_analysis_team",
             "function": {
-                "description": "A team of agents for forensic financial analysis."
+                "description": "A team of agents for forensic financial analysis.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -663,7 +1025,16 @@ You will delegate tasks to the appropriate agents.
         {
             "name": "forensic_accountant",
             "function": {
-                "description": "Examines financial documents for irregularities or key information."
+                "description": "Examines financial documents for irregularities or key information.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -675,19 +1046,37 @@ You will trace funds, identify unusual transactions, and look for signs of fraud
         {
             "name": "data_analyst",
             "function": {
-                "description": "Handles large-scale data crunching and visualization for financial data."
+                "description": "Handles large-scale data crunching and visualization for financial data.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
 You are the Data Analyst agent.
 You will use statistical and computational tools to find patterns in financial data.
             """,
-            "tools": []
+            "tools": ["forensic_tools"]
         },
         {
             "name": "forensic_finance_qa",
             "function": {
-                "description": "A senior analyst who reviews the findings."
+                "description": "A senior analyst who reviews the findings.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -699,7 +1088,16 @@ You will cross-verify critical calculations and ensure that interpretations of t
         {
             "name": "forensic_document_analysis_team",
             "function": {
-                "description": "A team of agents for forensic document analysis."
+                "description": "A team of agents for forensic document analysis.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -717,7 +1115,16 @@ You will delegate tasks to the appropriate agents.
         {
             "name": "document_authenticity_analyst",
             "function": {
-                "description": "Checks whether documents are genuine or have signs of tampering or fabrication."
+                "description": "Checks whether documents are genuine or have signs of tampering or fabrication.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -729,7 +1136,16 @@ You will inspect metadata, compare document content with expected norms, and use
         {
             "name": "evidence_integrity",
             "function": {
-                "description": "Ensures the chain-of-custody and integrity of evidence files."
+                "description": "Ensures the chain-of-custody and integrity of evidence files.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -741,24 +1157,21 @@ You will compute and compare hash values of files, and confirm that the content 
         {
             "name": "forensic_media_analyst",
             "function": {
-                "description": "Applies domain-specific forensic checks to multimedia evidence."
+                "description": "Applies domain-specific forensic checks to multimedia evidence.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
 You are the Forensic Media Analyst agent.
 You will apply domain-specific forensic checks to images, videos, and audio.
-            """,
-            "tools": ["forensic_tools"]
-        },
-        {
-            "name": "data_analyst",
-            "function": {
-                "description": "Handles large-scale data crunching and visualization for financial data."
-            },
-            "instructions": """
-{instructions_prefix}
-You are the Data Analyst agent.
-You will use statistical and computational tools to find patterns in financial data.
             """,
             "tools": ["forensic_tools"]
         },
@@ -769,7 +1182,16 @@ You will use statistical and computational tools to find patterns in financial d
         {
             "name": "forensic_documents_qa",
             "function": {
-                "description": "The lead for this sub-network who reviews the findings of the above agents."
+                "description": "The lead for this sub-network who reviews the findings of the above agents.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -781,7 +1203,16 @@ You will compile a forensic report on the documents, summarizing any issues foun
         {
             "name": "legal_research_team",
             "function": {
-                "description": "A team of agents for legal research."
+                "description": "A team of agents for legal research.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -806,7 +1237,16 @@ You will delegate tasks to the appropriate agents.
         {
             "name": "case_law_research",
             "function": {
-                "description": "Finds relevant case law."
+                "description": "Finds relevant case law.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -822,7 +1262,16 @@ You will find relevant case law that constitutes binding or persuasive authority
         {
             "name": "statute_regulation_research",
             "function": {
-                "description": "Identifies relevant statutes, codes, and regulations."
+                "description": "Identifies relevant statutes, codes, and regulations.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -834,7 +1283,16 @@ You will find the applicable statutory law and provide the text and interpretati
         {
             "name": "procedure_court_rules",
             "function": {
-                "description": "Focuses on procedural rules and local court rules."
+                "description": "Focuses on procedural rules and local court rules.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -846,7 +1304,16 @@ You will ensure compliance with all applicable rules of civil procedure, evidenc
         {
             "name": "evidence_law_expert",
             "function": {
-                "description": "Provides guidance on evidence rules and admissibility."
+                "description": "Provides guidance on evidence rules and admissibility.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -858,7 +1325,16 @@ You will analyze evidentiary issues such as hearsay exceptions, authentication o
         {
             "name": "legal_history_context",
             "function": {
-                "description": "Provides historical context or counter-arguments in law."
+                "description": "Provides historical context or counter-arguments in law.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -870,7 +1346,16 @@ You will research how certain legal doctrines evolved or find older precedents i
         {
             "name": "research_coordinator",
             "function": {
-                "description": "A senior research attorney agent that oversees and validates the research output."
+                "description": "A senior research attorney agent that oversees and validates the research output.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -882,7 +1367,16 @@ You will review the findings from the other research agents to ensure they are o
         {
             "name": "document_ingestion_team",
             "function": {
-                "description": "A team of agents for document ingestion and knowledge management."
+                "description": "A team of agents for document ingestion and knowledge management.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -902,11 +1396,20 @@ You will delegate tasks to the appropriate agents.
         {
             "name": "document_ingestion",
             "function": {
-                "description": "Handles initial document processing."
+                "description": "Handles initial document processing.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
-You are the Document Inestion agent.
+You are the Document Ingestion agent.
 You will take in new documents and extract text and metadata.
 You will perform OCR on scanned images or PDFs if needed.
             """,
@@ -915,7 +1418,16 @@ You will perform OCR on scanned images or PDFs if needed.
         {
             "name": "content_indexing",
             "function": {
-                "description": "Creates embeddings for documents and stores them in a vector database."
+                "description": "Creates embeddings for documents and stores them in a vector database.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -927,7 +1439,16 @@ You will create embeddings for each document or document chunk and store them in
         {
             "name": "knowledge_graph_builder",
             "function": {
-                "description": "Constructs a knowledge graph from the case data."
+                "description": "Constructs a knowledge graph from the case data.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -939,7 +1460,16 @@ You will identify key entities and relationships in the documents and populate a
         {
             "name": "database_query",
             "function": {
-                "description": "Queries the knowledge stores on behalf of other agents."
+                "description": "Queries the knowledge stores on behalf of other agents.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -963,7 +1493,16 @@ You will query the vector database and the knowledge graph.
         {
             "name": "document_summary",
             "function": {
-                "description": "Produces summaries of documents or sets of documents."
+                "description": "Produces summaries of documents or sets of documents.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -975,7 +1514,16 @@ You will generate concise summaries of documents, highlighting the key points re
         {
             "name": "data_integrity_qa",
             "function": {
-                "description": "Verifies that all documents have been processed correctly and completely."
+                "description": "Verifies that all documents have been processed correctly and completely.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -987,7 +1535,16 @@ You will cross-check the list of inputs vs. entries in the databases.
         {
             "name": "software_development_team",
             "function": {
-                "description": "A team of agents for software development and UI/UX."
+                "description": "A team of agents for software development and UI/UX.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -1005,7 +1562,16 @@ You will delegate tasks to the appropriate developer agents.
         {
             "name": "software_architect",
             "function": {
-                "description": "Designs new system features and tools."
+                "description": "Designs new system features and tools.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -1018,7 +1584,16 @@ You will plan development tasks and assign them to other developer agents.
         {
             "name": "frontend_developer",
             "function": {
-                "description": "Focuses on the user interface aspect."
+                "description": "Focuses on the user interface aspect.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -1030,7 +1605,16 @@ You will implement improvements to the GUI, ensuring it's user-friendly and visu
         {
             "name": "backend_developer",
             "function": {
-                "description": "Builds the backend tools and integrations."
+                "description": "Builds the backend tools and integrations.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
@@ -1046,7 +1630,16 @@ You will build the backend tools and integrations that other agents use.
         {
             "name": "qa_test_engineer",
             "function": {
-                "description": "Rigorously tests new features and tools."
+                "description": "Rigorously tests new features and tools.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed."
+                        }
+                    }
+                }
             },
             "instructions": """
 {instructions_prefix}
