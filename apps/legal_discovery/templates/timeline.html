@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Timeline</title>
+    <link href="{{ url_for('static', filename='vis-timeline/vis-timeline-graph2d.min.css') }}" rel="stylesheet" type="text/css" />
+    <script src="{{ url_for('static', filename='vis-timeline/vis-timeline-graph2d.min.js') }}"></script>
+</head>
+<body>
+    <div id="visualization"></div>
+
+    <script type="text/javascript">
+        // DOM element where the Timeline will be attached
+        var container = document.getElementById('visualization');
+
+        // Create a DataSet (allows two way data-binding)
+        var items = new vis.DataSet({{ timeline_items | tojson }});
+
+        // Configuration for the Timeline
+        var options = {};
+
+        // Create a Timeline
+        var timeline = new vis.Timeline(container, items, options);
+    </script>
+</body>
+</html>

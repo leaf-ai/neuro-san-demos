@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  legal_discovery:
+    build:
+      context: .
+      dockerfile: apps/legal_discovery/Dockerfile
+    ports:
+      - "5001:5001"
+    env_file:
+      - .env
+    depends_on:
+      - neo4j
+      - tesseract
+    volumes:
+      - .:/usr/src/app
+
+  neo4j:
+    image: neo4j:4.4
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
+    volumes:
+      - neo4j_data:/data
+
+  tesseract:
+    image: tesseractshadow/tesseract5-ocr
+    ports:
+      - "5000:5000"
+
+volumes:
+  neo4j_data:
