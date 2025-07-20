@@ -109,6 +109,7 @@
     "macys.hocon": true,
     "LinkedInJobSeekerSupportNetwork.hocon": true
     "website_search.hocon": true,
+    "legal_discovery.hocon": true,
 
     # Experimental and research
     "agent_network_designer.hocon": true,

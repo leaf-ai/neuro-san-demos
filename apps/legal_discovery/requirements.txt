@@ -1,0 +1,17 @@
+neuro-san
+flask
+flask-socketio
+python-socketio
+schedule
+gunicorn
+eventlet
+Pillow
+PyMuPDF
+pytesseract
+chromadb
+neo4j
+requests
+pandas
+beautifulsoup4
+python-docx
+python-pptx

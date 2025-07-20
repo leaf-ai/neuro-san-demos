@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Legal Discovery Assistant</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Google Fonts for a modern look -->
+    <link href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="main-container">
+        <header>
+            <h1>🧠 Legal Discovery Assistant</h1>
+            <p class="subtitle">A collaborative conversation with your AI assistant</p>
+        </header>
+
+        <section id="assistant-speech-section" aria-label="Assistant's Response">
+            <h2>Assistant</h2>
+            <div id="assistant-speech" class="chat-box"></div>
+        </section>
+
+        <section id="user-section" aria-label="User Input">
+            <h2>You</h2>
+            <div id="user-input-display" class="chat-box user-box"></div>
+            <form id="user-input-section" autocomplete="off">
+                <textarea id="user-input" rows="3" placeholder="Type a message… ('exit' to quit)" aria-label="Type your message"></textarea>
+                <button type="button" id="send-button" onclick="sendUserInput()">Send</button>
+            </form>
+        </section>
+
+        <section id="assistant-thoughts-section" aria-label="Assistant's Thoughts">
+            <div class="thoughts-header">
+                <h2>Assistant Thoughts</h2>
+                <button id="toggle-thoughts" type="button">Show/Hide Thoughts</button>
+            </div>
+            <div id="assistant-thoughts" class="chat-box collapsed"></div>
+        </section>
+    </div>
+    <footer>
+        <small>&copy; {{year}} Legal Discovery Assistant &mdash; Powered by Neuro-San</small>
+    </footer>
+
+    <script>
+        var socket = io.connect('http://' + document.domain + ':' + location.port + '/chat');
+
+        socket.on('connect', function() {
+            console.log('Websocket connected!');
+        });
+
+        socket.on('update_thoughts', function(data) {
+            var element = document.getElementById('assistant-thoughts');
+            element.innerHTML += '<div class="thought-msg">' + data.data.replace(/\n/g, '<br>') + '</div>';
+            element.scrollTop = element.scrollHeight;
+        });
+
+        socket.on('update_speech', function(data) {
+            var element = document.getElementById('assistant-speech');
+            element.innerHTML += '<div class="speech-msg">' + data.data.replace(/\n/g, '<br>') + '</div>';
+            element.scrollTop = element.scrollHeight;
+        });
+
+        socket.on('update_user_input', function(data) {
+            var element = document.getElementById('user-input-display');
+            element.innerHTML += '<div class="user-msg">' + data.data.replace(/\n/g, '<br>') + '</div>';
+            element.scrollTop = element.scrollHeight;
+        });
+
+        function sendUserInput() {
+            var userInput = document.getElementById('user-input').value.trim();
+            if (userInput) {
+                socket.emit('user_input', {data: userInput}, '/chat');
+                document.getElementById('user-input').value = '';
+            }
+        }
+
+        document.getElementById('toggle-thoughts').addEventListener('click', function() {
+            var thoughtsDiv = document.getElementById('assistant-thoughts');
+            thoughtsDiv.classList.toggle('collapsed');
+            this.innerText = thoughtsDiv.classList.contains('collapsed') ? 'Show Thoughts' : 'Hide Thoughts';
+        });
+
+        window.addEventListener('beforeunload', function () {
+            navigator.sendBeacon('/shutdown');
+        });
+    </script>
+</body>
+</html>
