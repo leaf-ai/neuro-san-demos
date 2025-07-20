@@ -19,4 +19,3 @@ pylint==3.3.1
 
 # Testing API keys
 openai==1.91.0
-google-generativeai==0.8.5

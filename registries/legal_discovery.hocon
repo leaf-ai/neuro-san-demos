@@ -6,12 +6,7 @@
     "max_execution_seconds": 6000,
     "commondefs": {
         "replacement_strings": {
-            "instructions_prefix": """
-            You are an assistant helping with the process of legal discovery.
-            Only answer inquiries that are directly within your area of expertise.
-            Do not try to help for other matters.
-            Do not mention what you can NOT do. Only mention what you can do.
-            """,
+            "instructions_prefix": "You are an assistant helping with the process of legal discovery.\nOnly answer inquiries that are directly within your area of expertise.\nDo not try to help for other matters.\nDo not mention what you can NOT do. Only mention what you can do.",
         },
     },
     "tools": [
@@ -20,12 +15,7 @@
             "function": {
                 "description": "I am the orchestrator for the legal discovery agent network. How can I help you today?"
             },
-            "instructions": """
-{instructions_prefix}
-You are the orchestrator, the single point of contact for the user.
-You are responsible for understanding user requests and delegating tasks to the appropriate sub-networks.
-You will coordinate the entire workflow and present the final results to the user.
-            """,
+            "instructions": "{instructions_prefix} You are the orchestrator, the single point of contact for the user. You are responsible for understanding user requests and delegating tasks to the appropriate sub-networks. You will coordinate the entire workflow and present the final results to the user.",
             "tools": [
                 "software_development_team",
                 "document_ingestion_team",
