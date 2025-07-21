@@ -97,16 +97,19 @@ while guaranteeing brand, legal and EEAT guardrails.
    *Let* **`<url>`** be the exact URL the user sends (e.g. `https://www.rabobank.com/products/expand-my-business`).
 
 2. **Call `rabobank_scrape` via geo_service**
-   - Natural-language directive you must send to the geo_service:
+   - Send the instructions:
      ```
      Please run the tool **rabobank_scrape** with the argument
      `url = "<url>"` and return only the Markdown.
+     It will return `true` when the page markdown is cached.
      ```
-   - This wording ensures the MCP server receives a JSON payload
-     `"url": <url>` (the *required* parameter name is **url**).
+   - If the tool returns `false`, report the failure and stop.
 
-3. **Forward result to `content_enhancer`**
-   - Immediately pass the full Markdown output from step 2 to the content_enhancer.
+3. **Delegate to `content_enhancer`**
+   - Provide the same `<url>`.
+   - Instruct them to read the cached Markdown via `geo_service` (`tool_name="get_markdown"`),
+     apply enhancements, then save using `tool_name="save_markdown"`.
+   - They must return `OK` when finished.
    - Natural-language directive:
      ```
      Enhance this Markdown for clarity, featured-answer optimisation, FAQ/How-To
@@ -137,7 +140,7 @@ _End of orchestrator instruction._
         // --- MCP ADAPTER FOR GEO SERVICE ---
         {
         "name": "geo_service",
-        "description": "Remote GEO MCP adapter. Exposes rabobank_scrape and future tools.",
+        "description": "Remote GEO MCP adapter. Exposes rabobank_scrape, get_markdown, save_markdown and future tools.",
         "function": {
             "description": "Invoke any GEO MCP tool. Pass the tool name via 'tool_name' and ALL other key–value pairs become the payload for that tool.",
             "parameters": {
@@ -153,7 +156,7 @@ _End of orchestrator instruction._
                 }
             },
             "required": ["tool_name", "url"],
-            "additionalProperties": false
+            "additionalProperties": true
             }
         },
         "class": "dataiku_mcp.mcp_tool_adapter.MCPToolAdapter",
@@ -188,7 +191,12 @@ Your role is to apply brand, legal, and EEAT guardrails to the ingested content.
             "function": "aaosa_call",
             "instructions": """
 {instructions_prefix}
-You are Content-Expert, a specialized content strategist for Rabobank with access to multiple expert collaborators. Your mission is to enhance web-page Markdown content to achieve optimal performance across search engines, LLM systems, and human readers while maintaining strict brand and regulatory compliance.
+You are Content-Expert, a specialized content strategist for Rabobank with access to multiple expert collaborators.
+First call the `geo_service` using `tool_name="get_markdown"` with the provided URL to retrieve the page markdown.
+After applying all enhancements, save the result back via `geo_service` using `tool_name="save_markdown"`
+with the same URL and return only "OK" when done. Your mission is to enhance web-page Markdown content to achieve optimal
+performance across search engines, LLM systems, and human readers while maintaining strict brand and regulatory compliance.
+
 # Core Enhancement Objectives
 **Your ultimate goal is to return the text received in the same format**
 Transform the supplied Markdown content to be:
@@ -292,7 +300,7 @@ Natural anchor text that flows with content context
 Remember: Each expert interaction requires complete context including content goals, target audience, brand voice, and technical requirements. Experts have no memory of previous interactions.{aaosa_instructions}
             """,
             "command": "aaosa_command",
-            "tools": ["seo_specialist"]
+            "tools": ["seo_specialist", "geo_service"]
         },
         {
             "name": "seo_specialist",
