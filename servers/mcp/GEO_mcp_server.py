@@ -5,6 +5,8 @@ import asyncio, platform, logging
 from crawl4ai import AsyncWebCrawler, CrawlerRunConfig
 from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
 from mcp.server.fastmcp import FastMCP
+from pathlib import Path
+from cache_utils import page_exists, markdown_path, KNOWDOCS_PATH
 
 # --- Windows event-loop fix (safe on Linux/macOS) --------------------------
 if platform.system() == "Windows":
@@ -74,18 +76,25 @@ async def rabobank_scrape(
     url: str = DEFAULT_URL,
     retries: int = MAX_RETRIES,
     delay_seconds: float = RETRY_DELAY_S,
-) -> str:
-    """Return markdown for any Rabobank `/products/*` page."""
-    logging.info("[MCP-Tool] Scraping URL => %s", url)
+) -> bool:
+    """Cache markdown for Rabobank product pages."""
+    logging.info("[MCP-Tool] rabobank_scrape called with URL: %s", url)
+    if page_exists(url):
+        logging.info("[MCP-Tool] Markdown already cached for URL: %s", url)
+        return True
     for attempt in range(1, retries + 1):
         markdown = await _crawl_once(url)
         if markdown:
             if attempt > 1:
                 logging.info("[MCP-Tool] Succeeded on retry %d/%d", attempt, retries)
-            return markdown
+            KNOWDOCS_PATH.mkdir(parents=True, exist_ok=True)
+            md_path = markdown_path(url)
+            md_path.write_text(markdown, encoding="utf-8")
+            logging.info("[MCP-Tool] Markdown saved to %s", md_path)
+            return True
         logging.warning("[MCP-Tool] Empty result on try %d/%d", attempt, retries)
         await asyncio.sleep(delay_seconds)
-    return f"No content found after {retries} retries."
+    return False
 
 
 # -------------------------------------------------------------------------- #
