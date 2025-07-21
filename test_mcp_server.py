@@ -63,6 +63,25 @@ async def main() -> None:
             f"✅  rabobank_scrape(custom) cached to: {custom_path}"
         )
 
+        # ------------------------------------------------------------------ #
+        # 4. get_markdown / save_markdown
+        # ------------------------------------------------------------------ #
+        target_url = "https://www.rabobank.com/products/expand-my-business"
 
+        # -- get_markdown --------------------------------------------------- #
+        md_resp = await client.call_tool("get_markdown", {"url": target_url})
+        markdown = md_resp.data.result
+        assert markdown, "get_markdown returned empty text"
+        print(f"✅  get_markdown → {len(markdown):,} chars")
+
+        # -- save_markdown -------------------------------------------------- #
+        updated = markdown + "\n<!-- test update -->\n"
+        save_resp = await client.call_tool(
+            "save_markdown",
+            {"url": target_url, "markdown": updated},
+        )
+        assert save_resp.data.result is True, "save_markdown failed"
+        saved_path = Path("servers/mcp/knowdocs/expand-my-business.md")
+        print(f"✅  save_markdown → wrote to: {saved_path.resolve()}")
 if __name__ == "__main__":
     asyncio.run(main())
