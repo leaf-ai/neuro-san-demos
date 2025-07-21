@@ -6,8 +6,13 @@ from crawl4ai import AsyncWebCrawler, CrawlerRunConfig
 from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
 from mcp.server.fastmcp import FastMCP
 from pathlib import Path
-from cache_utils import page_exists, markdown_path, KNOWDOCS_PATH
-
+from cache_utils import (
+    page_exists,
+    markdown_path,
+    read_markdown,
+    write_markdown,
+    KNOWDOCS_PATH,
+)
 # --- Windows event-loop fix (safe on Linux/macOS) --------------------------
 if platform.system() == "Windows":
     maj, minor = map(int, platform.python_version_tuple()[:2])
@@ -95,6 +100,23 @@ async def rabobank_scrape(
         logging.warning("[MCP-Tool] Empty result on try %d/%d", attempt, retries)
         await asyncio.sleep(delay_seconds)
     return False
+
+@mcp.tool()
+async def get_markdown(url: str = DEFAULT_URL) -> str:
+    """Return cached markdown for a Rabobank `/products/*` page."""
+    logging.info("[MCP-Tool] get_markdown called => %s", url)
+    return read_markdown(url)
+
+
+@mcp.tool()
+async def save_markdown(url: str = DEFAULT_URL, markdown: str = "") -> bool:
+    """Overwrite markdown cache for a page."""
+    if not markdown:
+        return False
+    logging.info("[MCP-Tool] save_markdown called => %s", url)
+    write_markdown(url, markdown)
+    return True
+
 
 
 # -------------------------------------------------------------------------- #
