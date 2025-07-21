@@ -38,7 +38,7 @@ async def main() -> None:
         # print("✅  rabobank_scrape(default) length:", len(md_default))
         # print("   Preview:", md_default[:120].replace("\n", " "), "…\n")
         assert scrape_default.data.result is True, "Default scrape failed"
-        default_md_path = Path("servers/mcp/knowdocs/finance-my-business.md")
+        default_md_path = Path("servers/mcp/knowdocs/raw_md/finance-my-business.md")
         print(
             f"✅  rabobank_scrape(default) cached to: {default_md_path}"
         )
@@ -58,7 +58,7 @@ async def main() -> None:
         # print("✅  rabobank_scrape(custom) length:", len(md_custom))
         # print("   Preview:", md_custom[:120].replace("\n", " "), "…")
         assert scrape_custom.data.result is True, "Custom scrape failed"
-        custom_path = Path("servers/mcp/knowdocs/expand-my-business.md")
+        custom_path = Path("servers/mcp/knowdocs/raw_md/expand-my-business.md")
         print(
             f"✅  rabobank_scrape(custom) cached to: {custom_path}"
         )
@@ -78,10 +78,10 @@ async def main() -> None:
         updated = markdown + "\n<!-- test update -->\n"
         save_resp = await client.call_tool(
             "save_markdown",
-            {"url": target_url, "markdown": updated},
+            {"url": target_url, "markdown": updated, "enhanced": True},
         )
         assert save_resp.data.result is True, "save_markdown failed"
-        saved_path = Path("servers/mcp/knowdocs/expand-my-business.md")
+        saved_path = Path("servers/mcp/knowdocs/enhanced_md/expand-my-business.md")
         print(f"✅  save_markdown → wrote to: {saved_path.resolve()}")
 if __name__ == "__main__":
     asyncio.run(main())

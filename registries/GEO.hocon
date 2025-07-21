@@ -2,6 +2,9 @@
     "llm_config": {
         "model_name": "gpt-4o",
         "temperature": 0,
+    ,
+    "max_iterations": 20000,
+    "max_execution_seconds": 600,
     },
     "commondefs": {
         "replacement_strings": {
@@ -95,12 +98,13 @@ while guaranteeing brand, legal and EEAT guardrails.
 
 1. **Capture user link**
    *Let* **`<url>`** be the exact URL the user sends (e.g. `https://www.rabobank.com/products/expand-my-business`).
+   *make sure to save this **`<url>`** provided by the user as other agents will ask for it in the downstream tasks
 
 2. **Call `rabobank_scrape` via geo_service**
    - Send the instructions:
      ```
      Please run the tool **rabobank_scrape** with the argument
-     `url = "<url>"` and return only the Markdown.
+     `url = "<url>"` and `enhanced = False`and return only the Markdown.
      It will return `true` when the page markdown is cached.
      ```
    - If the tool returns `false`, report the failure and stop.
@@ -108,13 +112,13 @@ while guaranteeing brand, legal and EEAT guardrails.
 3. **Delegate to `content_enhancer`**
    - Provide the same `<url>`.
    - Instruct them to read the cached Markdown via `geo_service` (`tool_name="get_markdown"`),
-     apply enhancements, then save using `tool_name="save_markdown"`.
+     apply enhancements, then save using `tool_name="save_markdown"` with `enhanced=true`.
    - They must return `OK` when finished.
    - Natural-language directive:
      ```
      Enhance this Markdown for clarity, featured-answer optimisation, FAQ/How-To
      enrichment, authoritative tone, smart internal links and conversational style.
-     Keep every existing heading level and block order unchanged.
+     Keep every existing heading level and block order unchanged. Here is the user provided `url = "<url>"`
      ```
 
 4. **Return final content to the user**
@@ -153,9 +157,13 @@ _End of orchestrator instruction._
                 "url": {
                 "type": "string",
                 "description": "Target Rabobank product URL for rabobank_scrape"
+                },
+                "enhanced": {
+                "type": "boolean",
+                "description": "Set to true for enhanced markdown operations"
                 }
             },
-            "required": ["tool_name", "url"],
+            "required": ["tool_name", "url", "enhanced"],
             "additionalProperties": true
             }
         },
@@ -191,11 +199,56 @@ Your role is to apply brand, legal, and EEAT guardrails to the ingested content.
             "function": "aaosa_call",
             "instructions": """
 {instructions_prefix}
+# Rabobank Content Enhancer Prompt (v3)
+
+---
+
+## 0 · URL Handshake
+If the calling agent **does not supply a `url` argument**, ask once and exit:
+
+> “Please provide the `url` of the Rabobank product page you’d like enhanced.”
+
+Resume only after a valid URL is received.
+
+---
+
+## 1 · Fetch Raw Markdown
+
+```call
+geo_service(
+    tool_name = "get_markdown",
+    url       = "<url>",
+    enhanced  = false
+)```
+If the result is empty, reply “Could not retrieve markdown for <url>” and stop.
+
+## 2 · Enhance Content
+Follow Core Enhancement Objectives, Strict Guardrails, and Enhancement Workflow below.
+Do not change heading hierarchy or order.
+Enhance the current content within the heading hierarchy and order
+Add new content only between:
+
+```
+<!-- NEW --> … <!-- END NEW -->
+```
+## 3 · Save Enhanced Markdown
+**Make sure to call the `save_markdown` function below
+```geo_service(
+    tool_name = "save_markdown",
+    url       = "<url>",
+    markdown  = "<enhanced markdown>",
+    enhanced  = true
+)```
+
+## 4 · Return to orchestrator
+Respond with exactly:
+
+`OK`
+No additional text.
+
+Please ask the content_management_lead the `url` that the user has provided so you can do your downstream tasks
 You are Content-Expert, a specialized content strategist for Rabobank with access to multiple expert collaborators.
-First call the `geo_service` using `tool_name="get_markdown"` with the provided URL to retrieve the page markdown.
-After applying all enhancements, save the result back via `geo_service` using `tool_name="save_markdown"`
-with the same URL and return only "OK" when done. Your mission is to enhance web-page Markdown content to achieve optimal
-performance across search engines, LLM systems, and human readers while maintaining strict brand and regulatory compliance.
+
 
 # Core Enhancement Objectives
 **Your ultimate goal is to return the text received in the same format**
@@ -297,7 +350,8 @@ All new answer boxes wrapped in <!-- NEW --> ANSWER BOX ... <!-- END NEW -->
 Internal links use relative URLs only: /banking/savings not full URLs
 Natural anchor text that flows with content context
 
-Remember: Each expert interaction requires complete context including content goals, target audience, brand voice, and technical requirements. Experts have no memory of previous interactions.{aaosa_instructions}
+Remember: Each expert interaction requires complete context including content goals, target audience, brand voice, and technical requirements. Experts have no memory of previous interactions.
+{aaosa_instructions}
             """,
             "command": "aaosa_command",
             "tools": ["seo_specialist", "geo_service"]
