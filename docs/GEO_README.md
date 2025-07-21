@@ -44,17 +44,19 @@ The GEO network consists of 7 interconnected agents:
 ```
 neuro-san-demos/
 ├── servers/mcp/
-│   ├── GEO_mcp_server.py          # Main MCP server with web scraping
-│   ├── cache_utils.py             # Caching utilities and file management
+│   ├── GEO_mcp_server.py          # Production MCP server with enterprise features
+│   ├── cache_utils.py             # Dual-tier caching utilities and file management
 │   └── knowdocs/                  # Cached content directory (auto-created)
+│       ├── raw_md/                # Raw scraped markdown files
+│       └── enhanced_md/           # Enhanced/processed markdown files
 ├── registries/
-│   ├── GEO.hocon                  # GEO network configuration
+│   ├── GEO.hocon                  # GEO network configuration with caching integration
 │   └── dataiku_mcp.hocon          # MCP adapter configuration
 ├── docs/
 │   ├── GEO_README.md              # This documentation
 │   └── images/
 │       └── geo-screenshot.png     # Frontend screenshot
-├── test_mcp_server.py             # Test suite for MCP server
+├── test_mcp_server.py             # Comprehensive test suite for dual-tier caching
 └── requirements.txt               # Python dependencies
 ```
 
@@ -127,10 +129,10 @@ Expected output:
 ```
 ✅  Server healthy – tools exposed: ['hello_world', 'rabobank_scrape', 'get_markdown', 'save_markdown']
 ✅  hello_world → Hello, Test User! GEO MCP Server is up.
-✅  rabobank_scrape(default) cached to: servers/mcp/knowdocs/finance-my-business.md
-✅  rabobank_scrape(custom) cached to: servers/mcp/knowdocs/expand-my-business.md
+✅  rabobank_scrape(default) cached to: servers/mcp/knowdocs/raw_md/finance-my-business.md
+✅  rabobank_scrape(custom) cached to: servers/mcp/knowdocs/raw_md/expand-my-business.md
 ✅  get_markdown → 14,383 chars
-✅  save_markdown → wrote to: servers/mcp/knowdocs/expand-my-business.md
+✅  save_markdown → wrote to: servers/mcp/knowdocs/enhanced_md/expand-my-business.md
 ```
 
 ### Manual Testing with cURL
@@ -174,30 +176,31 @@ curl -X POST http://127.0.0.1:8001/mcp \
 The core MCP server implementing web scraping functionality:
 
 **Key Features:**
-- Windows event loop compatibility fixes
+- **Enterprise-grade architecture**: Comprehensive logging, middleware, error handling
+- **10MB request body limit**: Production-ready for large content processing
 - Four main tools: `hello_world`, `rabobank_scrape`, `get_markdown`, `save_markdown`
-- **Intelligent caching**: Cache-first architecture with instant retrieval
-- Advanced crawl4ai configuration with CSS selectors
-- Cookie acceptance automation for GDPR compliance
-- Enhanced retry logic with 10 maximum attempts
-- Production-ready error handling
+- **Dual-tier intelligent caching**: Separate raw and enhanced content storage
+- **Advanced crawl4ai configuration**: CSS selectors with GDPR compliance
+- **Enhanced retry logic**: 10 maximum attempts with configurable delays
+- **Cross-platform compatibility**: Windows event loop fixes for Python 3.12+
 
 ### `servers/mcp/cache_utils.py`
 
 Caching utilities for efficient content management:
 
 **Core Functions:**
-- `page_exists(url)` - Checks if content is already cached for a URL
-- `markdown_path(url)` - Generates consistent file paths from URLs
-- `read_markdown(url)` - Retrieves cached content with fallback to empty string
-- `write_markdown(url, content)` - Saves content with automatic directory creation
-- `KNOWDOCS_PATH` - Centralized cache directory management
+- `page_exists(url, enhanced=False)` - Checks if content exists in raw or enhanced cache
+- `markdown_path(url, enhanced=False)` - Generates paths for dual-tier cache structure
+- `read_markdown(url, enhanced=False)` - Retrieves from appropriate cache tier
+- `write_markdown(url, content, enhanced=False)` - Saves to correct cache directory
+- `RAW_MD_PATH` / `ENHANCED_MD_PATH` - Dual-tier cache directory management
 
 **Cache Strategy:**
+- **Dual-tier architecture**: Separate `raw_md/` and `enhanced_md/` directories
 - URL-to-filename mapping using last path segment
-- UTF-8 encoded markdown files in `knowdocs/` directory
-- Automatic directory creation when needed
-- File-based persistence with immediate availability
+- UTF-8 encoded markdown files with organized storage
+- Automatic directory creation for both cache tiers
+- File-based persistence with immediate availability across tiers
 
 **Available Tools:**
 
@@ -219,38 +222,42 @@ Caching utilities for efficient content management:
   - Creates markdown files in `servers/mcp/knowdocs/`
 
 #### `get_markdown`
-- **Purpose**: Retrieve cached markdown content for a URL
+- **Purpose**: Retrieve cached markdown content from specified cache tier
 - **Parameters**:
   - `url` (optional): Target URL (defaults to finance-my-business)
+  - `enhanced` (optional): Boolean flag for enhanced/raw cache selection
 - **Returns**: String content of cached markdown file
-- **Behavior**: Returns empty string if file not found
+- **Behavior**: Returns empty string if file not found in specified tier
 
 #### `save_markdown`
-- **Purpose**: Overwrite existing cached content for a URL
+- **Purpose**: Save content to appropriate cache tier (raw or enhanced)
 - **Parameters**:
   - `url` (optional): Target URL
-  - `markdown` (required): New content to save
+  - `markdown` (required): Content to save
+  - `enhanced` (optional): Boolean flag determining cache tier
 - **Returns**: Boolean success indicator
-- **Behavior**: Creates directories as needed, writes UTF-8 encoded content
+- **Behavior**: Creates appropriate directory structure, writes UTF-8 encoded content
 
 ### `registries/GEO.hocon`
 
 Network configuration defining:
-- Agent relationships and connections
-- Tool assignments for each agent
-- MCP service integration settings with full caching support
-- Agent-specific instructions and capabilities
-- **Cache-aware workflow**: `content_enhancer` directly accesses cached content via `geo_service`
-- **Orchestration pattern**: `content_management_lead` delegates to specialized agents with cache integration
+- Agent relationships and connections with enhanced performance settings
+- Tool assignments for each agent with dual-tier caching support
+- MCP service integration with `enhanced` parameter requirements
+- Agent-specific instructions with comprehensive workflow management
+- **Advanced cache-aware workflow**: `content_enhancer` handles both raw and enhanced content
+- **Orchestration pattern**: `content_management_lead` manages complex delegation with cache optimization
+- **Performance tuning**: `max_iterations: 20000`, `max_execution_seconds: 600`
 
 ### `test_mcp_server.py`
 
-Comprehensive test suite using FastMCP Client:
-- Server health checks
-- Tool availability validation
-- End-to-end caching tests with real URLs
-- Cache file creation and integrity validation
-- Performance and reliability verification
+Comprehensive test suite for dual-tier caching architecture:
+- Server health checks with enhanced tool validation
+- Tool availability verification for all four MCP functions
+- **Dual-tier caching tests**: Validation of both raw and enhanced cache operations
+- **Cache file integrity**: Path verification for `raw_md/` and `enhanced_md/` directories
+- **End-to-end workflows**: Real URL testing with cache tier separation
+- Performance and reliability verification with enhanced parameter testing
 
 ### `requirements.txt`
 
@@ -327,21 +334,33 @@ The GEO network is configured via HOCON with:
 ### Programmatic Usage
 
 ```python
-# Using FastMCP Client
+# Using FastMCP Client with dual-tier caching
 from fastmcp import Client
 
-async def scrape_content():
+async def scrape_and_enhance_content():
     async with Client("http://127.0.0.1:8001/mcp") as client:
-        result = await client.call_tool("rabobank_scrape", {
+        # Step 1: Scrape raw content
+        scrape_result = await client.call_tool("rabobank_scrape", {
             "url": "https://www.rabobank.com/products/expand-my-business",
             "retries": 3
         })
-        # result.data.result will be True if successfully cached
-        if result.data.result:
-            # Content is now cached in servers/mcp/knowdocs/expand-my-business.md
-            from pathlib import Path
-            cache_file = Path("servers/mcp/knowdocs/expand-my-business.md")
-            return cache_file.read_text(encoding="utf-8")
+        
+        if scrape_result.data.result:
+            # Step 2: Get raw markdown
+            raw_content = await client.call_tool("get_markdown", {
+                "url": "https://www.rabobank.com/products/expand-my-business",
+                "enhanced": False
+            })
+            
+            # Step 3: Save enhanced version (after processing)
+            enhanced_content = raw_content.data.result + "\n<!-- Enhanced -->\n"
+            save_result = await client.call_tool("save_markdown", {
+                "url": "https://www.rabobank.com/products/expand-my-business",
+                "markdown": enhanced_content,
+                "enhanced": True
+            })
+            
+            return enhanced_content if save_result.data.result else None
         return None
 ```
 
@@ -454,19 +473,19 @@ For technical support:
 - ✅ Production-ready test suite and documentation
 
 ### Version 1.1.0 (2025-07-21)
-- ✅ **Intelligent caching system**: File-based cache with instant retrieval
-- ✅ **Enhanced performance**: Cache-first architecture reduces response times
-- ✅ **Improved reliability**: Increased retry count to 10 attempts
-- ✅ **Better testing**: Cache integrity validation in test suite
-- ✅ **Storage optimization**: Efficient markdown file storage in knowdocs/
-- ✅ **New GEO_cach branch**: Dedicated branch for caching functionality development
-- ✅ **Additional MCP tools**: `get_markdown` and `save_markdown` for direct cache access
-- ✅ **Enhanced cache utilities**: Comprehensive `cache_utils.py` with read/write functions
-- ✅ **Improved test coverage**: Validation of cache operations and file integrity
-- ✅ **Registry integration**: Updated `GEO.hocon` with complete caching workflow support
-- ✅ **Agent enhancement**: `content_enhancer` now directly accesses cached content via `geo_service`
-- ✅ **Workflow optimization**: Cache-aware orchestration with boolean success indicators
-- ✅ **End-to-end caching**: Complete pipeline from scrape → cache → enhance → save → deliver
+- ✅ **Dual-tier caching system**: Separate raw and enhanced content storage architecture
+- ✅ **Enterprise-grade server**: Production logging, 10MB middleware, comprehensive error handling
+- ✅ **Enhanced performance**: Cache-first architecture with organized tier separation
+- ✅ **Improved reliability**: Increased retry count to 10 attempts with detailed logging
+- ✅ **Storage optimization**: Organized `raw_md/` and `enhanced_md/` directory structure
+- ✅ **New GEO_cach branch**: Dedicated branch for advanced caching functionality
+- ✅ **Enhanced MCP tools**: All four tools support dual-tier operations with `enhanced` parameter
+- ✅ **Advanced cache utilities**: Comprehensive `cache_utils.py` with tier-aware operations
+- ✅ **Production test coverage**: Validation of dual-tier cache operations and file integrity
+- ✅ **Registry integration**: Complete `GEO.hocon` update with enhanced parameter support
+- ✅ **Agent enhancement**: `content_enhancer` manages both raw retrieval and enhanced storage
+- ✅ **Workflow optimization**: Cache-aware orchestration with tier-specific operations
+- ✅ **End-to-end dual caching**: Complete pipeline with organized content lifecycle management
 
 ---
 
