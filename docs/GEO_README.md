@@ -125,10 +125,12 @@ python test_mcp_server.py
 
 Expected output:
 ```
-✅  Server healthy – tools exposed: ['hello_world', 'rabobank_scrape']
+✅  Server healthy – tools exposed: ['hello_world', 'rabobank_scrape', 'get_markdown', 'save_markdown']
 ✅  hello_world → Hello, Test User! GEO MCP Server is up.
 ✅  rabobank_scrape(default) cached to: servers/mcp/knowdocs/finance-my-business.md
 ✅  rabobank_scrape(custom) cached to: servers/mcp/knowdocs/expand-my-business.md
+✅  get_markdown → 14,383 chars
+✅  save_markdown → wrote to: servers/mcp/knowdocs/expand-my-business.md
 ```
 
 ### Manual Testing with cURL
@@ -173,7 +175,7 @@ The core MCP server implementing web scraping functionality:
 
 **Key Features:**
 - Windows event loop compatibility fixes
-- Two main tools: `hello_world` and `rabobank_scrape`
+- Four main tools: `hello_world`, `rabobank_scrape`, `get_markdown`, `save_markdown`
 - **Intelligent caching**: Cache-first architecture with instant retrieval
 - Advanced crawl4ai configuration with CSS selectors
 - Cookie acceptance automation for GDPR compliance
@@ -187,12 +189,15 @@ Caching utilities for efficient content management:
 **Core Functions:**
 - `page_exists(url)` - Checks if content is already cached for a URL
 - `markdown_path(url)` - Generates consistent file paths from URLs
+- `read_markdown(url)` - Retrieves cached content with fallback to empty string
+- `write_markdown(url, content)` - Saves content with automatic directory creation
 - `KNOWDOCS_PATH` - Centralized cache directory management
 
 **Cache Strategy:**
 - URL-to-filename mapping using last path segment
 - UTF-8 encoded markdown files in `knowdocs/` directory
 - Automatic directory creation when needed
+- File-based persistence with immediate availability
 
 **Available Tools:**
 
@@ -212,6 +217,21 @@ Caching utilities for efficient content management:
   - Returns `True` immediately if content already cached
   - Scrapes and caches new content if not found
   - Creates markdown files in `servers/mcp/knowdocs/`
+
+#### `get_markdown`
+- **Purpose**: Retrieve cached markdown content for a URL
+- **Parameters**:
+  - `url` (optional): Target URL (defaults to finance-my-business)
+- **Returns**: String content of cached markdown file
+- **Behavior**: Returns empty string if file not found
+
+#### `save_markdown`
+- **Purpose**: Overwrite existing cached content for a URL
+- **Parameters**:
+  - `url` (optional): Target URL
+  - `markdown` (required): New content to save
+- **Returns**: Boolean success indicator
+- **Behavior**: Creates directories as needed, writes UTF-8 encoded content
 
 ### `registries/GEO.hocon`
 
@@ -437,6 +457,10 @@ For technical support:
 - ✅ **Improved reliability**: Increased retry count to 10 attempts
 - ✅ **Better testing**: Cache integrity validation in test suite
 - ✅ **Storage optimization**: Efficient markdown file storage in knowdocs/
+- ✅ **New GEO_cach branch**: Dedicated branch for caching functionality development
+- ✅ **Additional MCP tools**: `get_markdown` and `save_markdown` for direct cache access
+- ✅ **Enhanced cache utilities**: Comprehensive `cache_utils.py` with read/write functions
+- ✅ **Improved test coverage**: Validation of cache operations and file integrity
 
 ---
 
