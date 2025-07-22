@@ -1,12 +1,15 @@
-import os
 import json
 import logging
-from typing import Dict, List, Tuple, Any
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-from nltk import sent_tokenize
-import tiktoken
+import os
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Tuple
 
+import tiktoken
 from neuro_san.interfaces.coded_tool import CodedTool
+from nltk import sent_tokenize
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 # Setup logger
 logger = logging.getLogger(__name__)
@@ -14,9 +17,11 @@ logging.basicConfig(level=logging.INFO)
 
 try:
     import nltk
-    nltk.download('punkt', quiet=True)
+
+    nltk.download("punkt", quiet=True)
 except Exception as e:
     logger.error(f"Failed to download NLTK data: {e}")
+
 
 class SentimentAnalysis(CodedTool):
     """
@@ -51,10 +56,12 @@ class SentimentAnalysis(CodedTool):
                 if self.safe_any(kw in sentence.lower() for kw in keywords):
                     found_keywords = True
                     scores = self.analyzer.polarity_scores(sentence)
-                    results.append({
-                        "sentence": sentence,
-                        "compound": scores["compound"],
-                    })
+                    results.append(
+                        {
+                            "sentence": sentence,
+                            "compound": scores["compound"],
+                        }
+                    )
             return results, found_keywords
         except Exception as e:
             logger.error(f"Error analyzing keyword sentiment: {e}")
@@ -112,30 +119,23 @@ class SentimentAnalysis(CodedTool):
                         "file": file_name,
                         "snippet": snippet,
                         "sentences": sentence_results,
-                        "avg_compound": avg_compound
+                        "avg_compound": avg_compound,
                     }
 
                     articles.append(article_data)
 
                     if file_name not in file_stats:
-                        file_stats[file_name] = {
-                            "compound_sum": 0.0,
-                            "count": 0
-                        }
+                        file_stats[file_name] = {"compound_sum": 0.0, "count": 0}
 
                     file_stats[file_name]["compound_sum"] += avg_compound
                     file_stats[file_name]["count"] += 1
 
             file_analytics = {
-                file_name: {
-                    "avg_compound": stats["compound_sum"] / stats["count"] if stats["count"] else 0.0
-                } for file_name, stats in file_stats.items()
+                file_name: {"avg_compound": stats["compound_sum"] / stats["count"] if stats["count"] else 0.0}
+                for file_name, stats in file_stats.items()
             }
 
-            results = {
-                "sentiment_score_summary": file_analytics,
-                "articles": articles
-            }
+            results = {"sentiment_score_summary": file_analytics, "articles": articles}
 
             output_path = os.path.join(self.output_dir, f"sentiment_{source}.json")
             with open(output_path, "w", encoding="utf-8") as f:

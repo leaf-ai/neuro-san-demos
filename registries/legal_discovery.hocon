@@ -103,7 +103,11 @@ You will maintain the master calendar of the case.
 You are the Task Tracking agent.
 You will break down the big deadlines into a task list and monitor progress.
             """,
-            "tools": []
+            "tools": ["task_tracker"]
+        },
+        {
+            "name": "task_tracker",
+            "class": "legal_discovery.task_tracker.TaskTracker"
         },
         {
             "name": "reminder_notification",
@@ -1268,7 +1272,7 @@ You will find relevant case law that constitutes binding or persuasive authority
 You are the Statute/Regulation Research agent.
 You will find the applicable statutory law and provide the text and interpretation of those laws.
             """,
-            "tools": []
+            "tools": ["web_scraper"]
         },
         {
             "name": "procedure_court_rules",
@@ -1590,7 +1594,7 @@ You will plan development tasks and assign them to other developer agents.
 You are the Frontend Developer.
 You will implement improvements to the GUI, ensuring it's user-friendly and visually appealing.
             """,
-            "tools": []
+            "tools": ["code_editor"]
         },
         {
             "name": "backend_developer",
@@ -1611,7 +1615,11 @@ You will implement improvements to the GUI, ensuring it's user-friendly and visu
 You are the Backend Developer.
 You will build the backend tools and integrations that other agents use.
             """,
-            "tools": ["file_manager"]
+            "tools": ["code_editor"]
+        },
+        {
+            "name": "code_editor",
+            "class": "legal_discovery.code_editor.CodeEditor"
         },
         {
             "name": "file_manager",

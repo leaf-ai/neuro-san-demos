@@ -15,3 +15,4 @@ aiofiles>=24.1.0
 
 # For MCP servers and clients
 langchain-mcp-adapters>=0.1.7
+pyvis>=0.3.2

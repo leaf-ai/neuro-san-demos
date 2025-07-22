@@ -7,24 +7,25 @@ from datetime import datetime
 
 # pylint: disable=import-error
 import schedule
-import os
-from flask import Flask, request, jsonify
+from flask import Flask
+from flask import jsonify
 from flask import render_template
+from flask import request
 from flask_socketio import SocketIO
 
 from apps.legal_discovery.legal_discovery import legal_discovery_thinker
 from apps.legal_discovery.legal_discovery import set_up_legal_discovery_assistant
 from apps.legal_discovery.legal_discovery import tear_down_legal_discovery_assistant
-from .database import db
-from . import models
+
 from . import settings
+from .database import db
 
 os.environ["AGENT_MANIFEST_FILE"] = "registries/manifest.hocon"
 os.environ["AGENT_TOOL_PATH"] = "coded_tools"
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "secret!"
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///legal_discovery.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///legal_discovery.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 socketio = SocketIO(app)
 thread_started = False  # pylint: disable=invalid-name
@@ -42,7 +43,9 @@ def legal_discovery_thinking_process():
         while True:
             socketio.sleep(1)
 
-            thoughts, legal_discovery_thread = legal_discovery_thinker(legal_discovery_session, legal_discovery_thread, thoughts)
+            thoughts, legal_discovery_thread = legal_discovery_thinker(
+                legal_discovery_session, legal_discovery_thread, thoughts
+            )
             print(thoughts)
 
             # Separating thoughts and speeches
@@ -107,89 +110,123 @@ def on_connect():
         socketio.start_background_task(legal_discovery_thinking_process)
 
 
-@app.route("/api/settings", methods=['GET', 'POST'])
+@app.route("/api/settings", methods=["GET", "POST"])
 def manage_settings():
-    if request.method == 'POST':
+    if request.method == "POST":
         data = request.get_json()
         settings.save_user_settings(data)
         return jsonify({"message": "Settings saved successfully"})
     else:
         user_settings = settings.get_user_settings()
         if user_settings:
-            return jsonify({
-                "courtlistener_api_key": user_settings.courtlistener_api_key,
-                "gemini_api_key": user_settings.gemini_api_key,
-                "california_codes_url": user_settings.california_codes_url
-            })
+            return jsonify(
+                {
+                    "courtlistener_api_key": user_settings.courtlistener_api_key,
+                    "gemini_api_key": user_settings.gemini_api_key,
+                    "california_codes_url": user_settings.california_codes_url,
+                }
+            )
         return jsonify({})
 
-UPLOAD_FOLDER = 'uploads'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-@app.route('/api/upload', methods=['POST'])
-def upload_file():
+import shutil
+
+from flask import send_from_directory
+
+from .coded_tools.legal_discovery.forensic_tools import ForensicTools
+from .coded_tools.legal_discovery.knowledge_graph_manager import KnowledgeGraphManager
+from .coded_tools.legal_discovery.timeline_manager import TimelineManager
+
+UPLOAD_FOLDER = "uploads"
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+
+@app.route("/api/upload", methods=["POST"])
+def upload_files():
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
 
-    if 'file' not in request.files:
-        return jsonify({"error": "No file part"}), 400
+    files = request.files.getlist("files")
 
-    file = request.files['file']
+    if not files:
+        return jsonify({"error": "No files part"}), 400
 
-    if file.filename == '':
-        return jsonify({"error": "No selected file"}), 400
-
-    if file:
+    for file in files:
+        if file.filename == "":
+            continue
+        # The filename from the browser includes the relative path
         filename = file.filename
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        return jsonify({"message": f"File {filename} uploaded successfully"})
+        # Sanitize the filename to prevent directory traversal attacks
+        filename = os.path.normpath(filename)
+        if filename.startswith(".."):
+            continue
 
-    return jsonify({"error": "File upload failed"}), 500
+        save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
 
-from .coded_tools.legal_discovery.forensic_tools import ForensicTools
+        # Create directories if they don't exist
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
-@app.route('/api/agents/forensic_analysis', methods=['POST'])
+        file.save(save_path)
+
+    return jsonify({"message": "Files uploaded successfully"})
+
+
+@app.route("/api/export", methods=["GET"])
+def export_files():
+    shutil.make_archive("processed_files", "zip", UPLOAD_FOLDER)
+    return send_from_directory(".", "processed_files.zip", as_attachment=True)
+
+
+@app.route("/api/agents/forensic_analysis", methods=["POST"])
 def forensic_analysis():
     data = request.get_json()
-    file_path = data.get('file_path')
-    analysis_type = data.get('analysis_type')
+    file_path = data.get("file_path")
+    analysis_type = data.get("analysis_type")
 
     if not file_path or not analysis_type:
         return jsonify({"error": "Missing file_path or analysis_type"}), 400
 
     forensic_tools = ForensicTools()
 
-    if analysis_type == 'authenticity':
+    if analysis_type == "authenticity":
         result = forensic_tools.analyze_document_authenticity(file_path)
-    elif analysis_type == 'financial':
+    elif analysis_type == "financial":
         result = forensic_tools.financial_forensics(file_path)
     else:
         return jsonify({"error": "Invalid analysis_type"}), 400
 
     return jsonify({"result": result})
 
-from .coded_tools.legal_discovery.timeline_manager import TimelineManager
 
-@app.route('/api/timeline/export', methods=['POST'])
+@app.route("/api/graph/export", methods=["GET"])
+def export_graph():
+    kg_manager = KnowledgeGraphManager()
+    output_path = kg_manager.export_graph()
+    kg_manager.close()
+    return send_from_directory(".", output_path, as_attachment=False)
+
+
+@app.route("/api/timeline/export", methods=["POST"])
 def export_timeline():
     data = request.get_json()
-    timeline_id = data.get('timeline_id')
+    timeline_id = data.get("timeline_id")
 
     if not timeline_id:
         return jsonify({"error": "Missing timeline_id"}), 400
 
     timeline_manager = TimelineManager()
     # This is a placeholder for getting the timeline data from the database
+    # In a real app, you would fetch this from the database
     timeline_items = [
-        {'content': 'Event 1', 'start': '2024-01-01'},
-        {'content': 'Event 2', 'start': '2024-01-15'},
+        {"content": "Event 1", "start": "2024-01-01", "citation": "https://www.courtlistener.com"},
+        {"content": "Event 2", "start": "2024-01-15", "citation": "https://leginfo.legislature.ca.gov/"},
     ]
-    timeline_manager.create_timeline(timeline_id, timeline_items)
 
-    html = timeline_manager.render_timeline(timeline_id)
+    html = timeline_manager.render_timeline(timeline_items)
 
     # In a real app, you would save this to a file and provide a download link
     return html
+
 
 @app.route("/")
 def index():

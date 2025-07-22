@@ -1,6 +1,6 @@
 import json
-from flask import render_template_string
 
+from flask import render_template_string
 from neuro_san.coded_tool import CodedTool
 
 
@@ -38,14 +38,13 @@ class TimelineManager(CodedTool):
             self.timelines[timeline_id] = []
         self.timelines[timeline_id].append(item)
 
-    def render_timeline(self, timeline_id: str) -> str:
+    def render_timeline(self, timeline_items: list) -> str:
         """
         Renders a timeline as an HTML page.
 
-        :param timeline_id: The ID of the timeline to render.
+        :param timeline_items: A list of items to render in the timeline.
         :return: The rendered HTML.
         """
-        timeline_items = self.get_timeline_items(timeline_id)
         with open("apps/legal_discovery/templates/timeline.html") as f:
             template_str = f.read()
         return render_template_string(template_str, timeline_items=timeline_items)

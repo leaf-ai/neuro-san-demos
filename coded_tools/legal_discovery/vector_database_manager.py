@@ -16,11 +16,7 @@ class VectorDatabaseManager(CodedTool):
         :param metadatas: A list of metadata dictionaries corresponding to the documents.
         :param ids: A list of unique IDs for the documents.
         """
-        self.collection.add(
-            documents=documents,
-            metadatas=metadatas,
-            ids=ids
-        )
+        self.collection.add(documents=documents, metadatas=metadatas, ids=ids)
 
     def query(self, query_texts: list[str], n_results: int = 10) -> dict:
         """
@@ -30,10 +26,7 @@ class VectorDatabaseManager(CodedTool):
         :param n_results: The number of results to return.
         :return: A dictionary containing the query results.
         """
-        return self.collection.query(
-            query_texts=query_texts,
-            n_results=n_results
-        )
+        return self.collection.query(query_texts=query_texts, n_results=n_results)
 
     def get_document_count(self) -> int:
         """
