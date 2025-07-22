@@ -43,6 +43,21 @@ The GEO network consists of 7 interconnected agents:
 
 ```
 neuro-san-demos/
+├── adk/                           # Agent Development Kit implementation
+│   └── geo/
+│       ├── __init__.py            # ADK root agent export
+│       ├── agent_prompts.py       # Agent instruction templates
+│       ├── constants.py           # Model and configuration constants
+│       ├── agents/                # Individual agent implementations
+│       │   ├── content_management_lead.py  # Root orchestrator agent
+│       │   ├── page_ingestor.py            # Content extraction agent
+│       │   ├── compliance_specialist.py   # Brand/legal validation agent
+│       │   ├── content_enhancer.py        # Content optimization agent
+│       │   ├── seo_specialist.py          # SEO analysis agent
+│       │   └── output_generator.py        # Final output formatting agent
+│       └── tools/
+│           ├── geo_service.py              # MCP client wrapper for ADK
+│           └── test_geo_service.py         # ADK tool test suite
 ├── servers/mcp/
 │   ├── GEO_mcp_server.py          # Production MCP server with enterprise features
 │   ├── cache_utils.py             # Dual-tier caching utilities and file management
@@ -54,30 +69,33 @@ neuro-san-demos/
 │   └── dataiku_mcp.hocon          # MCP adapter configuration
 ├── docs/
 │   ├── GEO_README.md              # This documentation
+│   ├── geo_development_log.md     # Development timeline and progress
 │   └── images/
-│       └── geo-screenshot.png     # Frontend screenshot
+│       ├── geo-screenshot.png     # Neuro-San frontend screenshot
+│       └── adk-geo-screenshot.png # ADK implementation screenshot
 ├── test_mcp_server.py             # Comprehensive test suite for dual-tier caching
 └── requirements.txt               # Python dependencies
 ```
 
 ## Setup Instructions
 
-### Prerequisites
+The GEO Network supports two deployment modes:
 
+### Deployment Option A: Neuro-San Framework (Original)
+
+#### Prerequisites
 - Python 3.12 or higher
 - Node.js (for Playwright browser installation)
 - Git
 - Neuro AI Multi-Agent Accelerator Client
 
-### 1. Clone Repository
-
+#### 1. Clone Repository
 ```bash
 git clone <repository-url>
 cd neuro-san-demos
 ```
 
-### 2. Install Dependencies
-
+#### 2. Install Dependencies
 ```bash
 # Create virtual environment (recommended)
 python -m venv venv312
@@ -94,8 +112,7 @@ pip install -r requirements.txt
 python -m playwright install --with-deps chromium
 ```
 
-### 3. Start the GEO MCP Server
-
+#### 3. Start the GEO MCP Server
 ```bash
 python servers/mcp/GEO_mcp_server.py
 ```
@@ -109,15 +126,70 @@ INFO:     Application startup complete.
 INFO:     Uvicorn running on http://127.0.0.1:8001
 ```
 
-### 4. Launch Neuro AI Client
-
+#### 4. Launch Neuro AI Client
 1. Start your Neuro AI Multi-Agent Accelerator Client
 2. Load the GEO network configuration from `registries/GEO.hocon`
 3. Verify all agents are connected and operational
 
+### Deployment Option B: Agent Development Kit (ADK)
+
+![ADK GEO Network Interface](images/adk-geo-screenshot.png)
+*ADK deployment showing successful content processing with GEO service integration*
+
+#### Prerequisites
+- Python 3.12 or higher
+- Google Agent Development Kit (ADK) installed
+- MCP server dependencies
+
+#### 1. Install ADK Dependencies
+```bash
+# Install ADK and required packages
+pip install google-adk fastmcp
+```
+
+#### 2. Start the GEO MCP Server
+```bash
+python servers/mcp/GEO_mcp_server.py
+```
+
+#### 3. Configure Environment Variables
+```bash
+# Set MCP server endpoint (optional - defaults to localhost:8001)
+export MCP_BASE_URL="http://localhost:8001/mcp"
+export MCP_TIMEOUT_S="60"
+```
+
+#### 4. Run ADK GEO Network
+```python
+from adk.geo import root_agent
+
+# The root_agent is the content_management_lead with full agent hierarchy
+# Use with ADK session manager or directly invoke
+```
+
+#### 5. ADK Integration Example
+```python
+import asyncio
+from google.adk.session import Session
+from adk.geo import root_agent
+
+async def process_url(url: str):
+    session = Session()
+    response = await session.run_agent(
+        agent=root_agent,
+        prompt=f"Process this URL: {url}"
+    )
+    return response.content
+
+# Usage
+result = asyncio.run(process_url("https://www.rabobank.com/products/expand-my-business"))
+```
+
 ## Testing
 
 ### Automated Testing
+
+#### MCP Server Testing (Both Deployment Options)
 
 Run the comprehensive test suite:
 
@@ -133,6 +205,22 @@ Expected output:
 ✅  rabobank_scrape(custom) cached to: servers/mcp/knowdocs/raw_md/expand-my-business.md
 ✅  get_markdown → 14,383 chars
 ✅  save_markdown → wrote to: servers/mcp/knowdocs/enhanced_md/expand-my-business.md
+```
+
+#### ADK-Specific Testing
+
+Test the ADK geo service wrapper:
+
+```bash
+cd adk/geo/tools
+pytest test_geo_service.py -v
+```
+
+Expected output:
+```
+test_invoke_json_success PASSED
+test_invoke_text_success PASSED  
+test_geoargs_validation_error PASSED
 ```
 
 ### Manual Testing with cURL
@@ -408,6 +496,58 @@ python test_mcp_server.py
 curl http://127.0.0.1:8001/mcp -X POST -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
+
+### ADK-Specific Troubleshooting: Session Mismatch Problem
+
+#### The Core Problem: Session Mismatch
+
+During the ADK migration, we encountered a fundamental mismatch between how the `geo_service.py` tool (the **client**) was trying to communicate and what the `GEO_mcp_server` (the **server**) was expecting.
+
+**The Problem:**
+- **Client Was Stateless**: The initial `geo_service.py` used the `httpx` library to send simple, self-contained `POST` requests. Each request was independent and had no memory of previous requests.
+- **Server Was Stateful**: The `FastMCP` server was configured to be **session-aware**. It expected every request to be part of an ongoing conversation, tracked using a unique `Mcp-Session-Id`.
+
+This mismatch led to the error: **`Bad Request: Missing session ID`**.
+
+#### The Evolution of the Solution (Debugging Journey)
+
+1. **Attempt 1: Manually Creating a Session ID**
+   - **Logic**: If the server needs a session ID, create one for every request
+   - **Implementation**: Added `Mcp-Session-Id: uuid.uuid4().hex` to `httpx` request headers
+   - **Result**: New error: `No valid session ID provided`
+   - **Lesson**: The server wanted an ID that it had pre-authorized through proper session handshake
+
+2. **Attempt 2: Forwarding the ADK's Session ID**
+   - **Logic**: Forward the existing ADK session ID to the MCP server
+   - **Implementation**: Attempted to access session ID from `ToolContext` object via various paths
+   - **Result**: Series of `AttributeError`s and complex, brittle code
+   - **Issue**: Relied on internal ADK framework structure
+
+#### The Breakthrough: Using the Right Tool 💡
+
+The solution came from analyzing the working `test_mcp_server.py` script, which used the purpose-built `fastmcp.Client` library instead of generic `httpx`.
+
+**Why `fastmcp.Client` Works:**
+1. **Automatic Session Management**: Initiates connection and performs handshake
+2. **Valid Session ID**: Receives authorized `Mcp-Session-Id` from server
+3. **Header Management**: Automatically includes session ID in all requests
+4. **Lifecycle Management**: Properly terminates sessions when done
+
+**The Fix:**
+```python
+# Replace manual httpx code:
+# response = await httpx.post(url, json=payload, headers=headers)
+
+# With fastmcp.Client:
+async with Client(MCP_BASE_URL, timeout=TIMEOUT_S) as client:
+    response = await client.call_tool(tool_name, final_args)
+```
+
+#### Key Takeaways for Future Projects
+
+1. **Identify Server Protocol**: Determine if the server API is stateless (REST) or stateful/session-aware (MCP, gRPC, WebSockets)
+2. **Use Dedicated Client Libraries**: Always prefer official client libraries (`fastmcp` for `FastMCP`) over generic HTTP libraries
+3. **Manual Clients Are Last Resort**: Only build from scratch if no dedicated client exists, and thoroughly document the session handshake protocol
 
 ## Development Guidelines
 
