@@ -33,6 +33,9 @@ thread_started = False  # pylint: disable=invalid-name
 user_input_queue = queue.Queue()
 
 with app.app_context():
+
+    db.create_all()
+
     legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant()
 
 
@@ -134,9 +137,11 @@ import shutil
 
 from flask import send_from_directory
 
-from .coded_tools.legal_discovery.forensic_tools import ForensicTools
-from .coded_tools.legal_discovery.knowledge_graph_manager import KnowledgeGraphManager
-from .coded_tools.legal_discovery.timeline_manager import TimelineManager
+
+from coded_tools.legal_discovery.forensic_tools import ForensicTools
+from coded_tools.legal_discovery.knowledge_graph_manager import KnowledgeGraphManager
+from coded_tools.legal_discovery.timeline_manager import TimelineManager
+
 
 UPLOAD_FOLDER = "uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
@@ -162,12 +167,14 @@ def upload_files():
         if filename.startswith(".."):
             continue
 
+            
         save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
 
         # Create directories if they don't exist
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
         file.save(save_path)
+
 
     return jsonify({"message": "Files uploaded successfully"})
 
