@@ -1,12 +1,17 @@
-from neo4j import GraphDatabase
+import os
 
+from neo4j import GraphDatabase
 from neuro_san.coded_tool import CodedTool
+from pyvis.network import Network
 
 
 class KnowledgeGraphManager(CodedTool):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "password"))
+        uri = os.environ.get("NEO4J_URI", "bolt://localhost:7687")
+        user = os.environ.get("NEO4J_USER", "neo4j")
+        password = os.environ.get("NEO4J_PASSWORD", "password")
+        self.driver = GraphDatabase.driver(uri, auth=(user, password))
 
     def close(self):
         self.driver.close()
@@ -35,7 +40,9 @@ class KnowledgeGraphManager(CodedTool):
         result = self.run_query(query, {"props": properties})
         return result[0][0]
 
-    def create_relationship(self, start_node_id: int, end_node_id: int, relationship_type: str, properties: dict = None):
+    def create_relationship(
+        self, start_node_id: int, end_node_id: int, relationship_type: str, properties: dict = None
+    ):
         """
         Creates a new relationship between two nodes in the knowledge graph.
 
@@ -72,3 +79,38 @@ class KnowledgeGraphManager(CodedTool):
         query = "MATCH (n)-[r]->() WHERE id(n) = $node_id RETURN r"
         result = self.run_query(query, {"node_id": node_id})
         return [dict(record["r"]) for record in result]
+
+    def export_graph(self, output_path: str = "graph.html") -> str:
+        """
+        Exports the entire graph as an interactive HTML file.
+
+        :param output_path: The path to save the HTML file to.
+        :return: The path to the generated HTML file.
+        """
+        nodes_query = "MATCH (n) RETURN id(n) as id, labels(n) as labels, properties(n) as properties"
+        nodes_result = self.run_query(nodes_query)
+
+        relationships_query = (
+            "MATCH ()-[r]->() RETURN id(startNode(r)) as source, id(endNode(r)) as target, "
+            "type(r) as type, properties(r) as properties"
+        )
+        relationships_result = self.run_query(relationships_query)
+
+        net = Network(notebook=True)
+        for record in nodes_result:
+            node_id = record["id"]
+            labels = record["labels"]
+            properties = record["properties"]
+            title = "\\n".join([f"{k}: {v}" for k, v in properties.items()])
+            net.add_node(node_id, label=labels[0], title=title)
+
+        for record in relationships_result:
+            source = record["source"]
+            target = record["target"]
+            rel_type = record["type"]
+            properties = record["properties"]
+            title = "\\n".join([f"{k}: {v}" for k, v in properties.items()])
+            net.add_edge(source, target, label=rel_type, title=title)
+
+        net.save_graph(output_path)
+        return output_path

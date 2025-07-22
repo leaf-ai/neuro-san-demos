@@ -8,6 +8,7 @@ AGENT_NETWORK_NAME = "legal_discovery"
 
 from .settings import get_user_settings
 
+
 def set_up_legal_discovery_assistant():
     """Configure these as needed."""
     agent_name = AGENT_NETWORK_NAME

@@ -1,8 +1,7 @@
 import fitz  # PyMuPDF
 import pytesseract
-from PIL import Image
-
 from neuro_san.coded_tool import CodedTool
+from PIL import Image
 
 
 class DocumentProcessor(CodedTool):

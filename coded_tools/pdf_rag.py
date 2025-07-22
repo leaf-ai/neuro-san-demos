@@ -11,14 +11,13 @@
 #
 # END COPYRIGHT
 
+import logging
 from typing import Any
 from typing import Dict
 from typing import List
-import logging
 
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_core.documents import Document
-
 from neuro_san.interfaces.coded_tool import CodedTool
 
 from .base_rag import BaseRag
@@ -88,7 +87,7 @@ class PdfRag(CodedTool, BaseRag):
 
         :param loader_args: Dictionary containing 'urls' (list of PDF file URLs)
         :return: List of loaded PDF documents
-        """     
+        """
         docs: List[Document] = []
         urls = loader_args.get("urls", [])
 

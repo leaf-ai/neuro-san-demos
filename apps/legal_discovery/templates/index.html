@@ -49,17 +49,12 @@
             </form>
         </section>
 
-        <section id="file-upload-section" aria-label="File Upload">
-            <h2>File Upload</h2>
-            <form id="upload-form" enctype="multipart/form-data">
-                <input type="file" id="file-input" name="file" webkitdirectory directory multiple>
-                <button type="submit">Upload</button>
-            </form>
-        </section>
-
-        <section id="timeline-export-section" aria-label="Timeline Export">
-            <h2>Timeline Export</h2>
-            <button id="export-timeline-btn">Export Timeline</button>
+        <section id="file-management-section" aria-label="File Management">
+            <h2>File Management</h2>
+            <input type="file" id="file-input" webkitdirectory directory multiple style="display: none;" />
+            <button id="upload-button">Upload Files/Folders</button>
+            <button id="export-button">Export Processed Files</button>
+            <button id="export-graph-button">Export Graph</button>
         </section>
 
         <section id="assistant-thoughts-section" aria-label="Assistant's Thoughts">
@@ -158,13 +153,20 @@
             });
         });
 
-        // File Upload
-        document.getElementById('upload-form').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const formData = new FormData();
+        // File Management
+        document.getElementById('upload-button').addEventListener('click', () => {
+            document.getElementById('file-input').click();
+        });
+
+        document.getElementById('file-input').addEventListener('change', () => {
             const files = document.getElementById('file-input').files;
-            for (let i = 0; i < files.length; i++) {
-                formData.append('file', files[i]);
+            if (files.length === 0) {
+                return;
+            }
+
+            const formData = new FormData();
+            for (const file of files) {
+                formData.append('files', file, file.webkitRelativePath || file.name);
             }
 
             fetch('/api/upload', {
@@ -173,42 +175,20 @@
             })
             .then(response => response.json())
             .then(data => {
-                alert(data.message || data.error);
+                alert(data.message);
             })
             .catch(error => {
-                console.error('Error:', error);
-                alert('File upload failed.');
+                console.error('Error uploading files:', error);
+                alert('An error occurred during file upload.');
             });
         });
 
-        // Timeline Export
-        document.getElementById('export-timeline-btn').addEventListener('click', function() {
-            const timelineId = prompt("Enter timeline ID to export:");
-            if (timelineId) {
-                fetch('/api/timeline/export', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ timeline_id: timelineId })
-                })
-                .then(response => response.text())
-                .then(html => {
-                    const blob = new Blob([html], { type: 'text/html' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `${timelineId}.html`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Timeline export failed.');
-                });
-            }
+        document.getElementById('export-button').addEventListener('click', () => {
+            window.location.href = '/api/export';
+        });
+
+        document.getElementById('export-graph-button').addEventListener('click', () => {
+            window.open('/api/graph/export', '_blank');
         });
     </script>
 </body>

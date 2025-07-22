@@ -1,5 +1,4 @@
 from docx import Document
-
 from neuro_san.coded_tool import CodedTool
 
 

@@ -1,6 +1,6 @@
 import os
-import requests
 
+import requests
 from neuro_san.coded_tool import CodedTool
 
 

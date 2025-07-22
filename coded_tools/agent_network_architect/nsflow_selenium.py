@@ -17,6 +17,7 @@ from typing import Dict
 from typing import Optional
 
 from neuro_san.interfaces.coded_tool import CodedTool
+
 # pylint: disable=import-error
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException

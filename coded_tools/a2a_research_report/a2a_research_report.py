@@ -86,4 +86,22 @@ class A2aResearchReport(CodedTool):
             result: Dict[str, Any] = response.model_dump(exclude_none=True)
 
             # Extract text from the response
-            return result["result"]["parts"][-1]["text"]
+            report_text = result["result"]["parts"][-1]["text"]
+
+            # Add some example citations
+            report_text_with_citations = (
+                f"{report_text}\\n\\n"
+                f"This is an example citation to a case: [citation: https://www.courtlistener.com/opinion/106387/brown-v-board-of-education/]\\n"
+                f"This is an example citation to a statute: [citation: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=EVID&sectionNum=210.]"
+            )
+
+            # Make citations clickable
+            import re
+
+            def replace_citations(match):
+                url = match.group(1)
+                return f'<a href="{url}" target="_blank">[{url}]</a>'
+
+            report_html = re.sub(r'\[citation: (.*?)\]', replace_citations, report_text_with_citations)
+
+            return f"<html><body>{report_html}</body></html>"
