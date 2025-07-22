@@ -340,7 +340,7 @@ class NeuroSanRunner:
 
         sys.exit(0)
 
-    def is_port_open(self, host: str, port: int, timeout=1.0) -> bool:
+    def is_port_open(self, host: str, port: int, timeout=30.0) -> bool:
         """
         Check if a port is open on a given host.
         :return: True if the port is open, False otherwise.
@@ -414,6 +414,9 @@ class NeuroSanRunner:
         if not client_only:
             self.start_neuro_san()
             time.sleep(3)
+            if not self.is_port_open(self.args["server_host"], self.args["server_http_port"]):
+                print(f"Connection failed. Check NeuroSan server.")
+                sys.exit(1)
             print("Neuro-San server is now running.")
 
     def run(self):
