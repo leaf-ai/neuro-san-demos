@@ -1,7 +1,7 @@
 import json
 
 from flask import render_template_string
-from neuro_san.coded_tool import CodedTool
+from neuro_san.interfaces.coded_tool import CodedTool
 
 
 class TimelineManager(CodedTool):

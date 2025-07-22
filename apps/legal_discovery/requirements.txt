@@ -8,6 +8,10 @@ eventlet
 Pillow
 PyMuPDF
 pytesseract
+PyPDF2
+a2a
+PyPDF2
+a2a
 chromadb
 neo4j
 requests
@@ -16,3 +20,6 @@ beautifulsoup4
 python-docx
 python-pptx
 flask-sqlalchemy
+langchain-google-genai
+openai
+pyvis
