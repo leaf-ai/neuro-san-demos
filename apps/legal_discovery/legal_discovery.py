@@ -11,6 +11,7 @@ from .settings import get_user_settings
 
 def set_up_legal_discovery_assistant():
     """Configure these as needed."""
+    print("Setting up legal discovery assistant...")
     agent_name = AGENT_NETWORK_NAME
     connection = "direct"
     host = "localhost"

@@ -36,7 +36,9 @@ with app.app_context():
 
     db.create_all()
 
+    print("Setting up legal discovery assistant...")
     legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant()
+    print("...legal discovery assistant set up.")
 
 
 def legal_discovery_thinking_process():
@@ -47,9 +49,11 @@ def legal_discovery_thinking_process():
         while True:
             socketio.sleep(1)
 
+            print("Calling legal_discovery_thinker...")
             thoughts, legal_discovery_thread = legal_discovery_thinker(
                 legal_discovery_session, legal_discovery_thread, thoughts
             )
+            print("...legal_discovery_thinker returned.")
             print(thoughts)
 
             # Separating thoughts and speeches
@@ -286,6 +290,7 @@ def run_scheduled_tasks():
 atexit.register(cleanup)
 
 if __name__ == "__main__":
+    print("Starting Flask server...")
     with app.app_context():
         db.create_all()
     socketio.run(app, debug=False, port=5001, allow_unsafe_werkzeug=True, log_output=True, use_reloader=False)
