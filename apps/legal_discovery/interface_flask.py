@@ -19,6 +19,7 @@ from apps.legal_discovery.legal_discovery import tear_down_legal_discovery_assis
 
 from . import settings
 from .database import db
+from .models import LegalReference, TimelineEvent
 
 os.environ["AGENT_MANIFEST_FILE"] = "registries/manifest.hocon"
 os.environ["AGENT_TOOL_PATH"] = "coded_tools"
@@ -227,16 +228,29 @@ def export_timeline():
         return jsonify({"error": "Missing timeline_id"}), 400
 
     timeline_manager = TimelineManager()
-    # This is a placeholder for getting the timeline data from the database
-    # In a real app, you would fetch this from the database
-    timeline_items = [
-        {"content": "Event 1", "start": "2024-01-01", "citation": "https://www.courtlistener.com"},
-        {"content": "Event 2", "start": "2024-01-15", "citation": "https://leginfo.legislature.ca.gov/"},
-    ]
+    events = (
+        TimelineEvent.query
+        .filter_by(case_id=timeline_id)
+        .order_by(TimelineEvent.event_date)
+        .all()
+    )
+
+    timeline_items = []
+    for event in events:
+        citation = None
+        ref = LegalReference.query.filter_by(case_id=event.case_id).first()
+        if ref:
+            citation = ref.source_url
+        timeline_items.append(
+            {
+                "content": event.description,
+                "start": event.event_date.strftime("%Y-%m-%d"),
+                "citation": citation,
+            }
+        )
 
     html = timeline_manager.render_timeline(timeline_items)
-
-    # In a real app, you would save this to a file and provide a download link
+    timeline_manager.close()
     return html
 
 

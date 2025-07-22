@@ -1,8 +1,10 @@
 import hashlib
-
-import pandas as pd
 import json
+import os
+
 import numpy as np
+import pandas as pd
+import requests
 from neuro_san.interfaces.coded_tool import CodedTool
 from PIL import Image
 from PyPDF2 import PdfReader
@@ -145,19 +147,18 @@ class ForensicTools(CodedTool):
             return f"Unsupported file type for authenticity analysis: {file_path}"
 
     def call_verifypdf_api(self, file_path: str) -> dict:
-        """
-        Calls the VerifyPDF API to analyze a PDF file.
-
-        :param file_path: The path to the PDF file.
-        :return: The JSON response from the API.
-        """
-        import requests
+        """Call the VerifyPDF API for additional PDF analysis."""
         url = "https://api.verifypdf.com/v1/verify"
-        api_key = "76c3015d145eca829a0d7387a24f94c2"
+        api_key = os.environ.get("VERIFYPDF_API_KEY")
+        if not api_key:
+            raise RuntimeError("VERIFYPDF_API_KEY environment variable is not set")
+
         headers = {"Authorization": f"Bearer {api_key}"}
         with open(file_path, "rb") as f:
             files = {"file": f}
-            response = requests.post(url, headers=headers, files=files)
+            response = requests.post(url, headers=headers, files=files, timeout=30)
+
+        response.raise_for_status()
         return response.json()
 
     def financial_forensics(self, file_path: str) -> str:
