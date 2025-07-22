@@ -2,7 +2,7 @@
 
 ## Overview
 
-The **GEO (Generative Optimized Content) Network** is a production-ready multi-agent system designed for automated web content processing, analysis, and optimization. Built on the Neuro AI Multi-Agent Accelerator platform, GEO provides seamless web scraping capabilities integrated with intelligent content processing workflows.
+The **GEO (Generative Optimized Content) Network** is a production-ready multi-agent system designed for automated web content processing, analysis, and optimization. **Version 2.0** now supports dual deployment architectures: the original Neuro AI Multi-Agent Accelerator platform (HOCON-based) and the modern Google Agent Development Kit (Python-native). GEO provides seamless web scraping capabilities integrated with intelligent content processing workflows across both frameworks.
 
 ![GEO Network in Production](images/geo-screenshot.png)
 *GEO Network successfully processing live web content from Rabobank Finance My Business page*
@@ -15,6 +15,9 @@ The **GEO (Generative Optimized Content) Network** is a production-ready multi-a
 - **🔄 Robust Retry Logic**: Production-grade error handling and retry mechanisms
 - **💬 Real-time Chat Interface**: Seamless user interaction with immediate content processing
 - **🔧 MCP Integration**: Model Context Protocol for extensible tool integration
+- **🏗️ Dual Architecture**: Choose between Neuro-San (HOCON) or ADK (Python-native) deployment
+- **🛡️ Type Safety**: Full Pydantic validation in ADK implementation
+- **🧪 Enhanced Testing**: Integrated pytest framework with HTTP response mocking
 - **🖥️ Cross-platform**: Windows, macOS, and Linux compatibility
 
 ## Architecture
@@ -35,9 +38,12 @@ The GEO network consists of 7 interconnected agents:
 
 - **Backend**: Python 3.12+ with FastMCP framework
 - **Web Scraping**: Crawl4AI 0.7.1+ with Playwright 1.53.0+
-- **Frontend**: Neuro AI Multi-Agent Accelerator Client
+- **Agent Frameworks**: 
+  - Neuro AI Multi-Agent Accelerator (HOCON-based configuration)
+  - Google Agent Development Kit (Python-native classes)
 - **Protocol**: MCP (Model Context Protocol) for tool integration
 - **Transport**: Streamable HTTP for real-time communication
+- **Models**: Configurable (Gemini 2.5 Flash default in ADK)
 
 ## Project Structure
 
@@ -355,10 +361,14 @@ Essential dependencies:
 crawl4ai>=0.7.1
 playwright>=1.53.0
 
-# Core Neuro AI dependencies
+# Core Neuro AI dependencies (for Neuro-San deployment)
 neuro-san==0.5.38
 neuro-san-web-client==0.1.12
 nsflow==0.5.14
+
+# ADK dependencies (for ADK deployment)
+google-adk
+fastmcp
 
 # MCP integration
 langchain-mcp-adapters>=0.1.7
@@ -369,6 +379,11 @@ python-dotenv==1.0.1
 aiofiles>=24.1.0
 pypdf>=5.4.0
 pymupdf>=1.25.5
+
+# Testing (ADK)
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+respx>=0.20.0
 ```
 
 ## Configuration
@@ -560,10 +575,19 @@ async with Client(MCP_BASE_URL, timeout=TIMEOUT_S) as client:
 4. **Test thoroughly**: Add test cases for new domains
 
 #### Adding New Agents
+
+#### For Neuro-San Deployment
 1. **Define agent role**: Specify capabilities and responsibilities
 2. **Update GEO.hocon**: Add agent configuration and connections
 3. **Implement tools**: Create necessary MCP tools if needed
 4. **Test integration**: Verify agent communication and data flow
+
+#### For ADK Deployment
+1. **Create agent class**: Implement new agent using `Agent` class from `google.adk.agents`
+2. **Add to agent_prompts.py**: Define agent instruction templates
+3. **Update agent hierarchy**: Add to appropriate parent agent's `sub_agents` list
+4. **Import in __init__.py**: Update module exports if needed
+5. **Test integration**: Use pytest framework to verify functionality
 
 ### Code Standards
 - Follow PEP 8 Python style guidelines
@@ -627,6 +651,34 @@ For technical support:
 - ✅ **Workflow optimization**: Cache-aware orchestration with tier-specific operations
 - ✅ **End-to-end dual caching**: Complete pipeline with organized content lifecycle management
 
+### Version 2.0.0 (2025-07-22) - ADK Migration Release
+- ✅ **Dual Deployment Architecture**: Complete support for both Neuro-San and ADK frameworks
+- ✅ **Agent Development Kit Implementation**: Native Python agent classes using Google ADK
+- ✅ **Zero-Downtime Migration**: ADK agents work with existing MCP server infrastructure
+- ✅ **Enhanced MCP Client Integration**: FastMCP client wrapper for ADK compatibility
+- ✅ **Session Management Resolution**: Solved stateless/stateful communication mismatch
+- ✅ **Type Safety Enhancement**: Full Pydantic validation throughout ADK implementation
+- ✅ **Testing Infrastructure Upgrade**: Integrated pytest framework with HTTP mocking
+- ✅ **Model Flexibility**: Centralized configuration with easy model switching (Gemini 2.5 Flash)
+- ✅ **Agent Hierarchy Preservation**: Complete parent-child delegation structure maintained
+- ✅ **Performance Parity**: ADK implementation matches original Neuro-San performance
+- ✅ **Documentation Completeness**: Comprehensive dual-deployment documentation and troubleshooting
+- ✅ **Production Validation**: Successful deployment in both environments with feature parity
+
+#### Key Technical Achievements
+- **Architecture Flexibility**: Users can choose between HOCON-based (Neuro-San) or Python-native (ADK) deployment
+- **MCP Protocol Mastery**: Resolved complex session management challenges for robust client-server communication
+- **Framework Portability**: Same core functionality available across different agent frameworks
+- **Developer Experience**: Enhanced testing, debugging, and deployment capabilities
+- **Future-Proofing**: Modern ADK implementation ensures compatibility with evolving Google AI ecosystem
+
+#### Migration Benefits
+- **Simplified Deployment**: Python imports replace complex configuration file management
+- **Enhanced Testing**: Superior pytest-based testing with HTTP response mocking
+- **Better Error Handling**: Improved error propagation from MCP server to ADK agents
+- **Type Safety**: Comprehensive Pydantic validation prevents runtime errors
+- **Developer Tools**: Integrated debugging and development tools within ADK framework
+
 ---
 
-*This system represents a complete web content processing solution ready for team collaboration and further development.*
+*Version 2.0.0 represents a major architectural evolution while maintaining complete backward compatibility. The GEO Network now offers enterprise-grade flexibility for different deployment scenarios and development preferences.*
