@@ -1,6 +1,4 @@
 import schedule
-import time
-
 from neuro_san.coded_tool import CodedTool
 
 

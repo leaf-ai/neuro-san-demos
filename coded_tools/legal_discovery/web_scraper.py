@@ -1,10 +1,9 @@
+import os
+
 import requests
 from bs4 import BeautifulSoup
-
 from neuro_san.coded_tool import CodedTool
 
-
-import os
 
 class WebScraper(CodedTool):
     def __init__(self, **kwargs):

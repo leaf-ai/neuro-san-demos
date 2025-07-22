@@ -1,10 +1,10 @@
 import hashlib
-import os
+
+import pandas as pd
+from neuro_san.coded_tool import CodedTool
 from PIL import Image
 from PyPDF2 import PdfReader
 
-from neuro_san.coded_tool import CodedTool
-import pandas as pd
 from a2a_research_report.a2a_research_report import A2AResearchReport
 
 
@@ -66,13 +66,18 @@ class ForensicTools(CodedTool):
         # This is a placeholder for a more sophisticated analysis.
         # In a real system, this would involve checking digital signatures,
         # analyzing metadata for inconsistencies, etc.
-        metadata = self.get_pdf_metadata(file_path) if file_path.endswith('.pdf') else self.get_image_metadata(file_path)
+        if file_path.endswith(".pdf"):
+            metadata = self.get_pdf_metadata(file_path)
+        else:
+            metadata = self.get_image_metadata(file_path)
         file_hash = self.get_file_hash(file_path)
 
-        return f"Authenticity analysis for {file_path}:\n" \
-               f"  - Metadata: {metadata}\n" \
-               f"  - SHA256 Hash: {file_hash}\n" \
-               f"  - Note: This is a basic analysis. No signs of tampering detected."
+        return (
+            f"Authenticity analysis for {file_path}:\n"
+            f"  - Metadata: {metadata}\n"
+            f"  - SHA256 Hash: {file_hash}\n"
+            f"  - Note: This is a basic analysis. No signs of tampering detected."
+        )
 
     def financial_forensics(self, file_path: str) -> str:
         """
@@ -87,8 +92,10 @@ class ForensicTools(CodedTool):
 
         # Example of how you might use another agent for this
         researcher = A2AResearchReport()
-        report = researcher.run(
-            objective=f"Analyze the financial document at {file_path} for signs of fraud or irregularities.",
-            instructions="Focus on identifying unusual transactions, inconsistencies in financial statements, and any other red flags. Provide a summary of your findings."
+        objective = f"Analyze the financial document at {file_path} for signs of fraud or irregularities."
+        instructions = (
+            "Focus on identifying unusual transactions, inconsistencies in financial statements, "
+            "and any other red flags. Provide a summary of your findings."
         )
+        report = researcher.run(objective=objective, instructions=instructions)
         return report

@@ -1,7 +1,6 @@
+from neuro_san.coded_tool import CodedTool
 from pptx import Presentation
 from pptx.util import Inches
-
-from neuro_san.coded_tool import CodedTool
 
 
 class PresentationGenerator(CodedTool):

@@ -9,11 +9,14 @@
 #
 # END COPYRIGHT
 
+import logging
 import os
 import re
-from abc import ABC, abstractmethod
-from typing import Any, List, Optional
-import logging
+from abc import ABC
+from abc import abstractmethod
+from typing import Any
+from typing import List
+from typing import Optional
 
 from langchain_community.vectorstores import InMemoryVectorStore
 from langchain_core.documents import Document
@@ -25,6 +28,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 INVALID_PATH_PATTERN = r"[<>:\"|?*\x00-\x1F]"
 
 logger = logging.getLogger(__name__)
+
 
 class BaseRag(ABC):
     """
@@ -42,7 +46,7 @@ class BaseRag(ABC):
         Abstract method to load documents from a specific data source.
         """
         raise NotImplementedError
-    
+
     def configure_vector_store_path(self, vector_store_path: Optional[str]):
         """
         Validate the vector store file path and set it as an absolute path.
@@ -63,7 +67,6 @@ class BaseRag(ABC):
             logger.error("vector_store_path must be a .json file, got: '%s'", vector_store_path)
             raise ValueError(f"vector_store_path must be a .json file, got: '{vector_store_path}'")
 
-
         if os.path.isabs(vector_store_path):
             # It's already an absolute path — use it directly
             self.abs_vector_store_path = vector_store_path
@@ -76,7 +79,7 @@ class BaseRag(ABC):
         """
         Asynchronously loads documents from a given data source, split them into
         chunks, and build an in-memory vector store using OpenAI embeddings or
-        load vectorstore from memory if it is available. 
+        load vectorstore from memory if it is available.
 
         :param loader_args: Arguments specific to the document loader (e.g., Confluence params or PDF file paths).
         :return: In-memory vector store containing the embedded document chunks

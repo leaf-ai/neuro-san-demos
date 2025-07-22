@@ -20,18 +20,31 @@ from typing import Optional
 from typing import Union
 
 import requests
+from neuro_san.interfaces.coded_tool import CodedTool
 from requests import HTTPError
 from requests import JSONDecodeError
 from requests import RequestException
-from neuro_san.interfaces.coded_tool import CodedTool
 
 BRAVE_URL = "https://api.search.brave.com/res/v1/web/search"
 BRAVE_TIMEOUT = 30.0
 # The following parameters are from https://api-dashboard.search.brave.com/app/documentation/web-search/query.
 BRAVE_QUERY_PARAMS = [
-    "q", "country", "search_lang", "ui_lang", "count", "offset", "safesearch", "freshness",
-    "text_decorations", "spellcheck", "result_filter", "goggles_id", "goggles", "units",
-    "extra_snippets", "summary"
+    "q",
+    "country",
+    "search_lang",
+    "ui_lang",
+    "count",
+    "offset",
+    "safesearch",
+    "freshness",
+    "text_decorations",
+    "spellcheck",
+    "result_filter",
+    "goggles_id",
+    "goggles",
+    "units",
+    "extra_snippets",
+    "summary",
 ]
 
 
@@ -81,7 +94,9 @@ class BraveSearch(CodedTool):
         brave_timeout: float = float(args.get("brave_timeout") or os.getenv("BRAVE_TIMEOUT") or BRAVE_TIMEOUT)
 
         # Filter user-specified args using the BRAVE_QUERY_PARAMS
-        brave_search_params = {param: param_value for param, param_value in args.items() if param in BRAVE_QUERY_PARAMS}
+        brave_search_params = {
+            param: param_value for param, param_value in args.items() if param in BRAVE_QUERY_PARAMS
+        }
 
         # Use user-specified query 'q' if available; otherwise fall back to LLM-provided 'search_terms'
         brave_search_params.setdefault("q", args.get("search_terms"))
@@ -118,10 +133,10 @@ class BraveSearch(CodedTool):
         return await asyncio.to_thread(self.invoke, args, sly_data)
 
     def brave_search(
-            self,
-            brave_search_params: Dict[str, Any],
-            brave_url: Optional[str] = BRAVE_URL,
-            brave_timeout: Optional[float] = BRAVE_TIMEOUT
+        self,
+        brave_search_params: Dict[str, Any],
+        brave_url: Optional[str] = BRAVE_URL,
+        brave_timeout: Optional[float] = BRAVE_TIMEOUT,
     ) -> Dict[str, Any]:
         """
         Perform a search request to the Brave Search API.
@@ -138,12 +153,7 @@ class BraveSearch(CodedTool):
         }
         results: Dict[str, Any] = {}
         try:
-            response = requests.get(
-                brave_url,
-                headers=headers,
-                params=brave_search_params,
-                timeout=brave_timeout
-            )
+            response = requests.get(brave_url, headers=headers, params=brave_search_params, timeout=brave_timeout)
             response.raise_for_status()
             results = response.json()
         except HTTPError as http_err:

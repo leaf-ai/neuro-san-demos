@@ -1,19 +1,20 @@
-import requests
-from newspaper import Article
-from bs4 import BeautifulSoup
+import logging
 import os
 import time
-import logging
-from typing import Dict, Any
-import feedparser
-import backoff
-    
+from typing import Any
+from typing import Dict
 
+import backoff
+import feedparser
+import requests
+from bs4 import BeautifulSoup
 from neuro_san.interfaces.coded_tool import CodedTool
+from newspaper import Article
 
 # Setup logger
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
 
 class WebScrapingTechnician(CodedTool):
     """A class to scrape news articles from NYT, Guardian, and Al Jazeera."""
@@ -22,12 +23,22 @@ class WebScrapingTechnician(CodedTool):
         self.NYT_API_KEY = os.getenv("NYT_API_KEY")
         self.GUARDIAN_API_KEY = os.getenv("GUARDIAN_API_KEY")
         self.nyt_sections = [
-            "arts", "business", "climate", "education", "health", "jobs", "opinion",
-            "politics", "realestate", "science", "technology", "travel", "us", "world"
+            "arts",
+            "business",
+            "climate",
+            "education",
+            "health",
+            "jobs",
+            "opinion",
+            "politics",
+            "realestate",
+            "science",
+            "technology",
+            "travel",
+            "us",
+            "world",
         ]
-        self.aljazeera_feeds = {
-            "world": "https://www.aljazeera.com/xml/rss/all.xml"
-        }
+        self.aljazeera_feeds = {"world": "https://www.aljazeera.com/xml/rss/all.xml"}
         logger.info("WebScrapingTechnician initialized")
 
     def scrape_with_bs4(self, url: str, source: str = "generic") -> str:
@@ -50,7 +61,7 @@ class WebScrapingTechnician(CodedTool):
         requests.exceptions.HTTPError,
         max_tries=10,
         max_time=300,
-        giveup=lambda e: e.response is None or e.response.status_code != 429
+        giveup=lambda e: e.response is None or e.response.status_code != 429,
     )
     def _fetch_nyt_section(self, url: str) -> Dict:
         response = requests.get(url, timeout=15)
@@ -67,12 +78,7 @@ class WebScrapingTechnician(CodedTool):
         response.raise_for_status()
         return response.json()
 
-    @backoff.on_exception(
-        backoff.expo,
-        requests.exceptions.RequestException,
-        max_tries=3,
-        max_time=30
-    )
+    @backoff.on_exception(backoff.expo, requests.exceptions.RequestException, max_tries=3, max_time=30)
     def _fetch_aljazeera_feed(self, feed_url: str) -> Any:
         return feedparser.parse(feed_url)
 
@@ -119,20 +125,27 @@ class WebScrapingTechnician(CodedTool):
         return {
             "saved_articles": len(all_articles),
             "file": filename,
-            "status": "success" if all_articles else "failed"
+            "status": "success" if all_articles else "failed",
         }
 
-    def scrape_guardian(self, keywords: list, save_dir: str = "guardian_articles_output", page_size: int = 50) -> Dict[str, Any]:
+    def scrape_guardian(
+        self, keywords: list, save_dir: str = "guardian_articles_output", page_size: int = 50
+    ) -> Dict[str, Any]:
         logger.info("Guardian scraping started")
         keywords = [kw.lower() for kw in keywords]
-        
+
         os.makedirs(save_dir, exist_ok=True)
 
         all_articles = []
 
         for keyword in keywords:
             url = "https://content.guardianapis.com/search"
-            params = {"q": keyword, "api-key": self.GUARDIAN_API_KEY, "page-size": page_size, "show-fields": "bodyText"}
+            params = {
+                "q": keyword,
+                "api-key": self.GUARDIAN_API_KEY,
+                "page-size": page_size,
+                "show-fields": "bodyText",
+            }
             try:
                 response = requests.get(url, params=params, timeout=15)
                 results = response.json().get("response", {}).get("results", [])
@@ -153,7 +166,7 @@ class WebScrapingTechnician(CodedTool):
         return {
             "saved_articles": len(all_articles),
             "file": filename,
-            "status": "success" if all_articles else "failed"
+            "status": "success" if all_articles else "failed",
         }
 
     def scrape_aljazeera(self, keywords: list, save_dir: str = "aljazeera_articles_output") -> Dict[str, Any]:
@@ -186,7 +199,7 @@ class WebScrapingTechnician(CodedTool):
         return {
             "saved_articles": len(all_articles),
             "file": filename,
-            "status": "success" if all_articles else "failed"
+            "status": "success" if all_articles else "failed",
         }
 
     def scrape_all(self, keywords: list, save_dir: str = "all_articles_output") -> Dict[str, Any]:
@@ -218,7 +231,7 @@ class WebScrapingTechnician(CodedTool):
             "guardian_file": guardian_result.get("file"),
             "aljazeera_file": aljazeera_result.get("file"),
             "combined_file": combined_filename,
-            "status": "success" if total_articles else "failed"
+            "status": "success" if total_articles else "failed",
         }
 
     def invoke(self, arguments: Dict[str, Any], sly_data: Dict[str, Any]) -> Dict[str, Any]:
