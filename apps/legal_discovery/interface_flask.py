@@ -1,4 +1,5 @@
 import atexit
+import logging
 import os
 import queue
 import re
@@ -11,6 +12,7 @@ from flask import Flask
 from flask import jsonify
 from flask import render_template
 from flask import request
+from werkzeug.utils import secure_filename
 from flask_socketio import SocketIO
 
 from apps.legal_discovery.legal_discovery import legal_discovery_thinker
@@ -21,15 +23,19 @@ from . import settings
 from .database import db
 from .models import LegalReference, TimelineEvent
 
-os.environ["AGENT_MANIFEST_FILE"] = "registries/manifest.hocon"
-os.environ["AGENT_TOOL_PATH"] = "coded_tools"
+os.environ["AGENT_MANIFEST_FILE"] = os.environ.get("AGENT_MANIFEST_FILE", "registries/manifest.hocon")
+os.environ["AGENT_TOOL_PATH"] = os.environ.get("AGENT_TOOL_PATH", "coded_tools")
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "secret!"
+app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", os.urandom(24).hex())
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///legal_discovery.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 socketio = SocketIO(app)
 thread_started = False  # pylint: disable=invalid-name
+
+# Configure logging
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
+app.logger.setLevel(logging.getLevelName(os.environ.get("LOG_LEVEL", "INFO")))
 
 user_input_queue = queue.Queue()
 
@@ -37,9 +43,10 @@ with app.app_context():
 
     db.create_all()
 
-    print("Setting up legal discovery assistant...")
+    app.logger.info("Setting up legal discovery assistant...")
     legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant()
-    print("...legal discovery assistant set up.")
+    app.logger.info("...legal discovery assistant set up.")
+
 
 
 def legal_discovery_thinking_process():
@@ -50,12 +57,12 @@ def legal_discovery_thinking_process():
         while True:
             socketio.sleep(1)
 
-            print("Calling legal_discovery_thinker...")
+            app.logger.debug("Calling legal_discovery_thinker...")
             thoughts, legal_discovery_thread = legal_discovery_thinker(
                 legal_discovery_session, legal_discovery_thread, thoughts
             )
-            print("...legal_discovery_thinker returned.")
-            print(thoughts)
+            app.logger.debug("...legal_discovery_thinker returned.")
+            app.logger.debug(thoughts)
 
             # Separating thoughts and speeches
             # Assume 'thoughts' is the string returned by legal_discovery_thinker
@@ -150,6 +157,25 @@ from coded_tools.legal_discovery.timeline_manager import TimelineManager
 
 UPLOAD_FOLDER = "uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+ALLOWED_EXTENSIONS = {"pdf", "txt", "csv", "doc", "docx", "ppt", "pptx", "jpg", "jpeg", "png", "gif"}
+
+
+def allowed_file(filename: str) -> bool:
+    """Check if the file has an allowed extension."""
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def cleanup_upload_folder(max_age_hours: int = 24) -> None:
+    """Remove uploaded files older than ``max_age_hours``."""
+    cutoff = time.time() - max_age_hours * 3600
+    for root_dir, _, files in os.walk(app.config["UPLOAD_FOLDER"]):
+        for name in files:
+            path = os.path.join(root_dir, name)
+            try:
+                if os.path.getmtime(path) < cutoff:
+                    os.remove(path)
+            except FileNotFoundError:
+                continue
 
 
 @app.route("/api/upload", methods=["POST"])
@@ -165,19 +191,12 @@ def upload_files():
     for file in files:
         if file.filename == "":
             continue
-        # The filename from the browser includes the relative path
-        filename = file.filename
-        # Sanitize the filename to prevent directory traversal attacks
-        filename = os.path.normpath(filename)
-        if filename.startswith(".."):
+        filename = secure_filename(os.path.normpath(file.filename))
+        if filename.startswith("..") or not allowed_file(filename):
             continue
 
-            
         save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-
-        # Create directories if they don't exist
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
-
         file.save(save_path)
 
 
@@ -274,7 +293,7 @@ def handle_user_input(json, *_):
 
 def cleanup():
     """Tear things down on exit."""
-    print("Bye!")
+    app.logger.info("Bye!")
     tear_down_legal_discovery_assistant(legal_discovery_session)
     socketio.stop()
 
@@ -303,8 +322,12 @@ def run_scheduled_tasks():
 # Register the cleanup function
 atexit.register(cleanup)
 
+# Setup and start scheduled maintenance tasks
+schedule.every().day.at("00:00").do(cleanup_upload_folder)
+socketio.start_background_task(run_scheduled_tasks)
+
 if __name__ == "__main__":
-    print("Starting Flask server...")
+    app.logger.info("Starting Flask server...")
     with app.app_context():
         db.create_all()
     socketio.run(app, debug=False, port=5001, allow_unsafe_werkzeug=True, log_output=True, use_reloader=False)

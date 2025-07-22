@@ -14,7 +14,7 @@ from PyPDF2 import PdfReader
 class ForensicTools(CodedTool):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        print("ForensicTools instantiated")
+        # Avoid noisy output in production
 
     def get_file_hash(self, filepath: str) -> str:
         """
@@ -24,9 +24,12 @@ class ForensicTools(CodedTool):
         :return: The SHA256 hash of the file.
         """
         hasher = hashlib.sha256()
-        with open(filepath, "rb") as f:
-            buf = f.read()
-            hasher.update(buf)
+        try:
+            with open(filepath, "rb") as f:
+                buf = f.read()
+                hasher.update(buf)
+        except FileNotFoundError as exc:
+            raise FileNotFoundError(f"File not found: {filepath}") from exc
         return hasher.hexdigest()
 
     def get_pdf_metadata(self, filepath: str) -> dict:
@@ -36,9 +39,12 @@ class ForensicTools(CodedTool):
         :param filepath: The path to the PDF file.
         :return: A dictionary containing the PDF's metadata.
         """
-        with open(filepath, "rb") as f:
-            reader = PdfReader(f)
-            return reader.metadata
+        try:
+            with open(filepath, "rb") as f:
+                reader = PdfReader(f)
+                return reader.metadata
+        except Exception as exc:  # catch PyPDF2 errors
+            raise RuntimeError(f"Failed to read PDF metadata from {filepath}") from exc
 
     def get_image_metadata(self, filepath: str) -> dict:
         """
@@ -47,8 +53,11 @@ class ForensicTools(CodedTool):
         :param filepath: The path to the image file.
         :return: A dictionary containing the image's metadata.
         """
-        image = Image.open(filepath)
-        return image.info
+        try:
+            image = Image.open(filepath)
+            return image.info
+        except Exception as exc:
+            raise RuntimeError(f"Failed to read image metadata from {filepath}") from exc
 
     def analyze_financial_data(self, filepath: str) -> str:
         """
@@ -57,6 +66,8 @@ class ForensicTools(CodedTool):
         :param filepath: The path to the CSV file.
         :return: A string containing a summary of the financial data.
         """
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"File not found: {filepath}")
         df = pd.read_csv(filepath)
 
         # Calculate descriptive statistics for numerical columns
@@ -92,6 +103,9 @@ class ForensicTools(CodedTool):
         :param file_path: The path to the document.
         :return: A summary of the authenticity analysis.
         """
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"File not found: {file_path}")
+
         if file_path.endswith(".pdf"):
             reader = PdfReader(file_path)
             metadata = reader.metadata
@@ -130,8 +144,11 @@ class ForensicTools(CodedTool):
             # If any warnings were found, call the VerifyPDF API
             if "Warning" in report:
                 report += "\n\n**VerifyPDF API Analysis**\n"
-                verifypdf_result = self.call_verifypdf_api(file_path)
-                report += json.dumps(verifypdf_result, indent=2)
+                try:
+                    verifypdf_result = self.call_verifypdf_api(file_path)
+                    report += json.dumps(verifypdf_result, indent=2)
+                except Exception as exc:
+                    report += f"\n  - VerifyPDF API error: {exc}\n"
 
             return report
 
@@ -156,9 +173,11 @@ class ForensicTools(CodedTool):
         headers = {"Authorization": f"Bearer {api_key}"}
         with open(file_path, "rb") as f:
             files = {"file": f}
-            response = requests.post(url, headers=headers, files=files, timeout=30)
-
-        response.raise_for_status()
+            try:
+                response = requests.post(url, headers=headers, files=files, timeout=30)
+                response.raise_for_status()
+            except requests.RequestException as exc:
+                raise RuntimeError("VerifyPDF API request failed") from exc
         return response.json()
 
     def financial_forensics(self, file_path: str) -> str:
@@ -168,6 +187,9 @@ class ForensicTools(CodedTool):
         :param file_path: The path to the financial document.
         :return: A summary of the financial forensic analysis.
         """
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"File not found: {file_path}")
+
         from langchain_google_genai import ChatGoogleGenerativeAI
         llm = ChatGoogleGenerativeAI(model="gemini-pro")
 
@@ -177,7 +199,7 @@ class ForensicTools(CodedTool):
             for page in reader.pages:
                 document_content += page.extract_text()
         else:
-            with open(file_path, "r") as f:
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
                 document_content = f.read()
 
         prompt = f"""
@@ -189,5 +211,8 @@ class ForensicTools(CodedTool):
         {document_content}
         """
 
-        result = llm.invoke(prompt, timeout=60)
+        try:
+            result = llm.invoke(prompt, timeout=60)
+        except Exception as exc:
+            raise RuntimeError("Financial forensics LLM invocation failed") from exc
         return result.content

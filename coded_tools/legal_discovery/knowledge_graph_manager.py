@@ -11,7 +11,15 @@ class KnowledgeGraphManager(CodedTool):
         uri = os.environ.get("NEO4J_URI", "bolt://localhost:7687")
         user = os.environ.get("NEO4J_USER", "neo4j")
         password = os.environ.get("NEO4J_PASSWORD", "password")
-        self.driver = GraphDatabase.driver(uri, auth=(user, password))
+        try:
+            self.driver = GraphDatabase.driver(uri, auth=(user, password))
+            # Verify connection
+            with self.driver.session() as session:
+                session.run("RETURN 1")
+        except Exception as exc:  # pragma: no cover - connection may fail in tests
+            raise RuntimeError(
+                f"Failed to connect to Neo4j at {uri}. Is the server running?"
+            ) from exc
 
     def close(self):
         self.driver.close()
@@ -24,9 +32,12 @@ class KnowledgeGraphManager(CodedTool):
         :param parameters: A dictionary of parameters for the query.
         :return: A list of records returned by the query.
         """
-        with self.driver.session() as session:
-            result = session.run(query, parameters)
-            return [record for record in result]
+        try:
+            with self.driver.session() as session:
+                result = session.run(query, parameters)
+                return [record for record in result]
+        except Exception as exc:
+            raise RuntimeError("Neo4j query failed") from exc
 
     def create_node(self, label: str, properties: dict) -> int:
         """
