@@ -15,3 +15,4 @@ pandas
 beautifulsoup4
 python-docx
 python-pptx
+flask-sqlalchemy
