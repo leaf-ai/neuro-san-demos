@@ -6,6 +6,8 @@ from neuro_san.client.streaming_input_processor import StreamingInputProcessor
 AGENT_NETWORK_NAME = "legal_discovery"
 
 
+from .settings import get_user_settings
+
 def set_up_legal_discovery_assistant():
     """Configure these as needed."""
     agent_name = AGENT_NETWORK_NAME
@@ -14,6 +16,16 @@ def set_up_legal_discovery_assistant():
     port = 30011
     local_externals_direct = False
     metadata = {"user_id": os.environ.get("USER")}
+
+    # Get API key from settings
+    user_settings = get_user_settings()
+    if user_settings:
+        if user_settings.gemini_api_key:
+            os.environ["GEMINI_API_KEY"] = user_settings.gemini_api_key
+        if user_settings.courtlistener_api_key:
+            os.environ["COURTLISTENER_API_KEY"] = user_settings.courtlistener_api_key
+        if user_settings.california_codes_url:
+            os.environ["CALIFORNIA_CODES_URL"] = user_settings.california_codes_url
 
     # Create session factory and agent session
     factory = AgentSessionFactory()

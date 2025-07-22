@@ -4,9 +4,26 @@ from bs4 import BeautifulSoup
 from neuro_san.coded_tool import CodedTool
 
 
+import os
+
 class WebScraper(CodedTool):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.california_codes_url = os.environ.get("CALIFORNIA_CODES_URL")
+
+    def scrape_california_codes(self, query: str) -> str:
+        """
+        Scrapes the California Codes website for a given query.
+
+        :param query: The search query.
+        :return: The text content of the search results.
+        """
+        if not self.california_codes_url:
+            return "California Codes URL not configured."
+
+        # This is a simplified example. A real implementation would need to handle the search form submission.
+        url = f"{self.california_codes_url}/search/codes.xhtml?query={query}"
+        return self.scrape_website(url)
 
     def scrape_website(self, url: str) -> str:
         """

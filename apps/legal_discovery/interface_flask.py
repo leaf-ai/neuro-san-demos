@@ -7,18 +7,25 @@ from datetime import datetime
 
 # pylint: disable=import-error
 import schedule
-from flask import Flask
+import os
+from flask import Flask, request, jsonify
 from flask import render_template
 from flask_socketio import SocketIO
 
 from apps.legal_discovery.legal_discovery import legal_discovery_thinker
 from apps.legal_discovery.legal_discovery import set_up_legal_discovery_assistant
 from apps.legal_discovery.legal_discovery import tear_down_legal_discovery_assistant
+from .database import db
+from . import models
+from . import settings
 
 os.environ["AGENT_MANIFEST_FILE"] = "registries/manifest.hocon"
 os.environ["AGENT_TOOL_PATH"] = "coded_tools"
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "secret!"
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///legal_discovery.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db.init_app(app)
 socketio = SocketIO(app)
 thread_started = False  # pylint: disable=invalid-name
 
@@ -100,6 +107,90 @@ def on_connect():
         socketio.start_background_task(legal_discovery_thinking_process)
 
 
+@app.route("/api/settings", methods=['GET', 'POST'])
+def manage_settings():
+    if request.method == 'POST':
+        data = request.get_json()
+        settings.save_user_settings(data)
+        return jsonify({"message": "Settings saved successfully"})
+    else:
+        user_settings = settings.get_user_settings()
+        if user_settings:
+            return jsonify({
+                "courtlistener_api_key": user_settings.courtlistener_api_key,
+                "gemini_api_key": user_settings.gemini_api_key,
+                "california_codes_url": user_settings.california_codes_url
+            })
+        return jsonify({})
+
+UPLOAD_FOLDER = 'uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+@app.route('/api/upload', methods=['POST'])
+def upload_file():
+    if not os.path.exists(UPLOAD_FOLDER):
+        os.makedirs(UPLOAD_FOLDER)
+
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+
+    file = request.files['file']
+
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+
+    if file:
+        filename = file.filename
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        return jsonify({"message": f"File {filename} uploaded successfully"})
+
+    return jsonify({"error": "File upload failed"}), 500
+
+from .coded_tools.legal_discovery.forensic_tools import ForensicTools
+
+@app.route('/api/agents/forensic_analysis', methods=['POST'])
+def forensic_analysis():
+    data = request.get_json()
+    file_path = data.get('file_path')
+    analysis_type = data.get('analysis_type')
+
+    if not file_path or not analysis_type:
+        return jsonify({"error": "Missing file_path or analysis_type"}), 400
+
+    forensic_tools = ForensicTools()
+
+    if analysis_type == 'authenticity':
+        result = forensic_tools.analyze_document_authenticity(file_path)
+    elif analysis_type == 'financial':
+        result = forensic_tools.financial_forensics(file_path)
+    else:
+        return jsonify({"error": "Invalid analysis_type"}), 400
+
+    return jsonify({"result": result})
+
+from .coded_tools.legal_discovery.timeline_manager import TimelineManager
+
+@app.route('/api/timeline/export', methods=['POST'])
+def export_timeline():
+    data = request.get_json()
+    timeline_id = data.get('timeline_id')
+
+    if not timeline_id:
+        return jsonify({"error": "Missing timeline_id"}), 400
+
+    timeline_manager = TimelineManager()
+    # This is a placeholder for getting the timeline data from the database
+    timeline_items = [
+        {'content': 'Event 1', 'start': '2024-01-01'},
+        {'content': 'Event 2', 'start': '2024-01-15'},
+    ]
+    timeline_manager.create_timeline(timeline_id, timeline_items)
+
+    html = timeline_manager.render_timeline(timeline_id)
+
+    # In a real app, you would save this to a file and provide a download link
+    return html
+
 @app.route("/")
 def index():
     """Return the html."""
@@ -150,4 +241,6 @@ def run_scheduled_tasks():
 atexit.register(cleanup)
 
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
     socketio.run(app, debug=False, port=5001, allow_unsafe_werkzeug=True, log_output=True, use_reloader=False)
