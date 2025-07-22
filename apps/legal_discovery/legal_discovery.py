@@ -2,6 +2,7 @@ import os
 
 from neuro_san.client.agent_session_factory import AgentSessionFactory
 from neuro_san.client.streaming_input_processor import StreamingInputProcessor
+import logging
 
 AGENT_NETWORK_NAME = "legal_discovery"
 
@@ -11,7 +12,7 @@ from .settings import get_user_settings
 
 def set_up_legal_discovery_assistant():
     """Configure these as needed."""
-    print("Setting up legal discovery assistant...")
+    logging.info("Setting up legal discovery assistant...")
     agent_name = AGENT_NETWORK_NAME
     connection = "direct"
     host = "localhost"
@@ -85,7 +86,7 @@ def tear_down_legal_discovery_assistant(legal_discovery_session):
 
     :param legal_discovery_session: The pointer to the session.
     """
-    print("tearing down legal discovery assistant...")
+    logging.info("tearing down legal discovery assistant...")
     legal_discovery_session.close()
     # client.assistants.delete(legal_discovery_assistant_id)
-    print("legal discovery assistant torn down.")
+    logging.info("legal discovery assistant torn down.")
