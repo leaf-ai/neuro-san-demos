@@ -32,7 +32,8 @@ thread_started = False  # pylint: disable=invalid-name
 
 user_input_queue = queue.Queue()
 
-legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant()
+with app.app_context():
+    legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant()
 
 
 def legal_discovery_thinking_process():
