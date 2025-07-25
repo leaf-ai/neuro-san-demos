@@ -315,7 +315,7 @@ followed by guidance on how to select and configure models.
     This is sufficient if you only have **one AWS profile** or if you're certain these environment variables
     correspond to the correct credentials.
 
-2. Named profile (recommended for multiple profiles)
+2. Named profile (**required for multiple profiles**)
 
     If you have **multiple profiles** in `~/.aws/credentials` or `~/.aws/config`, it's recommended to explicitly set
     the credentials_profile_name field to avoid ambiguity. This tells the system exactly which profile to use,
@@ -339,13 +339,15 @@ followed by guidance on how to select and configure models.
     ```hocon
         "llm_config": {
 
+            # Bedrock documentation lists both model name and model ID.
+            # Use the **Model ID** as the value for "model_name".
             "model_name": "bedrock-us-claude-3-7-sonnet",
 
             # Optional if using env vars or default profile
             "credentials_profile_name": "<profile_name>",
 
             # Optional, but required if not defined in your profile config
-            "region_name": "us-east-1"
+            "region_name": "us-west-2"
         }
     ```
 
