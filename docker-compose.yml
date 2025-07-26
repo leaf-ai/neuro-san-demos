@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: apps/legal_discovery/Dockerfile
     ports:
-      - "5001:5001"
+      - "8080:5001"
     env_file:
       - .env
     depends_on:

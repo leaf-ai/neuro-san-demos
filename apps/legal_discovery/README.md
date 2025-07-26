@@ -25,13 +25,13 @@ docker-compose build
 docker-compose up
 ```
 
-This command starts three services:
 
-- **legal_discovery** – the Flask frontend exposed on <http://localhost:5001>
+- **legal_discovery** – the Flask frontend exposed on <http://localhost:8080>
 - **neo4j** – graph database used by the app
 - **tesseract** – OCR engine
 
-Once the containers are running, open <http://localhost:5001> in a browser to
+Once the containers are running, open <http://localhost:8080> in a browser to
+
 use the UI.
 
 To stop the stack press `Ctrl+C` and run `docker-compose down`.
