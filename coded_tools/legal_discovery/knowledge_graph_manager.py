@@ -17,9 +17,7 @@ class KnowledgeGraphManager(CodedTool):
             with self.driver.session() as session:
                 session.run("RETURN 1")
         except Exception as exc:  # pragma: no cover - connection may fail in tests
-            raise RuntimeError(
-                f"Failed to connect to Neo4j at {uri}. Is the server running?"
-            ) from exc
+            raise RuntimeError(f"Failed to connect to Neo4j at {uri}. Is the server running?") from exc
 
     def close(self):
         self.driver.close()
@@ -125,3 +123,30 @@ class KnowledgeGraphManager(CodedTool):
 
         net.save_graph(output_path)
         return output_path
+
+    def get_subgraph(self, label: str):
+        """Retrieve a subgraph for nodes with a given label."""
+        nodes_query = f"MATCH (n:{label}) RETURN id(n) as id, labels(n) as labels, properties(n) as properties"
+        relationships_query = (
+            f"MATCH (n:{label})-[r]->(m) RETURN id(startNode(r)) as source, id(endNode(r)) as target, type(r) as type"
+        )
+
+        nodes = [
+            {
+                "id": record["id"],
+                "labels": record["labels"],
+                "properties": record["properties"],
+            }
+            for record in self.run_query(nodes_query)
+        ]
+
+        edges = [
+            {
+                "source": record["source"],
+                "target": record["target"],
+                "type": record["type"],
+            }
+            for record in self.run_query(relationships_query)
+        ]
+
+        return nodes, edges
