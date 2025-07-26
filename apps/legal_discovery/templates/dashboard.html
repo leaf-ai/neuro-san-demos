@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Legal Discovery Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+  <script src="{{ url_for('static', filename='dashboardLogic.js') }}" defer></script>
+</head>
+<body>
+  <h1>Legal Discovery Assistant</h1>
+
+  <form id="queryForm" method="POST">
+    <label for="text">Query:</label><br>
+    <textarea name="text" rows="5" cols="80" placeholder="e.g. Find deposition transcripts related to expert testimony"></textarea><br><br>
+
+    <label for="session_id">Session ID:</label><br>
+    <input name="session_id" value="demo-session"><br><br>
+
+    <button type="submit">Run</button>
+  </form>
+
+  <hr>
+
+  <div id="responseContainer">
+    <h2>Response:</h2>
+    <pre id="outputBox"></pre>
+  </div>
+</body>
+</html>
