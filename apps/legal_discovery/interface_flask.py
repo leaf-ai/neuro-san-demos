@@ -208,6 +208,80 @@ def list_files():
     return jsonify({"status": "ok", "data": data})
 
 
+def _collect_paths(root: str) -> list:
+    paths = []
+    for dirpath, _, filenames in os.walk(root):
+        for f in filenames:
+            paths.append(os.path.relpath(os.path.join(dirpath, f), root))
+    return paths
+
+
+def _categorize_name(name: str) -> str:
+    name = name.lower()
+    if any(k in name for k in ["complaint", "response", "petition"]):
+        return "Pleadings"
+    if "deposition" in name:
+        return "Depositions"
+    if any(k in name for k in ["contract", "agreement"]):
+        return "Contracts"
+    if "email" in name:
+        return "Emails"
+    if any(k in name for k in ["memo", "memorandum"]):
+        return "Memos"
+    return "Other"
+
+
+def _paths_to_tree(paths: list) -> list:
+    tree = {}
+    for p in paths:
+        parts = p.split(os.sep)
+        node = tree
+        for part in parts[:-1]:
+            node = node.setdefault(part, {})
+        node.setdefault("_files", []).append(parts[-1])
+
+    def convert(d, prefix=""):
+        items = []
+        for name, val in sorted(d.items()):
+            if name == "_files":
+                for fname in val:
+                    items.append({"name": fname, "path": os.path.join(prefix, fname)})
+            else:
+                items.append(
+                    {
+                        "name": name,
+                        "path": os.path.join(prefix, name),
+                        "children": convert(val, os.path.join(prefix, name)),
+                    }
+                )
+        return items
+
+    return convert(tree)
+
+
+@app.route("/api/organized-files", methods=["GET"])
+def organized_files():
+    """Return files grouped into simple categories."""
+    root = os.path.abspath(app.config["UPLOAD_FOLDER"])
+    if not os.path.exists(root):
+        return jsonify({"status": "ok", "data": {}})
+
+    files = _collect_paths(root)
+    categories = {}
+    for path in files:
+        cat = _categorize_name(os.path.basename(path))
+        categories.setdefault(cat, []).append(path)
+
+    data = {cat: _paths_to_tree(paths) for cat, paths in categories.items()}
+    return jsonify({"status": "ok", "data": data})
+
+
+@app.route("/uploads/<path:filename>")
+def serve_upload(filename):
+    """Serve a file from the uploads folder."""
+    return send_from_directory(app.config["UPLOAD_FOLDER"], filename, as_attachment=False)
+
+
 def cleanup_upload_folder(max_age_hours: int = 24) -> None:
     """Remove uploaded files older than ``max_age_hours``."""
     cutoff = time.time() - max_age_hours * 3600
@@ -285,13 +359,12 @@ def forensic_logs():
 
 @app.route("/api/progress", methods=["GET"])
 def progress_status():
-    """Stubbed progress information for the frontend."""
-    data = {
-        "upload": 0,
-        "export": 0,
-        "timeline": 0,
-        "forensic": 0,
-    }
+    """Return basic progress metrics."""
+    root = app.config["UPLOAD_FOLDER"]
+    upload_count = 0
+    if os.path.exists(root):
+        upload_count = sum(len(f) for _, _, f in os.walk(root))
+    data = {"uploaded_files": upload_count}
     return jsonify({"status": "ok", "data": data})
 
 
@@ -389,6 +462,12 @@ def export_report():
 def index():
     """Return the html."""
     return render_template("index.html")
+
+
+@app.route("/dashboard")
+def dashboard():
+    """Return the dashboard UI."""
+    return render_template("dashboard.html")
 
 
 @socketio.on("user_input", namespace="/chat")
