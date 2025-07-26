@@ -26,7 +26,7 @@ services:
       - neo4j_data:/data
 
   tesseract:
-    image: tesseractshadow/tesseract5-ocr
+    image: tesseractshadow/tesseract4re
     ports:
       - "5000:5000"
 
