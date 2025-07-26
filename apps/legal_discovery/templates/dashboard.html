@@ -3,27 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <title>Legal Discovery Dashboard</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
-  <script src="{{ url_for('static', filename='dashboardLogic.js') }}" defer></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.26.0/dist/cytoscape.min.js"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='vis-timeline/vis-timeline-graph2d.min.css') }}" />
+  <script src="{{ url_for('static', filename='vis-timeline/vis-timeline-graph2d.min.js') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='dashboard.js') }}" defer></script>
+  <style>
+    #graph { height: 300px; border: 1px solid #ccc; margin-top: 1rem; }
+    #timeline { height: 200px; border: 1px solid #ccc; margin-top: 1rem; }
+    .folder-tree ul { list-style: none; padding-left: 1rem; }
+    .folder-tree li { cursor: pointer; }
+    #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center; }
+    #modal iframe { width: 80vw; height: 80vh; background:#fff; }
+  </style>
 </head>
 <body>
-  <h1>Legal Discovery Assistant</h1>
+  <h1>Legal Discovery Dashboard</h1>
 
-  <form id="queryForm" method="POST">
-    <label for="text">Query:</label><br>
-    <textarea name="text" rows="5" cols="80" placeholder="e.g. Find deposition transcripts related to expert testimony"></textarea><br><br>
+  <section>
+    <h2>Upload</h2>
+    <input type="file" id="file-input" webkitdirectory directory multiple />
+    <button id="upload-button">Upload</button>
+    <button id="export-button">Export All</button>
+    <div id="file-tree" class="folder-tree"></div>
+  </section>
 
-    <label for="session_id">Session ID:</label><br>
-    <input name="session_id" value="demo-session"><br><br>
+  <section>
+    <h2>Timeline</h2>
+    <textarea id="timeline-query" rows="2" cols="60" placeholder="Request events..."></textarea>
+    <button id="load-timeline">Load Timeline</button>
+    <div id="timeline"></div>
+  </section>
 
-    <button type="submit">Run</button>
-  </form>
+  <section>
+    <h2>Knowledge Graph</h2>
+    <div id="graph"></div>
+  </section>
 
-  <hr>
-
-  <div id="responseContainer">
-    <h2>Response:</h2>
-    <pre id="outputBox"></pre>
+  <div id="modal" onclick="this.style.display='none'">
+    <iframe></iframe>
   </div>
 </body>
 </html>

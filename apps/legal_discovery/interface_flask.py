@@ -208,6 +208,16 @@ def list_files():
     return jsonify({"status": "ok", "data": data})
 
 
+@app.route("/api/organized-files", methods=["GET"])
+def organized_files():
+    """Return a placeholder organized file structure."""
+    root = os.path.abspath(app.config["UPLOAD_FOLDER"])
+    if not os.path.exists(root):
+        return jsonify({"status": "ok", "data": {}})
+    data = build_file_tree(root, len(root))
+    return jsonify({"status": "ok", "data": {"Uncategorized": data}})
+
+
 def cleanup_upload_folder(max_age_hours: int = 24) -> None:
     """Remove uploaded files older than ``max_age_hours``."""
     cutoff = time.time() - max_age_hours * 3600
@@ -389,6 +399,12 @@ def export_report():
 def index():
     """Return the html."""
     return render_template("index.html")
+
+
+@app.route("/dashboard")
+def dashboard():
+    """Return the dashboard UI."""
+    return render_template("dashboard.html")
 
 
 @socketio.on("user_input", namespace="/chat")
