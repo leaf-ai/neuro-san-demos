@@ -48,3 +48,22 @@ class TimelineManager(CodedTool):
         with open("apps/legal_discovery/templates/timeline.html") as f:
             template_str = f.read()
         return render_template_string(template_str, timeline_items=timeline_items)
+
+    def get_timeline(self, case_id: str) -> list:
+        """Retrieve timeline events for a case from the database."""
+        try:
+            from apps.legal_discovery.models import TimelineEvent
+        except Exception:  # pragma: no cover - optional DB dependency
+            return []
+
+        events = TimelineEvent.query.filter_by(case_id=case_id).order_by(TimelineEvent.event_date).all()
+        result = []
+        for event in events:
+            result.append(
+                {
+                    "id": event.id,
+                    "date": event.event_date.isoformat(),
+                    "description": event.description,
+                }
+            )
+        return result

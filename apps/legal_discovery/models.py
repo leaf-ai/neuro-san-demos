@@ -72,6 +72,21 @@ class UserSetting(db.Model):
     courtlistener_api_key = db.Column(db.String(255), nullable=True)
     gemini_api_key = db.Column(db.String(255), nullable=True)
     california_codes_url = db.Column(db.String(255), nullable=True)
+    courtlistener_com_api_endpoint = db.Column(db.String(255), nullable=True)
+    google_api_endpoint = db.Column(db.String(255), nullable=True)
+    verifypdf_api_key = db.Column(db.String(255), nullable=True)
+    verify_pdf_endpoint = db.Column(db.String(255), nullable=True)
+    riza_key = db.Column(db.String(255), nullable=True)
+    neo4j_uri = db.Column(db.String(255), nullable=True)
+    neo4j_username = db.Column(db.String(255), nullable=True)
+    neo4j_password = db.Column(db.String(255), nullable=True)
+    neo4j_database = db.Column(db.String(255), nullable=True)
+    aura_instance_id = db.Column(db.String(255), nullable=True)
+    aura_instance_name = db.Column(db.String(255), nullable=True)
+    gcp_project_id = db.Column(db.String(255), nullable=True)
+    gcp_vertex_ai_data_store_id = db.Column(db.String(255), nullable=True)
+    gcp_vertex_ai_search_app = db.Column(db.String(255), nullable=True)
+    gcp_service_account_key = db.Column(db.Text, nullable=True)
 
 
 class FileUpload(db.Model):

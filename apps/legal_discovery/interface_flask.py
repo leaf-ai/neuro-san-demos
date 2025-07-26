@@ -48,7 +48,6 @@ with app.app_context():
     app.logger.info("...legal discovery assistant set up.")
 
 
-
 def legal_discovery_thinking_process():
     """Main permanent agent-calling loop."""
     with app.app_context():  # Manually push the application context
@@ -138,11 +137,32 @@ def manage_settings():
             return jsonify(
                 {
                     "courtlistener_api_key": user_settings.courtlistener_api_key,
-                    "gemini_api_key": user_settings.gemini_api_key,
+                    "courtlistener_com_api_endpoint": user_settings.courtlistener_com_api_endpoint,
                     "california_codes_url": user_settings.california_codes_url,
+                    "gemini_api_key": user_settings.gemini_api_key,
+                    "google_api_endpoint": user_settings.google_api_endpoint,
+                    "verifypdf_api_key": user_settings.verifypdf_api_key,
+                    "verify_pdf_endpoint": user_settings.verify_pdf_endpoint,
+                    "riza_key": user_settings.riza_key,
+                    "neo4j_uri": user_settings.neo4j_uri,
+                    "neo4j_username": user_settings.neo4j_username,
+                    "neo4j_password": user_settings.neo4j_password,
+                    "neo4j_database": user_settings.neo4j_database,
+                    "aura_instance_id": user_settings.aura_instance_id,
+                    "aura_instance_name": user_settings.aura_instance_name,
+                    "gcp_project_id": user_settings.gcp_project_id,
+                    "gcp_vertex_ai_data_store_id": user_settings.gcp_vertex_ai_data_store_id,
+                    "gcp_vertex_ai_search_app": user_settings.gcp_vertex_ai_search_app,
+                    "gcp_service_account_key": user_settings.gcp_service_account_key,
                 }
             )
         return jsonify({})
+
+
+@app.route("/api/settings/api-keys", methods=["GET", "POST"])
+def manage_api_keys():
+    """Manage extended API key settings."""
+    return manage_settings()
 
 
 import shutil
@@ -153,6 +173,7 @@ from flask import send_from_directory
 from coded_tools.legal_discovery.forensic_tools import ForensicTools
 from coded_tools.legal_discovery.knowledge_graph_manager import KnowledgeGraphManager
 from coded_tools.legal_discovery.timeline_manager import TimelineManager
+from coded_tools.legal_discovery.research_tools import ResearchTools
 
 
 UPLOAD_FOLDER = "uploads"
@@ -163,6 +184,28 @@ ALLOWED_EXTENSIONS = {"pdf", "txt", "csv", "doc", "docx", "ppt", "pptx", "jpg", 
 def allowed_file(filename: str) -> bool:
     """Check if the file has an allowed extension."""
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def build_file_tree(directory: str, root_length: int) -> list:
+    """Recursively build a file tree structure."""
+    tree = []
+    for entry in os.scandir(directory):
+        rel_path = entry.path[root_length:].lstrip(os.sep)
+        node = {"path": rel_path, "name": entry.name}
+        if entry.is_dir():
+            node["children"] = build_file_tree(entry.path, root_length)
+        tree.append(node)
+    return sorted(tree, key=lambda x: (not x.get("children"), x["name"]))
+
+
+@app.route("/api/files", methods=["GET"])
+def list_files():
+    """Return a hierarchical view of uploaded files."""
+    root = os.path.abspath(app.config["UPLOAD_FOLDER"])
+    if not os.path.exists(root):
+        return jsonify({"status": "ok", "data": []})
+    data = build_file_tree(root, len(root))
+    return jsonify({"status": "ok", "data": data})
 
 
 def cleanup_upload_folder(max_age_hours: int = 24) -> None:
@@ -199,7 +242,6 @@ def upload_files():
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         file.save(save_path)
 
-
     return jsonify({"message": "Files uploaded successfully"})
 
 
@@ -230,12 +272,47 @@ def forensic_analysis():
     return jsonify({"result": result})
 
 
+@app.route("/api/forensic/logs", methods=["GET"])
+def forensic_logs():
+    """Return forensic analysis logs if available."""
+    log_path = os.path.join(app.config["UPLOAD_FOLDER"], "forensic.log")
+    if not os.path.exists(log_path):
+        return jsonify({"status": "ok", "data": []})
+    with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
+        lines = f.read().splitlines()
+    return jsonify({"status": "ok", "data": lines})
+
+
+@app.route("/api/progress", methods=["GET"])
+def progress_status():
+    """Stubbed progress information for the frontend."""
+    data = {
+        "upload": 0,
+        "export": 0,
+        "timeline": 0,
+        "forensic": 0,
+    }
+    return jsonify({"status": "ok", "data": data})
+
+
 @app.route("/api/graph/export", methods=["GET"])
 def export_graph():
     kg_manager = KnowledgeGraphManager()
     output_path = kg_manager.export_graph()
     kg_manager.close()
     return send_from_directory(".", output_path, as_attachment=False)
+
+
+@app.route("/api/graph", methods=["GET"])
+def get_graph():
+    subnet = request.args.get("subnet", "")
+    kg_manager = KnowledgeGraphManager()
+    try:
+        nodes, edges = kg_manager.get_subgraph(subnet) if subnet else kg_manager.get_subgraph("*")
+    except Exception:
+        nodes, edges = [], []
+    kg_manager.close()
+    return jsonify({"status": "ok", "data": {"nodes": nodes, "edges": edges}})
 
 
 @app.route("/api/timeline/export", methods=["POST"])
@@ -247,12 +324,7 @@ def export_timeline():
         return jsonify({"error": "Missing timeline_id"}), 400
 
     timeline_manager = TimelineManager()
-    events = (
-        TimelineEvent.query
-        .filter_by(case_id=timeline_id)
-        .order_by(TimelineEvent.event_date)
-        .all()
-    )
+    events = TimelineEvent.query.filter_by(case_id=timeline_id).order_by(TimelineEvent.event_date).all()
 
     timeline_items = []
     for event in events:
@@ -271,6 +343,46 @@ def export_timeline():
     html = timeline_manager.render_timeline(timeline_items)
     timeline_manager.close()
     return html
+
+
+@app.route("/api/timeline", methods=["GET"])
+def get_timeline():
+    query = request.args.get("query")
+    timeline_manager = TimelineManager()
+    events = timeline_manager.get_timeline(query) if query else []
+    timeline_manager.close()
+    return jsonify({"status": "ok", "data": events})
+
+
+@app.route("/api/research", methods=["GET"])
+def research():
+    query = request.args.get("query")
+    tool = ResearchTools()
+    results = tool.search(query) if query else []
+    return jsonify({"status": "ok", "data": results})
+
+
+@app.route("/api/query", methods=["POST"])
+def query_agent():
+    data = request.get_json() or {}
+    text = data.get("text")
+    if text:
+        user_input_queue.put(text)
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/export/report", methods=["POST"])
+def export_report():
+    data = request.get_json() or {}
+    rpt_type = data.get("type")
+    if rpt_type == "timeline":
+        return export_timeline()
+    elif rpt_type == "files":
+        return export_files()
+    elif rpt_type == "graph":
+        return export_graph()
+    else:
+        return jsonify({"error": "Invalid type"}), 400
 
 
 @app.route("/")
