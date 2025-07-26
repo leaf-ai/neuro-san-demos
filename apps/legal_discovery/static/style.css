@@ -1,20 +1,47 @@
+/* Dark theme for the Legal Discovery Assistant
+ *
+ * This stylesheet redefines the palette variables used by the refined UI and
+ * adjusts component colours for a dark interface. Cards, chat bubbles and
+ * buttons use deeper tones with high‑contrast text. The structure and class
+ * names mirror those in the light theme to ensure compatibility with the
+ * existing HTML and JavaScript. Simply link this file in place of the
+ * default style.css to enable dark mode.
+ */
+
+/* Dark colour palette variables */
+:root {
+    --primary-color: #f97316;            /* bright orange accent */
+    --secondary-color: #334155;          /* dark slate for panels */
+    --background-start: #0f172a;         /* dark gradient start */
+    --background-end:   #1e293b;         /* dark gradient end */
+    --chat-bg: #1e293b;                  /* chat container background */
+    --user-bg: #14532d;                  /* user message bubble */
+    --speech-bg: #1e3a8a;                /* assistant speech bubble */
+    --thought-bg: #78350f;               /* assistant thought bubble */
+    --card-bg: #334155;                  /* card/panel background */
+    --border-colour: #475569;            /* border colour for cards */
+    --text-colour: #f8fafc;              /* primary text colour */
+    --subtitle-colour: #94a3b8;          /* secondary text */
+}
+
 html, body {
     height: 100%;
     margin: 0;
     padding: 0;
-    background: linear-gradient(to right, #f2f6fc, #e9eafc);
     font-family: 'Inter', 'Open Sans', Arial, sans-serif;
-    color: #232946;
+    color: var(--text-colour);
     min-height: 100vh;
+    background: linear-gradient(to right, var(--background-start), var(--background-end));
 }
 
 .main-container {
-    max-width: 700px;
+    max-width: 800px;
     margin: 40px auto 20px auto;
-    background: #fff;
-    border-radius: 18px;
-    box-shadow: 0 8px 32px 0 rgba(36, 50, 93, 0.14);
-    padding: 36px 28px 24px 28px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    padding: 40px 32px 28px 32px;
+    position: relative;
 }
 
 header {
@@ -27,11 +54,11 @@ header h1 {
     font-size: 2.2em;
     font-weight: 600;
     letter-spacing: -1px;
-    color: #3553ad;
+    color: var(--primary-color);
 }
 
 .subtitle {
-    color: #667;
+    color: var(--subtitle-colour);
     font-size: 1.08em;
     margin-top: 7px;
 }
@@ -41,11 +68,21 @@ section {
 }
 
 h2 {
-    color: #507be8;
+    color: var(--primary-color);
     margin-top: 0;
     margin-bottom: 14px;
     font-weight: 600;
     letter-spacing: -0.5px;
+    font-size: 1.4em;
+}
+
+.card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-colour);
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    padding: 24px;
+    margin-bottom: 24px;
 }
 
 .thoughts-header {
@@ -57,8 +94,8 @@ h2 {
 
 #toggle-thoughts {
     font-size: 1em;
-    color: #507be8;
-    background: #e4eafe;
+    color: var(--primary-color);
+    background: var(--speech-bg);
     border: none;
     border-radius: 7px;
     padding: 7px 14px;
@@ -67,14 +104,14 @@ h2 {
 }
 
 #toggle-thoughts:hover, #toggle-thoughts:focus {
-    background: #c6d3ff;
+    background: #1d4ed8;
 }
 
 .chat-box {
-    background: #f8faff;
-    border: 1px solid #dce3f0;
+    background: var(--chat-bg);
+    border: 1px solid var(--border-colour);
     border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(56,56,105,0.09);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     min-height: 60px;
     max-height: 200px;
     padding: 18px 15px;
@@ -85,12 +122,12 @@ h2 {
 }
 
 .user-box {
-    background: #f0f7ef;
+    background: var(--user-bg);
 }
 
 .speech-msg {
-    background: #e4eafe;
-    color: #233a66;
+    background: var(--speech-bg);
+    color: var(--text-colour);
     padding: 7px 12px;
     border-radius: 8px;
     margin-bottom: 7px;
@@ -98,8 +135,8 @@ h2 {
 }
 
 .user-msg {
-    background: #d3f8d3;
-    color: #246634;
+    background: var(--user-bg);
+    color: #86efac; /* light green text for contrast */
     padding: 7px 12px;
     border-radius: 8px;
     margin-bottom: 7px;
@@ -108,8 +145,8 @@ h2 {
 }
 
 .thought-msg {
-    background: #fff3cd;
-    color: #98732c;
+    background: var(--thought-bg);
+    color: #fcd34d; /* light yellow text */
     padding: 7px 12px;
     border-radius: 8px;
     margin-bottom: 7px;
@@ -133,49 +170,65 @@ textarea {
     min-height: 48px;
     max-height: 140px;
     padding: 10px 13px;
-    border: 1px solid #b8c0db;
+    border: 1px solid var(--border-colour);
     border-radius: 8px;
     font-size: 1em;
     resize: vertical;
     font-family: inherit;
     outline: none;
-    background: #f8faff;
+    background: var(--chat-bg);
+    color: var(--text-colour);
     transition: border-color 0.2s;
 }
 
 textarea:focus {
-    border-color: #507be8;
+    border-color: var(--primary-color);
 }
 
-#send-button {
+.button-primary {
     padding: 11px 24px;
     font-weight: bold;
-    background: linear-gradient(90deg, #507be8 60%, #233a66 100%);
-    color: #fff;
+    background: var(--primary-color);
+    color: #ffffff;
     border: none;
     border-radius: 8px;
     cursor: pointer;
     transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
-    box-shadow: 0 2px 6px rgba(80,123,232,0.10);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
 }
 
-#send-button:hover, #send-button:focus {
-    background: linear-gradient(90deg, #3553ad 70%, #3553ad 100%);
-    box-shadow: 0 4px 12px rgba(80,123,232,0.17);
+.button-primary:hover, .button-primary:focus {
+    background: #ea580c;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6);
     transform: translateY(-1px) scale(1.04);
+}
+
+.button-secondary {
+    padding: 11px 24px;
+    font-weight: bold;
+    background: var(--accent-colour, #475569);
+    color: var(--text-colour);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.button-secondary:hover, .button-secondary:focus {
+    background: #3f4f6a;
 }
 
 footer {
     text-align: center;
     margin: 40px 0 15px 0;
-    color: #aab2c8;
+    color: var(--subtitle-colour);
     font-size: 0.99em;
     letter-spacing: 0.01em;
 }
 
 @media (max-width: 700px) {
     .main-container {
-        padding: 16px 2vw 12px 2vw;
+        padding: 24px 4vw 20px 4vw;
         margin: 20px auto 10px auto;
     }
     .chat-box {
@@ -183,9 +236,9 @@ footer {
         padding: 12px 5px;
         min-width: 0;
     }
-    h1 { font-size: 1.4em; }
-    h2 { font-size: 1.07em; }
-    #send-button {
+    h1 { font-size: 1.6em; }
+    h2 { font-size: 1.2em; }
+    .button-primary {
         padding: 9px 15px;
         font-size: 0.95em;
     }
@@ -193,11 +246,11 @@ footer {
 
 ::-webkit-scrollbar {
     width: 8px;
-    background: #f2f6fc;
+    background: var(--background-start);
     border-radius: 8px;
 }
 ::-webkit-scrollbar-thumb {
-    background: #e4eafe;
+    background: var(--speech-bg);
     border-radius: 8px;
 }
 
@@ -216,19 +269,18 @@ footer {
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0,0,0,0.4);
+    background-color: rgba(0,0,0,0.6);
 }
 
 .modal-content {
-    background-color: #fefefe;
+    background-color: var(--card-bg);
     margin: 15% auto;
     padding: 20px;
-    border: 1px solid #888;
+    border: 1px solid var(--border-colour);
     width: 80%;
-}
 
 .close-btn {
-    color: #aaa;
+    color: var(--subtitle-colour);
     float: right;
     font-size: 28px;
     font-weight: bold;
@@ -236,7 +288,7 @@ footer {
 
 .close-btn:hover,
 .close-btn:focus {
-    color: black;
+    color: var(--text-colour);
     text-decoration: none;
     cursor: pointer;
 }
@@ -244,8 +296,8 @@ footer {
 #file-upload-section, #timeline-export-section {
     margin-top: 20px;
     padding: 20px;
-    background: #f8faff;
-    border: 1px solid #dce3f0;
+    background: var(--chat-bg);
+    border: 1px solid var(--border-colour);
     border-radius: 10px;
 }
 
