@@ -1,54 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Legal Discovery Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
-  <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.26.0/dist/cytoscape.min.js"></script>
-  <link rel="stylesheet" href="{{ url_for('static', filename='vis-timeline/vis-timeline-graph2d.min.css') }}" />
-  <script src="{{ url_for('static', filename='vis-timeline/vis-timeline-graph2d.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='dashboard.js') }}" defer></script>
-  <style>
-    #graph { height: 300px; border: 1px solid #ccc; margin-top: 1rem; }
-    #timeline { height: 200px; border: 1px solid #ccc; margin-top: 1rem; }
-    .folder-tree ul { list-style: none; padding-left: 1rem; }
-    .folder-tree li { cursor: pointer; }
-    #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center; }
-    #modal iframe { width: 80vw; height: 80vh; background:#fff; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Legal Discovery Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Application styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Tailwind for rapid utility classes (optional) -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <!-- Graph and timeline libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.26.0/dist/cytoscape.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='vis-timeline/vis-timeline-graph2d.min.css') }}" />
+    <script src="{{ url_for('static', filename='vis-timeline/vis-timeline-graph2d.min.js') }}"></script>
+    <!-- Dashboard script -->
+    <script src="{{ url_for('static', filename='dashboard.js') }}" defer></script>
 </head>
 <body>
-  <h1 class="text-2xl font-semibold mb-4">Legal Discovery Dashboard</h1>
+    <div class="main-container">
+        <h1 class="text-2xl font-semibold mb-6" style="color: var(--primary-color);">Legal Discovery Dashboard</h1>
 
-  <section class="bg-slate-800 p-4 rounded mb-6">
-    <h2 class="text-lg font-medium mb-2">Upload</h2>
-    <input type="file" id="file-input" class="mb-2" webkitdirectory directory multiple />
-    <div class="space-x-2 mb-2">
-      <button id="upload-button" class="px-3 py-1 rounded bg-orange-600 text-white">Upload</button>
-      <button id="export-button" class="px-3 py-1 rounded bg-slate-600 text-white">Export All</button>
-      <button id="organized-button" class="px-3 py-1 rounded bg-slate-700 text-white">Organize</button>
+        <!-- Upload section -->
+        <section class="card">
+            <h2>Upload</h2>
+            <input type="file" id="file-input" class="mb-3" webkitdirectory directory multiple />
+            <div class="flex flex-wrap gap-2 mb-3">
+                <button id="upload-button" class="button-primary">Upload</button>
+                <button id="export-button" class="button-secondary">Export All</button>
+                <button id="organized-button" class="button-secondary">Organize</button>
+            </div>
+            <div id="file-tree" class="folder-tree text-sm"></div>
+            <div id="organized-tree" class="folder-tree text-sm mt-4"></div>
+        </section>
+
+        <!-- Timeline section -->
+        <section class="card">
+            <h2>Timeline</h2>
+            <textarea id="timeline-query" rows="2" class="w-full mb-3 p-2 rounded" placeholder="Request events…"></textarea>
+            <button id="load-timeline" class="button-primary">Load Timeline</button>
+            <div id="timeline" class="mt-4"></div>
+        </section>
+
+        <!-- Knowledge graph section -->
+        <section class="card">
+            <h2>Knowledge Graph</h2>
+            <div id="graph" class="mt-2" style="height:300px;border:1px solid var(--border-colour);"></div>
+        </section>
     </div>
-    <div id="file-tree" class="folder-tree text-sm"></div>
-    <div id="organized-tree" class="folder-tree text-sm mt-4"></div>
-  </section>
 
-  <section class="bg-slate-800 p-4 rounded mb-6">
-    <h2 class="text-lg font-medium mb-2">Timeline</h2>
-    <textarea id="timeline-query" rows="2" cols="60" class="w-full mb-2 p-2 rounded bg-slate-700" placeholder="Request events..."></textarea>
-    <button id="load-timeline" class="px-3 py-1 rounded bg-orange-600 text-white">Load Timeline</button>
-    <div id="timeline" class="mt-4"></div>
-  </section>
-
-  <section class="bg-slate-800 p-4 rounded mb-6">
-    <h2 class="text-lg font-medium mb-2">Knowledge Graph</h2>
-    <div id="graph" class="mt-2"></div>
-  </section>
-
-  <div id="modal" onclick="this.style.display='none'">
-    <iframe></iframe>
-  </div>
+    <!-- Modal for displaying citations and other embedded content -->
+    <div id="modal" onclick="this.style.display='none'" style="position: fixed; inset: 0; background: rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center;">
+        <iframe style="width: 80vw; height: 80vh; background:#fff;"></iframe>
+    </div>
 </body>
 </html>
