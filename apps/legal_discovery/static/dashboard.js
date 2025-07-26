@@ -10,10 +10,31 @@ function buildTree(el, nodes) {
   nodes.forEach(n => {
     const li = document.createElement('li');
     li.textContent = n.name;
-    if (n.children) buildTree(li, n.children);
+    if (n.children) {
+      buildTree(li, n.children);
+    } else {
+      li.onclick = () => window.open('/uploads/' + n.path, '_blank');
+    }
     ul.appendChild(li);
   });
   el.appendChild(ul);
+}
+
+function fetchOrganized() {
+  fetch('/api/organized-files')
+    .then(r => r.json())
+    .then(d => {
+      const container = document.getElementById('organized-tree');
+      container.innerHTML = '';
+      Object.entries(d.data).forEach(([cat, nodes]) => {
+        const section = document.createElement('div');
+        const h3 = document.createElement('h3');
+        h3.textContent = cat;
+        section.appendChild(h3);
+        buildTree(section, nodes);
+        container.appendChild(section);
+      });
+    });
 }
 
 function upload() {
@@ -69,4 +90,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('upload-button').onclick = upload;
   document.getElementById('export-button').onclick = exportAll;
   document.getElementById('load-timeline').onclick = loadTimeline;
+  const orgBtn = document.getElementById('organized-button');
+  if (orgBtn) orgBtn.onclick = fetchOrganized;
 });

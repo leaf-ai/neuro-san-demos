@@ -5,10 +5,11 @@
   <title>Legal Discovery Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
   <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.26.0/dist/cytoscape.min.js"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='vis-timeline/vis-timeline-graph2d.min.css') }}" />
   <script src="{{ url_for('static', filename='vis-timeline/vis-timeline-graph2d.min.js') }}"></script>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <script src="{{ url_for('static', filename='dashboard.js') }}" defer></script>
   <style>
     #graph { height: 300px; border: 1px solid #ccc; margin-top: 1rem; }
@@ -20,26 +21,30 @@
   </style>
 </head>
 <body>
-  <h1>Legal Discovery Dashboard</h1>
+  <h1 class="text-2xl font-semibold mb-4">Legal Discovery Dashboard</h1>
 
-  <section>
-    <h2>Upload</h2>
-    <input type="file" id="file-input" webkitdirectory directory multiple />
-    <button id="upload-button">Upload</button>
-    <button id="export-button">Export All</button>
-    <div id="file-tree" class="folder-tree"></div>
+  <section class="bg-slate-800 p-4 rounded mb-6">
+    <h2 class="text-lg font-medium mb-2">Upload</h2>
+    <input type="file" id="file-input" class="mb-2" webkitdirectory directory multiple />
+    <div class="space-x-2 mb-2">
+      <button id="upload-button" class="px-3 py-1 rounded bg-orange-600 text-white">Upload</button>
+      <button id="export-button" class="px-3 py-1 rounded bg-slate-600 text-white">Export All</button>
+      <button id="organized-button" class="px-3 py-1 rounded bg-slate-700 text-white">Organize</button>
+    </div>
+    <div id="file-tree" class="folder-tree text-sm"></div>
+    <div id="organized-tree" class="folder-tree text-sm mt-4"></div>
   </section>
 
-  <section>
-    <h2>Timeline</h2>
-    <textarea id="timeline-query" rows="2" cols="60" placeholder="Request events..."></textarea>
-    <button id="load-timeline">Load Timeline</button>
-    <div id="timeline"></div>
+  <section class="bg-slate-800 p-4 rounded mb-6">
+    <h2 class="text-lg font-medium mb-2">Timeline</h2>
+    <textarea id="timeline-query" rows="2" cols="60" class="w-full mb-2 p-2 rounded bg-slate-700" placeholder="Request events..."></textarea>
+    <button id="load-timeline" class="px-3 py-1 rounded bg-orange-600 text-white">Load Timeline</button>
+    <div id="timeline" class="mt-4"></div>
   </section>
 
-  <section>
-    <h2>Knowledge Graph</h2>
-    <div id="graph"></div>
+  <section class="bg-slate-800 p-4 rounded mb-6">
+    <h2 class="text-lg font-medium mb-2">Knowledge Graph</h2>
+    <div id="graph" class="mt-2"></div>
   </section>
 
   <div id="modal" onclick="this.style.display='none'">
