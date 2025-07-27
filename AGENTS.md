@@ -30,9 +30,12 @@
 - Added `delete_node` and `delete_relationship` helpers to KnowledgeGraphManager
 - Updated unit test to use new cleanup method
 - Attempted installing dependencies but installation was interrupted
+
 - Next: get a clean environment to run full test suite
 
 ## Update 2025-07-27T15:24Z
 - Added Flask app factories in `apps/__init__.py` and submodules to expose application objects
 - Focused on `/apps/legal_discovery` but applied pattern to other demos for consistency
 - Next: ensure Docker compose works on Windows without manual tweaks
+=======
+- Next: get a clean environment to run full test suite
