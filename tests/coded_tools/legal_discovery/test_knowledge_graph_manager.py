@@ -3,7 +3,10 @@ from coded_tools.legal_discovery.knowledge_graph_manager import KnowledgeGraphMa
 
 class TestKnowledgeGraphManager(unittest.TestCase):
     def setUp(self):
-        self.kg_manager = KnowledgeGraphManager()
+        try:
+            self.kg_manager = KnowledgeGraphManager()
+        except RuntimeError as exc:  # Neo4j not running
+            self.skipTest(str(exc))
 
     def tearDown(self):
         self.kg_manager.close()
@@ -22,7 +25,7 @@ class TestKnowledgeGraphManager(unittest.TestCase):
         self.assertEqual(node['value'], properties['value'])
 
         # Clean up
-        self.kg_manager.run_query("MATCH (n) WHERE id(n) = $node_id DETACH DELETE n", {"node_id": node_id})
+        self.kg_manager.delete_node(node_id)
 
 if __name__ == '__main__':
     unittest.main()
