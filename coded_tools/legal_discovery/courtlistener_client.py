@@ -1,7 +1,7 @@
 import os
 
 import requests
-from neuro_san.coded_tool import CodedTool
+from neuro_san.interfaces.coded_tool import CodedTool
 
 
 class CourtListenerClient(CodedTool):
