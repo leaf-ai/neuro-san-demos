@@ -20,3 +20,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Refined styles with responsive grid and sticky navigation.
 - Connected all controls to backend APIs via `dashboard.js`.
 - Next: enhance data visualisations for the knowledge graph and timeline.
+
+## Update 2025-07-27T21:07Z
+- Updated imports for legal discovery tools to match new neuro_san package layout
+- Install attempts failed due to network restrictions
+- Next: test the Flask app in Docker once dependencies are resolved

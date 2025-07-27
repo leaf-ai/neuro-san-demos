@@ -1,6 +1,6 @@
 import os
 
-from neuro_san.coded_tool import CodedTool
+from neuro_san.interfaces.coded_tool import CodedTool
 
 
 class TaskTracker(CodedTool):

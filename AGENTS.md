@@ -107,3 +107,8 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Refined card grid layout and sticky nav for better UX
 - Created module AGENTS guide and logged tasks
 - Next: polish graphs and timeline exports
+
+## Update 2025-07-27T21:07Z
+- Fixed imports for CodedTool modules to use `neuro_san.interfaces.coded_tool`
+- Attempted installing requirements but network prevented completion
+- Next: rebuild Docker images and verify gunicorn now loads without ModuleNotFoundError
