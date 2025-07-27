@@ -92,4 +92,97 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('load-timeline').onclick = loadTimeline;
   const orgBtn = document.getElementById('organized-button');
   if (orgBtn) orgBtn.onclick = fetchOrganized;
+
+  const redactBtn = document.getElementById('redact-button');
+  const stampBtn = document.getElementById('stamp-button');
+  const vecSearchBtn = document.getElementById('vector-search-button');
+  const extractBtn = document.getElementById('extract-text-button');
+  const addTaskBtn = document.getElementById('add-task');
+  const listTaskBtn = document.getElementById('list-tasks');
+  const clearTaskBtn = document.getElementById('clear-tasks');
+  if (redactBtn) redactBtn.onclick = redact;
+  if (stampBtn) stampBtn.onclick = stamp;
+  if (vecSearchBtn) vecSearchBtn.onclick = vectorSearch;
+  if (extractBtn) extractBtn.onclick = extractText;
+  if (addTaskBtn) addTaskBtn.onclick = addTask;
+  if (listTaskBtn) listTaskBtn.onclick = listTasks;
+  if (clearTaskBtn) clearTaskBtn.onclick = clearTasks;
 });
+
+function redact() {
+  const path = document.getElementById('doc-path').value;
+  const text = document.getElementById('redact-text').value;
+  fetch('/api/document/redact', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({file_path: path, text})
+  })
+    .then(r => r.json())
+    .then(alertResponse);
+}
+
+function stamp() {
+  const path = document.getElementById('doc-path').value;
+  const prefix = document.getElementById('stamp-prefix').value;
+  fetch('/api/document/stamp', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({file_path: path, prefix})
+  })
+    .then(r => r.json())
+    .then(alertResponse);
+}
+
+function vectorSearch() {
+  const q = document.getElementById('vector-query').value;
+  fetch('/api/vector/search?q=' + encodeURIComponent(q))
+    .then(r => r.json())
+    .then(d => {
+      document.getElementById('vector-results').textContent = JSON.stringify(d.data, null, 2);
+    });
+}
+
+function extractText() {
+  const path = document.getElementById('doc-path').value;
+  fetch('/api/document/text', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({file_path: path})
+  })
+    .then(r => r.json())
+    .then(d => {
+      document.getElementById('extracted-text').textContent = d.data || '';
+    });
+}
+
+function addTask() {
+  const task = document.getElementById('task-input').value;
+  fetch('/api/tasks', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({task})
+  })
+    .then(r => r.json())
+    .then(alertResponse);
+}
+
+function listTasks() {
+  fetch('/api/tasks')
+    .then(r => r.json())
+    .then(d => {
+      document.getElementById('task-list').textContent = d.data || '';
+    });
+}
+
+function clearTasks() {
+  fetch('/api/tasks', {method:'DELETE'})
+    .then(r => r.json())
+    .then(d => {
+      document.getElementById('task-list').textContent = '';
+      alert(d.message || 'Cleared');
+    });
+}
+
+function alertResponse(d) {
+  alert(d.message || 'Done');
+}

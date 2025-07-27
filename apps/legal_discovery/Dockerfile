@@ -19,5 +19,6 @@ EXPOSE 5001
 # Define environment variable
 ENV NAME World
 
-# Run app.py when the container launches
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5001", "apps.legal_discovery.interface_flask:app"]
+# Run the Flask application via gunicorn with eventlet for SocketIO support
+# Using "python -m" avoids PATH issues on Windows hosts
+CMD ["python", "-m", "gunicorn", "-k", "eventlet", "-w", "1", "-b", "0.0.0.0:5001", "apps.legal_discovery.interface_flask:app"]
