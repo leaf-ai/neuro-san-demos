@@ -107,3 +107,19 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Refined card grid layout and sticky nav for better UX
 - Created module AGENTS guide and logged tasks
 - Next: polish graphs and timeline exports
+
+## Update 2025-07-27T21:07Z
+- Fixed imports for CodedTool modules to use `neuro_san.interfaces.coded_tool`
+- Attempted installing requirements but network prevented completion
+- Next: rebuild Docker images and verify gunicorn now loads without ModuleNotFoundError
+
+## Update 2025-07-27T21:25Z
+- Installed required dependencies (neuro-san, neo4j, pyvis) to run tests
+- Confirmed all tests pass (2 passed, 2 skipped)
+- Next: run Docker compose to verify imports resolved
+
+## Update 2025-07-27T21:29Z
+- Installed missing packages for pytest (`python-dotenv`, `neuro-san`, `neo4j`, `pyvis`)
+- Verified tests succeed again (2 passed, 2 skipped)
+- Attempted `docker compose` but the tool is unavailable in this environment
+- Next: test Docker build once Docker is accessible
