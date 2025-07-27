@@ -6,16 +6,39 @@ function fetchFiles() {
 
 function buildTree(el, nodes) {
   if (!nodes) return;
+  el.innerHTML = '';
   const ul = document.createElement('ul');
   nodes.forEach(n => {
-    const li = document.createElement('li');
-    li.textContent = n.name;
     if (n.children) {
-      buildTree(li, n.children);
+      const folder = document.createElement('li');
+      folder.className = 'folder';
+      const header = document.createElement('div');
+      header.className = 'folder-header';
+      const icon = document.createElement('i');
+      icon.className = 'folder-icon fa fa-caret-right';
+      const title = document.createElement('span');
+      title.className = 'title';
+      title.textContent = n.name;
+      header.appendChild(icon);
+      header.appendChild(title);
+      folder.appendChild(header);
+      const contents = document.createElement('div');
+      contents.className = 'folder-contents';
+      buildTree(contents, n.children);
+      folder.appendChild(contents);
+      header.onclick = () => {
+        folder.classList.toggle('open');
+        icon.classList.toggle('fa-caret-right', !folder.classList.contains('open'));
+        icon.classList.toggle('fa-caret-down', folder.classList.contains('open'));
+      };
+      ul.appendChild(folder);
     } else {
-      li.onclick = () => window.open('/uploads/' + n.path, '_blank');
+      const file = document.createElement('li');
+      file.className = 'file';
+      file.textContent = n.name;
+      file.onclick = () => window.open('/uploads/' + n.path, '_blank');
+      ul.appendChild(file);
     }
-    ul.appendChild(li);
   });
   el.appendChild(ul);
 }
@@ -37,6 +60,48 @@ function fetchOrganized() {
     });
 }
 
+function refreshStats() {
+  fetch('/api/progress')
+    .then(r => r.json())
+    .then(d => {
+      document.getElementById('upload-count').textContent = d.data.uploaded_files || 0;
+    });
+  fetch('/api/vector/count')
+    .then(r => r.json())
+    .then(d => {
+      document.getElementById('vector-count').textContent = d.data || 0;
+    });
+}
+
+function forensicAnalyze() {
+  const path = document.getElementById('forensic-path').value;
+  const analysis = document.getElementById('analysis-type').value;
+  fetch('/api/agents/forensic_analysis', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({file_path: path, analysis_type: analysis})
+  })
+    .then(r => r.json())
+    .then(d => alert(d.result || d.error || 'Done'));
+}
+
+function loadForensicLogs() {
+  fetch('/api/forensic/logs')
+    .then(r => r.json())
+    .then(d => {
+      document.getElementById('forensic-log').textContent = (d.data || []).join('\n');
+    });
+}
+
+function researchSearch() {
+  const q = document.getElementById('research-query').value;
+  fetch('/api/research?query=' + encodeURIComponent(q))
+    .then(r => r.json())
+    .then(d => {
+      document.getElementById('research-results').textContent = JSON.stringify(d.data, null, 2);
+    });
+}
+
 function upload() {
   const files = document.getElementById('file-input').files;
   if (!files.length) return;
@@ -44,7 +109,7 @@ function upload() {
   for (const f of files) fd.append('files', f, f.webkitRelativePath || f.name);
   fetch('/api/upload', { method:'POST', body:fd })
     .then(r => r.json())
-    .then(_ => fetchFiles());
+    .then(_ => { fetchFiles(); refreshStats(); });
 }
 
 function exportAll() {
@@ -87,16 +152,23 @@ function loadGraph() {
 document.addEventListener('DOMContentLoaded', () => {
   fetchFiles();
   loadGraph();
+  refreshStats();
   document.getElementById('upload-button').onclick = upload;
   document.getElementById('export-button').onclick = exportAll;
   document.getElementById('load-timeline').onclick = loadTimeline;
   const orgBtn = document.getElementById('organized-button');
   if (orgBtn) orgBtn.onclick = fetchOrganized;
 
+  const refreshBtn = document.getElementById('refresh-stats');
+  if (refreshBtn) refreshBtn.onclick = refreshStats;
+
   const redactBtn = document.getElementById('redact-button');
   const stampBtn = document.getElementById('stamp-button');
   const vecSearchBtn = document.getElementById('vector-search-button');
   const extractBtn = document.getElementById('extract-text-button');
+  const forensicBtn = document.getElementById('forensic-analyze');
+  const forensicLogBtn = document.getElementById('load-forensic-logs');
+  const researchBtn = document.getElementById('research-button');
   const addTaskBtn = document.getElementById('add-task');
   const listTaskBtn = document.getElementById('list-tasks');
   const clearTaskBtn = document.getElementById('clear-tasks');
@@ -104,9 +176,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (stampBtn) stampBtn.onclick = stamp;
   if (vecSearchBtn) vecSearchBtn.onclick = vectorSearch;
   if (extractBtn) extractBtn.onclick = extractText;
+  if (forensicBtn) forensicBtn.onclick = forensicAnalyze;
+  if (forensicLogBtn) forensicLogBtn.onclick = loadForensicLogs;
+  if (researchBtn) researchBtn.onclick = researchSearch;
   if (addTaskBtn) addTaskBtn.onclick = addTask;
   if (listTaskBtn) listTaskBtn.onclick = listTasks;
   if (clearTaskBtn) clearTaskBtn.onclick = clearTasks;
+  setupSettingsModal();
+  setupChat();
 });
 
 function redact() {
@@ -185,4 +262,54 @@ function clearTasks() {
 
 function alertResponse(d) {
   alert(d.message || 'Done');
+}
+
+let socket;
+function setupChat() {
+  socket = io('/chat');
+  socket.on('update_thoughts', d => addMessage('thought', d.data));
+  socket.on('update_speech', d => addMessage('speech', d.data));
+  socket.on('update_user_input', d => addMessage('user', d.data));
+  document.getElementById('chat-send').onclick = sendChat;
+}
+
+function addMessage(type, text) {
+  const box = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = type === 'user' ? 'user-msg' : type === 'speech' ? 'speech-msg' : 'thought-msg';
+  div.innerHTML = text.replace(/\n/g, '<br>');
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function sendChat() {
+  const input = document.getElementById('chat-input');
+  const txt = input.value.trim();
+  if (!txt) return;
+  socket.emit('user_input', {data: txt}, '/chat');
+  input.value = '';
+}
+
+function setupSettingsModal() {
+  const modal = document.getElementById('settings-modal');
+  const btn = document.getElementById('settings-btn');
+  const span = modal.querySelector('.close-btn');
+  btn.onclick = () => {
+    modal.style.display = 'block';
+    fetch('/api/settings')
+      .then(r => r.json())
+      .then(d => {
+        document.getElementById('courtlistener-api-key').value = d.courtlistener_api_key || '';
+        document.getElementById('gemini-api-key').value = d.gemini_api_key || '';
+        document.getElementById('california-codes-url').value = d.california_codes_url || '';
+      });
+  };
+  span.onclick = () => { modal.style.display = 'none'; };
+  window.onclick = e => { if (e.target === modal) modal.style.display = 'none'; };
+  document.getElementById('settings-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(e.target).entries());
+    fetch('/api/settings', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data)})
+      .then(() => { modal.style.display = 'none'; });
+  });
 }

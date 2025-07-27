@@ -88,3 +88,22 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Next: confirm Docker Compose on Windows builds without errors
 
 - Next: get a clean environment to run full test suite
+
+## Update 2025-07-27T19:54Z
+- Expanded dashboard with stats, forensic analysis and research sections
+- Added corresponding API hooks and refreshed dark theme styles
+- Confirmed all tests pass (2 passed, 2 skipped)
+- Next: verify docker compose on Windows
+
+## Update 2025-07-27T20:15Z
+- Improved dashboard layout with responsive card grid and navigation bar
+- Added FontAwesome icons and collapsible folder tree for uploads
+- Updated styles for modern dark theme and polished visuals
+- Confirmed tests still pass (2 passed, 2 skipped)
+- Next: continue refining UI interactions and verify Docker stack
+
+## Update 2025-07-27T20:30Z
+- Added dashboard chat panel and settings modal with socket.io integration
+- Refined card grid layout and sticky nav for better UX
+- Created module AGENTS guide and logged tasks
+- Next: polish graphs and timeline exports
