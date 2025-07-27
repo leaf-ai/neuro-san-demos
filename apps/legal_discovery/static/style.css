@@ -22,6 +22,8 @@
     --border-colour: #475569;            /* border colour for cards */
     --text-colour: #f8fafc;              /* primary text colour */
     --subtitle-colour: #94a3b8;          /* secondary text */
+    --nav-bg: #1e293b;                   /* navigation bar */
+    --nav-text: #f8fafc;                 /* navigation text */
 }
 
 html, body {
@@ -47,6 +49,30 @@ html, body {
 header {
     text-align: center;
     margin-bottom: 28px;
+}
+
+nav {
+    background: var(--nav-bg);
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+nav a {
+    color: var(--nav-text);
+    text-decoration: none;
+    margin-left: 12px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+}
+
+nav a:hover {
+    color: var(--primary-color);
 }
 
 header h1 {
@@ -85,9 +111,24 @@ h2 {
     margin-bottom: 24px;
 }
 
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 24px;
+}
+
+@media (min-width: 1200px) {
+    .card-grid {
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    }
+}
+
 .thoughts-header {
     display: flex;
     align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 50;
     justify-content: space-between;
     margin-bottom: 4px;
 }
@@ -305,8 +346,52 @@ footer {
     display: flex;
     gap: 10px;
     align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 50;
 }
 
 #file-input {
     flex-grow: 1;
+}
+
+pre {
+    background: var(--chat-bg);
+    border: 1px solid var(--border-colour);
+    padding: 12px;
+    border-radius: 8px;
+    overflow-x: auto;
+}
+
+.folder-tree ul {
+    list-style: none;
+    margin: 0;
+    padding-left: 1em;
+}
+
+.folder-tree .folder-header {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+.folder-tree .folder-icon {
+    margin-right: 0.5em;
+    transition: transform 0.2s;
+}
+
+.folder-tree .folder.open > .folder-header .folder-icon {
+    transform: rotate(90deg);
+}
+
+.folder-tree .folder-contents {
+    margin-left: 1em;
+    display: none;
+}
+
+.folder-tree .folder.open > .folder-contents {
+    display: block;
 }
