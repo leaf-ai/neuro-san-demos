@@ -47,6 +47,40 @@
             <h2>Knowledge Graph</h2>
             <div id="graph" class="mt-2" style="height:300px;border:1px solid var(--border-colour);"></div>
         </section>
+
+        <!-- Document tools section -->
+        <section class="card">
+            <h2>Document Tools</h2>
+            <input type="text" id="doc-path" class="w-full mb-2 p-2 rounded" placeholder="Path to PDF" />
+            <input type="text" id="redact-text" class="w-full mb-2 p-2 rounded" placeholder="Text to redact" />
+            <div class="flex flex-wrap gap-2 mb-2">
+                <button id="redact-button" class="button-secondary">Redact PDF</button>
+            </div>
+            <input type="text" id="stamp-prefix" class="w-full mb-2 p-2 rounded" placeholder="Bates prefix" />
+            <button id="stamp-button" class="button-secondary">Bates Stamp</button>
+            <button id="extract-text-button" class="button-secondary mt-2">Extract Text</button>
+            <pre id="extracted-text" class="text-sm mt-2"></pre>
+        </section>
+
+        <!-- Vector search section -->
+        <section class="card">
+            <h2>Vector Search</h2>
+            <input type="text" id="vector-query" class="w-full mb-2 p-2 rounded" placeholder="Search text" />
+            <button id="vector-search-button" class="button-secondary mb-2">Search</button>
+            <pre id="vector-results" class="text-sm"></pre>
+        </section>
+
+        <!-- Task tracker section -->
+        <section class="card">
+            <h2>Task Tracker</h2>
+            <input type="text" id="task-input" class="w-full mb-2 p-2 rounded" placeholder="New task" />
+            <div class="flex flex-wrap gap-2 mb-2">
+                <button id="add-task" class="button-secondary">Add</button>
+                <button id="list-tasks" class="button-secondary">List</button>
+                <button id="clear-tasks" class="button-secondary">Clear</button>
+            </div>
+            <pre id="task-list" class="text-sm"></pre>
+        </section>
     </div>
 
     <!-- Modal for displaying citations and other embedded content -->

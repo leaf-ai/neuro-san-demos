@@ -174,11 +174,20 @@ from coded_tools.legal_discovery.forensic_tools import ForensicTools
 from coded_tools.legal_discovery.knowledge_graph_manager import KnowledgeGraphManager
 from coded_tools.legal_discovery.timeline_manager import TimelineManager
 from coded_tools.legal_discovery.research_tools import ResearchTools
+from coded_tools.legal_discovery.document_modifier import DocumentModifier
+from coded_tools.legal_discovery.document_processor import DocumentProcessor
+from coded_tools.legal_discovery.task_tracker import TaskTracker
+from coded_tools.legal_discovery.vector_database_manager import (
+    VectorDatabaseManager,
+)
 
 
 UPLOAD_FOLDER = "uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {"pdf", "txt", "csv", "doc", "docx", "ppt", "pptx", "jpg", "jpeg", "png", "gif"}
+
+# Singleton task tracker instance for quick task management
+task_tracker = TaskTracker()
 
 
 def allowed_file(filename: str) -> bool:
@@ -355,6 +364,105 @@ def forensic_logs():
     with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
         lines = f.read().splitlines()
     return jsonify({"status": "ok", "data": lines})
+
+
+@app.route("/api/document/redact", methods=["POST"])
+def redact_document():
+    """Redact occurrences of text in a PDF using DocumentModifier."""
+    data = request.get_json() or {}
+    file_path = data.get("file_path")
+    text = data.get("text")
+    if not file_path or not text:
+        return jsonify({"error": "Missing file_path or text"}), 400
+
+    modifier = DocumentModifier()
+    try:
+        modifier.redact_text(file_path, text)
+    except Exception as exc:  # pragma: no cover - filesystem errors
+        return jsonify({"error": str(exc)}), 500
+    return jsonify({"message": "File redacted", "output": f"{file_path}_redacted.pdf"})
+
+
+@app.route("/api/document/stamp", methods=["POST"])
+def bates_stamp_document():
+    """Apply Bates numbering to a PDF."""
+    data = request.get_json() or {}
+    file_path = data.get("file_path")
+    prefix = data.get("prefix", "BATES")
+    if not file_path:
+        return jsonify({"error": "Missing file_path"}), 400
+    modifier = DocumentModifier()
+    try:
+        modifier.bates_stamp(file_path, prefix)
+    except Exception as exc:  # pragma: no cover - filesystem errors
+        return jsonify({"error": str(exc)}), 500
+    return jsonify({"message": "File stamped", "output": f"{file_path}_stamped.pdf"})
+
+
+@app.route("/api/vector/add", methods=["POST"])
+def vector_add_documents():
+    """Add documents to the vector database."""
+    data = request.get_json() or {}
+    documents = data.get("documents")
+    ids = data.get("ids")
+    metadatas = data.get("metadatas", [{} for _ in (documents or [])])
+    if not documents or not ids:
+        return jsonify({"error": "Missing documents or ids"}), 400
+    manager = VectorDatabaseManager()
+    manager.add_documents(documents, metadatas, ids)
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/vector/search", methods=["GET"])
+def vector_search():
+    """Query the vector database."""
+    query = request.args.get("q")
+    if not query:
+        return jsonify({"status": "ok", "data": {}})
+    manager = VectorDatabaseManager()
+    result = manager.query([query], n_results=5)
+    return jsonify({"status": "ok", "data": result})
+
+
+@app.route("/api/vector/count", methods=["GET"])
+def vector_count():
+    """Return the document count in the vector database."""
+    manager = VectorDatabaseManager()
+    count = manager.get_document_count()
+    return jsonify({"status": "ok", "data": count})
+
+
+@app.route("/api/document/text", methods=["POST"])
+def extract_document_text():
+    """Extract text from a document using DocumentProcessor."""
+    data = request.get_json() or {}
+    file_path = data.get("file_path")
+    if not file_path:
+        return jsonify({"error": "Missing file_path"}), 400
+    processor = DocumentProcessor()
+    try:
+        text = processor.extract_text(file_path)
+    except Exception as exc:  # pragma: no cover - filesystem errors
+        return jsonify({"error": str(exc)}), 500
+    return jsonify({"status": "ok", "data": text})
+
+
+@app.route("/api/tasks", methods=["GET", "POST", "DELETE"])
+def manage_tasks():
+    """Simple task tracker endpoints."""
+    if request.method == "POST":
+        data = request.get_json() or {}
+        task = data.get("task")
+        if not task:
+            return jsonify({"error": "Missing task"}), 400
+        msg = task_tracker.add_task(task)
+        return jsonify({"status": "ok", "message": msg})
+    if request.method == "DELETE":
+        msg = task_tracker.clear_tasks()
+        return jsonify({"status": "ok", "message": msg})
+
+    tasks = task_tracker.list_tasks()
+    return jsonify({"status": "ok", "data": tasks})
 
 
 @app.route("/api/progress", methods=["GET"])

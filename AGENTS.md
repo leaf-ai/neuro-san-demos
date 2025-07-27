@@ -4,6 +4,7 @@
 - Keep the UI polished, responsive and fully functional.
 - Log progress in this file before each commit with a short summary of work and next steps.
 
+
 ###START UP SCRIPT###
 
 #!/bin/bash
@@ -30,9 +31,6 @@ pip install requests
 pip install flask
 
 echo "Setup complete. To activate the virtual environment, run 'source venv/bin/activate'"
-
-
-
 
 ## Update 2025-07-27T12:54Z
 - Added AGENTS guidelines and first entry.
@@ -73,6 +71,20 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Installed required dependencies (`python-dotenv`, `neo4j`, `neuro-san`, `pyvis`) for running tests
 - Confirmed all tests pass after cleanup (2 passed, 2 skipped)
 - Next: review Docker compose build on Windows and polish remaining UI
-=======
-=======
+
+## Update 2025-07-27T16:04Z
+- Integrated several coded tools into the Flask app with new API routes for document redaction, Bates stamping and vector search
+- Enhanced the dashboard UI to expose these new features and wired up client-side JavaScript
+- Next: verify endpoints work in Docker Compose and continue tightening UX
+
+## Update 2025-07-27T16:15Z
+- Added document text extraction and task tracker API endpoints
+- Extended dashboard UI with new buttons for text extraction and managing tasks
+- Next: run tests and ensure Docker build works smoothly
+
+## Update 2025-07-27T16:32Z
+- Installed dependencies from both requirements files to satisfy test imports
+- Verified all tests pass again (2 passed, 2 skipped)
+- Next: confirm Docker Compose on Windows builds without errors
+
 - Next: get a clean environment to run full test suite
