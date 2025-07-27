@@ -10,6 +10,7 @@
 - Modified Dockerfile to run gunicorn via `python -m` to address Windows path issues.
 
 
+
 ## Update 2025-07-27T13:01Z
 - Updated knowledge graph test to skip if Neo4j unavailable
 
@@ -23,4 +24,5 @@
 - Added PYTHONPATH export in Makefile so tests find local packages
 - Verified all tests pass with `pytest -q`
 - Next: verify Docker Compose build on Windows
+
 
