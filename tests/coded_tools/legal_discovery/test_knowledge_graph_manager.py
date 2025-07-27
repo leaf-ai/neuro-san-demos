@@ -3,7 +3,10 @@ from coded_tools.legal_discovery.knowledge_graph_manager import KnowledgeGraphMa
 
 class TestKnowledgeGraphManager(unittest.TestCase):
     def setUp(self):
-        self.kg_manager = KnowledgeGraphManager()
+        try:
+            self.kg_manager = KnowledgeGraphManager()
+        except RuntimeError as exc:  # Neo4j not running
+            self.skipTest(str(exc))
 
     def tearDown(self):
         self.kg_manager.close()
