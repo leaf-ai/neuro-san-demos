@@ -25,3 +25,13 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Updated imports for legal discovery tools to match new neuro_san package layout
 - Install attempts failed due to network restrictions
 - Next: test the Flask app in Docker once dependencies are resolved
+
+## Update 2025-07-27T21:25Z
+- Installed dependencies locally to run tests successfully
+- Verified coded tool imports after update; tests pass
+- Next: rebuild Docker image and ensure Flask app loads correctly
+
+## Update 2025-07-27T21:29Z
+- Confirmed tests run successfully after installing dependencies
+- Docker tooling not available here so image build couldn't be tested
+- Next: verify Docker compose when environment supports it
