@@ -4,6 +4,35 @@
 - Keep the UI polished, responsive and fully functional.
 - Log progress in this file before each commit with a short summary of work and next steps.
 
+###START UP SCRIPT###
+
+#!/bin/bash
+
+# Exit immediately if a command exits with a non-zero status.
+set -e
+
+# Create a Python virtual environment.
+python3 -m venv venv
+
+# Activate the virtual environment.
+source venv/bin/activate
+
+# Set the PYTHONPATH to the current directory.
+export PYTHONPATH=$(pwd)
+
+# Install the required Python packages.
+pip install -r requirements.txt
+pip install python-dotenv
+pip install neuro-san
+pip install gunicorn
+pip install pillow
+pip install requests
+pip install flask
+
+echo "Setup complete. To activate the virtual environment, run 'source venv/bin/activate'"
+
+
+
 
 ## Update 2025-07-27T12:54Z
 - Added AGENTS guidelines and first entry.
@@ -30,6 +59,7 @@
 - Added `delete_node` and `delete_relationship` helpers to KnowledgeGraphManager
 - Updated unit test to use new cleanup method
 - Attempted installing dependencies but installation was interrupted
+
 - Next: get a clean environment to run full test suite
 
 ## Update 2025-07-27T15:24Z
@@ -37,8 +67,12 @@
 - Focused on `/apps/legal_discovery` but applied pattern to other demos for consistency
 - Next: ensure Docker compose works on Windows without manual tweaks
 
+
 ## Update 2025-07-27T15:53Z
 - Removed obsolete `dashboardLogic.js` script and cleaned up stray terminal output
 - Installed required dependencies (`python-dotenv`, `neo4j`, `neuro-san`, `pyvis`) for running tests
 - Confirmed all tests pass after cleanup (2 passed, 2 skipped)
 - Next: review Docker compose build on Windows and polish remaining UI
+=======
+=======
+- Next: get a clean environment to run full test suite
