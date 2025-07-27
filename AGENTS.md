@@ -33,6 +33,7 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 
 
 
+
 ## Update 2025-07-27T12:54Z
 - Added AGENTS guidelines and first entry.
 - Modified Dockerfile to run gunicorn via `python -m` to address Windows path issues.
@@ -65,5 +66,13 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Added Flask app factories in `apps/__init__.py` and submodules to expose application objects
 - Focused on `/apps/legal_discovery` but applied pattern to other demos for consistency
 - Next: ensure Docker compose works on Windows without manual tweaks
+
+
+## Update 2025-07-27T15:53Z
+- Removed obsolete `dashboardLogic.js` script and cleaned up stray terminal output
+- Installed required dependencies (`python-dotenv`, `neo4j`, `neuro-san`, `pyvis`) for running tests
+- Confirmed all tests pass after cleanup (2 passed, 2 skipped)
+- Next: review Docker compose build on Windows and polish remaining UI
+=======
 =======
 - Next: get a clean environment to run full test suite
