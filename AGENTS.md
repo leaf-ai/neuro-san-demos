@@ -26,3 +26,9 @@
 - Next: verify Docker Compose build on Windows
 
 
+## Update 2025-07-27T13:28Z
+- Reviewed repository for unfinished code; no placeholder functions found
+- Added `delete_node` and `delete_relationship` helpers to KnowledgeGraphManager
+- Updated unit test to use new cleanup method
+- Attempted installing dependencies but installation was interrupted
+- Next: get a clean environment to run full test suite

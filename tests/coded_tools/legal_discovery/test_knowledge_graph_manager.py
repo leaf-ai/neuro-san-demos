@@ -25,7 +25,7 @@ class TestKnowledgeGraphManager(unittest.TestCase):
         self.assertEqual(node['value'], properties['value'])
 
         # Clean up
-        self.kg_manager.run_query("MATCH (n) WHERE id(n) = $node_id DETACH DELETE n", {"node_id": node_id})
+        self.kg_manager.delete_node(node_id)
 
 if __name__ == '__main__':
     unittest.main()
