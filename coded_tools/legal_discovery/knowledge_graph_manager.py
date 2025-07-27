@@ -150,3 +150,18 @@ class KnowledgeGraphManager(CodedTool):
         ]
 
         return nodes, edges
+
+    def delete_node(self, node_id: int) -> None:
+        """Delete a node and any attached relationships."""
+        query = "MATCH (n) WHERE id(n) = $node_id DETACH DELETE n"
+        self.run_query(query, {"node_id": node_id})
+
+    def delete_relationship(
+        self, start_node_id: int, end_node_id: int, relationship_type: str
+    ) -> None:
+        """Delete a specific relationship between two nodes."""
+        query = (
+            "MATCH (a)-[r:{rtype}]->(b) "
+            "WHERE id(a) = $start AND id(b) = $end DELETE r"
+        ).format(rtype=relationship_type)
+        self.run_query(query, {"start": start_node_id, "end": end_node_id})
