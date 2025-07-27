@@ -35,3 +35,5 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Confirmed tests run successfully after installing dependencies
 - Docker tooling not available here so image build couldn't be tested
 - Next: verify Docker compose when environment supports it
+
+- Next: verify Docker compose when environment supports it
