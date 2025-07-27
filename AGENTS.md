@@ -123,3 +123,4 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Verified tests succeed again (2 passed, 2 skipped)
 - Attempted `docker compose` but the tool is unavailable in this environment
 - Next: test Docker build once Docker is accessible
+- Next: test Docker build once Docker is accessible
