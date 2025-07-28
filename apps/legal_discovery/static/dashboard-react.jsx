@@ -52,6 +52,31 @@ function StatsSection() {
   );
 }
 
+function PipelineSection() {
+  const [metrics,setMetrics] = useState({files:0,vectors:0,graph:0,tasks:0,logs:0});
+  const refresh = () => {
+    fetchJSON('/api/progress').then(d=>setMetrics(m=>({...m,files:d.data.uploaded_files||0})));
+    fetchJSON('/api/vector/count').then(d=>setMetrics(m=>({...m,vectors:d.data||0})));
+    fetchJSON('/api/tasks').then(d=>setMetrics(m=>({...m,tasks:(d.data||[]).length})));
+    fetchJSON('/api/graph').then(d=>setMetrics(m=>({...m,graph:(d.data.nodes||[]).length})));
+    fetchJSON('/api/forensic/logs').then(d=>setMetrics(m=>({...m,logs:(d.data||[]).length})));
+  };
+  useEffect(refresh, []);
+  return (
+    <section className="card">
+      <h2>Team Pipeline</h2>
+      <div className="pipeline">
+        <div className="stage"><span>Ingestion</span><span>{metrics.files}</span></div>
+        <div className="stage"><span>Forensics</span><span>{metrics.logs}</span></div>
+        <div className="stage"><span>Vector DB</span><span>{metrics.vectors}</span></div>
+        <div className="stage"><span>Graph</span><span>{metrics.graph}</span></div>
+        <div className="stage"><span>Tasks</span><span>{metrics.tasks}</span></div>
+      </div>
+      <button className="button-secondary mt-2" onClick={refresh}><i className="fa fa-sync mr-1"></i>Refresh</button>
+    </section>
+  );
+}
+
 function OverviewSection() {
   const [progress,setProgress] = useState({uploaded_files:0});
   const [tasks,setTasks] = useState([]);
@@ -245,7 +270,9 @@ function DocToolsSection() {
   const [redactText,setRedact] = useState('');
   const [prefix,setPrefix] = useState('');
   const [extracted,setExtracted] = useState('');
-  const call = (url,body) => fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json()).then(alertResponse);
+  const [output,setOutput] = useState('');
+  const call = (url,body) => fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+      .then(r=>r.json()).then(d=>{setOutput(d.output||'');alertResponse(d);});
   const redact = () => call('/api/document/redact',{file_path:path,text:redactText});
   const stamp = () => call('/api/document/stamp',{file_path:path,prefix});
   const extract = () => fetch('/api/document/text',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file_path:path})}).then(r=>r.json()).then(d=>setExtracted(d.data||''));
@@ -260,6 +287,7 @@ function DocToolsSection() {
       <input type="text" value={prefix} onChange={e=>setPrefix(e.target.value)} className="w-full mb-2 p-2 rounded" placeholder="Bates prefix" />
       <button className="button-secondary" onClick={stamp}><i className="fa fa-stamp mr-1"></i>Bates Stamp</button>
       <button className="button-secondary mt-2" onClick={extract}><i className="fa fa-file-lines mr-1"></i>Extract Text</button>
+      {output && <p className="text-sm mb-2">Output: <a href={'/uploads/'+output} target="_blank" rel="noopener noreferrer">{output}</a></p>}
       <pre className="text-sm mt-2">{extracted}</pre>
     </section>
   );
@@ -472,11 +500,13 @@ function Dashboard() {
   return (
     <div>
       <div className="tab-buttons">
-        {['overview','chat','stats','upload','timeline','graph','docs','forensic','vector','tasks','case','research','subpoena','presentation'].map(t => (
+        {['overview','pipeline','chat','stats','upload','timeline','graph','docs','forensic','vector','tasks','case','research','subpoena','presentation'].map(t => (
+
           <button key={t} className={`tab-button ${tab===t?'active':''}`} onClick={()=>setTab(t)} data-target={`tab-${t}`}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>
         ))}
       </div>
       <div className="tab-content" style={{display: tab==='overview'?'block':'none'}}><OverviewSection/></div>
+      <div className="tab-content" style={{display: tab==='pipeline'?'block':'none'}}><PipelineSection/></div>
       <div className="tab-content" style={{display: tab==='chat'?'block':'none'}}><ChatSection/></div>
       <div className="tab-content" style={{display: tab==='stats'?'block':'none'}}><StatsSection/></div>
       <div className="tab-content" style={{display: tab==='upload'?'block':'none'}}><UploadSection/></div>

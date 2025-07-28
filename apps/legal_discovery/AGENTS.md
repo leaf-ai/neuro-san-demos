@@ -153,4 +153,10 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - React timeline modal displays citation or excerpt
 - Added helper to read excerpts from uploaded files
 - Next: tweak graph layout
+
+## Update 2025-07-28T11:05Z
+- Added Team Pipeline section to React dashboard
+- Document tools now show output links after stamping or redaction
+- Next: polish remaining styles
+
 - Next: polish tab visuals

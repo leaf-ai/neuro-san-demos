@@ -244,3 +244,8 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - React timeline shows excerpts in modal if no citation
 - Exported timelines include excerpts for context
 - Next: continue polishing UI layout
+
+## Update 2025-07-28T11:05Z
+- Added Team Pipeline view and document tool output links
+- Improved dashboard navigation tabs
+- Next: finalize visual polish and ensure tests pass
