@@ -21,6 +21,7 @@ from apps.legal_discovery.legal_discovery import tear_down_legal_discovery_assis
 
 from . import settings
 from .database import db
+from .models import Case, Document, LegalReference, TimelineEvent
 from .models import LegalReference, TimelineEvent, Document
 
 os.environ["AGENT_MANIFEST_FILE"] = os.environ.get(
@@ -55,6 +56,10 @@ def _gather_upload_paths() -> list[str]:
 with app.app_context():
 
     db.create_all()
+    if not Case.query.first():
+        default_case = Case(name="Default Case")
+        db.session.add(default_case)
+        db.session.commit()
 
     app.logger.info("Setting up legal discovery assistant...")
     legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant(_gather_upload_paths())
@@ -329,18 +334,38 @@ def upload_files():
     if not files:
         return jsonify({"error": "No files part"}), 400
 
-    for file in files:
-        if file.filename == "":
-            continue
-        filename = secure_filename(os.path.normpath(file.filename))
-        if filename.startswith("..") or not allowed_file(filename):
-            continue
+    with app.app_context():
+        case = Case.query.first()
+        case_id = case.id if case else 1
 
-        save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-        os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        file.save(save_path)
+        for file in files:
+            if file.filename == "":
+                continue
+            filename = secure_filename(os.path.normpath(file.filename))
+            if filename.startswith("..") or not allowed_file(filename):
+                continue
 
-    return jsonify({"message": "Files uploaded successfully"})
+            save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            file.save(save_path)
+
+            # store document record
+            doc = Document(case_id=case_id, name=filename, file_path=save_path)
+            db.session.add(doc)
+            db.session.commit()
+
+            # extract text and add to vector DB
+            try:
+                processor = DocumentProcessor()
+                text = processor.extract_text(save_path)
+                VectorDatabaseManager().add_documents([text], [{}], [str(doc.id)])
+            except Exception as exc:  # pragma: no cover - best effort
+                app.logger.error("Ingestion failed for %s: %s", save_path, exc)
+
+    user_input_queue.put(
+        "process all files ingested within your scope and produce a basic overview and report."
+    )
+    return jsonify({"message": "Files uploaded and processing started"})
 
 
 @app.route("/api/export", methods=["GET"])

@@ -159,4 +159,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Document tools now show output links after stamping or redaction
 - Next: polish remaining styles
 
+## Update 2025-07-28T14:23Z
+- Upload endpoint stores documents and kicks off analysis automatically
+- Default case created on first run
+- Next: review vector DB contents and refine UI polish
 - Next: polish tab visuals
