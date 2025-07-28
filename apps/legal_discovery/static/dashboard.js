@@ -182,6 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (addTaskBtn) addTaskBtn.onclick = addTask;
   if (listTaskBtn) listTaskBtn.onclick = listTasks;
   if (clearTaskBtn) clearTaskBtn.onclick = clearTasks;
+  setupTabs();
   setupSettingsModal();
   setupChat();
 });
@@ -262,6 +263,20 @@ function clearTasks() {
 
 function alertResponse(d) {
   alert(d.message || 'Done');
+}
+
+function setupTabs() {
+  const buttons = document.querySelectorAll('.tab-button');
+  const contents = document.querySelectorAll('.tab-content');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      contents.forEach(c => c.classList.remove('active'));
+      buttons.forEach(b => b.classList.remove('active'));
+      document.getElementById(btn.dataset.target).classList.add('active');
+      btn.classList.add('active');
+    });
+  });
+  if (buttons.length) buttons[0].click();
 }
 
 let socket;
