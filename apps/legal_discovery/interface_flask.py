@@ -23,7 +23,10 @@ from . import settings
 from .database import db
 from .models import LegalReference, TimelineEvent
 
-os.environ["AGENT_MANIFEST_FILE"] = os.environ.get("AGENT_MANIFEST_FILE", "registries/manifest.hocon")
+os.environ["AGENT_MANIFEST_FILE"] = os.environ.get(
+    "AGENT_MANIFEST_FILE",
+    "registries/legal_discovery.hocon",
+)
 os.environ["AGENT_TOOL_PATH"] = os.environ.get("AGENT_TOOL_PATH", "coded_tools")
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", os.urandom(24).hex())
@@ -39,12 +42,22 @@ app.logger.setLevel(logging.getLevelName(os.environ.get("LOG_LEVEL", "INFO")))
 
 user_input_queue = queue.Queue()
 
+
+def _gather_upload_paths() -> list[str]:
+    """Return a list of all files currently uploaded."""
+    root = os.path.abspath("uploads")
+    paths = []
+    for dirpath, _, filenames in os.walk(root):
+        for fname in filenames:
+            paths.append(os.path.join(dirpath, fname))
+    return paths
+
 with app.app_context():
 
     db.create_all()
 
     app.logger.info("Setting up legal discovery assistant...")
-    legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant()
+    legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant(_gather_upload_paths())
     app.logger.info("...legal discovery assistant set up.")
 
 
@@ -568,8 +581,8 @@ def export_report():
 
 @app.route("/")
 def index():
-    """Return the html."""
-    return render_template("index.html")
+    """Serve the React dashboard by default."""
+    return render_template("dashboard.html")
 
 
 @app.route("/dashboard")

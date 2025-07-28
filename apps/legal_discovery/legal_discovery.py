@@ -10,7 +10,15 @@ AGENT_NETWORK_NAME = "legal_discovery"
 from .settings import get_user_settings
 
 
-def set_up_legal_discovery_assistant():
+def _gather_metadata(corpus_files: list[str] | None) -> dict:
+    """Return session metadata including any provided corpus files."""
+    meta = {"user_id": os.environ.get("USER")}
+    if corpus_files:
+        meta["corpus_files"] = corpus_files
+    return meta
+
+
+def set_up_legal_discovery_assistant(corpus_files: list[str] | None = None):
     """Configure these as needed."""
     logging.info("Setting up legal discovery assistant...")
     agent_name = AGENT_NETWORK_NAME
@@ -18,7 +26,7 @@ def set_up_legal_discovery_assistant():
     host = "localhost"
     port = 30011
     local_externals_direct = False
-    metadata = {"user_id": os.environ.get("USER")}
+    metadata = _gather_metadata(corpus_files)
 
     # Get API key from settings
     user_settings = get_user_settings()
