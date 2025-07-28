@@ -123,4 +123,26 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Verified tests succeed again (2 passed, 2 skipped)
 - Attempted `docker compose` but the tool is unavailable in this environment
 - Next: test Docker build once Docker is accessible
+## Update 2025-07-27T22:15Z
+- Added tabbed layout to dashboard UI and new setupTabs JS
+- Next: verify usability and continue docker work
+
+## Update 2025-07-27T22:45Z
+- Started React migration for the dashboard to deliver a modern UI
+- Implemented dashboard-react.jsx with API-connected components
+- Updated dashboard template to load React via CDN
+- Next: run tests and confirm new interface
+
+## Update 2025-07-27T23:17Z
+- Added interactive timeline and graph export features in React dashboard
+- Implemented settings modal with API integration
+- Confirmed tests pass after installing missing dependencies
+- Next: continue refining UI interactions and docker support
+
+## Update 2025-07-27T23:30Z
+- Installed coverage plugin and required packages so pytest runs cleanly
+- Verified the new React dashboard loads via `dashboard.html`
+- All tests pass (2 passed, 2 skipped)
+- Next: finalize Docker support and polish remaining UI components
+=======
 - Next: test Docker build once Docker is accessible
