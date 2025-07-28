@@ -16,12 +16,14 @@ from werkzeug.utils import secure_filename
 from flask_socketio import SocketIO
 
 from apps.legal_discovery.legal_discovery import legal_discovery_thinker
-from apps.legal_discovery.legal_discovery import set_up_legal_discovery_assistant
-from apps.legal_discovery.legal_discovery import tear_down_legal_discovery_assistant
+from apps.legal_discovery.legal_discovery import (
+    set_up_legal_discovery_assistant,
+    tear_down_legal_discovery_assistant,
+)
 
 from . import settings
 from .database import db
-from .models import LegalReference, TimelineEvent
+from .models import Case, Document, LegalReference, TimelineEvent
 
 os.environ["AGENT_MANIFEST_FILE"] = os.environ.get(
     "AGENT_MANIFEST_FILE",
@@ -55,10 +57,24 @@ def _gather_upload_paths() -> list[str]:
 with app.app_context():
 
     db.create_all()
+    if not Case.query.first():
+        default_case = Case(name="Default Case")
+        db.session.add(default_case)
+        db.session.commit()
 
     app.logger.info("Setting up legal discovery assistant...")
     legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant(_gather_upload_paths())
     app.logger.info("...legal discovery assistant set up.")
+
+
+def reinitialize_legal_discovery_session() -> None:
+    """Reload the agent session with the latest uploaded files."""
+    global legal_discovery_session, legal_discovery_thread
+    tear_down_legal_discovery_assistant(legal_discovery_session)
+    legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant(
+        _gather_upload_paths()
+    )
+    app.logger.info("Legal discovery session reinitialized")
 
 
 def legal_discovery_thinking_process():
@@ -329,18 +345,41 @@ def upload_files():
     if not files:
         return jsonify({"error": "No files part"}), 400
 
-    for file in files:
-        if file.filename == "":
-            continue
-        filename = secure_filename(os.path.normpath(file.filename))
-        if filename.startswith("..") or not allowed_file(filename):
-            continue
+    with app.app_context():
+        case = Case.query.first()
+        case_id = case.id if case else 1
 
-        save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-        os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        file.save(save_path)
+        for file in files:
+            if file.filename == "":
+                continue
+            filename = secure_filename(os.path.normpath(file.filename))
+            if filename.startswith("..") or not allowed_file(filename):
+                continue
 
-    return jsonify({"message": "Files uploaded successfully"})
+            save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            file.save(save_path)
+
+            # store document record
+            doc = Document(case_id=case_id, name=filename, file_path=save_path)
+            db.session.add(doc)
+            db.session.commit()
+
+            # extract text and add to vector DB
+            try:
+                processor = DocumentProcessor()
+                text = processor.extract_text(save_path)
+                VectorDatabaseManager().add_documents([text], [{}], [str(doc.id)])
+            except Exception as exc:  # pragma: no cover - best effort
+                app.logger.error("Ingestion failed for %s: %s", save_path, exc)
+
+    # Reload session metadata so new files are visible to the agent network
+    reinitialize_legal_discovery_session()
+
+    user_input_queue.put(
+        "process all files ingested within your scope and produce a basic overview and report."
+    )
+    return jsonify({"message": "Files uploaded and processing started"})
 
 
 @app.route("/api/export", methods=["GET"])
@@ -547,6 +586,18 @@ def get_graph():
     return jsonify({"status": "ok", "data": {"nodes": nodes, "edges": edges}})
 
 
+def _get_file_excerpt(case_id: str, length: int = 400) -> str | None:
+    """Return a short excerpt from the first document for the case."""
+    doc = Document.query.filter_by(case_id=case_id).first()
+    if not doc or not doc.file_path:
+        return None
+    try:
+        with open(doc.file_path, "r", errors="ignore") as f:
+            return f.read(length)
+    except Exception:  # pragma: no cover - optional file may be missing
+        return None
+
+
 @app.route("/api/timeline/export", methods=["POST"])
 def export_timeline():
     data = request.get_json()
@@ -564,11 +615,13 @@ def export_timeline():
         ref = LegalReference.query.filter_by(case_id=event.case_id).first()
         if ref:
             citation = ref.source_url
+        excerpt = _get_file_excerpt(event.case_id)
         timeline_items.append(
             {
                 "content": event.description,
                 "start": event.event_date.strftime("%Y-%m-%d"),
                 "citation": citation,
+                "excerpt": excerpt,
             }
         )
 
@@ -580,17 +633,41 @@ def export_timeline():
 @app.route("/api/timeline", methods=["GET"])
 def get_timeline():
     query = request.args.get("query")
-    timeline_manager = TimelineManager()
-    events = timeline_manager.get_timeline(query) if query else []
-    timeline_manager.close()
-    return jsonify({"status": "ok", "data": events})
+    if not query:
+        return jsonify({"status": "ok", "data": []})
+
+    events = (
+        TimelineEvent.query.filter_by(case_id=query)
+        .order_by(TimelineEvent.event_date)
+        .all()
+    )
+
+    data = []
+    for event in events:
+        citation = None
+        ref = LegalReference.query.filter_by(case_id=event.case_id).first()
+        if ref:
+            citation = ref.source_url
+        excerpt = _get_file_excerpt(event.case_id)
+        data.append(
+            {
+                "id": event.id,
+                "date": event.event_date.strftime("%Y-%m-%d"),
+                "description": event.description,
+                "citation": citation,
+                "excerpt": excerpt,
+            }
+        )
+
+    return jsonify({"status": "ok", "data": data})
 
 
 @app.route("/api/research", methods=["GET"])
 def research():
     query = request.args.get("query")
+    source = request.args.get("source", "all")
     tool = ResearchTools()
-    results = tool.search(query) if query else []
+    results = tool.search(query, source) if query else []
     return jsonify({"status": "ok", "data": results})
 
 
