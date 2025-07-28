@@ -63,3 +63,15 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-07-28T01:49Z
 - Use `legal_discovery.hocon` manifest and send uploaded files to the agent
 - Next: verify ingestion pipeline within Docker compose
+
+## Update 2025-07-28T02:30Z
+- Created Flask routes for subpoena drafting and presentation generation
+- Added React tabs to use these endpoints
+- Installed missing Python packages so tests execute
+- Next: integrate remaining sub-team tools and polish React styling
+
+### Plan 2025-07-28
+- Build tabs for each team in `legal_discovery.hocon` (case management, research, forensic, timeline, subpoena, trial prep)
+- Provide REST endpoints for all coded tools with clear parameters and JSON responses
+- Connect React components to these endpoints using fetch and intuitive forms
+- Document Docker deployment and ensure gunicorn works on Windows

@@ -250,6 +250,54 @@ function ResearchSection() {
   );
 }
 
+function PresentationSection() {
+  const [file,setFile] = useState('');
+  const [slides,setSlides] = useState([{title:'',content:''}]);
+  const update = (i,field,val) => {
+    const next = slides.slice();
+    next[i][field] = val;
+    setSlides(next);
+  };
+  const add = () => setSlides([...slides,{title:'',content:''}]);
+  const create = () => {
+    fetch('/api/presentation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filepath:file,slides})})
+      .then(r=>r.json()).then(alertResponse);
+  };
+  return (
+    <section className="card">
+      <h2>Presentations</h2>
+      <input type="text" value={file} onChange={e=>setFile(e.target.value)} className="w-full mb-2 p-2 rounded" placeholder="Presentation path" />
+      {slides.map((s,i)=>(
+        <div key={i} className="mb-2">
+          <input type="text" value={s.title} onChange={e=>update(i,'title',e.target.value)} className="w-full mb-1 p-2 rounded" placeholder="Slide title" />
+          <textarea value={s.content} onChange={e=>update(i,'content',e.target.value)} rows="2" className="w-full p-2 rounded" placeholder="Slide content"></textarea>
+        </div>
+      ))}
+      <div className="flex gap-2">
+        <button className="button-secondary" onClick={add}><i className="fa fa-plus mr-1"></i>Add Slide</button>
+        <button className="button-primary" onClick={create}><i className="fa fa-file-powerpoint mr-1"></i>Create</button>
+      </div>
+    </section>
+  );
+}
+
+function SubpoenaSection() {
+  const [file,setFile] = useState('');
+  const [content,setContent] = useState('');
+  const draft = () => {
+    fetch('/api/subpoena/draft',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file_path:file,content})})
+      .then(r=>r.json()).then(alertResponse);
+  };
+  return (
+    <section className="card">
+      <h2>Subpoenas</h2>
+      <input type="text" value={file} onChange={e=>setFile(e.target.value)} className="w-full mb-2 p-2 rounded" placeholder="Document path" />
+      <textarea value={content} onChange={e=>setContent(e.target.value)} rows="3" className="w-full mb-2 p-2 rounded" placeholder="Subpoena text"></textarea>
+      <button className="button-primary" onClick={draft}><i className="fa fa-gavel mr-1"></i>Draft</button>
+    </section>
+  );
+}
+
 function SettingsModal({open,onClose}) {
   const [form,setForm] = useState({});
   const ref = useRef();
@@ -291,7 +339,7 @@ function Dashboard() {
   return (
     <div>
       <div className="tab-buttons">
-        {['chat','stats','upload','timeline','graph','docs','forensic','vector','tasks','research'].map(t => (
+        {['chat','stats','upload','timeline','graph','docs','forensic','vector','tasks','research','presentation','subpoenas'].map(t => (
           <button key={t} className={`tab-button ${tab===t?'active':''}`} onClick={()=>setTab(t)} data-target={`tab-${t}`}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>
         ))}
       </div>
@@ -305,6 +353,8 @@ function Dashboard() {
       <div className="tab-content" style={{display: tab==='vector'?'block':'none'}}><VectorSection/></div>
       <div className="tab-content" style={{display: tab==='tasks'?'block':'none'}}><TasksSection/></div>
       <div className="tab-content" style={{display: tab==='research'?'block':'none'}}><ResearchSection/></div>
+      <div className="tab-content" style={{display: tab==='presentation'?'block':'none'}}><PresentationSection/></div>
+      <div className="tab-content" style={{display: tab==='subpoenas'?'block':'none'}}><SubpoenaSection/></div>
       <SettingsModal open={showSettings} onClose={()=>setShowSettings(false)}/>
     </div>
   );

@@ -193,6 +193,8 @@ from coded_tools.legal_discovery.task_tracker import TaskTracker
 from coded_tools.legal_discovery.vector_database_manager import (
     VectorDatabaseManager,
 )
+from coded_tools.legal_discovery.subpoena_manager import SubpoenaManager
+from coded_tools.legal_discovery.presentation_generator import PresentationGenerator
 
 
 UPLOAD_FOLDER = "uploads"
@@ -476,6 +478,42 @@ def manage_tasks():
 
     tasks = task_tracker.list_tasks()
     return jsonify({"status": "ok", "data": tasks})
+
+
+@app.route("/api/subpoena/draft", methods=["POST"])
+def draft_subpoena():
+    """Draft a subpoena document using SubpoenaManager."""
+    data = request.get_json() or {}
+    file_path = data.get("file_path")
+    content = data.get("content")
+    if not file_path or not content:
+        return jsonify({"error": "Missing file_path or content"}), 400
+    mgr = SubpoenaManager()
+    try:
+        mgr.draft_subpoena_document(file_path, content)
+    except Exception as exc:  # pragma: no cover - file system errors
+        return jsonify({"error": str(exc)}), 500
+    return jsonify({"status": "ok", "output": file_path})
+
+
+@app.route("/api/presentation", methods=["POST"])
+def create_presentation():
+    """Create or update a PowerPoint presentation."""
+    data = request.get_json() or {}
+    filepath = data.get("filepath")
+    slides = data.get("slides", [])
+    if not filepath or not isinstance(slides, list):
+        return jsonify({"error": "Missing filepath or slides"}), 400
+    gen = PresentationGenerator()
+    try:
+        gen.create_presentation(filepath)
+        for slide in slides:
+            title = slide.get("title", "")
+            content = slide.get("content", "")
+            gen.add_slide(filepath, title, content)
+    except Exception as exc:  # pragma: no cover - file system errors
+        return jsonify({"error": str(exc)}), 500
+    return jsonify({"status": "ok", "output": filepath})
 
 
 @app.route("/api/progress", methods=["GET"])

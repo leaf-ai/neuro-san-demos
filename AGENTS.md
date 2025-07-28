@@ -153,3 +153,15 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Default manifest now points to `registries/legal_discovery.hocon`
 - Assistant setup passes uploaded file list to session metadata
 - Next: ensure corpus ingestion works smoothly in Docker
+
+## Update 2025-07-28T02:30Z
+- Added subpoena and presentation endpoints to Flask app
+- Expanded React dashboard with tabs for presentations and subpoenas
+- Installed missing test dependencies so `pytest` runs
+- Next: flesh out remaining team tools and verify Docker build
+
+### Plan 2025-07-28
+- Map each subnetwork in `registries/legal_discovery.hocon` to a dedicated UI tab
+- Expose coded tool functions via REST endpoints to keep React components thin
+- Finalize Docker support for cross-platform use and document setup steps
+- Polish the dark theme and responsive layout for production readiness
