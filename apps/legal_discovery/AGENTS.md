@@ -80,3 +80,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Synced template with React components by removing old settings modal
 - Set default manifest in run.py to legal_discovery.hocon
 - Next: verify timeline export works and finalize Docker config
+
+## Update 2025-07-28T03:19Z
+- Installed dependencies for tests and verified coverage
+- React dashboard and manifest integration confirmed working
+- Next: ensure Docker serves React UI correctly

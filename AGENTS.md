@@ -171,3 +171,8 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Default manifest path set to `legal_discovery.hocon` in run script
 - Removed duplicated settings modal in dashboard template
 - Next: verify timeline modal works and finalize Docker build
+
+## Update 2025-07-28T03:19Z
+- Installed missing packages for tests (dotenv, neuro-san, neo4j, pyvis)
+- Confirmed pytest passes with coverage plugin
+- Next: finalize Docker configuration and polish React UI
