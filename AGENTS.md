@@ -227,3 +227,14 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Integrated CourtListener and California Codes search with Gemini summarisation
 - Added source selector in research tab
 - Next: enhance timeline exports with file excerpts
+
+## Update 2025-07-28T07:36Z
+- Added graph filtering and search
+- Created case management tab with tasks and timeline
+- Improved overview metrics
+- Next: polish layout
+
+## Update 2025-07-28T10:31Z
+- Added progress indicators for uploads and exports in React dashboard
+- Added date filters for timeline and improved export handling
+- Next: enhance styling of overview metrics

@@ -136,3 +136,14 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Integrated CourtListener and statute scraping in ResearchTools
 - Research tab now lets users pick source
 - Next: link timeline events to file excerpts
+
+## Update 2025-07-28T07:36Z
+- Graph search and subnet filter implemented
+- Added CaseManagementSection tying tasks and timeline
+- Overview shows vector counts
+- Next: refine styles
+
+## Update 2025-07-28T10:31Z
+- Upload progress bar and export spinners added
+- Timeline filters by date range and export feedback
+- Next: polish tab visuals
