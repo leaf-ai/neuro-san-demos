@@ -22,6 +22,7 @@ from apps.legal_discovery.legal_discovery import tear_down_legal_discovery_assis
 from . import settings
 from .database import db
 from .models import Case, Document, LegalReference, TimelineEvent
+from .models import LegalReference, TimelineEvent, Document
 
 os.environ["AGENT_MANIFEST_FILE"] = os.environ.get(
     "AGENT_MANIFEST_FILE",

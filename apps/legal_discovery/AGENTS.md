@@ -163,3 +163,4 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Upload endpoint stores documents and kicks off analysis automatically
 - Default case created on first run
 - Next: review vector DB contents and refine UI polish
+- Next: polish tab visuals

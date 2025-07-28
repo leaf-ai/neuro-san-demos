@@ -254,3 +254,4 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Auto-trigger document analysis after upload and store records in DB
 - Create default case entry if none exists
 - Next: verify ingestion pipeline with vector and graph updates
+- Next: finalize visual polish and ensure tests pass
