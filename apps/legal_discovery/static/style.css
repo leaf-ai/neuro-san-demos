@@ -117,6 +117,37 @@ h2 {
     gap: 24px;
 }
 
+/* Simple tabbed interface */
+.tab-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.tab-button {
+    padding: 8px 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-colour);
+    border-radius: 6px;
+    color: var(--text-colour);
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.tab-button.active {
+    background: var(--primary-color);
+    color: #ffffff;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
 @media (min-width: 1200px) {
     .card-grid {
         grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
