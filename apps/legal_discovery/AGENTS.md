@@ -153,3 +153,4 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - React timeline modal displays citation or excerpt
 - Added helper to read excerpts from uploaded files
 - Next: tweak graph layout
+- Next: polish tab visuals

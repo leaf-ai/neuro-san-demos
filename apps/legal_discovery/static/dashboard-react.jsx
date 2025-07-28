@@ -147,6 +147,7 @@ function TimelineSection() {
       citation: e.citation,
       excerpt: e.excerpt,
     })));
+    const dataset = new vis.DataSet(filtered.map(e=>({id:e.id, content:e.description, start:e.date, citation:e.citation})));
     const timeline = new vis.Timeline(containerRef.current, dataset, {});
     timeline.on('click', props => {
       const item = dataset.get(props.item);
