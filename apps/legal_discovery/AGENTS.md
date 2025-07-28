@@ -158,3 +158,5 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added Team Pipeline section to React dashboard
 - Document tools now show output links after stamping or redaction
 - Next: polish remaining styles
+
+- Next: polish tab visuals
