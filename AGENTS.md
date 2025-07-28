@@ -258,3 +258,4 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 ## Update 2025-07-28T14:42Z
 - Reinitialize agent session after uploads so new files are included
 - Next: validate analysis outputs returned to UI
+- Next: finalize visual polish and ensure tests pass

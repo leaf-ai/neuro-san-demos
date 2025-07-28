@@ -167,3 +167,4 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-07-28T14:42Z
 - Session reload ensures new uploads reach agent network
 - Next: improve styling polish
+- Next: polish tab visuals

@@ -24,6 +24,7 @@ from apps.legal_discovery.legal_discovery import (
 from . import settings
 from .database import db
 from .models import Case, Document, LegalReference, TimelineEvent
+from .models import LegalReference, TimelineEvent, Document
 
 os.environ["AGENT_MANIFEST_FILE"] = os.environ.get(
     "AGENT_MANIFEST_FILE",
@@ -375,6 +376,24 @@ def upload_files():
 
     # Reload session metadata so new files are visible to the agent network
     reinitialize_legal_discovery_session()
+
+
+            save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            file.save(save_path)
+
+            # store document record
+            doc = Document(case_id=case_id, name=filename, file_path=save_path)
+            db.session.add(doc)
+            db.session.commit()
+
+            # extract text and add to vector DB
+            try:
+                processor = DocumentProcessor()
+                text = processor.extract_text(save_path)
+                VectorDatabaseManager().add_documents([text], [{}], [str(doc.id)])
+            except Exception as exc:  # pragma: no cover - best effort
+                app.logger.error("Ingestion failed for %s: %s", save_path, exc)
 
     user_input_queue.put(
         "process all files ingested within your scope and produce a basic overview and report."

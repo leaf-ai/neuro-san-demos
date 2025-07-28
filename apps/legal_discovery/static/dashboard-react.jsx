@@ -172,6 +172,7 @@ function TimelineSection() {
       citation: e.citation,
       excerpt: e.excerpt,
     })));
+    
     const timeline = new vis.Timeline(containerRef.current, dataset, {});
     timeline.on('click', props => {
       const item = dataset.get(props.item);
