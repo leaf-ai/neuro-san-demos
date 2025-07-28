@@ -55,3 +55,5 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Verified dashboard renders with new React design
 - Tests succeed (2 passed, 2 skipped)
 - Next: finalize Docker build scripts and refine CSS details
+
+- Next: verify Docker compose when environment supports it

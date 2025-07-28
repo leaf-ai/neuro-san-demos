@@ -144,3 +144,5 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Verified the new React dashboard loads via `dashboard.html`
 - All tests pass (2 passed, 2 skipped)
 - Next: finalize Docker support and polish remaining UI components
+=======
+- Next: test Docker build once Docker is accessible
