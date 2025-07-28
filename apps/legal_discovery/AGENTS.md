@@ -126,3 +126,13 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Next: finalize Docker build scripts and refine CSS details
 
 - Next: verify Docker compose when environment supports it
+
+## Update 2025-07-28T06:55Z
+- Added subpoena and presentation tabs to React UI
+- Extended settings modal with full credential fields
+- Next: finalize overview page for team interactions
+
+## Update 2025-07-28T07:05Z
+- Integrated CourtListener and statute scraping in ResearchTools
+- Research tab now lets users pick source
+- Next: link timeline events to file excerpts

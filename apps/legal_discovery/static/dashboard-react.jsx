@@ -1,5 +1,9 @@
 const { useState, useEffect, useRef } = React;
 
+function fetchJSON(url, options) {
+  return fetch(url, options).then(r => r.json());
+}
+
 function alertResponse(d) {
   alert(d.message || 'Done');
 }
@@ -44,6 +48,22 @@ function StatsSection() {
       <p className="mb-1">Uploaded files: <span>{uploaded}</span></p>
       <p>Vector documents: <span>{vectorCount}</span></p>
       <button className="button-secondary mt-2" onClick={refresh}><i className="fa fa-sync mr-1"></i>Refresh</button>
+    </section>
+  );
+}
+
+function OverviewSection() {
+  const [progress,setProgress] = useState({uploaded_files:0});
+  const [tasks,setTasks] = useState([]);
+  useEffect(() => {
+    fetchJSON('/api/progress').then(d=>setProgress(d.data||{}));
+    fetchJSON('/api/tasks').then(d=>setTasks(d.data||[]));
+  }, []);
+  return (
+    <section className="card">
+      <h2>Overview</h2>
+      <p className="mb-1">Uploaded Files: {progress.uploaded_files||0}</p>
+      <p className="mb-1">Open Tasks: {tasks.length||0}</p>
     </section>
   );
 }
@@ -237,15 +257,52 @@ function TasksSection() {
 function ResearchSection() {
   const [q,setQ] = useState('');
   const [res,setRes] = useState('');
-  const search = () => fetch('/api/research?query='+encodeURIComponent(q)).then(r=>r.json()).then(d=>setRes(JSON.stringify(d.data,null,2)));
+  const [source,setSource] = useState('all');
+  const search = () => fetch('/api/research?query='+encodeURIComponent(q)+'&source='+source).then(r=>r.json()).then(d=>setRes(JSON.stringify(d.data,null,2)));
   return (
     <section className="card">
       <h2>Research</h2>
       <input type="text" value={q} onChange={e=>setQ(e.target.value)} className="w-full mb-2 p-2 rounded" placeholder="Search references" />
+      <select value={source} onChange={e=>setSource(e.target.value)} className="w-full mb-2 p-2 rounded">
+        <option value="all">All</option>
+        <option value="cases">Cases</option>
+        <option value="statutes">Statutes</option>
+      </select>
       <div className="flex flex-wrap gap-2 mb-2">
         <button className="button-secondary" onClick={search}><i className="fa fa-book-open mr-1"></i>Search</button>
       </div>
       <pre className="text-sm">{res}</pre>
+    </section>
+  );
+}
+
+function SubpoenaSection() {
+  const [path,setPath] = useState('');
+  const [text,setText] = useState('');
+  const draft = () => fetchJSON('/api/subpoena/draft',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file_path:path,content:text})}).then(alertResponse);
+  return (
+    <section className="card">
+      <h2>Subpoena Drafting</h2>
+      <input type="text" value={path} onChange={e=>setPath(e.target.value)} className="w-full mb-2 p-2 rounded" placeholder="Template path" />
+      <textarea rows="3" value={text} onChange={e=>setText(e.target.value)} className="w-full mb-2 p-2 rounded" placeholder="Content" />
+      <button className="button-secondary" onClick={draft}><i className="fa fa-file-signature mr-1"></i>Draft</button>
+    </section>
+  );
+}
+
+function PresentationSection() {
+  const [path,setPath] = useState('');
+  const [slides,setSlides] = useState('');
+  const create = () => {
+    const slidesArr = slides.split('\n').map(l=>{const [t,...c]=l.split('|');return {title:t||'',content:c.join('|')||''};});
+    fetchJSON('/api/presentation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filepath:path,slides:slidesArr})}).then(alertResponse);
+  };
+  return (
+    <section className="card">
+      <h2>Presentation</h2>
+      <input type="text" value={path} onChange={e=>setPath(e.target.value)} className="w-full mb-2 p-2 rounded" placeholder="PPTX path" />
+      <textarea rows="4" value={slides} onChange={e=>setSlides(e.target.value)} className="w-full mb-2 p-2 rounded" placeholder="title|content per line" />
+      <button className="button-secondary" onClick={create}><i className="fa fa-slideshare mr-1"></i>Create/Update</button>
     </section>
   );
 }
@@ -270,10 +327,25 @@ function SettingsModal({open,onClose}) {
       <div className="modal-content">
         <span className="close-btn" onClick={onClose}>&times;</span>
         <h2>API Settings</h2>
-        <form id="settings-form" onSubmit={submit} className="space-y-2">
+        <form id="settings-form" onSubmit={submit} className="space-y-2 overflow-y-auto" style={{maxHeight:'60vh'}}>
           <label>CourtListener API Key<input type="text" name="courtlistener_api_key" value={form.courtlistener_api_key||''} onChange={update} className="w-full p-2 rounded"/></label>
-          <label>Gemini API Key<input type="text" name="gemini_api_key" value={form.gemini_api_key||''} onChange={update} className="w-full p-2 rounded"/></label>
+          <label>CourtListener Endpoint<input type="text" name="courtlistener_com_api_endpoint" value={form.courtlistener_com_api_endpoint||''} onChange={update} className="w-full p-2 rounded"/></label>
           <label>California Codes URL<input type="text" name="california_codes_url" value={form.california_codes_url||''} onChange={update} className="w-full p-2 rounded"/></label>
+          <label>Gemini API Key<input type="text" name="gemini_api_key" value={form.gemini_api_key||''} onChange={update} className="w-full p-2 rounded"/></label>
+          <label>Google API Endpoint<input type="text" name="google_api_endpoint" value={form.google_api_endpoint||''} onChange={update} className="w-full p-2 rounded"/></label>
+          <label>VerifyPDF API Key<input type="text" name="verifypdf_api_key" value={form.verifypdf_api_key||''} onChange={update} className="w-full p-2 rounded"/></label>
+          <label>VerifyPDF Endpoint<input type="text" name="verify_pdf_endpoint" value={form.verify_pdf_endpoint||''} onChange={update} className="w-full p-2 rounded"/></label>
+          <label>Riza Key<input type="text" name="riza_key" value={form.riza_key||''} onChange={update} className="w-full p-2 rounded"/></label>
+          <label>Neo4j URI<input type="text" name="neo4j_uri" value={form.neo4j_uri||''} onChange={update} className="w-full p-2 rounded"/></label>
+          <label>Neo4j Username<input type="text" name="neo4j_username" value={form.neo4j_username||''} onChange={update} className="w-full p-2 rounded"/></label>
+          <label>Neo4j Password<input type="password" name="neo4j_password" value={form.neo4j_password||''} onChange={update} className="w-full p-2 rounded"/></label>
+          <label>Neo4j Database<input type="text" name="neo4j_database" value={form.neo4j_database||''} onChange={update} className="w-full p-2 rounded"/></label>
+          <label>Aura Instance ID<input type="text" name="aura_instance_id" value={form.aura_instance_id||''} onChange={update} className="w-full p-2 rounded"/></label>
+          <label>Aura Instance Name<input type="text" name="aura_instance_name" value={form.aura_instance_name||''} onChange={update} className="w-full p-2 rounded"/></label>
+          <label>GCP Project ID<input type="text" name="gcp_project_id" value={form.gcp_project_id||''} onChange={update} className="w-full p-2 rounded"/></label>
+          <label>GCP Vertex Data Store<input type="text" name="gcp_vertex_ai_data_store_id" value={form.gcp_vertex_ai_data_store_id||''} onChange={update} className="w-full p-2 rounded"/></label>
+          <label>GCP Search App<input type="text" name="gcp_vertex_ai_search_app" value={form.gcp_vertex_ai_search_app||''} onChange={update} className="w-full p-2 rounded"/></label>
+          <label>GCP Service Account Key<textarea name="gcp_service_account_key" value={form.gcp_service_account_key||''} onChange={update} className="w-full p-2 rounded" rows="2"/></label>
           <button className="button-primary" type="submit">Save</button>
         </form>
       </div>
@@ -282,7 +354,7 @@ function SettingsModal({open,onClose}) {
 }
 
 function Dashboard() {
-  const [tab, setTab] = useState('chat');
+  const [tab, setTab] = useState('overview');
   const [showSettings,setShowSettings] = useState(false);
   useEffect(()=>{
     const btn=document.getElementById('settings-btn');
@@ -291,10 +363,11 @@ function Dashboard() {
   return (
     <div>
       <div className="tab-buttons">
-        {['chat','stats','upload','timeline','graph','docs','forensic','vector','tasks','research'].map(t => (
+        {['overview','chat','stats','upload','timeline','graph','docs','forensic','vector','tasks','research','subpoena','presentation'].map(t => (
           <button key={t} className={`tab-button ${tab===t?'active':''}`} onClick={()=>setTab(t)} data-target={`tab-${t}`}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>
         ))}
       </div>
+      <div className="tab-content" style={{display: tab==='overview'?'block':'none'}}><OverviewSection/></div>
       <div className="tab-content" style={{display: tab==='chat'?'block':'none'}}><ChatSection/></div>
       <div className="tab-content" style={{display: tab==='stats'?'block':'none'}}><StatsSection/></div>
       <div className="tab-content" style={{display: tab==='upload'?'block':'none'}}><UploadSection/></div>
@@ -305,6 +378,8 @@ function Dashboard() {
       <div className="tab-content" style={{display: tab==='vector'?'block':'none'}}><VectorSection/></div>
       <div className="tab-content" style={{display: tab==='tasks'?'block':'none'}}><TasksSection/></div>
       <div className="tab-content" style={{display: tab==='research'?'block':'none'}}><ResearchSection/></div>
+      <div className="tab-content" style={{display: tab==='subpoena'?'block':'none'}}><SubpoenaSection/></div>
+      <div className="tab-content" style={{display: tab==='presentation'?'block':'none'}}><PresentationSection/></div>
       <SettingsModal open={showSettings} onClose={()=>setShowSettings(false)}/>
     </div>
   );
