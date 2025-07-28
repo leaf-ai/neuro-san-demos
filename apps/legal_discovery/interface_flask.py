@@ -589,8 +589,9 @@ def get_timeline():
 @app.route("/api/research", methods=["GET"])
 def research():
     query = request.args.get("query")
+    source = request.args.get("source", "all")
     tool = ResearchTools()
-    results = tool.search(query) if query else []
+    results = tool.search(query, source) if query else []
     return jsonify({"status": "ok", "data": results})
 
 
