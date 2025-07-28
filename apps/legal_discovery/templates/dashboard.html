@@ -16,9 +16,12 @@
     <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.26.0/dist/cytoscape.min.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='vis-timeline/vis-timeline-graph2d.min.css') }}" />
     <script src="{{ url_for('static', filename='vis-timeline/vis-timeline-graph2d.min.js') }}"></script>
-    <!-- Dashboard script -->
+    <!-- React and Socket.IO -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
-    <script src="{{ url_for('static', filename='dashboard.js') }}" defer></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/babel-standalone@7/babel.min.js"></script>
+    <script type="text/babel" src="{{ url_for('static', filename='dashboard-react.jsx') }}" defer></script>
 </head>
 <body>
     <nav>
@@ -170,6 +173,8 @@
             </section>
         </div>
         </div>
+
+        <div id="root"></div>
     </div>
 
     <!-- Modal for displaying citations and other embedded content -->
