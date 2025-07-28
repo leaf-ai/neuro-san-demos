@@ -123,6 +123,7 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Verified tests succeed again (2 passed, 2 skipped)
 - Attempted `docker compose` but the tool is unavailable in this environment
 - Next: test Docker build once Docker is accessible
+\n## Update 2025-07-27T22:15Z\n- Added tabbed layout to dashboard UI and new setupTabs JS\n- Next: verify usability and continue docker work
 ## Update 2025-07-27T22:15Z
 - Added tabbed layout to dashboard UI and new setupTabs JS
 - Next: verify usability and continue docker work
@@ -144,5 +145,5 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Verified the new React dashboard loads via `dashboard.html`
 - All tests pass (2 passed, 2 skipped)
 - Next: finalize Docker support and polish remaining UI components
-=======
+
 - Next: test Docker build once Docker is accessible
