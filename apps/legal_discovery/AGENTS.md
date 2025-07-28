@@ -85,3 +85,44 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Installed dependencies for tests and verified coverage
 - React dashboard and manifest integration confirmed working
 - Next: ensure Docker serves React UI correctly
+
+## Update 2025-07-27T21:07Z
+- Updated imports for legal discovery tools to match new neuro_san package layout
+- Install attempts failed due to network restrictions
+- Next: test the Flask app in Docker once dependencies are resolved
+
+## Update 2025-07-27T21:25Z
+- Installed dependencies locally to run tests successfully
+- Verified coded tool imports after update; tests pass
+- Next: rebuild Docker image and ensure Flask app loads correctly
+
+## Update 2025-07-27T21:29Z
+- Confirmed tests run successfully after installing dependencies
+- Docker tooling not available here so image build couldn't be tested
+- Next: verify Docker compose when environment supports it
+
+\n## Update 2025-07-27T22:15Z\n- Introduced tabbed interface and updated dashboard scripts\n- Next: refine styles and test Docker stack
+
+## Update 2025-07-27T22:15Z
+- Introduced tabbed interface and updated dashboard scripts
+- Next: refine styles and test Docker stack
+
+## Update 2025-07-27T22:45Z
+- Migrated dashboard to React for a richer UI
+- Added dashboard-react.jsx and updated template to load React
+- Next: run tests and verify Docker images once available
+
+## Update 2025-07-27T23:17Z
+- Added React settings modal tied to /api/settings
+- Upgraded timeline view with vis.js and export action
+- All tests pass after installing dependencies
+- Next: polish remaining React components
+
+
+## Update 2025-07-27T23:30Z
+- Ensured coverage plugin installed so tests run
+- Verified dashboard renders with new React design
+- Tests succeed (2 passed, 2 skipped)
+- Next: finalize Docker build scripts and refine CSS details
+
+- Next: verify Docker compose when environment supports it
