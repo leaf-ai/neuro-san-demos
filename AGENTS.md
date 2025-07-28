@@ -165,3 +165,9 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Expose coded tool functions via REST endpoints to keep React components thin
 - Finalize Docker support for cross-platform use and document setup steps
 - Polish the dark theme and responsive layout for production readiness
+
+## Update 2025-07-28T03:09Z
+- Merged React UI changes with manifest default updates
+- Default manifest path set to `legal_discovery.hocon` in run script
+- Removed duplicated settings modal in dashboard template
+- Next: verify timeline modal works and finalize Docker build

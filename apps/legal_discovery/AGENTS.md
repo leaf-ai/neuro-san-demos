@@ -75,3 +75,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Provide REST endpoints for all coded tools with clear parameters and JSON responses
 - Connect React components to these endpoints using fetch and intuitive forms
 - Document Docker deployment and ensure gunicorn works on Windows
+
+## Update 2025-07-28T03:09Z
+- Synced template with React components by removing old settings modal
+- Set default manifest in run.py to legal_discovery.hocon
+- Next: verify timeline export works and finalize Docker config
