@@ -2,7 +2,7 @@ import os
 
 import requests
 from bs4 import BeautifulSoup
-from neuro_san.coded_tool import CodedTool
+from neuro_san.interfaces.coded_tool import CodedTool
 
 
 class WebScraper(CodedTool):

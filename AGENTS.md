@@ -107,3 +107,40 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Refined card grid layout and sticky nav for better UX
 - Created module AGENTS guide and logged tasks
 - Next: polish graphs and timeline exports
+
+## Update 2025-07-27T21:07Z
+- Fixed imports for CodedTool modules to use `neuro_san.interfaces.coded_tool`
+- Attempted installing requirements but network prevented completion
+- Next: rebuild Docker images and verify gunicorn now loads without ModuleNotFoundError
+
+## Update 2025-07-27T21:25Z
+- Installed required dependencies (neuro-san, neo4j, pyvis) to run tests
+- Confirmed all tests pass (2 passed, 2 skipped)
+- Next: run Docker compose to verify imports resolved
+
+## Update 2025-07-27T21:29Z
+- Installed missing packages for pytest (`python-dotenv`, `neuro-san`, `neo4j`, `pyvis`)
+- Verified tests succeed again (2 passed, 2 skipped)
+- Attempted `docker compose` but the tool is unavailable in this environment
+- Next: test Docker build once Docker is accessible
+## Update 2025-07-27T22:15Z
+- Added tabbed layout to dashboard UI and new setupTabs JS
+- Next: verify usability and continue docker work
+
+## Update 2025-07-27T22:45Z
+- Started React migration for the dashboard to deliver a modern UI
+- Implemented dashboard-react.jsx with API-connected components
+- Updated dashboard template to load React via CDN
+- Next: run tests and confirm new interface
+
+## Update 2025-07-27T23:17Z
+- Added interactive timeline and graph export features in React dashboard
+- Implemented settings modal with API integration
+- Confirmed tests pass after installing missing dependencies
+- Next: continue refining UI interactions and docker support
+
+## Update 2025-07-27T23:30Z
+- Installed coverage plugin and required packages so pytest runs cleanly
+- Verified the new React dashboard loads via `dashboard.html`
+- All tests pass (2 passed, 2 skipped)
+- Next: finalize Docker support and polish remaining UI components

@@ -1,6 +1,6 @@
 import fitz  # PyMuPDF
 import pytesseract
-from neuro_san.coded_tool import CodedTool
+from neuro_san.interfaces.coded_tool import CodedTool
 from PIL import Image
 
 
