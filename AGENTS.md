@@ -123,6 +123,75 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Verified tests succeed again (2 passed, 2 skipped)
 - Attempted `docker compose` but the tool is unavailable in this environment
 - Next: test Docker build once Docker is accessible
+## Update 2025-07-27T22:15Z
+- Added tabbed layout to dashboard UI and new setupTabs JS
+- Next: verify usability and continue docker work
+
+## Update 2025-07-27T22:45Z
+- Started React migration for the dashboard to deliver a modern UI
+- Implemented dashboard-react.jsx with API-connected components
+- Updated dashboard template to load React via CDN
+- Next: run tests and confirm new interface
+
+## Update 2025-07-27T23:17Z
+- Added interactive timeline and graph export features in React dashboard
+- Implemented settings modal with API integration
+- Confirmed tests pass after installing missing dependencies
+- Next: continue refining UI interactions and docker support
+
+## Update 2025-07-27T23:30Z
+- Installed coverage plugin and required packages so pytest runs cleanly
+- Verified the new React dashboard loads via `dashboard.html`
+- All tests pass (2 passed, 2 skipped)
+- Next: finalize Docker support and polish remaining UI components
+
+## Update 2025-07-28T00:24Z
+- Removed obsolete templates and static files; index now serves React dashboard
+- Next: verify docker container loads updated UI
+
+## Update 2025-07-28T01:49Z
+- Default manifest now points to `registries/legal_discovery.hocon`
+- Assistant setup passes uploaded file list to session metadata
+- Next: ensure corpus ingestion works smoothly in Docker
+
+## Update 2025-07-28T02:30Z
+- Added subpoena and presentation endpoints to Flask app
+- Expanded React dashboard with tabs for presentations and subpoenas
+- Installed missing test dependencies so `pytest` runs
+- Next: flesh out remaining team tools and verify Docker build
+
+### Plan 2025-07-28
+- Map each subnetwork in `registries/legal_discovery.hocon` to a dedicated UI tab
+- Expose coded tool functions via REST endpoints to keep React components thin
+- Finalize Docker support for cross-platform use and document setup steps
+- Polish the dark theme and responsive layout for production readiness
+
+## Update 2025-07-28T03:09Z
+- Merged React UI changes with manifest default updates
+- Default manifest path set to `legal_discovery.hocon` in run script
+- Removed duplicated settings modal in dashboard template
+- Next: verify timeline modal works and finalize Docker build
+
+## Update 2025-07-28T03:19Z
+- Installed missing packages for tests (dotenv, neuro-san, neo4j, pyvis)
+- Confirmed pytest passes with coverage plugin
+- Next: finalize Docker configuration and polish React UI
+
+## Update 2025-07-27T21:07Z
+- Fixed imports for CodedTool modules to use `neuro_san.interfaces.coded_tool`
+- Attempted installing requirements but network prevented completion
+- Next: rebuild Docker images and verify gunicorn now loads without ModuleNotFoundError
+
+## Update 2025-07-27T21:25Z
+- Installed required dependencies (neuro-san, neo4j, pyvis) to run tests
+- Confirmed all tests pass (2 passed, 2 skipped)
+- Next: run Docker compose to verify imports resolved
+
+## Update 2025-07-27T21:29Z
+- Installed missing packages for pytest (`python-dotenv`, `neuro-san`, `neo4j`, `pyvis`)
+- Verified tests succeed again (2 passed, 2 skipped)
+- Attempted `docker compose` but the tool is unavailable in this environment
+- Next: test Docker build once Docker is accessible
 \n## Update 2025-07-27T22:15Z\n- Added tabbed layout to dashboard UI and new setupTabs JS\n- Next: verify usability and continue docker work
 ## Update 2025-07-27T22:15Z
 - Added tabbed layout to dashboard UI and new setupTabs JS

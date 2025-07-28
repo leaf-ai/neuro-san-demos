@@ -56,7 +56,7 @@ class NeuroSanRunner:
             "thinking_dir": os.getenv("THINKING_DIR", self.thinking_dir),
             # Ensure all paths are resolved relative to `self.root_dir`
             "agent_manifest_file": os.getenv(
-                "AGENT_MANIFEST_FILE", os.path.join(self.root_dir, "registries", "manifest.hocon")
+                "AGENT_MANIFEST_FILE", os.path.join(self.root_dir, "registries", "legal_discovery.hocon")
             ),
             "agent_tool_path": os.getenv("AGENT_TOOL_PATH", os.path.join(self.root_dir, "coded_tools")),
             "agent_toolbox_info_file": os.getenv(

@@ -23,7 +23,10 @@ from . import settings
 from .database import db
 from .models import LegalReference, TimelineEvent
 
-os.environ["AGENT_MANIFEST_FILE"] = os.environ.get("AGENT_MANIFEST_FILE", "registries/manifest.hocon")
+os.environ["AGENT_MANIFEST_FILE"] = os.environ.get(
+    "AGENT_MANIFEST_FILE",
+    "registries/legal_discovery.hocon",
+)
 os.environ["AGENT_TOOL_PATH"] = os.environ.get("AGENT_TOOL_PATH", "coded_tools")
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", os.urandom(24).hex())
@@ -39,12 +42,22 @@ app.logger.setLevel(logging.getLevelName(os.environ.get("LOG_LEVEL", "INFO")))
 
 user_input_queue = queue.Queue()
 
+
+def _gather_upload_paths() -> list[str]:
+    """Return a list of all files currently uploaded."""
+    root = os.path.abspath("uploads")
+    paths = []
+    for dirpath, _, filenames in os.walk(root):
+        for fname in filenames:
+            paths.append(os.path.join(dirpath, fname))
+    return paths
+
 with app.app_context():
 
     db.create_all()
 
     app.logger.info("Setting up legal discovery assistant...")
-    legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant()
+    legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant(_gather_upload_paths())
     app.logger.info("...legal discovery assistant set up.")
 
 
@@ -180,6 +193,8 @@ from coded_tools.legal_discovery.task_tracker import TaskTracker
 from coded_tools.legal_discovery.vector_database_manager import (
     VectorDatabaseManager,
 )
+from coded_tools.legal_discovery.subpoena_manager import SubpoenaManager
+from coded_tools.legal_discovery.presentation_generator import PresentationGenerator
 
 
 UPLOAD_FOLDER = "uploads"
@@ -465,6 +480,42 @@ def manage_tasks():
     return jsonify({"status": "ok", "data": tasks})
 
 
+@app.route("/api/subpoena/draft", methods=["POST"])
+def draft_subpoena():
+    """Draft a subpoena document using SubpoenaManager."""
+    data = request.get_json() or {}
+    file_path = data.get("file_path")
+    content = data.get("content")
+    if not file_path or not content:
+        return jsonify({"error": "Missing file_path or content"}), 400
+    mgr = SubpoenaManager()
+    try:
+        mgr.draft_subpoena_document(file_path, content)
+    except Exception as exc:  # pragma: no cover - file system errors
+        return jsonify({"error": str(exc)}), 500
+    return jsonify({"status": "ok", "output": file_path})
+
+
+@app.route("/api/presentation", methods=["POST"])
+def create_presentation():
+    """Create or update a PowerPoint presentation."""
+    data = request.get_json() or {}
+    filepath = data.get("filepath")
+    slides = data.get("slides", [])
+    if not filepath or not isinstance(slides, list):
+        return jsonify({"error": "Missing filepath or slides"}), 400
+    gen = PresentationGenerator()
+    try:
+        gen.create_presentation(filepath)
+        for slide in slides:
+            title = slide.get("title", "")
+            content = slide.get("content", "")
+            gen.add_slide(filepath, title, content)
+    except Exception as exc:  # pragma: no cover - file system errors
+        return jsonify({"error": str(exc)}), 500
+    return jsonify({"status": "ok", "output": filepath})
+
+
 @app.route("/api/progress", methods=["GET"])
 def progress_status():
     """Return basic progress metrics."""
@@ -568,8 +619,8 @@ def export_report():
 
 @app.route("/")
 def index():
-    """Return the html."""
-    return render_template("index.html")
+    """Serve the React dashboard by default."""
+    return render_template("dashboard.html")
 
 
 @app.route("/dashboard")
