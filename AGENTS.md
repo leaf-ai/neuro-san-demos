@@ -217,3 +217,30 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Next: finalize Docker support and polish remaining UI components
 
 - Next: test Docker build once Docker is accessible
+
+## Update 2025-07-28T06:55Z
+- Added subpoena and presentation tabs in React dashboard with improved overview layout
+- Updated settings modal with all credential fields
+- Next: refine case management view and verify full workflow
+
+## Update 2025-07-28T07:05Z
+- Integrated CourtListener and California Codes search with Gemini summarisation
+- Added source selector in research tab
+- Next: enhance timeline exports with file excerpts
+
+## Update 2025-07-28T07:36Z
+- Added graph filtering and search
+- Created case management tab with tasks and timeline
+- Improved overview metrics
+- Next: polish layout
+
+## Update 2025-07-28T10:31Z
+- Added progress indicators for uploads and exports in React dashboard
+- Added date filters for timeline and improved export handling
+- Next: enhance styling of overview metrics
+
+## Update 2025-07-28T10:50Z
+- Timeline API now returns citations and file excerpts
+- React timeline shows excerpts in modal if no citation
+- Exported timelines include excerpts for context
+- Next: continue polishing UI layout

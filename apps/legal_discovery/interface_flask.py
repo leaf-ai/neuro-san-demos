@@ -21,7 +21,7 @@ from apps.legal_discovery.legal_discovery import tear_down_legal_discovery_assis
 
 from . import settings
 from .database import db
-from .models import LegalReference, TimelineEvent
+from .models import LegalReference, TimelineEvent, Document
 
 os.environ["AGENT_MANIFEST_FILE"] = os.environ.get(
     "AGENT_MANIFEST_FILE",
@@ -547,6 +547,18 @@ def get_graph():
     return jsonify({"status": "ok", "data": {"nodes": nodes, "edges": edges}})
 
 
+def _get_file_excerpt(case_id: str, length: int = 400) -> str | None:
+    """Return a short excerpt from the first document for the case."""
+    doc = Document.query.filter_by(case_id=case_id).first()
+    if not doc or not doc.file_path:
+        return None
+    try:
+        with open(doc.file_path, "r", errors="ignore") as f:
+            return f.read(length)
+    except Exception:  # pragma: no cover - optional file may be missing
+        return None
+
+
 @app.route("/api/timeline/export", methods=["POST"])
 def export_timeline():
     data = request.get_json()
@@ -564,11 +576,13 @@ def export_timeline():
         ref = LegalReference.query.filter_by(case_id=event.case_id).first()
         if ref:
             citation = ref.source_url
+        excerpt = _get_file_excerpt(event.case_id)
         timeline_items.append(
             {
                 "content": event.description,
                 "start": event.event_date.strftime("%Y-%m-%d"),
                 "citation": citation,
+                "excerpt": excerpt,
             }
         )
 
@@ -580,17 +594,41 @@ def export_timeline():
 @app.route("/api/timeline", methods=["GET"])
 def get_timeline():
     query = request.args.get("query")
-    timeline_manager = TimelineManager()
-    events = timeline_manager.get_timeline(query) if query else []
-    timeline_manager.close()
-    return jsonify({"status": "ok", "data": events})
+    if not query:
+        return jsonify({"status": "ok", "data": []})
+
+    events = (
+        TimelineEvent.query.filter_by(case_id=query)
+        .order_by(TimelineEvent.event_date)
+        .all()
+    )
+
+    data = []
+    for event in events:
+        citation = None
+        ref = LegalReference.query.filter_by(case_id=event.case_id).first()
+        if ref:
+            citation = ref.source_url
+        excerpt = _get_file_excerpt(event.case_id)
+        data.append(
+            {
+                "id": event.id,
+                "date": event.event_date.strftime("%Y-%m-%d"),
+                "description": event.description,
+                "citation": citation,
+                "excerpt": excerpt,
+            }
+        )
+
+    return jsonify({"status": "ok", "data": data})
 
 
 @app.route("/api/research", methods=["GET"])
 def research():
     query = request.args.get("query")
+    source = request.args.get("source", "all")
     tool = ResearchTools()
-    results = tool.search(query) if query else []
+    results = tool.search(query, source) if query else []
     return jsonify({"status": "ok", "data": results})
 
 
