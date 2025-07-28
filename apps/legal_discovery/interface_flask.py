@@ -16,8 +16,10 @@ from werkzeug.utils import secure_filename
 from flask_socketio import SocketIO
 
 from apps.legal_discovery.legal_discovery import legal_discovery_thinker
-from apps.legal_discovery.legal_discovery import set_up_legal_discovery_assistant
-from apps.legal_discovery.legal_discovery import tear_down_legal_discovery_assistant
+from apps.legal_discovery.legal_discovery import (
+    set_up_legal_discovery_assistant,
+    tear_down_legal_discovery_assistant,
+)
 
 from . import settings
 from .database import db
@@ -64,6 +66,16 @@ with app.app_context():
     app.logger.info("Setting up legal discovery assistant...")
     legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant(_gather_upload_paths())
     app.logger.info("...legal discovery assistant set up.")
+
+
+def reinitialize_legal_discovery_session() -> None:
+    """Reload the agent session with the latest uploaded files."""
+    global legal_discovery_session, legal_discovery_thread
+    tear_down_legal_discovery_assistant(legal_discovery_session)
+    legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant(
+        _gather_upload_paths()
+    )
+    app.logger.info("Legal discovery session reinitialized")
 
 
 def legal_discovery_thinking_process():
@@ -344,6 +356,27 @@ def upload_files():
             filename = secure_filename(os.path.normpath(file.filename))
             if filename.startswith("..") or not allowed_file(filename):
                 continue
+
+            save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            file.save(save_path)
+
+            # store document record
+            doc = Document(case_id=case_id, name=filename, file_path=save_path)
+            db.session.add(doc)
+            db.session.commit()
+
+            # extract text and add to vector DB
+            try:
+                processor = DocumentProcessor()
+                text = processor.extract_text(save_path)
+                VectorDatabaseManager().add_documents([text], [{}], [str(doc.id)])
+            except Exception as exc:  # pragma: no cover - best effort
+                app.logger.error("Ingestion failed for %s: %s", save_path, exc)
+
+    # Reload session metadata so new files are visible to the agent network
+    reinitialize_legal_discovery_session()
+
 
             save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
             os.makedirs(os.path.dirname(save_path), exist_ok=True)
