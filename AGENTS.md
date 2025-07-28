@@ -238,3 +238,9 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Added progress indicators for uploads and exports in React dashboard
 - Added date filters for timeline and improved export handling
 - Next: enhance styling of overview metrics
+
+## Update 2025-07-28T10:50Z
+- Timeline API now returns citations and file excerpts
+- React timeline shows excerpts in modal if no citation
+- Exported timelines include excerpts for context
+- Next: continue polishing UI layout

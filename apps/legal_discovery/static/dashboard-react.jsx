@@ -140,15 +140,28 @@ function TimelineSection() {
     if(startDate) filtered = filtered.filter(e=>e.date>=startDate);
     if(endDate) filtered = filtered.filter(e=>e.date<=endDate);
     if(!filtered.length) { containerRef.current.innerHTML=''; return; }
+    const dataset = new vis.DataSet(filtered.map(e => ({
+      id: e.id,
+      content: e.description,
+      start: e.date,
+      citation: e.citation,
+      excerpt: e.excerpt,
+    })));
     const dataset = new vis.DataSet(filtered.map(e=>({id:e.id, content:e.description, start:e.date, citation:e.citation})));
     const timeline = new vis.Timeline(containerRef.current, dataset, {});
     timeline.on('click', props => {
       const item = dataset.get(props.item);
-      if(item && item.citation) {
-        const modal = document.getElementById('modal');
-        modal.querySelector('iframe').src = item.citation;
-        modal.style.display='flex';
+      if(!item) return;
+      const modal = document.getElementById('modal');
+      const frame = modal.querySelector('iframe');
+      if(item.citation) {
+        frame.src = item.citation;
+      } else if(item.excerpt) {
+        frame.srcdoc = `<pre style="white-space:pre-wrap">${item.excerpt}</pre>`;
+      } else {
+        return;
       }
+      modal.style.display='flex';
     });
   }, [events]);
   return (
@@ -403,8 +416,6 @@ function CaseManagementSection() {
   );
 }
 
-
- 
 function SettingsModal({open,onClose}) {
   const [form,setForm] = useState({});
   const ref = useRef();

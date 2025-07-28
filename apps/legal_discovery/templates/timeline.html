@@ -30,11 +30,17 @@
 
         timeline.on('click', function (properties) {
             var item = items.get(properties.item);
-            if (item && item.citation) {
-                document.getElementById('citation-frame').src = item.citation;
-                document.getElementById('citation-modal').style.display = 'block';
+            if (!item) return;
+            var frame = document.getElementById('citation-frame');
+            if (item.citation) {
+                frame.src = item.citation;
+            } else if (item.excerpt) {
+                frame.srcdoc = '<pre style="white-space:pre-wrap">' + item.excerpt + '</pre>';
+            } else {
+                return;
             }
-        }});
+            document.getElementById('citation-modal').style.display = 'block';
+        });
 
         document.getElementById('close-modal').onclick = function() {
             document.getElementById('citation-modal').style.display = 'none';

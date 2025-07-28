@@ -147,3 +147,10 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Upload progress bar and export spinners added
 - Timeline filters by date range and export feedback
 - Next: polish tab visuals
+
+## Update 2025-07-28T10:50Z
+- Timeline endpoints provide excerpts with citations
+- React timeline modal displays citation or excerpt
+- Added helper to read excerpts from uploaded files
+- Next: tweak graph layout
+- Next: polish tab visuals
