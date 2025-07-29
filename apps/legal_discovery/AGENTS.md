@@ -262,3 +262,9 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-07-29T21:20Z
 - Adjusted Dockerfile to export AGENT_LLM_INFO_FILE without quotes
 - Next: run npm build and pytest to confirm fix
+
+## Update 2025-07-29T21:35Z
+- Resolved LLM config path with absolute directories
+- Reinstalled dependencies and built Vite bundle
+- Tests pass with all new packages
+- Next: validate docker-compose startup

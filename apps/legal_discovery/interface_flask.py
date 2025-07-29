@@ -31,14 +31,19 @@ from .models import (
     CalendarEvent,
 )
 
+# Resolve project root relative to this file so Docker and local runs share paths
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 os.environ["AGENT_MANIFEST_FILE"] = os.environ.get(
     "AGENT_MANIFEST_FILE",
-    "registries/legal_discovery.hocon",
+    os.path.join(BASE_DIR, "registries", "legal_discovery.hocon"),
 )
-os.environ["AGENT_TOOL_PATH"] = os.environ.get("AGENT_TOOL_PATH", "coded_tools")
+os.environ["AGENT_TOOL_PATH"] = os.environ.get(
+    "AGENT_TOOL_PATH",
+    os.path.join(BASE_DIR, "coded_tools"),
+)
 os.environ["AGENT_LLM_INFO_FILE"] = os.environ.get(
     "AGENT_LLM_INFO_FILE",
-    "registries/llm_config.hocon",
+    os.path.join(BASE_DIR, "registries", "llm_config.hocon"),
 )
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", os.urandom(24).hex())

@@ -28,7 +28,7 @@ EXPOSE 5001
 
 # Define environment variable
 ENV NAME World
-ENV AGENT_LLM_INFO_FILE=registries/llm_config.hocon
+ENV AGENT_LLM_INFO_FILE=/usr/src/app/registries/llm_config.hocon
 
 # Run the Flask application via gunicorn with eventlet for SocketIO support
 # Using "python -m" avoids PATH issues on Windows hosts

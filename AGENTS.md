@@ -352,3 +352,9 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 ## Update 2025-07-29T21:20Z
 - Remove quotes from AGENT_LLM_INFO_FILE in Dockerfile to fix startup error
 - Next: verify docker-compose build and run tests
+
+## Update 2025-07-29T21:35Z
+- Set absolute AGENT_LLM_INFO_FILE path and resolve paths in Flask
+- Reinstalled Node modules and built React bundle
+- Verified pytest and npm build succeed
+- Next: ensure container starts without llm path error
