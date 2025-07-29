@@ -168,3 +168,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Session reload ensures new uploads reach agent network
 - Next: improve styling polish
 - Next: polish tab visuals
+## Update 2025-07-28T15:35Z
+- Added Vite build setup and modular React components
+- Updated dashboard template to load compiled bundle
+- Documented build command in README
+- Next: verify build artifacts in Docker image
