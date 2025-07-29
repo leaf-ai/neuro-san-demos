@@ -24,7 +24,6 @@ from apps.legal_discovery.legal_discovery import (
 from . import settings
 from .database import db
 from .models import Case, Document, LegalReference, TimelineEvent
-from .models import LegalReference, TimelineEvent, Document
 
 os.environ["AGENT_MANIFEST_FILE"] = os.environ.get(
     "AGENT_MANIFEST_FILE",
@@ -377,24 +376,6 @@ def upload_files():
     # Reload session metadata so new files are visible to the agent network
     reinitialize_legal_discovery_session()
 
-
-            save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-            os.makedirs(os.path.dirname(save_path), exist_ok=True)
-            file.save(save_path)
-
-            # store document record
-            doc = Document(case_id=case_id, name=filename, file_path=save_path)
-            db.session.add(doc)
-            db.session.commit()
-
-            # extract text and add to vector DB
-            try:
-                processor = DocumentProcessor()
-                text = processor.extract_text(save_path)
-                VectorDatabaseManager().add_documents([text], [{}], [str(doc.id)])
-            except Exception as exc:  # pragma: no cover - best effort
-                app.logger.error("Ingestion failed for %s: %s", save_path, exc)
-
     user_input_queue.put(
         "process all files ingested within your scope and produce a basic overview and report."
     )
@@ -538,6 +519,39 @@ def manage_tasks():
     return jsonify({"status": "ok", "data": tasks})
 
 
+@app.route("/api/cases", methods=["GET", "POST", "DELETE"])
+def manage_cases():
+    """List, create or delete cases."""
+    if request.method == "POST":
+        data = request.get_json() or {}
+        name = data.get("name")
+        if not name:
+            return jsonify({"error": "Missing name"}), 400
+        case = Case(name=name)
+        db.session.add(case)
+        db.session.commit()
+        return jsonify({"status": "ok", "id": case.id})
+
+    if request.method == "DELETE":
+        data = request.get_json() or {}
+        case_id = data.get("id")
+        if not case_id:
+            return jsonify({"error": "Missing id"}), 400
+        case = Case.query.get(case_id)
+        if not case:
+            return jsonify({"error": "Case not found"}), 404
+        Document.query.filter_by(case_id=case_id).delete()
+        TimelineEvent.query.filter_by(case_id=case_id).delete()
+        LegalReference.query.filter_by(case_id=case_id).delete()
+        db.session.delete(case)
+        db.session.commit()
+        return jsonify({"status": "ok"})
+
+    cases = Case.query.all()
+    data = [{"id": c.id, "name": c.name} for c in cases]
+    return jsonify({"status": "ok", "data": data})
+
+
 @app.route("/api/subpoena/draft", methods=["POST"])
 def draft_subpoena():
     """Draft a subpoena document using SubpoenaManager."""
@@ -582,6 +596,50 @@ def progress_status():
     if os.path.exists(root):
         upload_count = sum(len(f) for _, _, f in os.walk(root))
     data = {"uploaded_files": upload_count}
+    return jsonify({"status": "ok", "data": data})
+
+
+@app.route("/api/metrics", methods=["GET"])
+def aggregated_metrics():
+    """Return combined counts for dashboard metrics."""
+    root = app.config["UPLOAD_FOLDER"]
+    upload_count = 0
+    if os.path.exists(root):
+        upload_count = sum(len(f) for _, _, f in os.walk(root))
+
+    vector_count = 0
+    try:
+        vector_count = VectorDatabaseManager().get_document_count()
+    except Exception:  # pragma: no cover - optional dependency may fail
+        vector_count = 0
+
+    graph_count = 0
+    try:
+        kg_manager = KnowledgeGraphManager()
+        result = kg_manager.run_query("MATCH (n) RETURN count(n) AS count")
+        graph_count = result[0]["count"] if result else 0
+        kg_manager.close()
+    except Exception:  # pragma: no cover - database may be unavailable
+        graph_count = 0
+
+    task_count = len(task_tracker.list_tasks())
+
+    case_count = Case.query.count()
+
+    log_path = os.path.join(root, "forensic.log")
+    log_count = 0
+    if os.path.exists(log_path):
+        with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
+            log_count = len(f.read().splitlines())
+
+    data = {
+        "uploaded_files": upload_count,
+        "vector_docs": vector_count,
+        "graph_nodes": graph_count,
+        "task_count": task_count,
+        "forensic_logs": log_count,
+        "case_count": case_count,
+    }
     return jsonify({"status": "ok", "data": data})
 
 

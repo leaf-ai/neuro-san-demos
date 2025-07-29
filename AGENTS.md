@@ -259,3 +259,54 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Reinitialize agent session after uploads so new files are included
 - Next: validate analysis outputs returned to UI
 - Next: finalize visual polish and ensure tests pass
+## Update 2025-07-28T15:35Z
+- Introduced Vite build for legal_discovery UI
+- Split dashboard-react.jsx into modular components
+- Build outputs to static/bundle.js and template updated
+- Next: ensure tests pass and check Docker on Windows
+## Update 2025-07-29T02:17Z
+- Removed bundle.js from version control and added gitignore rules
+- Documented build step producing bundle.js
+- Next: verify npm build once dependencies install
+
+## Update 2025-07-29T02:32Z
+- Polished React dashboard tabs with icons
+- Verified npm build and tests pass
+- Next: refine backend API documentation
+## Update 2025-07-29T03:01Z
+- Added metric cards in overview section for better at-a-glance stats
+- Styled new metric grid and built React bundle with Vite
+- Next: refine pipeline layout responsiveness
+
+## Update 2025-07-29T03:13Z
+- Improved pipeline grid layout with icons and responsive CSS
+- Rebuilt React bundle and confirmed tests pass
+- Next: polish modal styling across sections
+## Update 2025-07-29T03:22Z
+- Added `/api/metrics` endpoint aggregating counts for uploads, vectors, graph nodes and tasks
+- Updated React Overview and Pipeline sections to use this single endpoint
+- Documented metrics endpoint in module README and rebuilt bundle
+- Next: refine Docker setup for Windows compatibility
+
+## Update 2025-07-29T03:32Z
+- Improved React UI to show results from coded tools in their respective team tabs
+- Forensic, subpoena and presentation sections now display output links
+- Tabs renamed to match legal_discovery.hocon teams
+- Next: verify build and tests
+## Update 2025-07-29T03:54Z
+- Added case management API and metrics
+- Removed duplicate code in upload handler
+- Dashboard overview and stats now show case counts
+- Next: run tests and build
+
+## Update 2025-07-29T05:53Z
+- Extended React dashboard with case selector and creation form
+- Documented the new UI in the module README
+- Next: run tests and compile bundle
+
+## Update 2025-07-29T06:40Z
+- Added case deletion API and button in Case Management tab
+- Improved research results with summary and case links
+- Vector search now lists document IDs and snippets
+- Updated README and rebuilt React components
+- Next: verify build and unit tests
