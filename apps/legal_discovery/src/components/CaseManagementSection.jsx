@@ -52,6 +52,7 @@ function CaseManagementSection() {
         {tasks.map((t,i)=><li key={i}>{t}</li>)}
       </ul>
       <div className="flex flex-wrap gap-2 mb-2">
+        <input type="text" value={caseId} onChange={e=>setCaseId(e.target.value)} placeholder="Case ID" className="p-1 rounded" />
         <button className="button-secondary" onClick={loadTimeline}><i className="fa fa-clock mr-1"></i>Load Timeline</button>
       </div>
       <div ref={containerRef} style={{height:'200px'}}></div>

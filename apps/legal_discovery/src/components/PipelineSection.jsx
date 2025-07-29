@@ -13,6 +13,11 @@ function PipelineSection() {
         logs:m.forensic_logs||0
       });
     });
+    fetchJSON('/api/progress').then(d=>setMetrics(m=>({...m,files:d.data.uploaded_files||0})));
+    fetchJSON('/api/vector/count').then(d=>setMetrics(m=>({...m,vectors:d.data||0})));
+    fetchJSON('/api/tasks').then(d=>setMetrics(m=>({...m,tasks:(d.data||[]).length})));
+    fetchJSON('/api/graph').then(d=>setMetrics(m=>({...m,graph:(d.data.nodes||[]).length})));
+    fetchJSON('/api/forensic/logs').then(d=>setMetrics(m=>({...m,logs:(d.data||[]).length})));
   };
   useEffect(refresh, []);
   return (
@@ -44,7 +49,6 @@ function PipelineSection() {
           <span>Tasks</span>
           <span className="count">{metrics.tasks}</span>
         </div>
-      </div>
       <button className="button-secondary mt-2" onClick={refresh}><i className="fa fa-sync mr-1"></i>Refresh</button>
     </section>
   );

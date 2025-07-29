@@ -211,3 +211,4 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added case management controls to the React UI
 - README updated with instructions for using the case selector
 - Next: run npm build and pytest
+- Next: confirm React build step works in Docker

@@ -11,6 +11,7 @@ function ForensicSection() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ file_path: path, analysis_type: type })
     }).then(d => setResult(d.result || d.error || ''));
+  const analyze = () => fetch('/api/agents/forensic_analysis',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file_path:path,analysis_type:type})}).then(r=>r.json()).then(d=>alert(d.result||d.error||'Done'));
   const loadLogs = () => fetch('/api/forensic/logs').then(r=>r.json()).then(d=>setLog((d.data||[]).join('\n')));
   return (
     <section className="card">

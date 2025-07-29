@@ -30,7 +30,21 @@ const TABS = [
   {id:'case', label:'Case Mgmt', icon:'fa-folder-open'},
   {id:'research', label:'Legal Research', icon:'fa-book-open'},
   {id:'subpoena', label:'Subpoena', icon:'fa-gavel'},
-  {id:'presentation', label:'Trial Prep', icon:'fa-slideshare'}
+  {id:'presentation', label:'Trial Prep', icon:'fa-slideshare'},
+  {id:'pipeline', label:'Pipeline', icon:'fa-route'},
+  {id:'chat', label:'Chat', icon:'fa-comments'},
+  {id:'stats', label:'Stats', icon:'fa-chart-bar'},
+  {id:'upload', label:'Upload', icon:'fa-upload'},
+  {id:'timeline', label:'Timeline', icon:'fa-clock'},
+  {id:'graph', label:'Graph', icon:'fa-project-diagram'},
+  {id:'docs', label:'Docs', icon:'fa-file-alt'},
+  {id:'forensic', label:'Forensic', icon:'fa-search-dollar'},
+  {id:'vector', label:'Vector', icon:'fa-database'},
+  {id:'tasks', label:'Tasks', icon:'fa-tasks'},
+  {id:'case', label:'Case', icon:'fa-folder-open'},
+  {id:'research', label:'Research', icon:'fa-book-open'},
+  {id:'subpoena', label:'Subpoena', icon:'fa-gavel'},
+  {id:'presentation', label:'Presentation', icon:'fa-slideshare'}
 ];
 
 function Dashboard() {

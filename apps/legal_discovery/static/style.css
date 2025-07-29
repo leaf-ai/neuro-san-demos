@@ -470,6 +470,7 @@ progress::-webkit-progress-value {
 .pipeline .stage .count {
     font-size: 1.1em;
     font-weight: bold;
+    margin-top: 4px;
 }
 
 /* Dashboard metrics */

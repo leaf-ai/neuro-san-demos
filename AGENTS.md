@@ -303,3 +303,6 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Extended React dashboard with case selector and creation form
 - Documented the new UI in the module README
 - Next: run tests and compile bundle
+
+- Next: verify npm build once dependoutputencies install
+- Ensure each tab maps correctly to display the output of the corresponding subnetwork's particular job from neuro-san-studio-2/registries/legal_discovery.hocon
