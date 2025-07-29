@@ -4,21 +4,24 @@ FROM python:3.12-slim
 # Set the working directory in the container
 WORKDIR /usr/src/app
 
-# Copy the requirements file into the container at /usr/src/app
-COPY ./requirements.txt .
+# Copy Python requirements
+COPY ./requirements.txt ./
+
+# Copy Node manifest early so npm install can be cached
+COPY apps/legal_discovery/package*.json apps/legal_discovery/
 
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt \
-    && pip install --no-cache-dir gunicorn \
-    && pip install --no-cache-dir tesseract \
     && apt-get update \
     && apt-get install -y nodejs npm \
-    && npm --prefix apps/legal_discovery install \
-    && npm --prefix apps/legal_discovery run build --silent \
-    && rm -rf apps/legal_discovery/node_modules /var/lib/apt/lists/*
+    && npm --prefix apps/legal_discovery install
 
-# Copy the rest of the application's code into the container
+# Copy the rest of the application code
 COPY . .
+
+# Build React assets and clean up caches
+RUN npm --prefix apps/legal_discovery run build --silent \
+    && rm -rf apps/legal_discovery/node_modules /var/lib/apt/lists/*
 
 # Make port 5001 available to the world outside this container
 EXPOSE 5001

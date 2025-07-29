@@ -247,3 +247,9 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Ran npm install and built bundle with Vite
 - All unit tests pass and build succeeds
 - Next: fix llm_config path in Docker startup
+
+## Update 2025-07-29T10:25Z
+- Updated Dockerfile to copy Node manifests before install
+- Rebuilt React bundle and ran pytest successfully
+- Next: ensure docker-compose build succeeds
+=

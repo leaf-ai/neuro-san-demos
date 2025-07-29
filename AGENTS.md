@@ -337,3 +337,8 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Built React bundle successfully
 - Verified pytest and npm build pass
 - Next: ensure Docker uses llm_config.hocon path to avoid startup error
+
+## Update 2025-07-29T10:25Z
+- Fixed Dockerfile build by copying package.json before npm install
+- Ran npm build and pytest after installing dependencies
+- Next: verify docker-compose image builds without errors
