@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { fetchJSON } from "../utils";
+/* global cytoscape */
 function GraphSection() {
   const [nodes,setNodes] = useState([]);
   const [edges,setEdges] = useState([]);
@@ -56,7 +57,7 @@ function GraphSection() {
         <input type="text" value={search} onChange={e=>setSearch(e.target.value)} placeholder="find node" className="p-1 rounded" />
         <button className="button-secondary" onClick={highlight}><i className="fa fa-search mr-1"></i>Find</button>
         <button className="button-secondary" onClick={exportGraph}><i className="fa fa-file-export mr-1"></i>Export</button>
-        <button className="button-secondary" onClick={analyze}><i className="fa fa-chart-network mr-1"></i>Analyze</button>
+        <button className="button-secondary" onClick={analyze}><i className="fa fa-network-wired mr-1"></i>Analyze</button>
       </div>
       {exporting && <p className="text-sm mb-1">Exporting...</p>}
       <div id="graph" style={{height:'300px', border:'1px solid var(--border-colour)'}}></div>

@@ -222,4 +222,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added calendar UI with backend events
 - Introduced graph analysis tool
 - Next: build bundle and run tests
-- Next: confirm React build step works in Docker
+## Update 2025-07-29T08:34Z
+- Updated graph analyze icon and added global lint hints
+- Fixed newlines in Dockerfile and stylesheet
+- Next: rebuild React bundle and run tests

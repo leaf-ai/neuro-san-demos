@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
+/* global vis */
 function CaseManagementSection() {
   const [task,setTask] = useState('');
   const [tasks,setTasks] = useState([]);
