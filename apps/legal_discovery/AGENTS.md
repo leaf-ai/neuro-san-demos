@@ -177,3 +177,9 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Removed compiled bundle from repo and added ignore rules
 - Documented that bundle.js must be built locally
 - Next: confirm React build step works in Docker
+
+## Update 2025-07-29T02:32Z
+- Added icons to dashboard tabs and improved styles
+- Built bundle.js via Vite
+- Next: test Docker image with compiled assets
+- Next: confirm React build step works in Docker
