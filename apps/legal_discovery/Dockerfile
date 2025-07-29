@@ -15,6 +15,10 @@ COPY . .
 COPY --from=frontend /app/apps/legal_discovery/static apps/legal_discovery/static
 RUN rm -rf apps/legal_discovery/node_modules
 
+# Build React assets and clean up caches
+RUN npm --prefix apps/legal_discovery run build --silent \
+    && rm -rf apps/legal_discovery/node_modules /var/lib/apt/lists/*
+
 # Make port 5001 available to the world outside this container
 EXPOSE 5001
 
