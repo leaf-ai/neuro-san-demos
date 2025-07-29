@@ -313,3 +313,5 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 ## Update 2025-07-29T07:06Z
 - Added graph analysis endpoint and calendar events
 - Next: build React bundle and run tests
+- Next: verify npm build once dependoutputencies install
+- Ensure each tab maps correctly to display the output of the corresponding subnetwork's particular job from neuro-san-studio-2/registries/legal_discovery.hocon

@@ -222,3 +222,4 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added calendar UI with backend events
 - Introduced graph analysis tool
 - Next: build bundle and run tests
+- Next: confirm React build step works in Docker
