@@ -133,6 +133,9 @@ h2 {
     color: var(--text-colour);
     cursor: pointer;
     font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .tab-button.active {

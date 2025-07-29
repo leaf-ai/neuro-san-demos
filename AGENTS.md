@@ -259,3 +259,17 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Reinitialize agent session after uploads so new files are included
 - Next: validate analysis outputs returned to UI
 - Next: finalize visual polish and ensure tests pass
+## Update 2025-07-28T15:35Z
+- Introduced Vite build for legal_discovery UI
+- Split dashboard-react.jsx into modular components
+- Build outputs to static/bundle.js and template updated
+- Next: ensure tests pass and check Docker on Windows
+## Update 2025-07-29T02:17Z
+- Removed bundle.js from version control and added gitignore rules
+- Documented build step producing bundle.js
+- Next: verify npm build once dependencies install
+
+## Update 2025-07-29T02:32Z
+- Polished React dashboard tabs with icons
+- Verified npm build and tests pass
+- Next: refine backend API documentation

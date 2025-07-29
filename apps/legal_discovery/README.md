@@ -35,3 +35,17 @@ Once the containers are running, open <http://localhost:8080> in a browser to
 use the UI.
 
 To stop the stack press `Ctrl+C` and run `docker-compose down`.
+
+## Building the React Dashboard
+
+The dashboard React code is built using [Vite](https://vitejs.dev/). Run the
+following command from this directory to compile the assets into the `static/`
+folder:
+
+```bash
+npm install
+npm run build
+```
+
+The resulting `static/bundle.js` file is not committed to version control, so run
+the build command whenever you update the React code.

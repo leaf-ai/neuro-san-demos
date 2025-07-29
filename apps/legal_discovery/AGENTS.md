@@ -168,3 +168,17 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Session reload ensures new uploads reach agent network
 - Next: improve styling polish
 - Next: polish tab visuals
+## Update 2025-07-28T15:35Z
+- Added Vite build setup and modular React components
+- Updated dashboard template to load compiled bundle
+- Documented build command in README
+- Next: verify build artifacts in Docker image
+## Update 2025-07-29T02:17Z
+- Removed compiled bundle from repo and added ignore rules
+- Documented that bundle.js must be built locally
+- Next: confirm React build step works in Docker
+
+## Update 2025-07-29T02:32Z
+- Added icons to dashboard tabs and improved styles
+- Built bundle.js via Vite
+- Next: test Docker image with compiled assets
