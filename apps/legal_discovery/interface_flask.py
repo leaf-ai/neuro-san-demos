@@ -36,6 +36,10 @@ os.environ["AGENT_MANIFEST_FILE"] = os.environ.get(
     "registries/legal_discovery.hocon",
 )
 os.environ["AGENT_TOOL_PATH"] = os.environ.get("AGENT_TOOL_PATH", "coded_tools")
+os.environ["AGENT_LLM_INFO_FILE"] = os.environ.get(
+    "AGENT_LLM_INFO_FILE",
+    "registries/llm_config.hocon",
+)
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", os.urandom(24).hex())
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///legal_discovery.db"

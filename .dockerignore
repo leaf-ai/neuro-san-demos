@@ -1,0 +1,14 @@
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/*.so
+**/*.egg-info/
+.git/
+venv/
+.env
+apps/legal_discovery/node_modules/
+apps/legal_discovery/static/bundle.js
+apps/legal_discovery/static/main.css
+__pycache__/
+*.pyc

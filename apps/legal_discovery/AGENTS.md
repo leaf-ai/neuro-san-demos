@@ -231,3 +231,14 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Renamed default LLM config to `llm_config.hocon`
 - Updated `.env` examples with new path
 - Next: run npm build and pytest
+## Update 2025-07-29T09:17Z
+- Default AGENT_LLM_INFO_FILE added to Flask app
+- run.py now passes this path via environment
+- Next: npm build and pytest
+
+## Update 2025-07-29T09:52Z
+- Dockerfile now installs Node and builds React bundle automatically
+- Added project .dockerignore to keep images slim
+- Verified build and tests pass
+- Next: finalize UI polish
+

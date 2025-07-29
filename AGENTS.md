@@ -317,6 +317,18 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Polished UI components and fixed missing EOF newlines
 - Added lint hints for global libraries and updated graph icon
 - Next: build React bundle and run tests
+
+## Update 2025-07-29T08:57Z
 - Renamed `default-llm` to `llm_config.hocon` so Docker start-up succeeds
 - Documented AGENT_LLM_INFO_FILE path in `.env` files
 - Next: run tests and rebuild React bundle
+## Update 2025-07-29T09:17Z
+- Set default AGENT_LLM_INFO_FILE so Docker starts without env variables
+- Exposed new setting in run.py
+- Next: rebuild React bundle and run tests
+
+## Update 2025-07-29T09:52Z
+- Added .dockerignore to reduce image context and integrated npm build into Dockerfile
+- Installed build dependencies in tests and verified `npm run build` and pytest pass
+- Next: confirm Compose deployment on Windows
+
