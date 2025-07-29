@@ -133,6 +133,9 @@ h2 {
     color: var(--text-colour);
     cursor: pointer;
     font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .tab-button.active {
@@ -462,4 +465,26 @@ progress::-webkit-progress-value {
     font-size: 1.1em;
     font-weight: bold;
     margin-top: 4px;
+}
+
+/* Dashboard metrics */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 12px;
+    margin-bottom: 8px;
+}
+.metric-card {
+    background: var(--chat-bg);
+    border: 1px solid var(--border-colour);
+    border-radius: 8px;
+    padding: 8px;
+    text-align: center;
+}
+.metric-card .value {
+    font-size: 1.4em;
+    font-weight: bold;
+}
+.metric-card .label {
+    color: var(--subtitle-colour);
 }
