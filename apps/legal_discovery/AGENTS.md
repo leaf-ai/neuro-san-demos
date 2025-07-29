@@ -226,3 +226,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Updated graph analyze icon and added global lint hints
 - Fixed newlines in Dockerfile and stylesheet
 - Next: rebuild React bundle and run tests
+
+## Update 2025-07-29T08:57Z
+- Renamed default LLM config to `llm_config.hocon`
+- Updated `.env` examples with new path
+- Next: run npm build and pytest
