@@ -348,3 +348,7 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Built React bundle after npm install
 - Verified tests pass (2 passed, 2 skipped)
 - Next: confirm docker-compose build on Windows
+
+## Update 2025-07-29T21:20Z
+- Remove quotes from AGENT_LLM_INFO_FILE in Dockerfile to fix startup error
+- Next: verify docker-compose build and run tests

@@ -258,3 +258,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Reinstalled Node modules and built Vite bundle
 - Verified pytest and npm build succeed
 - Next: check docker-compose on Windows
+
+## Update 2025-07-29T21:20Z
+- Adjusted Dockerfile to export AGENT_LLM_INFO_FILE without quotes
+- Next: run npm build and pytest to confirm fix
