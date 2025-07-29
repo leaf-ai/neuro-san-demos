@@ -186,3 +186,4 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Introduced MetricCard component and overview metrics grid
 - Updated stylesheet with metric card styles and built bundle
 - Next: adjust pipeline view for smaller screens
+- Next: confirm React build step works in Docker
