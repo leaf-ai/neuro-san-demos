@@ -20,3 +20,4 @@ flask-sqlalchemy
 langchain-google-genai
 openai
 pyvis
+networkx
