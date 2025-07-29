@@ -65,12 +65,9 @@ function Dashboard() {
       <div className="tab-content" style={{display: tab==='research'?'block':'none'}} id="tab-research"><ResearchSection/></div>
       <div className="tab-content" style={{display: tab==='subpoena'?'block':'none'}} id="tab-subpoena"><SubpoenaSection/></div>
       <div className="tab-content" style={{display: tab==='presentation'?'block':'none'}} id="tab-presentation"><PresentationSection/></div>
-        {['overview','pipeline','chat','stats','upload','timeline','graph','docs','forensic','vector','tasks','case','research','subpoena','presentation'].map(t => (
-          <button key={t} className={`tab-button ${tab===t?'active':''}`} onClick={()=>setTab(t)} data-target={`tab-${t}`}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>
-        ))}
       <SettingsModal open={showSettings} onClose={()=>setShowSettings(false)}/>
-     </div>
-  )
+    </div>
+  );
 }
 
 export default Dashboard;
