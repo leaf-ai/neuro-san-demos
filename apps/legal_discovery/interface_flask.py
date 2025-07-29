@@ -23,14 +23,23 @@ from apps.legal_discovery.legal_discovery import (
 
 from . import settings
 from .database import db
-from .models import Case, Document, LegalReference, TimelineEvent
-from .models import LegalReference, TimelineEvent, Document
+from .models import (
+    Case,
+    Document,
+    LegalReference,
+    TimelineEvent,
+    CalendarEvent,
+)
 
 os.environ["AGENT_MANIFEST_FILE"] = os.environ.get(
     "AGENT_MANIFEST_FILE",
     "registries/legal_discovery.hocon",
 )
 os.environ["AGENT_TOOL_PATH"] = os.environ.get("AGENT_TOOL_PATH", "coded_tools")
+os.environ["AGENT_LLM_INFO_FILE"] = os.environ.get(
+    "AGENT_LLM_INFO_FILE",
+    "registries/llm_config.hocon",
+)
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", os.urandom(24).hex())
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///legal_discovery.db"
@@ -212,6 +221,7 @@ from coded_tools.legal_discovery.vector_database_manager import (
 )
 from coded_tools.legal_discovery.subpoena_manager import SubpoenaManager
 from coded_tools.legal_discovery.presentation_generator import PresentationGenerator
+from coded_tools.legal_discovery.graph_analyzer import GraphAnalyzer
 
 
 UPLOAD_FOLDER = "uploads"
@@ -246,6 +256,52 @@ def list_files():
     if not os.path.exists(root):
         return jsonify({"status": "ok", "data": []})
     data = build_file_tree(root, len(root))
+    return jsonify({"status": "ok", "data": data})
+
+
+@app.route("/api/calendar", methods=["GET", "POST", "DELETE"])
+def calendar_events():
+    """Manage calendar events for a case."""
+    if request.method == "POST":
+        data = request.get_json() or {}
+        case_id = data.get("case_id")
+        date = data.get("date")
+        title = data.get("title")
+        if not case_id or not date or not title:
+            return jsonify({"error": "Missing case_id, date or title"}), 400
+        event = CalendarEvent(
+            case_id=case_id,
+            title=title,
+            event_date=datetime.fromisoformat(date),
+        )
+        db.session.add(event)
+        db.session.commit()
+        return jsonify({"status": "ok", "id": event.id})
+
+    if request.method == "DELETE":
+        data = request.get_json() or {}
+        event_id = data.get("id")
+        if not event_id:
+            return jsonify({"error": "Missing id"}), 400
+        event = CalendarEvent.query.get(event_id)
+        if not event:
+            return jsonify({"error": "Event not found"}), 404
+        db.session.delete(event)
+        db.session.commit()
+        return jsonify({"status": "ok"})
+
+    case_id = request.args.get("case_id")
+    if not case_id:
+        return jsonify({"status": "ok", "data": []})
+    events = (
+        CalendarEvent.query.filter_by(case_id=case_id)
+        .order_by(CalendarEvent.event_date)
+        .all()
+    )
+    data = [
+        {"id": e.id, "date": e.event_date.strftime("%Y-%m-%d"), "title": e.title}
+        for e in events
+    ]
     return jsonify({"status": "ok", "data": data})
 
 
@@ -376,24 +432,6 @@ def upload_files():
 
     # Reload session metadata so new files are visible to the agent network
     reinitialize_legal_discovery_session()
-
-
-            save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-            os.makedirs(os.path.dirname(save_path), exist_ok=True)
-            file.save(save_path)
-
-            # store document record
-            doc = Document(case_id=case_id, name=filename, file_path=save_path)
-            db.session.add(doc)
-            db.session.commit()
-
-            # extract text and add to vector DB
-            try:
-                processor = DocumentProcessor()
-                text = processor.extract_text(save_path)
-                VectorDatabaseManager().add_documents([text], [{}], [str(doc.id)])
-            except Exception as exc:  # pragma: no cover - best effort
-                app.logger.error("Ingestion failed for %s: %s", save_path, exc)
 
     user_input_queue.put(
         "process all files ingested within your scope and produce a basic overview and report."
@@ -538,6 +576,39 @@ def manage_tasks():
     return jsonify({"status": "ok", "data": tasks})
 
 
+@app.route("/api/cases", methods=["GET", "POST", "DELETE"])
+def manage_cases():
+    """List, create or delete cases."""
+    if request.method == "POST":
+        data = request.get_json() or {}
+        name = data.get("name")
+        if not name:
+            return jsonify({"error": "Missing name"}), 400
+        case = Case(name=name)
+        db.session.add(case)
+        db.session.commit()
+        return jsonify({"status": "ok", "id": case.id})
+
+    if request.method == "DELETE":
+        data = request.get_json() or {}
+        case_id = data.get("id")
+        if not case_id:
+            return jsonify({"error": "Missing id"}), 400
+        case = Case.query.get(case_id)
+        if not case:
+            return jsonify({"error": "Case not found"}), 404
+        Document.query.filter_by(case_id=case_id).delete()
+        TimelineEvent.query.filter_by(case_id=case_id).delete()
+        LegalReference.query.filter_by(case_id=case_id).delete()
+        db.session.delete(case)
+        db.session.commit()
+        return jsonify({"status": "ok"})
+
+    cases = Case.query.all()
+    data = [{"id": c.id, "name": c.name} for c in cases]
+    return jsonify({"status": "ok", "data": data})
+
+
 @app.route("/api/subpoena/draft", methods=["POST"])
 def draft_subpoena():
     """Draft a subpoena document using SubpoenaManager."""
@@ -585,6 +656,50 @@ def progress_status():
     return jsonify({"status": "ok", "data": data})
 
 
+@app.route("/api/metrics", methods=["GET"])
+def aggregated_metrics():
+    """Return combined counts for dashboard metrics."""
+    root = app.config["UPLOAD_FOLDER"]
+    upload_count = 0
+    if os.path.exists(root):
+        upload_count = sum(len(f) for _, _, f in os.walk(root))
+
+    vector_count = 0
+    try:
+        vector_count = VectorDatabaseManager().get_document_count()
+    except Exception:  # pragma: no cover - optional dependency may fail
+        vector_count = 0
+
+    graph_count = 0
+    try:
+        kg_manager = KnowledgeGraphManager()
+        result = kg_manager.run_query("MATCH (n) RETURN count(n) AS count")
+        graph_count = result[0]["count"] if result else 0
+        kg_manager.close()
+    except Exception:  # pragma: no cover - database may be unavailable
+        graph_count = 0
+
+    task_count = len(task_tracker.list_tasks())
+
+    case_count = Case.query.count()
+
+    log_path = os.path.join(root, "forensic.log")
+    log_count = 0
+    if os.path.exists(log_path):
+        with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
+            log_count = len(f.read().splitlines())
+
+    data = {
+        "uploaded_files": upload_count,
+        "vector_docs": vector_count,
+        "graph_nodes": graph_count,
+        "task_count": task_count,
+        "forensic_logs": log_count,
+        "case_count": case_count,
+    }
+    return jsonify({"status": "ok", "data": data})
+
+
 @app.route("/api/graph/export", methods=["GET"])
 def export_graph():
     kg_manager = KnowledgeGraphManager()
@@ -603,6 +718,22 @@ def get_graph():
         nodes, edges = [], []
     kg_manager.close()
     return jsonify({"status": "ok", "data": {"nodes": nodes, "edges": edges}})
+
+
+@app.route("/api/graph/analyze", methods=["GET"])
+def analyze_graph():
+    """Return centrality analysis of the knowledge graph."""
+    subnet = request.args.get("subnet", "*")
+    analyzer = GraphAnalyzer()
+    try:
+        results = analyzer.analyze_centrality(subnet)
+        user_input_queue.put(
+            "Provide insights on the most connected entities in the case graph."
+        )
+    except Exception as exc:  # pragma: no cover - optional analysis may fail
+        app.logger.error("Graph analysis failed: %s", exc)
+        return jsonify({"error": str(exc)}), 500
+    return jsonify({"status": "ok", "data": results})
 
 
 def _get_file_excerpt(case_id: str, length: int = 400) -> str | None:
