@@ -9,6 +9,8 @@ COPY ./requirements.txt .
 
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir gunicorn \
+    && pip install --no-cache-dir tesseract \
     && apt-get update \
     && apt-get install -y nodejs npm \
     && npm --prefix apps/legal_discovery install \
