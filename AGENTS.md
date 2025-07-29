@@ -342,3 +342,9 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Fixed Dockerfile build by copying package.json before npm install
 - Ran npm build and pytest after installing dependencies
 - Next: verify docker-compose image builds without errors
+
+## Update 2025-07-29T20:47Z
+- Installed missing dependencies so pytest runs
+- Built React bundle after npm install
+- Verified tests pass (2 passed, 2 skipped)
+- Next: confirm docker-compose build on Windows

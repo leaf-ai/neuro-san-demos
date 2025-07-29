@@ -252,4 +252,9 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Updated Dockerfile to copy Node manifests before install
 - Rebuilt React bundle and ran pytest successfully
 - Next: ensure docker-compose build succeeds
-=
+
+## Update 2025-07-29T20:47Z
+- Installed extra Python packages so tests run
+- Reinstalled Node modules and built Vite bundle
+- Verified pytest and npm build succeed
+- Next: check docker-compose on Windows
