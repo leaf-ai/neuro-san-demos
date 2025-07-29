@@ -168,3 +168,66 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Session reload ensures new uploads reach agent network
 - Next: improve styling polish
 - Next: polish tab visuals
+## Update 2025-07-28T15:35Z
+- Added Vite build setup and modular React components
+- Updated dashboard template to load compiled bundle
+- Documented build command in README
+- Next: verify build artifacts in Docker image
+## Update 2025-07-29T02:17Z
+- Removed compiled bundle from repo and added ignore rules
+- Documented that bundle.js must be built locally
+- Next: confirm React build step works in Docker
+
+## Update 2025-07-29T02:32Z
+- Added icons to dashboard tabs and improved styles
+- Built bundle.js via Vite
+- Next: test Docker image with compiled assets
+## Update 2025-07-29T03:01Z
+- Introduced MetricCard component and overview metrics grid
+- Updated stylesheet with metric card styles and built bundle
+- Next: adjust pipeline view for smaller screens
+
+## Update 2025-07-29T03:13Z
+- Redesigned pipeline section with icons and grid layout
+- Compiled latest React build and verified unit tests
+- Next: refine case management timeline display
+## Update 2025-07-29T03:22Z
+- Created aggregated `/api/metrics` endpoint for dashboard stats
+- Overview and Pipeline React components now fetch from this endpoint
+- Readme documents the new API; bundle rebuilt via Vite
+- Next: polish timeline UI and confirm Docker build on Windows
+
+## Update 2025-07-29T03:32Z
+- Display results from Forensic, Subpoena and Presentation tools in the UI
+- Renamed dashboard tabs to reflect team names from the manifest
+- Next: run tests and build to ensure everything compiles
+## Update 2025-07-29T03:54Z
+- Implemented /api/cases endpoint and case count metric
+- Fixed duplicate code in upload_files
+- Overview and Stats sections updated with new metrics
+- Next: verify npm build and tests
+
+## Update 2025-07-29T05:53Z
+- Added case management controls to the React UI
+- README updated with instructions for using the case selector
+- Next: run npm build and pytest
+
+## Update 2025-07-29T06:40Z
+- Implemented case deletion endpoint and UI control
+- Enhanced research tab with formatted results and summaries
+- Vector search view now shows IDs and snippets
+- Updated documentation and prepared for build
+- Next: compile bundle and ensure tests pass
+## Update 2025-07-29T07:06Z
+- Added calendar UI with backend events
+- Introduced graph analysis tool
+- Next: build bundle and run tests
+## Update 2025-07-29T08:34Z
+- Updated graph analyze icon and added global lint hints
+- Fixed newlines in Dockerfile and stylesheet
+- Next: rebuild React bundle and run tests
+
+## Update 2025-07-29T08:57Z
+- Renamed default LLM config to `llm_config.hocon`
+- Updated `.env` examples with new path
+- Next: run npm build and pytest

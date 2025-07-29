@@ -142,3 +142,10 @@ class Deposition(db.Model):
     deponent_name = db.Column(db.String(255), nullable=False)
     deposition_date = db.Column(db.DateTime, nullable=False)
     transcript_path = db.Column(db.String(255), nullable=True)
+
+class CalendarEvent(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    case_id = db.Column(db.Integer, db.ForeignKey("case.id"), nullable=False)
+    title = db.Column(db.String(255), nullable=False)
+    event_date = db.Column(db.DateTime, nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
