@@ -358,3 +358,9 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Reinstalled Node modules and built React bundle
 - Verified pytest and npm build succeed
 - Next: ensure container starts without llm path error
+
+## Update 2025-07-29T22:06Z
+- Refactored legal_discovery Dockerfile to a multi-stage build using Node 18
+- Copied built static assets into the Python runtime image
+- Verified `npm --prefix apps/legal_discovery run build --silent` and `pytest -q` pass
+- Next: confirm docker-compose builds cleanly

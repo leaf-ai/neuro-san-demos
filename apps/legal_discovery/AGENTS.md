@@ -268,3 +268,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Reinstalled dependencies and built Vite bundle
 - Tests pass with all new packages
 - Next: validate docker-compose startup
+
+## Update 2025-07-29T22:06Z
+- Switched Dockerfile to multi-stage build with Node 18 for frontend assets
+- Confirmed npm build and pytest succeed after the change
+- Next: check docker-compose build on Windows

@@ -1,23 +1,19 @@
 # Use an official Python runtime as a parent image
-FROM python:3.12-slim
-
-# Set the working directory in the container
-WORKDIR /usr/src/app
-
-# Copy Python requirements
-COPY ./requirements.txt ./
-
-# Copy Node manifest early so npm install can be cached
+FROM node:18-slim AS frontend
+WORKDIR /app
 COPY apps/legal_discovery/package*.json apps/legal_discovery/
+RUN npm --prefix apps/legal_discovery install
+COPY apps/legal_discovery apps/legal_discovery
+RUN npm --prefix apps/legal_discovery run build --silent
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt \
-    && apt-get update \
-    && apt-get install -y nodejs npm \
-    && npm --prefix apps/legal_discovery install
+FROM python:3.12-slim
+WORKDIR /usr/src/app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application code
 COPY . .
+COPY --from=frontend /app/apps/legal_discovery/static apps/legal_discovery/static
+RUN rm -rf apps/legal_discovery/node_modules
 
 # Build React assets and clean up caches
 RUN npm --prefix apps/legal_discovery run build --silent \
