@@ -13,7 +13,6 @@ function SubpoenaSection() {
       setOutput(d.output || '');
       alertResponse(d);
     });
-  const draft = () => fetchJSON('/api/subpoena/draft',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file_path:path,content:text})}).then(alertResponse);
   return (
     <section className="card">
       <h2>Subpoena Drafting</h2>

@@ -519,9 +519,9 @@ def manage_tasks():
     return jsonify({"status": "ok", "data": tasks})
 
 
-@app.route("/api/cases", methods=["GET", "POST"])
+@app.route("/api/cases", methods=["GET", "POST", "DELETE"])
 def manage_cases():
-    """List existing cases or create a new one."""
+    """List, create or delete cases."""
     if request.method == "POST":
         data = request.get_json() or {}
         name = data.get("name")
@@ -531,6 +531,21 @@ def manage_cases():
         db.session.add(case)
         db.session.commit()
         return jsonify({"status": "ok", "id": case.id})
+
+    if request.method == "DELETE":
+        data = request.get_json() or {}
+        case_id = data.get("id")
+        if not case_id:
+            return jsonify({"error": "Missing id"}), 400
+        case = Case.query.get(case_id)
+        if not case:
+            return jsonify({"error": "Case not found"}), 404
+        Document.query.filter_by(case_id=case_id).delete()
+        TimelineEvent.query.filter_by(case_id=case_id).delete()
+        LegalReference.query.filter_by(case_id=case_id).delete()
+        db.session.delete(case)
+        db.session.commit()
+        return jsonify({"status": "ok"})
 
     cases = Case.query.all()
     data = [{"id": c.id, "name": c.name} for c in cases]

@@ -20,8 +20,6 @@ function StatsSection() {
       <p className="mb-1">Vector documents: <span>{stats.vector_docs || 0}</span></p>
       <p className="mb-1">Graph nodes: <span>{stats.graph_nodes || 0}</span></p>
       <p>Tasks: <span>{stats.task_count || 0}</span></p>
-      <p className="mb-1">Uploaded files: <span>{uploaded}</span></p>
-      <p>Vector documents: <span>{vectorCount}</span></p>
       <button className="button-secondary mt-2" onClick={refresh}><i className="fa fa-sync mr-1"></i>Refresh</button>
     </section>
   );

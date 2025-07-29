@@ -61,6 +61,18 @@ The dashboard tabs are labelled after the teams defined in
 directly within their respective sections so you can track the work of each
 team at a glance.
 
+Research results are summarised and displayed with direct links to matching
+case law when available. Vector searches now list the matching document IDs
+and text snippets instead of raw JSON for easier review.
+
+The Case Management tab lets you create new cases and select one to view its
+timeline. You can also delete the currently selected case. Use the form to
+enter a case name, then refresh the list to pick it from the dropdown or remove
+it with the **Delete** button.
+
+### Case Management API
+
+Use `/api/cases` to list existing cases or create a new one. POST requests require a JSON body with a `name` field and return the created case ID.
 The Case Management tab lets you create new cases and select one to view its
 timeline. Use the form to enter a case name, then refresh the list to pick it
 from the dropdown.

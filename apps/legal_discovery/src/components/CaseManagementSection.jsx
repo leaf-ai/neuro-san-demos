@@ -19,6 +19,12 @@ function CaseManagementSection() {
     fetch('/api/cases',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:newCase})})
       .then(()=>{setNewCase('');refreshCases();});
   };
+  const deleteCase = () => {
+    if(!caseId) return;
+    fetch('/api/cases',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:caseId})})
+      .then(()=>{setCaseId('');refreshCases();setEvents([]);});
+  };
+
   const loadTimeline = () => {
     if(!caseId) return;
     fetch('/api/timeline?query='+encodeURIComponent(caseId)).then(r=>r.json()).then(d=>setEvents(d.data||[]));
@@ -41,6 +47,7 @@ function CaseManagementSection() {
         <input type="text" value={newCase} onChange={e=>setNewCase(e.target.value)} className="p-1 rounded" placeholder="New case" />
         <button className="button-secondary" onClick={createCase}><i className="fa fa-plus mr-1"></i>Create</button>
         <button className="button-secondary" onClick={refreshCases}><i className="fa fa-sync mr-1"></i>Refresh</button>
+        <button className="button-secondary" onClick={deleteCase}><i className="fa fa-trash mr-1"></i>Delete</button>
       </div>
       <div className="flex flex-wrap gap-2 mb-2">
         <input type="text" value={task} onChange={e=>setTask(e.target.value)} className="p-1 rounded" placeholder="New task" />

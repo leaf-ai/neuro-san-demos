@@ -304,5 +304,11 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Documented the new UI in the module README
 - Next: run tests and compile bundle
 
+## Update 2025-07-29T06:40Z
+- Added case deletion API and button in Case Management tab
+- Improved research results with summary and case links
+- Vector search now lists document IDs and snippets
+- Updated README and rebuilt React components
+- Next: verify build and unit tests
 - Next: verify npm build once dependoutputencies install
 - Ensure each tab maps correctly to display the output of the corresponding subnetwork's particular job from neuro-san-studio-2/registries/legal_discovery.hocon

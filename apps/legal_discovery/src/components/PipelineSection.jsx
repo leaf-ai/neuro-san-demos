@@ -49,6 +49,7 @@ function PipelineSection() {
           <span>Tasks</span>
           <span className="count">{metrics.tasks}</span>
         </div>
+      </div>
       <button className="button-secondary mt-2" onClick={refresh}><i className="fa fa-sync mr-1"></i>Refresh</button>
     </section>
   );
