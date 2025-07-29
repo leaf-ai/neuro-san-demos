@@ -70,6 +70,13 @@ timeline. You can also delete the currently selected case. Use the form to
 enter a case name, then refresh the list to pick it from the dropdown or remove
 it with the **Delete** button.
 
+Each case includes a calendar for filing deadlines and court appearances.
+Add events using the form below the calendar and they will appear as dots on
+their respective dates.
+
+The Graph tab now features an **Analyze** button which performs a centrality
+check on the stored Neo4j graph and highlights the most connected nodes.
+Insights from the analysis are also forwarded to the agent network.
 ### Case Management API
 
 Use `/api/cases` to list existing cases or create a new one. POST requests require a JSON body with a `name` field and return the created case ID.

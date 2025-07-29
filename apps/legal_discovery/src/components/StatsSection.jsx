@@ -4,12 +4,6 @@ function StatsSection() {
   const [stats, setStats] = useState({});
   const refresh = () => {
     fetchJSON('/api/metrics').then(d => setStats(d.data || {}));
-function StatsSection() {
-  const [uploaded, setUploaded] = useState(0);
-  const [vectorCount, setVector] = useState(0);
-  const refresh = () => {
-    fetch('/api/progress').then(r=>r.json()).then(d=>setUploaded(d.data.uploaded_files||0));
-    fetch('/api/vector/count').then(r=>r.json()).then(d=>setVector(d.data||0));
   };
   useEffect(refresh, []);
   return (

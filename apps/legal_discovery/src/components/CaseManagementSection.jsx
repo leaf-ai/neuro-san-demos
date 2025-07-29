@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
+import Calendar from "react-calendar";
+import "react-calendar/dist/Calendar.css";
 function CaseManagementSection() {
   const [task,setTask] = useState('');
   const [tasks,setTasks] = useState([]);
@@ -6,6 +8,9 @@ function CaseManagementSection() {
   const [cases,setCases] = useState([]);
   const [newCase,setNewCase] = useState('');
   const [events,setEvents] = useState([]);
+  const [calendarEvents,setCalendarEvents] = useState([]);
+  const [newEventDate,setNewEventDate] = useState(new Date());
+  const [newEventTitle,setNewEventTitle] = useState('');
   const containerRef = useRef();
   const add = () => fetch('/api/tasks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task})}).then(r=>r.json()).then(()=>{setTask('');listAll();});
   const listAll = () => fetch('/api/tasks').then(r=>r.json()).then(d=>{const arr=(d.data||'').split('\n').filter(Boolean).map(l=>l.replace(/^\-\s*/,''));setTasks(arr);});
@@ -24,10 +29,10 @@ function CaseManagementSection() {
     fetch('/api/cases',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:caseId})})
       .then(()=>{setCaseId('');refreshCases();setEvents([]);});
   };
-
   const loadTimeline = () => {
     if(!caseId) return;
     fetch('/api/timeline?query='+encodeURIComponent(caseId)).then(r=>r.json()).then(d=>setEvents(d.data||[]));
+    fetch('/api/calendar?case_id='+encodeURIComponent(caseId)).then(r=>r.json()).then(d=>setCalendarEvents(d.data||[]));
   };
   useEffect(()=>{listAll();refreshCases();}, []);
   useEffect(() => {
@@ -59,10 +64,29 @@ function CaseManagementSection() {
         {tasks.map((t,i)=><li key={i}>{t}</li>)}
       </ul>
       <div className="flex flex-wrap gap-2 mb-2">
-        <input type="text" value={caseId} onChange={e=>setCaseId(e.target.value)} placeholder="Case ID" className="p-1 rounded" />
         <button className="button-secondary" onClick={loadTimeline}><i className="fa fa-clock mr-1"></i>Load Timeline</button>
       </div>
       <div ref={containerRef} style={{height:'200px'}}></div>
+      <div className="mt-4">
+        <h3 className="font-bold mb-1">Case Calendar</h3>
+        <Calendar
+          value={newEventDate}
+          onClickDay={(val)=>setNewEventDate(val)}
+          tileContent={({ date }) => calendarEvents.some(e=>e.date===date.toISOString().slice(0,10)) ? <span className="dot"></span> : null}
+        />
+        <div className="flex flex-wrap gap-2 mt-2">
+          <input type="text" value={newEventTitle} onChange={e=>setNewEventTitle(e.target.value)} className="p-1 rounded" placeholder="Event title" />
+          <button className="button-secondary" onClick={()=>{
+            fetch('/api/calendar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({case_id:caseId,date:newEventDate.toISOString().slice(0,10),title:newEventTitle})})
+              .then(()=>{setNewEventTitle('');loadTimeline();});
+          }}><i className="fa fa-plus mr-1"></i>Add</button>
+        </div>
+        <ul className="list-disc list-inside text-sm mt-2">
+          {calendarEvents.map(ev=>(
+            <li key={ev.id}>{ev.date} - {ev.title}</li>
+          ))}
+        </ul>
+      </div>
     </section>
   );
 }

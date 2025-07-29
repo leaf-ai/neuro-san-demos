@@ -185,4 +185,4 @@ token.json
 # Node build artifacts
 apps/legal_discovery/node_modules/
 apps/legal_discovery/static/bundle.js
-
+apps/legal_discovery/static/main.css

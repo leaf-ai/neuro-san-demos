@@ -493,3 +493,12 @@ progress::-webkit-progress-value {
 .metric-card .label {
     color: var(--subtitle-colour);
 }
+
+.dot {
+    display:inline-block;
+    width:6px;
+    height:6px;
+    margin-left:2px;
+    background:var(--primary-color);
+    border-radius:50%;
+}

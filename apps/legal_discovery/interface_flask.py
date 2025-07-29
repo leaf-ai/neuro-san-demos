@@ -23,7 +23,13 @@ from apps.legal_discovery.legal_discovery import (
 
 from . import settings
 from .database import db
-from .models import Case, Document, LegalReference, TimelineEvent
+from .models import (
+    Case,
+    Document,
+    LegalReference,
+    TimelineEvent,
+    CalendarEvent,
+)
 
 os.environ["AGENT_MANIFEST_FILE"] = os.environ.get(
     "AGENT_MANIFEST_FILE",
@@ -211,6 +217,7 @@ from coded_tools.legal_discovery.vector_database_manager import (
 )
 from coded_tools.legal_discovery.subpoena_manager import SubpoenaManager
 from coded_tools.legal_discovery.presentation_generator import PresentationGenerator
+from coded_tools.legal_discovery.graph_analyzer import GraphAnalyzer
 
 
 UPLOAD_FOLDER = "uploads"
@@ -245,6 +252,52 @@ def list_files():
     if not os.path.exists(root):
         return jsonify({"status": "ok", "data": []})
     data = build_file_tree(root, len(root))
+    return jsonify({"status": "ok", "data": data})
+
+
+@app.route("/api/calendar", methods=["GET", "POST", "DELETE"])
+def calendar_events():
+    """Manage calendar events for a case."""
+    if request.method == "POST":
+        data = request.get_json() or {}
+        case_id = data.get("case_id")
+        date = data.get("date")
+        title = data.get("title")
+        if not case_id or not date or not title:
+            return jsonify({"error": "Missing case_id, date or title"}), 400
+        event = CalendarEvent(
+            case_id=case_id,
+            title=title,
+            event_date=datetime.fromisoformat(date),
+        )
+        db.session.add(event)
+        db.session.commit()
+        return jsonify({"status": "ok", "id": event.id})
+
+    if request.method == "DELETE":
+        data = request.get_json() or {}
+        event_id = data.get("id")
+        if not event_id:
+            return jsonify({"error": "Missing id"}), 400
+        event = CalendarEvent.query.get(event_id)
+        if not event:
+            return jsonify({"error": "Event not found"}), 404
+        db.session.delete(event)
+        db.session.commit()
+        return jsonify({"status": "ok"})
+
+    case_id = request.args.get("case_id")
+    if not case_id:
+        return jsonify({"status": "ok", "data": []})
+    events = (
+        CalendarEvent.query.filter_by(case_id=case_id)
+        .order_by(CalendarEvent.event_date)
+        .all()
+    )
+    data = [
+        {"id": e.id, "date": e.event_date.strftime("%Y-%m-%d"), "title": e.title}
+        for e in events
+    ]
     return jsonify({"status": "ok", "data": data})
 
 
@@ -661,6 +714,22 @@ def get_graph():
         nodes, edges = [], []
     kg_manager.close()
     return jsonify({"status": "ok", "data": {"nodes": nodes, "edges": edges}})
+
+
+@app.route("/api/graph/analyze", methods=["GET"])
+def analyze_graph():
+    """Return centrality analysis of the knowledge graph."""
+    subnet = request.args.get("subnet", "*")
+    analyzer = GraphAnalyzer()
+    try:
+        results = analyzer.analyze_centrality(subnet)
+        user_input_queue.put(
+            "Provide insights on the most connected entities in the case graph."
+        )
+    except Exception as exc:  # pragma: no cover - optional analysis may fail
+        app.logger.error("Graph analysis failed: %s", exc)
+        return jsonify({"error": str(exc)}), 500
+    return jsonify({"status": "ok", "data": results})
 
 
 def _get_file_excerpt(case_id: str, length: int = 400) -> str | None:
