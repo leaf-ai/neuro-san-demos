@@ -242,3 +242,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Verified build and tests pass
 - Next: finalize UI polish
 
+## Update 2025-07-29T10:14Z
+- Installed pyvis, flask and chromadb for tests
+- Ran npm install and built bundle with Vite
+- All unit tests pass and build succeeds
+- Next: fix llm_config path in Docker startup

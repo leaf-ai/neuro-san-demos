@@ -332,3 +332,8 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Installed build dependencies in tests and verified `npm run build` and pytest pass
 - Next: confirm Compose deployment on Windows
 
+## Update 2025-07-29T10:14Z
+- Installed missing Python dependencies and Node modules for tests
+- Built React bundle successfully
+- Verified pytest and npm build pass
+- Next: ensure Docker uses llm_config.hocon path to avoid startup error
