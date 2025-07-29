@@ -278,6 +278,31 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Styled new metric grid and built React bundle with Vite
 - Next: refine pipeline layout responsiveness
 
+## Update 2025-07-29T03:13Z
+- Improved pipeline grid layout with icons and responsive CSS
+- Rebuilt React bundle and confirmed tests pass
+- Next: polish modal styling across sections
+## Update 2025-07-29T03:22Z
+- Added `/api/metrics` endpoint aggregating counts for uploads, vectors, graph nodes and tasks
+- Updated React Overview and Pipeline sections to use this single endpoint
+- Documented metrics endpoint in module README and rebuilt bundle
+- Next: refine Docker setup for Windows compatibility
+
+## Update 2025-07-29T03:32Z
+- Improved React UI to show results from coded tools in their respective team tabs
+- Forensic, subpoena and presentation sections now display output links
+- Tabs renamed to match legal_discovery.hocon teams
+- Next: verify build and tests
+## Update 2025-07-29T03:54Z
+- Added case management API and metrics
+- Removed duplicate code in upload handler
+- Dashboard overview and stats now show case counts
+- Next: run tests and build
+
+## Update 2025-07-29T05:53Z
+- Extended React dashboard with case selector and creation form
+- Documented the new UI in the module README
+- Next: run tests and compile bundle
 
 - Next: verify npm build once dependoutputencies install
 - Ensure each tab maps correctly to display the output of the corresponding subnetwork's particular job from neuro-san-studio-2/registries/legal_discovery.hocon

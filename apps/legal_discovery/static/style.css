@@ -448,20 +448,26 @@ progress::-webkit-progress-value {
 
 /* Team pipeline */
 .pipeline {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 12px;
 }
 .pipeline .stage {
-    flex: 1 1 120px;
     background: var(--chat-bg);
     border: 1px solid var(--border-colour);
     border-radius: 8px;
     padding: 10px;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
 }
-.pipeline .stage span:last-child {
-    display: block;
+.pipeline .stage i {
+    color: var(--primary-color);
+    font-size: 1.4em;
+}
+.pipeline .stage .count {
     font-size: 1.1em;
     font-weight: bold;
     margin-top: 4px;

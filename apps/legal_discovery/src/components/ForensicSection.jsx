@@ -1,8 +1,16 @@
 import React, { useState } from "react";
+import { fetchJSON } from "../utils";
 function ForensicSection() {
   const [path,setPath] = useState('');
   const [type,setType] = useState('authenticity');
   const [log,setLog] = useState('');
+  const [result,setResult] = useState('');
+  const analyze = () =>
+    fetchJSON('/api/agents/forensic_analysis', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file_path: path, analysis_type: type })
+    }).then(d => setResult(d.result || d.error || ''));
   const analyze = () => fetch('/api/agents/forensic_analysis',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file_path:path,analysis_type:type})}).then(r=>r.json()).then(d=>alert(d.result||d.error||'Done'));
   const loadLogs = () => fetch('/api/forensic/logs').then(r=>r.json()).then(d=>setLog((d.data||[]).join('\n')));
   return (
@@ -17,6 +25,7 @@ function ForensicSection() {
         <button className="button-secondary" onClick={analyze}><i className="fa fa-search-dollar mr-1"></i>Analyze</button>
         <button className="button-secondary" onClick={loadLogs}><i className="fa fa-book mr-1"></i>Logs</button>
       </div>
+      {result && <pre className="text-sm mb-2">{result}</pre>}
       <pre className="text-sm">{log}</pre>
     </section>
   );

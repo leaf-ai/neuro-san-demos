@@ -3,16 +3,27 @@ function CaseManagementSection() {
   const [task,setTask] = useState('');
   const [tasks,setTasks] = useState([]);
   const [caseId,setCaseId] = useState('');
+  const [cases,setCases] = useState([]);
+  const [newCase,setNewCase] = useState('');
   const [events,setEvents] = useState([]);
   const containerRef = useRef();
   const add = () => fetch('/api/tasks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task})}).then(r=>r.json()).then(()=>{setTask('');listAll();});
   const listAll = () => fetch('/api/tasks').then(r=>r.json()).then(d=>{const arr=(d.data||'').split('\n').filter(Boolean).map(l=>l.replace(/^\-\s*/,''));setTasks(arr);});
   const clear = () => fetch('/api/tasks',{method:'DELETE'}).then(r=>r.json()).then(()=>{setTasks([]);});
+  const refreshCases = () =>
+    fetch('/api/cases')
+      .then(r=>r.json())
+      .then(d=>{const arr=d.data||[];setCases(arr);if(!caseId && arr.length) setCaseId(String(arr[0].id));});
+  const createCase = () => {
+    if(!newCase.trim()) return;
+    fetch('/api/cases',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:newCase})})
+      .then(()=>{setNewCase('');refreshCases();});
+  };
   const loadTimeline = () => {
     if(!caseId) return;
     fetch('/api/timeline?query='+encodeURIComponent(caseId)).then(r=>r.json()).then(d=>setEvents(d.data||[]));
   };
-  useEffect(listAll, []);
+  useEffect(()=>{listAll();refreshCases();}, []);
   useEffect(() => {
     if(!containerRef.current) return;
     if(!events.length) { containerRef.current.innerHTML=''; return; }
@@ -22,6 +33,15 @@ function CaseManagementSection() {
   return (
     <section className="card">
       <h2>Case Management</h2>
+      <div className="flex flex-wrap gap-2 mb-2">
+        <select value={caseId} onChange={e=>setCaseId(e.target.value)} className="p-1 rounded">
+          <option value="">Select case...</option>
+          {cases.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+        <input type="text" value={newCase} onChange={e=>setNewCase(e.target.value)} className="p-1 rounded" placeholder="New case" />
+        <button className="button-secondary" onClick={createCase}><i className="fa fa-plus mr-1"></i>Create</button>
+        <button className="button-secondary" onClick={refreshCases}><i className="fa fa-sync mr-1"></i>Refresh</button>
+      </div>
       <div className="flex flex-wrap gap-2 mb-2">
         <input type="text" value={task} onChange={e=>setTask(e.target.value)} className="p-1 rounded" placeholder="New task" />
         <button className="button-secondary" onClick={add}><i className="fa fa-plus mr-1"></i>Add</button>

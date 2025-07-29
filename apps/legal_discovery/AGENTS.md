@@ -186,4 +186,29 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Introduced MetricCard component and overview metrics grid
 - Updated stylesheet with metric card styles and built bundle
 - Next: adjust pipeline view for smaller screens
+
+## Update 2025-07-29T03:13Z
+- Redesigned pipeline section with icons and grid layout
+- Compiled latest React build and verified unit tests
+- Next: refine case management timeline display
+## Update 2025-07-29T03:22Z
+- Created aggregated `/api/metrics` endpoint for dashboard stats
+- Overview and Pipeline React components now fetch from this endpoint
+- Readme documents the new API; bundle rebuilt via Vite
+- Next: polish timeline UI and confirm Docker build on Windows
+
+## Update 2025-07-29T03:32Z
+- Display results from Forensic, Subpoena and Presentation tools in the UI
+- Renamed dashboard tabs to reflect team names from the manifest
+- Next: run tests and build to ensure everything compiles
+## Update 2025-07-29T03:54Z
+- Implemented /api/cases endpoint and case count metric
+- Fixed duplicate code in upload_files
+- Overview and Stats sections updated with new metrics
+- Next: verify npm build and tests
+
+## Update 2025-07-29T05:53Z
+- Added case management controls to the React UI
+- README updated with instructions for using the case selector
+- Next: run npm build and pytest
 - Next: confirm React build step works in Docker

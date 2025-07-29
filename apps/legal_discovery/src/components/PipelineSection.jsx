@@ -3,6 +3,16 @@ import { fetchJSON } from "../utils";
 function PipelineSection() {
   const [metrics,setMetrics] = useState({files:0,vectors:0,graph:0,tasks:0,logs:0});
   const refresh = () => {
+    fetchJSON('/api/metrics').then(d=>{
+      const m=d.data||{};
+      setMetrics({
+        files:m.uploaded_files||0,
+        vectors:m.vector_docs||0,
+        graph:m.graph_nodes||0,
+        tasks:m.task_count||0,
+        logs:m.forensic_logs||0
+      });
+    });
     fetchJSON('/api/progress').then(d=>setMetrics(m=>({...m,files:d.data.uploaded_files||0})));
     fetchJSON('/api/vector/count').then(d=>setMetrics(m=>({...m,vectors:d.data||0})));
     fetchJSON('/api/tasks').then(d=>setMetrics(m=>({...m,tasks:(d.data||[]).length})));
@@ -14,12 +24,31 @@ function PipelineSection() {
     <section className="card">
       <h2>Team Pipeline</h2>
       <div className="pipeline">
-        <div className="stage"><span>Ingestion</span><span>{metrics.files}</span></div>
-        <div className="stage"><span>Forensics</span><span>{metrics.logs}</span></div>
-        <div className="stage"><span>Vector DB</span><span>{metrics.vectors}</span></div>
-        <div className="stage"><span>Graph</span><span>{metrics.graph}</span></div>
-        <div className="stage"><span>Tasks</span><span>{metrics.tasks}</span></div>
-      </div>
+        <div className="stage">
+          <i className="fa fa-file-upload"></i>
+          <span>Ingestion</span>
+          <span className="count">{metrics.files}</span>
+        </div>
+        <div className="stage">
+          <i className="fa fa-search-dollar"></i>
+          <span>Forensics</span>
+          <span className="count">{metrics.logs}</span>
+        </div>
+        <div className="stage">
+          <i className="fa fa-database"></i>
+          <span>Vector DB</span>
+          <span className="count">{metrics.vectors}</span>
+        </div>
+        <div className="stage">
+          <i className="fa fa-project-diagram"></i>
+          <span>Graph</span>
+          <span className="count">{metrics.graph}</span>
+        </div>
+        <div className="stage">
+          <i className="fa fa-tasks"></i>
+          <span>Tasks</span>
+          <span className="count">{metrics.tasks}</span>
+        </div>
       <button className="button-secondary mt-2" onClick={refresh}><i className="fa fa-sync mr-1"></i>Refresh</button>
     </section>
   );
