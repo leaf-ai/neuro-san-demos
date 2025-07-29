@@ -241,3 +241,4 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added project .dockerignore to keep images slim
 - Verified build and tests pass
 - Next: finalize UI polish
+

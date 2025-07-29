@@ -331,3 +331,4 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Added .dockerignore to reduce image context and integrated npm build into Dockerfile
 - Installed build dependencies in tests and verified `npm run build` and pytest pass
 - Next: confirm Compose deployment on Windows
+
