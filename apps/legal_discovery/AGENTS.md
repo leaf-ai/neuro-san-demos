@@ -218,3 +218,4 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Vector search view now shows IDs and snippets
 - Updated documentation and prepared for build
 - Next: compile bundle and ensure tests pass
+- Next: confirm React build step works in Docker

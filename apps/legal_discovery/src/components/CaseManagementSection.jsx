@@ -24,6 +24,7 @@ function CaseManagementSection() {
     fetch('/api/cases',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:caseId})})
       .then(()=>{setCaseId('');refreshCases();setEvents([]);});
   };
+
   const loadTimeline = () => {
     if(!caseId) return;
     fetch('/api/timeline?query='+encodeURIComponent(caseId)).then(r=>r.json()).then(d=>setEvents(d.data||[]));
@@ -58,6 +59,7 @@ function CaseManagementSection() {
         {tasks.map((t,i)=><li key={i}>{t}</li>)}
       </ul>
       <div className="flex flex-wrap gap-2 mb-2">
+        <input type="text" value={caseId} onChange={e=>setCaseId(e.target.value)} placeholder="Case ID" className="p-1 rounded" />
         <button className="button-secondary" onClick={loadTimeline}><i className="fa fa-clock mr-1"></i>Load Timeline</button>
       </div>
       <div ref={containerRef} style={{height:'200px'}}></div>

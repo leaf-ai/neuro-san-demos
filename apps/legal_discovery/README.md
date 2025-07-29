@@ -73,3 +73,10 @@ it with the **Delete** button.
 ### Case Management API
 
 Use `/api/cases` to list existing cases or create a new one. POST requests require a JSON body with a `name` field and return the created case ID.
+The Case Management tab lets you create new cases and select one to view its
+timeline. Use the form to enter a case name, then refresh the list to pick it
+from the dropdown.
+
+### Case Management API
+
+Use `/api/cases` to list existing cases or create a new one. POST requests require a JSON body with a `name` field and return the created case ID.
