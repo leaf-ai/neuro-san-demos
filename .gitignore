@@ -181,3 +181,8 @@ cython_debug/
 # Google credentials
 credentials.json
 token.json
+
+# Node build artifacts
+apps/legal_discovery/node_modules/
+apps/legal_discovery/static/bundle.js
+

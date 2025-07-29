@@ -35,3 +35,32 @@ Once the containers are running, open <http://localhost:8080> in a browser to
 use the UI.
 
 To stop the stack press `Ctrl+C` and run `docker-compose down`.
+
+## Building the React Dashboard
+
+The dashboard React code is built using [Vite](https://vitejs.dev/). Run the
+following command from this directory to compile the assets into the `static/`
+folder:
+
+```bash
+npm install
+npm run build
+```
+
+The resulting `static/bundle.js` file is not committed to version control, so run
+the build command whenever you update the React code.
+
+### Metrics Endpoint
+
+Dashboard components use `/api/metrics` to retrieve counts for uploads,
+vector documents, graph nodes, tasks, forensic logs and total cases in a single request.
+This reduces network traffic and keeps the UI responsive.
+
+The dashboard tabs are labelled after the teams defined in
+`registries/legal_discovery.hocon`. Outputs from each coded tool are shown
+directly within their respective sections so you can track the work of each
+team at a glance.
+
+### Case Management API
+
+Use `/api/cases` to list existing cases or create a new one. POST requests require a JSON body with a `name` field and return the created case ID.
