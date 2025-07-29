@@ -298,3 +298,8 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Removed duplicate code in upload handler
 - Dashboard overview and stats now show case counts
 - Next: run tests and build
+
+## Update 2025-07-29T05:53Z
+- Extended React dashboard with case selector and creation form
+- Documented the new UI in the module README
+- Next: run tests and compile bundle

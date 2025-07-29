@@ -206,3 +206,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Fixed duplicate code in upload_files
 - Overview and Stats sections updated with new metrics
 - Next: verify npm build and tests
+
+## Update 2025-07-29T05:53Z
+- Added case management controls to the React UI
+- README updated with instructions for using the case selector
+- Next: run npm build and pytest
