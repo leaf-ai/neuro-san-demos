@@ -182,3 +182,4 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added icons to dashboard tabs and improved styles
 - Built bundle.js via Vite
 - Next: test Docker image with compiled assets
+- Next: confirm React build step works in Docker

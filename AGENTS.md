@@ -273,3 +273,6 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Polished React dashboard tabs with icons
 - Verified npm build and tests pass
 - Next: refine backend API documentation
+
+- Next: verify npm build once dependoutputencies install
+- Ensure each tab maps correctly to display the output of the corresponding subnetwork's particular job from neuro-san-studio-2/registries/legal_discovery.hocon
