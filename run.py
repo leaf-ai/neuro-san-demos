@@ -62,6 +62,9 @@ class NeuroSanRunner:
             "agent_toolbox_info_file": os.getenv(
                 "AGENT_TOOLBOX_INFO_FILE", os.path.join(self.root_dir, "toolbox", "toolbox_info.hocon")
             ),
+            "agent_llm_info_file": os.getenv(
+                "AGENT_LLM_INFO_FILE", os.path.join(self.root_dir, "registries", "llm_config.hocon")
+            ),
             "logs_dir": self.logs_dir,
         }
 
@@ -159,12 +162,14 @@ class NeuroSanRunner:
         os.environ["AGENT_MANIFEST_FILE"] = self.args["agent_manifest_file"]
         os.environ["AGENT_TOOL_PATH"] = self.args["agent_tool_path"]
         os.environ["AGENT_TOOLBOX_INFO_FILE"] = self.args["agent_toolbox_info_file"]
+        os.environ["AGENT_LLM_INFO_FILE"] = self.args["agent_llm_info_file"]
         os.environ["NEURO_SAN_SERVER_CONNECTION"] = self.args["server_connection"]
         os.environ["AGENT_MANIFEST_UPDATE_PERIOD_SECONDS"] = str(self.args["manifest_update_period_seconds"])
         print(f"PYTHONPATH set to: {os.environ['PYTHONPATH']}")
         print(f"AGENT_MANIFEST_FILE set to: {os.environ['AGENT_MANIFEST_FILE']}")
         print(f"AGENT_TOOL_PATH set to: {os.environ['AGENT_TOOL_PATH']}")
         print(f"AGENT_TOOLBOX_INFO_FILE set to: {os.environ['AGENT_TOOLBOX_INFO_FILE']}")
+        print(f"AGENT_LLM_INFO_FILE set to: {os.environ['AGENT_LLM_INFO_FILE']}")
         print(f"NEURO_SAN_SERVER_CONNECTION set to: {os.environ['NEURO_SAN_SERVER_CONNECTION']}")
         print(f"AGENT_MANIFEST_UPDATE_PERIOD_SECONDS set to: {os.environ['AGENT_MANIFEST_UPDATE_PERIOD_SECONDS']}\n")
 

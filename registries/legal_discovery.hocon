@@ -1485,6 +1485,10 @@ You will query the vector database and the knowledge graph.
             "class": "legal_discovery.knowledge_graph_manager.KnowledgeGraphManager"
         },
         {
+            "name": "graph_analyzer",
+            "class": "legal_discovery.graph_analyzer.GraphAnalyzer"
+        },
+        {
             "name": "document_summary",
             "function": {
                 "description": "Produces summaries of documents or sets of documents.",

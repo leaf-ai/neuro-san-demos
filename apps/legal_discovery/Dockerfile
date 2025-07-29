@@ -8,7 +8,12 @@ WORKDIR /usr/src/app
 COPY ./requirements.txt .
 
 # Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt \
+    && apt-get update \
+    && apt-get install -y nodejs npm \
+    && npm --prefix apps/legal_discovery install \
+    && npm --prefix apps/legal_discovery run build --silent \
+    && rm -rf apps/legal_discovery/node_modules /var/lib/apt/lists/*
 
 # Copy the rest of the application's code into the container
 COPY . .
@@ -18,6 +23,7 @@ EXPOSE 5001
 
 # Define environment variable
 ENV NAME World
+ENV AGENT_LLM_INFO_FILE="registries/llm_config.hocon"
 
 # Run the Flask application via gunicorn with eventlet for SocketIO support
 # Using "python -m" avoids PATH issues on Windows hosts
