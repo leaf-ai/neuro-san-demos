@@ -264,3 +264,7 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Split dashboard-react.jsx into modular components
 - Build outputs to static/bundle.js and template updated
 - Next: ensure tests pass and check Docker on Windows
+## Update 2025-07-29T02:17Z
+- Removed bundle.js from version control and added gitignore rules
+- Documented build step producing bundle.js
+- Next: verify npm build once dependencies install

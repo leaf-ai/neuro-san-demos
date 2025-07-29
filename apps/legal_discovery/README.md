@@ -46,3 +46,6 @@ folder:
 npm install
 npm run build
 ```
+
+The resulting `static/bundle.js` file is not committed to version control, so run
+the build command whenever you update the React code.

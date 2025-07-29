@@ -173,3 +173,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Updated dashboard template to load compiled bundle
 - Documented build command in README
 - Next: verify build artifacts in Docker image
+## Update 2025-07-29T02:17Z
+- Removed compiled bundle from repo and added ignore rules
+- Documented that bundle.js must be built locally
+- Next: confirm React build step works in Docker
