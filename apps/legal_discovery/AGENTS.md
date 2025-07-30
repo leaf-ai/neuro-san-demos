@@ -273,3 +273,17 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Switched Dockerfile to multi-stage build with Node 18 for frontend assets
 - Confirmed npm build and pytest succeed after the change
 - Next: check docker-compose build on Windows
+
+## Update 2025-07-29T22:35Z
+- Verified the builder stage installs Node modules and compiles React before copying assets
+- `npm run build` and `pytest -q` both succeed
+- Next: ensure docker-compose builds without missing npm
+## Update 2025-07-29T23:31Z
+- Installed pytest-cov and other deps so tests run
+- Rebuilt Vite bundle and ran pytest
+- Next: verify docker-compose build when docker available
+
+## Update 2025-07-29T23:43Z
+- Installed neuro-san, pyvis, flask and chromadb so tests run
+- Rebuilt Vite bundle and confirmed pytest passes
+- Next: confirm Docker build pipeline

@@ -364,3 +364,17 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Copied built static assets into the Python runtime image
 - Verified `npm --prefix apps/legal_discovery run build --silent` and `pytest -q` pass
 - Next: confirm docker-compose builds cleanly
+
+## Update 2025-07-29T22:35Z
+- Confirmed multi-stage Dockerfile runs `npm` in the Node builder stage so the runtime image no longer requires Node
+- Reinstalled Node modules, built the React bundle and ran tests
+- Next: validate docker-compose build on Windows without npm errors
+## Update 2025-07-29T23:31Z
+- Installed dependencies so pytest-cov works
+- Ran npm build and pytest to confirm build issues fixed
+- Next: confirm docker-compose build when Docker is available
+
+## Update 2025-07-29T23:43Z
+- Installed neuro-san, pyvis, flask and chromadb for tests
+- Verified npm build and pytest pass
+- Next: ensure docker-compose build works in CI
