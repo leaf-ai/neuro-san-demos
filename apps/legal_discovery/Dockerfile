@@ -1,23 +1,26 @@
 # Use an official Python runtime as a parent image
+FROM node:18-slim AS frontend
+WORKDIR /app
+COPY apps/legal_discovery/package*.json apps/legal_discovery/
+RUN npm --prefix apps/legal_discovery install
+COPY apps/legal_discovery apps/legal_discovery
+RUN npm --prefix apps/legal_discovery run build --silent
+
 FROM python:3.12-slim
-
-# Set the working directory in the container
 WORKDIR /usr/src/app
-
-# Copy the requirements file into the container at /usr/src/app
-COPY ./requirements.txt .
-
-# Install any needed packages specified in requirements.txt
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application's code into the container
 COPY . .
+COPY --from=frontend /app/apps/legal_discovery/static apps/legal_discovery/static
+RUN rm -rf apps/legal_discovery/node_modules
 
 # Make port 5001 available to the world outside this container
 EXPOSE 5001
 
 # Define environment variable
 ENV NAME World
+ENV AGENT_LLM_INFO_FILE=/usr/src/app/registries/llm_config.hocon
 
 # Run the Flask application via gunicorn with eventlet for SocketIO support
 # Using "python -m" avoids PATH issues on Windows hosts
