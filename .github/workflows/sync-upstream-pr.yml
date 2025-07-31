@@ -1,19 +1,20 @@
-name: Create PR to sync with upstream
+name: Sync fork with upstream
 
 on:
   schedule:
-    - cron: '0 0 * * 1'  # 毎週月曜 0:00 UTC（日本時間 月曜 9:00）
+    - cron: '0 0 * * 1'  # 毎週月曜0:00 UTC
   workflow_dispatch:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   sync:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout main branch
+      - name: Checkout main
         uses: actions/checkout@v4
 
       - name: Set up Git config
@@ -23,15 +24,14 @@ jobs:
 
       - name: Add upstream and fetch
         run: |
-          git remote remove upstream || true
           git remote add upstream https://github.com/cognizant-ai-lab/neuro-san-studio.git
           git fetch upstream
 
-      - name: Create and push sync branch
+      - name: Create sync-upstream branch and merge
         run: |
           git checkout -b sync-upstream origin/main
-          git merge upstream/main --no-edit || echo "Merge conflicts may exist"
-          git push origin sync-upstream
+          git merge upstream/main --no-edit || true
+          git push origin sync-upstream --force
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
@@ -39,9 +39,9 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: sync-upstream
           base: main
-          title: "🔄 Sync fork with upstream"
+          title: "🔄 Weekly Sync with Upstream"
           body: |
-            This PR merges the latest changes from the upstream repository into this fork.
-            Please review the changes and resolve any merge conflicts if necessary.
-          commit-message: "chore: sync with upstream"
-          delete-branch: true
+            This PR merges upstream changes into `main`. Please resolve any conflicts manually if needed.
+          commit-message: "chore: merge upstream into main"
+          delete-branch: false
+          assignees: y107818
