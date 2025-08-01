@@ -101,7 +101,10 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Docker tooling not available here so image build couldn't be tested
 - Next: verify Docker compose when environment supports it
 
-\n## Update 2025-07-27T22:15Z\n- Introduced tabbed interface and updated dashboard scripts\n- Next: refine styles and test Docker stack
+
+## Update 2025-07-27T22:15Z
+- Introduced tabbed interface and updated dashboard scripts
+- Next: refine styles and test Docker stack
 
 ## Update 2025-07-27T22:15Z
 - Introduced tabbed interface and updated dashboard scripts
@@ -287,3 +290,14 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Installed neuro-san, pyvis, flask and chromadb so tests run
 - Rebuilt Vite bundle and confirmed pytest passes
 - Next: confirm Docker build pipeline
+
+## Update 2025-08-01T12:34Z
+- Built React bundle and launched Flask on port 5001
+- Verified server start by pointing AGENT_MANIFEST_FILE to manifest.hocon
+- Next: adjust run script to avoid port conflicts
+
+## Update 2025-08-01T12:50Z
+- Confirmed Flask server runs with AGENT_MANIFEST_FILE=registries/manifest.hocon
+- Npm build and pytest succeed
+- Added detailed build instructions to docs/memory_bank.md
+- Next: implement agent network cards in React UI
