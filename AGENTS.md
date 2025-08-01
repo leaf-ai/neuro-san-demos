@@ -378,3 +378,4 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Installed neuro-san, pyvis, flask and chromadb for tests
 - Verified npm build and pytest pass
 - Next: ensure docker-compose build works in CI
+\n## Update 2025-08-01T12:14Z\n- Reviewed documentation and coded tools for legal discovery\n- Built React bundle and ran pytest (2 passed)\n- Attempted to start server; neuro-san fails due to AGENT_LLM_INFO_FILE path\n- Next: resolve LLM config path and confirm server startup
