@@ -192,7 +192,10 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Verified tests succeed again (2 passed, 2 skipped)
 - Attempted `docker compose` but the tool is unavailable in this environment
 - Next: test Docker build once Docker is accessible
-\n## Update 2025-07-27T22:15Z\n- Added tabbed layout to dashboard UI and new setupTabs JS\n- Next: verify usability and continue docker work
+
+## Update 2025-07-27T22:15Z
+- Added tabbed layout to dashboard UI and new setupTabs JS
+- Next: verify usability and continue docker work
 ## Update 2025-07-27T22:15Z
 - Added tabbed layout to dashboard UI and new setupTabs JS
 - Next: verify usability and continue docker work
@@ -378,3 +381,27 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Installed neuro-san, pyvis, flask and chromadb for tests
 - Verified npm build and pytest pass
 - Next: ensure docker-compose build works in CI
+
+## Update 2025-08-01T12:14Z
+- Reviewed documentation and coded tools for legal discovery
+- Built React bundle and ran pytest (2 passed)
+- Attempted to start server; neuro-san fails due to AGENT_LLM_INFO_FILE path
+- Next: resolve LLM config path and confirm server startup
+
+## Update 2025-08-01T12:34Z
+- Diagnosed server startup failure due to AGENT_MANIFEST_FILE pointing to legal_discovery.hocon
+- Set AGENT_MANIFEST_FILE to registries/manifest.hocon and confirmed NeuroSAN starts on port 30011
+- Launched Flask UI on port 5001 after building React assets
+- Next: refine startup script to use manifest.hocon by default
+
+## Update 2025-08-01T12:50Z
+- Reviewed all docs and registry files for legal_discovery
+- Verified npm build and pytest pass locally
+- Documented full startup workflow in memory_bank.md
+- Next: polish UI with agent team cards
+
+## Update 2025-08-01T13:25Z
+- Set default AGENT_MANIFEST_FILE to registries/manifest.hocon in run.py and Flask app
+- Added Agent Network tab with team cards in React UI
+- Documented standalone startup steps and expanded memory_bank
+- Next: verify container startup with new defaults

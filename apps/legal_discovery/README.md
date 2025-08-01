@@ -36,6 +36,17 @@ use the UI.
 
 To stop the stack press `Ctrl+C` and run `docker-compose down`.
 
+## Running Without Docker
+
+1. Execute `bash setup.sh` from the project root to create a virtual environment and install Python dependencies.
+2. Run `npm install` and `npm run build` inside `apps/legal_discovery` to compile the React dashboard.
+3. Export required variables so NeuroSAN loads the correct manifest and LLM config:
+   ```bash
+   export AGENT_MANIFEST_FILE=registries/manifest.hocon
+   export AGENT_LLM_INFO_FILE=registries/llm_config.hocon
+   ```
+4. Start the Flask server with `python apps/legal_discovery/interface_flask.py` and open <http://localhost:5001>.
+
 ## Building the React Dashboard
 
 The dashboard React code is built using [Vite](https://vitejs.dev/). Run the
