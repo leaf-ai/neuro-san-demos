@@ -57,3 +57,18 @@ Each tool appears in `coded_tools/legal_discovery/`. Example `KnowledgeGraphMana
 
 Running `python -m run` currently fails because NeuroSAN cannot load `registries/llm_config.hocon`, reporting `ValueError: file_reference .../llm_config must be a .json or .hocon file`【F:logs/server.log†L1-L30】. The environment variable is not forwarded correctly when starting the server directly. Exporting `AGENT_LLM_INFO_FILE` before launching `interface_flask.py` still produces this error. Resolving the path handling in NeuroSAN is required to fully start the application outside Docker.
 
+### Debugging Notes (2025-08-01)
+Running `python -m run` initially failed because `AGENT_MANIFEST_FILE` defaulted to
+`registries/legal_discovery.hocon`. The Neuro SAN server treated this network file
+as a manifest and attempted to load `llm_config` as another file path, leading to
+`ValueError: file_reference .../llm_config must be a .json or .hocon file`.
+Exporting `AGENT_MANIFEST_FILE=registries/manifest.hocon` resolves the error.
+The server can then be started with:
+```bash
+python -m neuro_san.service.main_loop.server_main_loop --port 30011 --http_port 8081
+```
+Followed by launching the Flask UI:
+```bash
+export FLASK_APP=apps/legal_discovery/interface_flask.py
+python -m flask run --port 5001
+```
