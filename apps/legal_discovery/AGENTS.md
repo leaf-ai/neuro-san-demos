@@ -287,3 +287,4 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Installed neuro-san, pyvis, flask and chromadb so tests run
 - Rebuilt Vite bundle and confirmed pytest passes
 - Next: confirm Docker build pipeline
+\n## Update 2025-08-01T12:34Z\n- Built React bundle and launched Flask on port 5001\n- Verified server start by pointing AGENT_MANIFEST_FILE to manifest.hocon\n- Next: adjust run script to avoid port conflicts
