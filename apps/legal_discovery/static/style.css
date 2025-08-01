@@ -117,6 +117,19 @@ h2 {
     gap: 24px;
 }
 
+.network-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.network-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-colour);
+    border-radius: 8px;
+    padding: 16px;
+}
+
 /* Simple tabbed interface */
 .tab-buttons {
     display: flex;

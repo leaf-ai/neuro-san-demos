@@ -301,3 +301,9 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Npm build and pytest succeed
 - Added detailed build instructions to docs/memory_bank.md
 - Next: implement agent network cards in React UI
+
+## Update 2025-08-01T13:25Z
+- Created AgentNetworkSection component and new tab
+- Updated defaults to use manifest.hocon for local runs
+- Rebuilt bundle and confirmed tests pass
+- Next: test docker-compose build when available

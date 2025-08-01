@@ -49,6 +49,9 @@ The stack launches the Flask front end on port `8080` plus Neo4j and Tesseract c
 - Forensic Document Analysis Team – includes `FraudDetector` and `GraphAnalyzer`.
 - Legal Analysis Case Strategy Team – uses `LegalSummary` and `KnowledgeGraphManager`.
 - Timeline Construction Team – wraps `TimelineManager`.
+- Legal Research Team – provides case law and precedent lookup with `ResearchTools`.
+- Forensic Financial Analysis Team – runs `ForensicTools` on financial records.
+- Software Development Team – offers `CodeEditor` and `FileManager` utilities.
 - Trial Preparation & Presentation Team – exposes `PresentationGenerator`, `SubpoenaManager` and `DocumentModifier`.
 
 Each tool appears in `coded_tools/legal_discovery/`. Example `KnowledgeGraphManager` connects to Neo4j and exposes helper methods for creating nodes and relationships【F:coded_tools/legal_discovery/knowledge_graph_manager.py†L1-L35】.
@@ -79,6 +82,7 @@ python -m flask run --port 5001
 - Knowledge graphs are persisted to Neo4j using `KnowledgeGraphManager`. Use `/api/graph` to query and `/api/graph/analyze` for centrality metrics.
 - Timelines for each case are managed through `TimelineManager` with events stored in SQLite. Export via `/api/timeline/export`.
 - The UI exposes tabs for ingestion, document tools, forensics, research, case management, vector search, graph visualisation, subpoena drafting and presentation generation.
+- A dedicated **Agent Network** tab lists every subteam and tool from the manifest so users can understand the overall workflow.
 - All coded tools are wired through dedicated Flask endpoints (e.g. `/api/document/redact`, `/api/agents/forensic_analysis`). See `interface_flask.py` for full list.
 
 ## End-to-End Startup Checklist
@@ -88,3 +92,4 @@ python -m flask run --port 5001
 3. `PYTHONPATH=$(pwd) AGENT_MANIFEST_FILE=$(pwd)/registries/manifest.hocon AGENT_LLM_INFO_FILE=$(pwd)/registries/llm_config.hocon python apps/legal_discovery/interface_flask.py`
 
 This starts the Flask server on port 5001 without Docker. Docker Compose performs these steps inside the image automatically.
+The helper `run.py` now uses `registries/manifest.hocon` as its default manifest so manual exports are rarely required.

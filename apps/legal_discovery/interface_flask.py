@@ -35,7 +35,7 @@ from .models import (
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 os.environ["AGENT_MANIFEST_FILE"] = os.environ.get(
     "AGENT_MANIFEST_FILE",
-    os.path.join(BASE_DIR, "registries", "legal_discovery.hocon"),
+    os.path.join(BASE_DIR, "registries", "manifest.hocon"),
 )
 os.environ["AGENT_TOOL_PATH"] = os.environ.get(
     "AGENT_TOOL_PATH",

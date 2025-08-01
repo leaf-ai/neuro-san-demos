@@ -14,8 +14,10 @@ import CaseManagementSection from "./components/CaseManagementSection";
 import ResearchSection from "./components/ResearchSection";
 import SubpoenaSection from "./components/SubpoenaSection";
 import PresentationSection from "./components/PresentationSection";
+import AgentNetworkSection from "./components/AgentNetworkSection";
 import SettingsModal from "./components/SettingsModal";
 const TABS = [
+  {id:'network', label:'Agent Network', icon:'fa-sitemap'},
   {id:'overview', label:'Overview', icon:'fa-home'},
   {id:'pipeline', label:'Team Pipeline', icon:'fa-route'},
   {id:'chat', label:'Orchestrator', icon:'fa-comments'},
@@ -50,6 +52,7 @@ function Dashboard() {
           </button>
         ))}
       </div>
+      <div className="tab-content" style={{display: tab==='network'?'block':'none'}} id="tab-network"><AgentNetworkSection/></div>
       <div className="tab-content" style={{display: tab==='overview'?'block':'none'}} id="tab-overview"><OverviewSection/></div>
       <div className="tab-content" style={{display: tab==='pipeline'?'block':'none'}} id="tab-pipeline"><PipelineSection/></div>
       <div className="tab-content" style={{display: tab==='chat'?'block':'none'}} id="tab-chat"><ChatSection/></div>

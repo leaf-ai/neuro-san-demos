@@ -399,3 +399,9 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Verified npm build and pytest pass locally
 - Documented full startup workflow in memory_bank.md
 - Next: polish UI with agent team cards
+
+## Update 2025-08-01T13:25Z
+- Set default AGENT_MANIFEST_FILE to registries/manifest.hocon in run.py and Flask app
+- Added Agent Network tab with team cards in React UI
+- Documented standalone startup steps and expanded memory_bank
+- Next: verify container startup with new defaults
