@@ -72,3 +72,19 @@ Followed by launching the Flask UI:
 export FLASK_APP=apps/legal_discovery/interface_flask.py
 python -m flask run --port 5001
 ```
+
+## Application Features
+
+- Document uploads are stored in `uploads/` and indexed in a ChromaDB collection via `VectorDatabaseManager`.
+- Knowledge graphs are persisted to Neo4j using `KnowledgeGraphManager`. Use `/api/graph` to query and `/api/graph/analyze` for centrality metrics.
+- Timelines for each case are managed through `TimelineManager` with events stored in SQLite. Export via `/api/timeline/export`.
+- The UI exposes tabs for ingestion, document tools, forensics, research, case management, vector search, graph visualisation, subpoena drafting and presentation generation.
+- All coded tools are wired through dedicated Flask endpoints (e.g. `/api/document/redact`, `/api/agents/forensic_analysis`). See `interface_flask.py` for full list.
+
+## End-to-End Startup Checklist
+
+1. `npm --prefix apps/legal_discovery run build --silent`
+2. `pytest -q`
+3. `PYTHONPATH=$(pwd) AGENT_MANIFEST_FILE=$(pwd)/registries/manifest.hocon AGENT_LLM_INFO_FILE=$(pwd)/registries/llm_config.hocon python apps/legal_discovery/interface_flask.py`
+
+This starts the Flask server on port 5001 without Docker. Docker Compose performs these steps inside the image automatically.
