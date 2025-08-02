@@ -25,6 +25,7 @@ from apps.legal_discovery.legal_discovery import (
 
 from pyhocon import ConfigFactory
 
+
 from apps.legal_discovery import settings
 from apps.legal_discovery.database import db
 from apps.legal_discovery.models import (
