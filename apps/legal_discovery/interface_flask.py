@@ -3,6 +3,8 @@ import logging
 import os
 import queue
 import re
+import subprocess
+import threading
 import time
 from datetime import datetime
 
@@ -31,6 +33,9 @@ from apps.legal_discovery.models import (
     CalendarEvent,
 )
 
+# Configure logging before any other setup so early steps are captured
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
+
 # Resolve project root relative to this file so Docker and local runs share paths
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 os.environ["AGENT_MANIFEST_FILE"] = os.environ.get(
@@ -45,6 +50,15 @@ os.environ["AGENT_LLM_INFO_FILE"] = os.environ.get(
     "AGENT_LLM_INFO_FILE",
     os.path.join(BASE_DIR, "registries", "llm_config.hocon"),
 )
+# Ensure the React build exists so the dashboard can render
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+BUNDLE_PATH = os.path.join(STATIC_DIR, "bundle.js")
+if not os.path.exists(BUNDLE_PATH):
+    logging.info("No frontend bundle found; running npm build")
+    subprocess.run(
+        ["npm", "--prefix", os.path.dirname(__file__), "run", "build", "--silent"],
+        check=True,
+    )
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", os.urandom(24).hex())
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///legal_discovery.db"
@@ -53,11 +67,13 @@ db.init_app(app)
 socketio = SocketIO(app)
 thread_started = False  # pylint: disable=invalid-name
 
-# Configure logging
-logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 app.logger.setLevel(logging.getLevelName(os.environ.get("LOG_LEVEL", "INFO")))
 
 user_input_queue = queue.Queue()
+
+# Shared agent session and worker thread are initialized asynchronously
+legal_discovery_session = None
+legal_discovery_thread = None
 
 
 def _gather_upload_paths() -> list[str]:
@@ -69,23 +85,33 @@ def _gather_upload_paths() -> list[str]:
             paths.append(os.path.join(dirpath, fname))
     return paths
 
-with app.app_context():
 
+def _initialize_agent() -> None:
+    """Set up the legal discovery assistant in a background thread."""
+    global legal_discovery_session, legal_discovery_thread
+    with app.app_context():
+        app.logger.info("Setting up legal discovery assistant...")
+        legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant(
+            _gather_upload_paths()
+        )
+        app.logger.info("...legal discovery assistant set up.")
+
+
+with app.app_context():
     db.create_all()
     if not Case.query.first():
         default_case = Case(name="Default Case")
         db.session.add(default_case)
         db.session.commit()
 
-    app.logger.info("Setting up legal discovery assistant...")
-    legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant(_gather_upload_paths())
-    app.logger.info("...legal discovery assistant set up.")
+threading.Thread(target=_initialize_agent, daemon=True).start()
 
 
 def reinitialize_legal_discovery_session() -> None:
     """Reload the agent session with the latest uploaded files."""
     global legal_discovery_session, legal_discovery_thread
-    tear_down_legal_discovery_assistant(legal_discovery_session)
+    if legal_discovery_session is not None:
+        tear_down_legal_discovery_assistant(legal_discovery_session)
     legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant(
         _gather_upload_paths()
     )
@@ -99,6 +125,8 @@ def legal_discovery_thinking_process():
         thoughts = "thought: hmm, let's see now..."
         while True:
             socketio.sleep(1)
+            if legal_discovery_session is None:
+                continue
 
             app.logger.debug("Calling legal_discovery_thinker...")
             thoughts, legal_discovery_thread = legal_discovery_thinker(
@@ -876,7 +904,8 @@ def handle_user_input(json, *_):
 def cleanup():
     """Tear things down on exit."""
     app.logger.info("Bye!")
-    tear_down_legal_discovery_assistant(legal_discovery_session)
+    if legal_discovery_session is not None:
+        tear_down_legal_discovery_assistant(legal_discovery_session)
     socketio.stop()
 
 

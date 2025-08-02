@@ -410,3 +410,16 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Added missing rfc3987 dependency for Chromadb startup
 - Converted Flask imports to absolute paths so gunicorn serves the UI
 - Next: ensure frontend build assets are referenced consistently
+
+## Update 2025-08-02T22:23Z
+- Automatically build React assets when bundle.js is absent and include generated CSS
+- Next: confirm dashboard renders in browser and broaden API coverage
+
+## Update 2025-08-02T23:05Z
+- Set manifest path in Legal Discovery Dockerfile and removed placeholder env var
+- Dropped repo bind mount from docker-compose so built frontend assets are served
+- Next: build compose stack to verify UI loads in container
+
+## Update 2025-08-02T23:48Z
+- Initialize legal discovery agent in background thread so Flask responds immediately
+- Next: exercise UI once container stack is available
