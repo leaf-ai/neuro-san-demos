@@ -307,3 +307,22 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Updated defaults to use manifest.hocon for local runs
 - Rebuilt bundle and confirmed tests pass
 - Next: test docker-compose build when available
+
+## Update 2025-08-02T22:08Z
+- Added rfc3987 dependency and switched Flask imports to absolute paths
+- Verified gunicorn serves bundle.js and main.css after build
+- Next: audit dashboard for missing stylesheet references
+
+## Update 2025-08-02T22:23Z
+- Trigger npm build at startup if bundle.js is missing and link main.css in the template
+- Removed obsolete dashboard.js to avoid serving stale assets
+- Next: confirm UI renders in browser and broaden API test coverage
+
+## Update 2025-08-02T23:05Z
+- Removed host bind mount from Docker Compose to keep built React assets inside container
+- Set AGENT_MANIFEST_FILE in Dockerfile for consistent registry loading
+- Next: build compose stack and verify dashboard renders in container
+
+## Update 2025-08-02T23:48Z
+- Load legal discovery assistant on a background thread so HTTP requests return immediately
+- Next: verify dashboard interactivity once agent initialization completes
