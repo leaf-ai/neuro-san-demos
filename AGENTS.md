@@ -405,3 +405,8 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Added Agent Network tab with team cards in React UI
 - Documented standalone startup steps and expanded memory_bank
 - Next: verify container startup with new defaults
+
+## Update 2025-08-02T22:08Z
+- Added missing rfc3987 dependency for Chromadb startup
+- Converted Flask imports to absolute paths so gunicorn serves the UI
+- Next: ensure frontend build assets are referenced consistently
