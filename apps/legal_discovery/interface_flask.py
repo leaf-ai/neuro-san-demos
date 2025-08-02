@@ -21,9 +21,9 @@ from apps.legal_discovery.legal_discovery import (
     tear_down_legal_discovery_assistant,
 )
 
-from . import settings
-from .database import db
-from .models import (
+from apps.legal_discovery import settings
+from apps.legal_discovery.database import db
+from apps.legal_discovery.models import (
     Case,
     Document,
     LegalReference,
