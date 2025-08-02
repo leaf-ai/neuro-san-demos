@@ -423,3 +423,7 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 ## Update 2025-08-02T23:48Z
 - Initialize legal discovery agent in background thread so Flask responds immediately
 - Next: exercise UI once container stack is available
+
+## Update 2025-08-03T00:20Z
+- Exposed agent and topic APIs and fixed front-end build wiring
+- Next: verify docker compose serves dashboard assets reliably

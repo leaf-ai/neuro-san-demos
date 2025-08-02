@@ -326,3 +326,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-02T23:48Z
 - Load legal discovery assistant on a background thread so HTTP requests return immediately
 - Next: verify dashboard interactivity once agent initialization completes
+
+## Update 2025-08-03T00:20Z
+- Added /api/agents and /api/topics endpoints backed by registry and database
+- Ensured React build outputs load by bundling when missing
+- Next: validate dashboard renders data from new endpoints

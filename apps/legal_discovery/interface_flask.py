@@ -23,6 +23,9 @@ from apps.legal_discovery.legal_discovery import (
     tear_down_legal_discovery_assistant,
 )
 
+from pyhocon import ConfigFactory
+
+
 from apps.legal_discovery import settings
 from apps.legal_discovery.database import db
 from apps.legal_discovery.models import (
@@ -31,6 +34,7 @@ from apps.legal_discovery.models import (
     LegalReference,
     TimelineEvent,
     CalendarEvent,
+    LegalTheory,
 )
 
 # Configure logging before any other setup so early steps are captured
@@ -289,6 +293,28 @@ def list_files():
     if not os.path.exists(root):
         return jsonify({"status": "ok", "data": []})
     data = build_file_tree(root, len(root))
+    return jsonify({"status": "ok", "data": data})
+
+
+@app.route("/api/agents", methods=["GET"])
+def list_agents():
+    """Return agent team names from the legal discovery registry."""
+    config_path = os.path.join(BASE_DIR, "registries", "legal_discovery.hocon")
+    cfg = ConfigFactory.parse_file(config_path)
+    orchestrator = cfg.get("tools")[0]
+    agents = [{"name": name} for name in orchestrator.get("tools", [])]
+    return jsonify({"status": "ok", "data": agents})
+
+
+@app.route("/api/topics", methods=["GET"])
+def list_topics():
+    """Return distinct legal theory topics from the database."""
+    case_id = request.args.get("case_id")
+    query = LegalTheory.query
+    if case_id:
+        query = query.filter_by(case_id=case_id)
+    topics = query.with_entities(LegalTheory.theory_name).distinct().all()
+    data = [{"label": name} for (name,) in topics]
     return jsonify({"status": "ok", "data": data})
 
 
