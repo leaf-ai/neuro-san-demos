@@ -4,12 +4,15 @@
     <meta charset="UTF-8">
     <title>Timeline</title>
     <link href="{{ url_for('static', filename='vis-timeline/vis-timeline-graph2d.min.css') }}" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="{{ url_for('static', filename='vis-timeline/vis-timeline-graph2d.min.js') }}"></script>
 </head>
 <body>
     <div id="visualization"></div>
-    <div id="citation-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5);">
-        <div style="background-color:white; margin:15% auto; padding:20px; border:1px solid #888; width:80%;">
+    <div id="citation-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7);">
+        <div style="background:var(--card-bg); color:var(--text-colour); margin:15% auto; padding:20px; border:1px solid var(--border-colour); width:80%; backdrop-filter:blur(var(--glass-blur));">
             <span id="close-modal" style="float:right; cursor:pointer;">&times;</span>
             <iframe id="citation-frame" style="width:100%; height:500px;"></iframe>
         </div>
