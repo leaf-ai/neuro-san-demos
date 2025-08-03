@@ -503,3 +503,7 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Batched document commits with dual-schema metadata storage and concurrent ingestion processes
 - Skipped and logged files that exceed 30s without halting batch progress
 - Next: monitor batch commit performance and tune concurrency
+
+## Update 2025-08-03T20:30Z
+- Moved AAOSA include inside root object in `legal_discovery.hocon` to resolve parse errors during agent initialization
+- Next: confirm configuration loads and tests pass
