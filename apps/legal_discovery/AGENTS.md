@@ -370,3 +370,14 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - `VectorDatabaseManager` now inserts placeholder metadata when none is provided, preventing Chroma errors
 - Next: test large batch uploads to confirm ingestion remains stable
 
+## Update 2025-08-03T08:27Z
+- Wrapped Chroma `add` calls in a retry with default metadata so malformed files are skipped without stalling uploads
+- Next: verify batch uploads proceed even when some documents contain empty metadata
+
+## Update 2025-08-03T11:00Z
+- Switched document ingestion to subprocesses and kill on timeout to prevent frozen uploads
+- Next: surface timeout skips in UI
+
+## Update 2025-08-03T12:30Z
+- Append processed filenames to each batch so agent session reinitializes when chunks succeed
+- Next: report skipped files back to users for troubleshooting

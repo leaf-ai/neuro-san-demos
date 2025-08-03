@@ -1,3 +1,5 @@
+import logging
+
 import chromadb
 from neuro_san.interfaces.coded_tool import CodedTool
 
@@ -35,7 +37,14 @@ class VectorDatabaseManager(CodedTool):
                     safe_metadatas.append(cleaned)
                 else:
                     safe_metadatas.append({"source": "unknown", "id": doc_id})
-        self.collection.add(documents=documents, metadatas=safe_metadatas, ids=ids)
+        try:
+            self.collection.add(documents=documents, metadatas=safe_metadatas, ids=ids)
+        except ValueError as exc:
+            logging.warning(
+                "Vector add failed (%s); retrying with placeholder metadata", exc
+            )
+            fallback = [{"source": "unknown", "id": i} for i in ids]
+            self.collection.add(documents=documents, metadatas=fallback, ids=ids)
 
     def query(self, query_texts: list[str], n_results: int = 10) -> dict:
         """

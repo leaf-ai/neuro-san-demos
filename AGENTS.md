@@ -466,3 +466,15 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 ## Update 2025-08-03T09:40Z
 - Normalised vector metadata in `VectorDatabaseManager` so every document includes a placeholder entry
 - Next: monitor uploads for any remaining vector ingestion issues
+
+## Update 2025-08-03T08:27Z
+- Hardened vector database writes with an automatic retry using placeholder metadata to prevent ingestion stalls
+- Next: watch batch uploads for any files that still fail to index
+
+## Update 2025-08-03T11:00Z
+- Run file ingestion in separate processes and terminate tasks exceeding 30s so uploads never hang
+- Next: monitor memory usage during large uploads
+
+## Update 2025-08-03T12:30Z
+- Track processed files per batch so agent session reloads after each successful chunk
+- Next: monitor ingestion logs for skipped files and prompt reloads
