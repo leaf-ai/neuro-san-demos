@@ -391,3 +391,18 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Logged skipped uploads and enforced 30s kill switches so hung files no longer freeze batches
 - Restyled dashboard with smoky glass greys and backdrop blur for a spaceship-like feel
 - Next: surface skip reasons in UI and tighten grey theme across components
+
+## Update 2025-08-03T17:30Z
+- Applied alien warship glass theme with neon accents across dashboard and timeline
+- Added reusable design tokens (`theme.js`, `figma_tokens.json`) for UI expansion
+- Next: integrate tokens into remaining React components and verify Docker styling
+
+## Update 2025-08-03T18:30Z
+- Repaired ingestion subprocess setup to close syntax gap and handle timeouts via queue
+- Batch tracking restored so sessions reload after successful uploads
+- Next: ensure gunicorn starts cleanly with updated interface
+
+## Update 2025-08-03T19:50Z
+- Commit uploads per 10-file batch with concurrent ingestion and dual-schema metadata storage
+- Log and skip 30s timeouts without halting remaining uploads
+- Next: expose skipped file details in dashboard UI

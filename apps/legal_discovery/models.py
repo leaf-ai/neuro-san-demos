@@ -40,6 +40,19 @@ class Document(db.Model):
     file_path = db.Column(db.String(255), nullable=False)
     content_hash = db.Column(db.String(64), nullable=False, unique=True)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
+    metadata_entries = db.relationship(
+        "DocumentMetadata",
+        backref="document",
+        lazy=True,
+        cascade="all, delete-orphan",
+    )
+
+
+class DocumentMetadata(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    document_id = db.Column(db.Integer, db.ForeignKey("document.id"), nullable=False)
+    schema = db.Column(db.String(50), nullable=False)
+    data = db.Column(db.JSON, nullable=False)
 
 
 class KnowledgeGraph(db.Model):
