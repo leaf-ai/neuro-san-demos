@@ -12,6 +12,7 @@ services:
     depends_on:
       - neo4j
       - tesseract
+
     volumes:
       - uploads_data:/usr/src/app/uploads
 
