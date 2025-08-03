@@ -497,6 +497,7 @@ def upload_files():
                 if remaining <= 0:
                     skipped.append(raw_name)
                     continue
+
                 filename = secure_filename(raw_name)
                 if filename.startswith("..") or not allowed_file(filename):
                     skipped.append(raw_name)
@@ -576,6 +577,7 @@ def upload_files():
             except Exception:  # pragma: no cover - best effort
                 app.logger.warning("Vector DB persist failed")
 
+
     if processed:
         reinitialize_legal_discovery_session()
         user_input_queue.put(
@@ -583,6 +585,7 @@ def upload_files():
         )
 
     return jsonify({"status": "ok", "processed": processed, "skipped": skipped})
+
 
 
 @app.route("/api/export", methods=["GET"])
