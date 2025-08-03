@@ -67,3 +67,4 @@ openai
 pyvis
 gunicorn
 google-genai
+more-itertools
