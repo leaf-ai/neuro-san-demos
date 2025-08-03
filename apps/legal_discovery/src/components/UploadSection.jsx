@@ -6,6 +6,7 @@ function UploadSection() {
   const [vecProg,setVecProg] = useState(0);
   const [kgProg,setKgProg] = useState(0);
   const [neoProg,setNeoProg] = useState(0);
+
   const [current,setCurrent] = useState('');
   const upload = async () => {
     const files = Array.from(inputRef.current.files);
@@ -80,6 +81,7 @@ function UploadSection() {
           </div>
         </>
       )}
+
       <div className="folder-tree text-sm"><ul>{renderNodes(tree)}</ul></div>
     </section>
   );

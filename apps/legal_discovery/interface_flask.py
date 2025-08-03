@@ -528,6 +528,28 @@ def upload_files():
                     skipped.append(raw_name)
                     continue
 
+                    skipped.append(raw_name)
+                    continue
+
+                start_time = time.time()
+                hasher = hashlib.sha256()
+                total_read = 0
+                try:
+                    for chunk in iter(lambda: file.stream.read(8192), b""):
+                        hasher.update(chunk)
+                        total_read += len(chunk)
+                        if time.time() - start_time > 30 or total_read > MAX_FILE_SIZE:
+                            break
+                    file.stream.seek(0)
+                except Exception as exc:  # pragma: no cover - best effort
+                    skipped.append(raw_name)
+                    app.logger.error("Failed reading %s: %s", raw_name, exc)
+                    continue
+
+                if time.time() - start_time > 30 or total_read > MAX_FILE_SIZE:
+                    skipped.append(raw_name)
+                    continue
+
                 file_hash = hasher.hexdigest()
                 if Document.query.filter_by(content_hash=file_hash).first():
                     skipped.append(raw_name)
@@ -571,6 +593,7 @@ def upload_files():
                             ],
                             [str(doc.id)],
                         )
+
                         kg = None
                         try:
                             kg = KnowledgeGraphManager()
