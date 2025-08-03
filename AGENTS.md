@@ -483,3 +483,4 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Introduced Document Drafter agent with AAOSA delegation and frontend panel
 - Added neon glow styling for active tabs and wired aaosa macros into `legal_discovery.hocon`
 - Next: extend AAOSA pattern to remaining agents and expose drafted outputs in UI summaries
+

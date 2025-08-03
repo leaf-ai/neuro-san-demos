@@ -386,3 +386,4 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added Document Drafter endpoint and React panel so trial prep team can draft pleadings
 - Integrated AAOSA macros into `legal_discovery.hocon` and enhanced tab styling with neon glow
 - Next: stream drafted document summaries back to the dashboard
+
