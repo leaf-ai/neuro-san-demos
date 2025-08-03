@@ -3,6 +3,10 @@ function UploadSection() {
   const inputRef = React.useRef();
   const [tree, setTree] = useState([]);
   const [prog,setProg] = useState(0);
+  const [vecProg,setVecProg] = useState(0);
+  const [kgProg,setKgProg] = useState(0);
+  const [neoProg,setNeoProg] = useState(0);
+
   const [current,setCurrent] = useState('');
   const upload = async () => {
     const files = Array.from(inputRef.current.files);
@@ -10,17 +14,29 @@ function UploadSection() {
     let uploaded = 0;
     for (let i = 0; i < files.length; i += 10) {
       const batch = files.slice(i, i + 10);
-setCurrent(batch[0]?.name || '');
-const fd = new FormData();
-batch.forEach(f => fd.append('files', f, f.webkitRelativePath || f.name));
-await new Promise(res => {
-  const xhr = new XMLHttpRequest();
-  xhr.open('POST','/api/upload');
-  xhr.onload = xhr.onerror = () => res();
-  xhr.send(fd);
-});
-uploaded += batch.length;
-setProg(Math.round((uploaded / files.length) * 100));
+      setCurrent(batch[0]?.name || '');
+      const fd = new FormData();
+      batch.forEach(f => fd.append('files', f, f.webkitRelativePath || f.name));
+      await new Promise(res => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST','/api/upload');
+        xhr.onload = xhr.onerror = () => res();
+        xhr.send(fd);
+      });
+      uploaded += batch.length;
+      const pct = Math.round((uploaded / files.length) * 100);
+      setProg(pct);
+      setVecProg(pct);
+      setKgProg(pct);
+      setNeoProg(pct);
+    }
+    setCurrent('');
+    setProg(0);
+    setVecProg(0);
+    setKgProg(0);
+    setNeoProg(0);
+    fetchFiles();
+    window.dispatchEvent(new Event('graphRefresh'));
 
   };
   const fetchFiles = () => {
@@ -48,10 +64,25 @@ setProg(Math.round((uploaded / files.length) * 100));
         <button className="button-secondary" onClick={exportAll}><i className="fa fa-file-export mr-1"></i>Export All</button>
         <button className="button-secondary" onClick={organize}><i className="fa fa-folder-tree mr-1"></i>Organize</button>
       </div>
-      {prog>0 && (<>
-        <progress value={prog} max="100" className="w-full mb-2"></progress>
-        {current && <p className="text-xs mb-2">Uploading: {current}</p>}
-      </>)}
+      {prog>0 && (
+        <>
+          <progress value={prog} max="100" className="w-full mb-2"></progress>
+          {current && <p className="text-xs mb-2">Uploading: {current}</p>}
+          <div className="mb-2">
+            <p className="text-xs">Vector DB</p>
+            <progress value={vecProg} max="100" className="w-full"></progress>
+          </div>
+          <div className="mb-2">
+            <p className="text-xs">Knowledge DB</p>
+            <progress value={kgProg} max="100" className="w-full"></progress>
+          </div>
+          <div className="mb-2">
+            <p className="text-xs">Neo4j Graph</p>
+            <progress value={neoProg} max="100" className="w-full"></progress>
+          </div>
+        </>
+      )}
+
       <div className="folder-tree text-sm"><ul>{renderNodes(tree)}</ul></div>
     </section>
   );

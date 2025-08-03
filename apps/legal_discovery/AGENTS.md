@@ -346,3 +346,11 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Batch uploads now time out after 30s and update Neo4j and vector DB simultaneously
 - Added UPLOAD_ROOT env support and graph refresh hook in React uploader
 - Next: run end-to-end analysis to ensure orchestrator picks up new documents automatically
+
+## Update 2025-08-03T04:07Z
+- Wrapped full document ingestion in 30s guarded threads; uploads now skip stalled files and continue
+- Next: surface skipped-file info in the React uploader
+
+## Update 2025-08-03T04:31Z
+- Batch uploads trigger orchestrator after each commit and show per-stage progress bars
+- Next: expose ingestion metrics and error details through dashboard

@@ -489,12 +489,14 @@ def upload_files():
         for batch in chunked(files, 10):
             batch_start = time.time()
             vector_mgr = VectorDatabaseManager()
+            batch_processed: list[str] = []
             for file in batch:
                 if file.filename == "":
                     continue
-                remaining = 30 - (time.time() - batch_start)
                 raw_name = os.path.normpath(file.filename)
-                if remaining <= 0:
+
+                batch_remaining = 30 - (time.time() - batch_start)
+                if batch_remaining <= 0:
                     skipped.append(raw_name)
                     continue
 
@@ -502,19 +504,39 @@ def upload_files():
                 if filename.startswith("..") or not allowed_file(filename):
                     skipped.append(raw_name)
                     continue
+
+                start_time = time.time()
                 hasher = hashlib.sha256()
                 for chunk in iter(lambda: file.stream.read(8192), b""):
                     hasher.update(chunk)
+                    if time.time() - start_time > 30:
+                        break
                 file.stream.seek(0)
+
+                if time.time() - start_time > 30:
+                    skipped.append(raw_name)
+                    continue
+
                 file_hash = hasher.hexdigest()
                 if Document.query.filter_by(content_hash=file_hash).first():
                     skipped.append(raw_name)
                     continue
+
                 filename = unique_filename(filename)
                 save_path = os.path.join(upload_root, filename)
                 os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
                 try:
                     file.save(save_path)
+                    elapsed = time.time() - start_time
+                    if elapsed > 30 or (time.time() - batch_start) > 30:
+                        skipped.append(raw_name)
+                        try:
+                            os.remove(save_path)
+                        except OSError:
+                            pass
+                        continue
+
                     doc = Document(
                         case_id=case_id,
                         name=filename,
@@ -550,16 +572,22 @@ def upload_files():
                             if kg:
                                 kg.close()
 
+                    remaining = min(30 - (time.time() - start_time), batch_remaining)
                     with ThreadPoolExecutor(max_workers=1) as ex:
                         future = ex.submit(ingest)
-                        future.result(timeout=remaining)
+                        future.result(timeout=max(1, remaining))
 
                     db.session.commit()
                     processed.append(filename)
+                    batch_processed.append(filename)
                 except TimeoutError:
                     db.session.rollback()
                     skipped.append(raw_name)
-                    app.logger.error("Batch timed out for %s", save_path)
+                    app.logger.error("Ingestion timed out for %s", save_path)
+                    try:
+                        future.cancel()
+                    except Exception:  # pragma: no cover - best effort
+                        pass
                     try:
                         os.remove(save_path)
                     except OSError:
@@ -577,12 +605,11 @@ def upload_files():
             except Exception:  # pragma: no cover - best effort
                 app.logger.warning("Vector DB persist failed")
 
-
-    if processed:
-        reinitialize_legal_discovery_session()
-        user_input_queue.put(
-            "process all files ingested within your scope and produce a basic overview and report."
-        )
+            if batch_processed:
+                reinitialize_legal_discovery_session()
+                user_input_queue.put(
+                    "process all files ingested within your scope and produce a basic overview and report."
+                )
 
     return jsonify({"status": "ok", "processed": processed, "skipped": skipped})
 

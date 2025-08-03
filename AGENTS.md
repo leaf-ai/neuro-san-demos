@@ -442,3 +442,12 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Added UPLOAD_ROOT for external corpus storage and mounted volume in docker-compose
 - React uploader batches requests and refreshes the knowledge graph after ingestion
 - Next: exercise full analysis pipeline and confirm graph updates appear in UI
+
+## Update 2025-08-03T04:07Z
+- Enforced 30s per-file ingestion timeouts to skip hung uploads without freezing batches
+- Next: watch upload pipeline for edge-case failures and expand error reporting to UI
+
+## Update 2025-08-03T04:31Z
+- Trigger orchestrator after each 10-file batch and persist vectors immediately
+- Added progress bars for vector, knowledge, and Neo4j stages in React uploader
+- Next: expose detailed ingestion metrics via API
