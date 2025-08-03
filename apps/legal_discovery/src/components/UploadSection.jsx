@@ -10,24 +10,18 @@ function UploadSection() {
     let uploaded = 0;
     for (let i = 0; i < files.length; i += 10) {
       const batch = files.slice(i, i + 10);
-      for (const f of batch) {
-        setCurrent(f.name);
-        const fd = new FormData();
-        fd.append('files', f, f.webkitRelativePath || f.name);
-        await new Promise(res => {
-          const xhr = new XMLHttpRequest();
-          xhr.open('POST','/api/upload');
-          xhr.onload = xhr.onerror = () => res();
-          xhr.send(fd);
-        });
-        uploaded += 1;
-        setProg(Math.round((uploaded / files.length) * 100));
-      }
-    }
-    setCurrent('');
+setCurrent(batch[0]?.name || '');
+const fd = new FormData();
+batch.forEach(f => fd.append('files', f, f.webkitRelativePath || f.name));
+await new Promise(res => {
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST','/api/upload');
+  xhr.onload = xhr.onerror = () => res();
+  xhr.send(fd);
+});
+uploaded += batch.length;
+setProg(Math.round((uploaded / files.length) * 100));
 
-    setProg(0);
-    fetchFiles();
   };
   const fetchFiles = () => {
     fetch('/api/files').then(r=>r.json()).then(d=>setTree(d.data||[]));

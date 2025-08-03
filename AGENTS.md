@@ -436,3 +436,9 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Added per-file hashing and timeout to skip duplicates and hung uploads
 - Frontend now reports current file during batch uploads
 - Next: investigate UI rendering in browser and optimize ingestion throughput
+
+## Update 2025-08-03T02:48Z
+- Uploads now feed documents into vector DB and Neo4j with 30s per-batch timeout
+- Added UPLOAD_ROOT for external corpus storage and mounted volume in docker-compose
+- React uploader batches requests and refreshes the knowledge graph after ingestion
+- Next: exercise full analysis pipeline and confirm graph updates appear in UI

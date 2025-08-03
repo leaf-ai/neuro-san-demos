@@ -262,7 +262,8 @@ from coded_tools.legal_discovery.presentation_generator import PresentationGener
 from coded_tools.legal_discovery.graph_analyzer import GraphAnalyzer
 
 
-UPLOAD_FOLDER = "uploads"
+# Allow hosting the corpus on an attached volume via UPLOAD_ROOT
+UPLOAD_FOLDER = os.environ.get("UPLOAD_ROOT", os.path.join(BASE_DIR, "uploads"))
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {"pdf", "txt", "csv", "doc", "docx", "ppt", "pptx", "jpg", "jpeg", "png", "gif"}
 
@@ -472,11 +473,10 @@ def cleanup_upload_folder(max_age_hours: int = 24) -> None:
 
 @app.route("/api/upload", methods=["POST"])
 def upload_files():
-    if not os.path.exists(UPLOAD_FOLDER):
-        os.makedirs(UPLOAD_FOLDER)
+    upload_root = app.config["UPLOAD_FOLDER"]
+    os.makedirs(upload_root, exist_ok=True)
 
     files = request.files.getlist("files")
-
     if not files:
         return jsonify({"error": "No files part"}), 400
 
@@ -487,10 +487,17 @@ def upload_files():
         case_id = case.id if case else 1
 
         for batch in chunked(files, 10):
+            batch_start = time.time()
+            vector_mgr = VectorDatabaseManager()
             for file in batch:
                 if file.filename == "":
                     continue
+                remaining = 30 - (time.time() - batch_start)
                 raw_name = os.path.normpath(file.filename)
+                if remaining <= 0:
+                    skipped.append(raw_name)
+                    continue
+
                 filename = secure_filename(raw_name)
                 if filename.startswith("..") or not allowed_file(filename):
                     skipped.append(raw_name)
@@ -503,9 +510,8 @@ def upload_files():
                 if Document.query.filter_by(content_hash=file_hash).first():
                     skipped.append(raw_name)
                     continue
-
                 filename = unique_filename(filename)
-                save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+                save_path = os.path.join(upload_root, filename)
                 os.makedirs(os.path.dirname(save_path), exist_ok=True)
                 try:
                     file.save(save_path)
@@ -521,28 +527,43 @@ def upload_files():
                     def ingest() -> None:
                         processor = DocumentProcessor()
                         text = processor.extract_text(save_path)
-                        mgr = VectorDatabaseManager()
-                        mgr.add_documents([text], [{}], [str(doc.id)])
+                        vector_mgr.add_documents([text], [{}], [str(doc.id)])
+                        kg = None
                         try:
-                            mgr.client.persist()
-                        except Exception:  # pragma: no cover - best effort
-                            app.logger.warning("Vector DB persist failed")
+                            kg = KnowledgeGraphManager()
+                            result = kg.run_query(
+                                "MERGE (c:Case {id: $id}) RETURN id(c) as cid",
+                                {"id": case_id},
+                            )
+                            case_node = result[0]["cid"] if result else None
+                            doc_node = kg.create_node(
+                                "Document",
+                                {
+                                    "name": filename,
+                                    "path": save_path,
+                                    "document_id": doc.id,
+                                },
+                            )
+                            if case_node is not None:
+                                kg.create_relationship(case_node, doc_node, "HAS_DOCUMENT")
+                        finally:
+                            if kg:
+                                kg.close()
 
                     with ThreadPoolExecutor(max_workers=1) as ex:
                         future = ex.submit(ingest)
-                        future.result(timeout=30)
+                        future.result(timeout=remaining)
 
                     db.session.commit()
                     processed.append(filename)
                 except TimeoutError:
                     db.session.rollback()
                     skipped.append(raw_name)
-                    app.logger.error("Ingestion timed out for %s", save_path)
+                    app.logger.error("Batch timed out for %s", save_path)
                     try:
                         os.remove(save_path)
                     except OSError:
                         pass
-
                 except Exception as exc:  # pragma: no cover - best effort
                     db.session.rollback()
                     skipped.append(raw_name)
@@ -551,6 +572,11 @@ def upload_files():
                         os.remove(save_path)
                     except OSError:
                         pass
+            try:
+                vector_mgr.client.persist()
+            except Exception:  # pragma: no cover - best effort
+                app.logger.warning("Vector DB persist failed")
+
 
     if processed:
         reinitialize_legal_discovery_session()
@@ -558,13 +584,8 @@ def upload_files():
             "process all files ingested within your scope and produce a basic overview and report."
         )
 
-    return jsonify(
-        {
-            "message": "Files processed",
-            "processed": processed,
-            "skipped": skipped,
-        }
-    )
+    return jsonify({"status": "ok", "processed": processed, "skipped": skipped})
+
 
 
 @app.route("/api/export", methods=["GET"])

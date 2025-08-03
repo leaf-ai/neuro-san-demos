@@ -341,3 +341,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Display current filename during uploads and dedupe by SHA256 hash
 - Backend rejects files that exceed a 30s ingestion timeout and persists batches
 - Next: verify dashboard renders in browser and tune timeout threshold
+
+## Update 2025-08-03T02:48Z
+- Batch uploads now time out after 30s and update Neo4j and vector DB simultaneously
+- Added UPLOAD_ROOT env support and graph refresh hook in React uploader
+- Next: run end-to-end analysis to ensure orchestrator picks up new documents automatically

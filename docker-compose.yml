@@ -13,6 +13,10 @@ services:
       - neo4j
       - tesseract
 
+    volumes:
+      - uploads_data:/usr/src/app/uploads
+
+
   neo4j:
     image: neo4j:4.4
     ports:
@@ -30,3 +34,4 @@ services:
 
 volumes:
   neo4j_data:
+  uploads_data:
