@@ -478,3 +478,9 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 ## Update 2025-08-03T12:30Z
 - Track processed files per batch so agent session reloads after each successful chunk
 - Next: monitor ingestion logs for skipped files and prompt reloads
+
+## Update 2025-08-03T13:45Z
+- Introduced Document Drafter agent with AAOSA delegation and frontend panel
+- Added neon glow styling for active tabs and wired aaosa macros into `legal_discovery.hocon`
+- Next: extend AAOSA pattern to remaining agents and expose drafted outputs in UI summaries
+

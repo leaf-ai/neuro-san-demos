@@ -381,3 +381,9 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-03T12:30Z
 - Append processed filenames to each batch so agent session reinitializes when chunks succeed
 - Next: report skipped files back to users for troubleshooting
+
+## Update 2025-08-03T13:45Z
+- Added Document Drafter endpoint and React panel so trial prep team can draft pleadings
+- Integrated AAOSA macros into `legal_discovery.hocon` and enhanced tab styling with neon glow
+- Next: stream drafted document summaries back to the dashboard
+

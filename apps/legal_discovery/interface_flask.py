@@ -26,6 +26,7 @@ from apps.legal_discovery.legal_discovery import (
     tear_down_legal_discovery_assistant,
 )
 
+
 from more_itertools import chunked
 from pyhocon import ConfigFactory
 
@@ -93,6 +94,7 @@ def _gather_upload_paths() -> list[str]:
         for fname in filenames:
             paths.append(os.path.join(dirpath, fname))
     return paths
+
 
 
 def initialize_agent() -> None:
@@ -256,6 +258,7 @@ from coded_tools.legal_discovery.knowledge_graph_manager import KnowledgeGraphMa
 from coded_tools.legal_discovery.timeline_manager import TimelineManager
 from coded_tools.legal_discovery.research_tools import ResearchTools
 from coded_tools.legal_discovery.document_modifier import DocumentModifier
+from coded_tools.legal_discovery.document_drafter import DocumentDrafter
 from coded_tools.legal_discovery.document_processor import DocumentProcessor
 from coded_tools.legal_discovery.task_tracker import TaskTracker
 from coded_tools.legal_discovery.vector_database_manager import VectorDatabaseManager
@@ -491,54 +494,174 @@ def upload_files():
         case = Case.query.first()
         case_id = case.id if case else 1
 
-        for batch_index, batch in enumerate(chunked(files, 10)):
-            app.logger.info(f"Starting batch {batch_index + 1}")
-            vector_mgr = VectorDatabaseManager()
-            batch_processed = []
+for batch_index, batch in enumerate(chunked(files, 10)):
+    app.logger.info(f"Starting batch {batch_index + 1}")
+    vector_mgr = VectorDatabaseManager()
+    batch_processed = []
 
-            for file in batch:
-                raw_name = os.path.normpath(file.filename)
-                app.logger.info(f"Processing: {raw_name}")
+    for file in batch:
+        raw_name = os.path.normpath(file.filename)
+        app.logger.info(f"Processing: {raw_name}")
 
-                if not raw_name or not allowed_file(raw_name):
-                    skipped.append(raw_name)
-                    app.logger.warning(f"Disallowed or blank file: {raw_name}")
-                    continue
+        if not raw_name or not allowed_file(raw_name):
+            skipped.append(raw_name)
+            app.logger.warning(f"Disallowed or blank file: {raw_name}")
+            continue
 
-                if getattr(file, "content_length", None) and file.content_length > MAX_FILE_SIZE:
-                    skipped.append(raw_name)
-                    continue
+        if getattr(file, "content_length", None) and file.content_length > MAX_FILE_SIZE:
+            skipped.append(raw_name)
+            app.logger.warning(f"File too large: {raw_name}")
+            continue
 
-                # Hash with timeout + size check
-                start_time = time.time()
-                hasher, total_read = hashlib.sha256(), 0
-                try:
-                    for chunk in iter(lambda: file.stream.read(8192), b""):
-                        hasher.update(chunk)
-                        total_read += len(chunk)
-                        if time.time() - start_time > MAX_TIMEOUT or total_read > MAX_FILE_SIZE:
-                            raise TimeoutError("Exceeded time or size limit during hash")
-                    file.stream.seek(0)
-                except Exception as exc:
-                    app.logger.error(f"Failed reading {raw_name}: {exc}")
+        # Hash with timeout + size check
+        start_time = time.time()
+        hasher, total_read = hashlib.sha256(), 0
+        try:
+            for chunk in iter(lambda: file.stream.read(8192), b""):
+                hasher.update(chunk)
+                total_read += len(chunk)
+                if time.time() - start_time > MAX_TIMEOUT:
+                    raise TimeoutError("Hashing exceeded time limit")
+                if total_read > MAX_FILE_SIZE:
+                    raise TimeoutError("File exceeded max size during hash")
+            file.stream.seek(0)
+        except TimeoutError as te:
+            app.logger.warning(f"Skipped file {raw_name}: {te}")
+            skipped.append(raw_name)
+            continue
+        except Exception as exc:
+            app.logger.error(f"Error reading {raw_name}: {exc}")
+            skipped.append(raw_name)
+            continue
+
+        file_hash = hasher.hexdigest()
+        if Document.query.filter_by(content_hash=file_hash).first():
+            skipped.append(raw_name)
+            app.logger.info(f"Duplicate file hash: {raw_name}")
+            continue
+
+        # ✅ At this point, the file is validated and ready for save + ingest...
+
                     skipped.append(raw_name)
                     continue
 
                 file_hash = hasher.hexdigest()
                 if Document.query.filter_by(content_hash=file_hash).first():
                     skipped.append(raw_name)
-                    app.logger.info(f"Duplicate file hash: {raw_name}")
                     continue
 
-                filename = unique_filename(secure_filename(raw_name))
+                filename = unique_filename(filename)
                 save_path = os.path.join(upload_root, filename)
                 os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
                 try:
                     file.save(save_path)
-                except Exception as e:
-                    app.logger.error(f"Failed to save {raw_name}: {e}")
+                    elapsed = time.time() - start_time
+                    if elapsed > 30 or (time.time() - batch_start) > 30:
+                        skipped.append(raw_name)
+                        try:
+                            os.remove(save_path)
+                        except OSError:
+                            pass
+                        continue
+
+                    doc = Document(
+                        case_id=case_id,
+                        name=filename,
+                        file_path=save_path,
+                        content_hash=file_hash,
+                    )
+                    db.session.add(doc)
+                    db.session.flush()
+
+                    def ingest() -> None:
+                        processor = DocumentProcessor()
+                        text = processor.extract_text(save_path) or ""
+                        metadata = {
+                            "filename": filename,
+                            "path": save_path,
+                            "document_id": str(doc.id),
+                        }
+                        metadata = {k: v for k, v in metadata.items() if v}
+                        if not metadata:
+                            metadata = {"filename": filename or os.path.basename(save_path)}
+                        try:
+                            vector_mgr.add_documents([text], [metadata], [str(doc.id)])
+                        except ValueError as exc:  # pragma: no cover - best effort
+                            app.logger.warning(
+                                "Vector add failed for %s: %s; retrying with placeholder metadata",
+                                save_path,
+                                exc,
+                            )
+                            vector_mgr.add_documents(
+                                [text],
+                                [{"filename": filename or os.path.basename(save_path)}],
+                                [str(doc.id)],
+                            )
+                        kg = None
+                        try:
+                            kg = KnowledgeGraphManager()
+                            result = kg.run_query(
+                                "MERGE (c:Case {id: $id}) RETURN id(c) as cid",
+                                {"id": case_id},
+                            )
+                            case_node = result[0]["cid"] if result else None
+                            doc_node = kg.create_node(
+                                "Document",
+                                {
+                                    "name": filename,
+                                    "path": save_path,
+                                    "document_id": doc.id,
+                                },
+                            )
+                            if case_node is not None:
+                                kg.create_relationship(case_node, doc_node, "HAS_DOCUMENT")
+                        finally:
+                            if kg:
+                                kg.close()
+
+                    remaining = min(30 - (time.time() - start_time), batch_remaining)
+                    proc = Process(target=ingest)
+                    proc.start()
+                    proc.join(timeout=max(1, remaining))
+                    if proc.is_alive():
+                        proc.terminate()
+                        proc.join()
+                        raise TimeoutError
+                    if proc.exitcode != 0:
+                        raise TimeoutError
+
+                    db.session.commit()
+                    processed.append(filename)
+                    batch_processed.append(filename)
+                except TimeoutError:
+                    db.session.rollback()
                     skipped.append(raw_name)
-                    continue
+                    app.logger.error("Ingestion timed out for %s", save_path)
+                    try:
+                        os.remove(save_path)
+                    except OSError:
+                        pass
+                except Exception as exc:  # pragma: no cover - best effort
+                    db.session.rollback()
+                    skipped.append(raw_name)
+                    app.logger.error("Ingestion failed for %s: %s", save_path, exc)
+                    try:
+                        os.remove(save_path)
+                    except OSError:
+                        pass
+            try:
+                vector_mgr.client.persist()
+            except Exception:  # pragma: no cover - best effort
+                app.logger.warning("Vector DB persist failed")
+
+            if batch_processed:
+                reinitialize_legal_discovery_session()
+                user_input_queue.put(
+                    "process all files ingested within your scope and produce a basic overview and report."
+                )
+
+    return jsonify({"status": "ok", "processed": processed, "skipped": skipped})
 
                 try:
                     doc = Document(
@@ -706,6 +829,29 @@ def bates_stamp_document():
     except Exception as exc:  # pragma: no cover - filesystem errors
         return jsonify({"error": str(exc)}), 500
     return jsonify({"message": "File stamped", "output": f"{file_path}_stamped.pdf"})
+
+
+@app.route("/api/document/draft", methods=["POST"])
+def draft_document():
+    """Create or update a DOCX document using DocumentDrafter."""
+    data = request.get_json() or {}
+    filepath = data.get("filepath")
+    content = data.get("content", "")
+    action = data.get("action", "create")
+    level = int(data.get("level", 1))
+    if not filepath:
+        return jsonify({"error": "Missing filepath"}), 400
+    drafter = DocumentDrafter()
+    try:
+        if action == "paragraph":
+            drafter.add_paragraph(filepath, content)
+        elif action == "heading":
+            drafter.add_heading(filepath, content, level)
+        else:
+            drafter.create_document(filepath, content)
+    except Exception as exc:  # pragma: no cover - file system errors
+        return jsonify({"error": str(exc)}), 500
+    return jsonify({"status": "ok", "output": filepath})
 
 
 @app.route("/api/vector/add", methods=["POST"])

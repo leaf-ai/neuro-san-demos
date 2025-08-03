@@ -154,6 +154,7 @@ h2 {
 .tab-button.active {
     background: var(--primary-color);
     color: #ffffff;
+    box-shadow: 0 0 10px var(--primary-color), inset 0 0 5px var(--primary-color);
 }
 
 .tab-content {
