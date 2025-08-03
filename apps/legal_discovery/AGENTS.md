@@ -307,3 +307,77 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Updated defaults to use manifest.hocon for local runs
 - Rebuilt bundle and confirmed tests pass
 - Next: test docker-compose build when available
+
+## Update 2025-08-02T22:08Z
+- Added rfc3987 dependency and switched Flask imports to absolute paths
+- Verified gunicorn serves bundle.js and main.css after build
+- Next: audit dashboard for missing stylesheet references
+
+## Update 2025-08-02T22:23Z
+- Trigger npm build at startup if bundle.js is missing and link main.css in the template
+- Removed obsolete dashboard.js to avoid serving stale assets
+- Next: confirm UI renders in browser and broaden API test coverage
+
+## Update 2025-08-02T23:05Z
+- Removed host bind mount from Docker Compose to keep built React assets inside container
+- Set AGENT_MANIFEST_FILE in Dockerfile for consistent registry loading
+- Next: build compose stack and verify dashboard renders in container
+
+## Update 2025-08-02T23:48Z
+- Load legal discovery assistant on a background thread so HTTP requests return immediately
+- Next: verify dashboard interactivity once agent initialization completes
+
+## Update 2025-08-03T00:20Z
+- Added /api/agents and /api/topics endpoints backed by registry and database
+- Ensured React build outputs load by bundling when missing
+- Next: validate dashboard renders data from new endpoints
+
+## Update 2025-08-03T01:40Z
+- Implemented resilient upload pipeline with per-file error handling and batch processing
+- Frontend now uploads files in groups of 10 and refreshes view after each chunk
+- Next: surface upload errors to users and expand ingestion metrics
+
+## Update 2025-08-03T02:20Z
+- Display current filename during uploads and dedupe by SHA256 hash
+- Backend rejects files that exceed a 30s ingestion timeout and persists batches
+- Next: verify dashboard renders in browser and tune timeout threshold
+
+## Update 2025-08-03T02:48Z
+- Batch uploads now time out after 30s and update Neo4j and vector DB simultaneously
+- Added UPLOAD_ROOT env support and graph refresh hook in React uploader
+- Next: run end-to-end analysis to ensure orchestrator picks up new documents automatically
+
+## Update 2025-08-03T04:07Z
+- Wrapped full document ingestion in 30s guarded threads; uploads now skip stalled files and continue
+- Next: surface skipped-file info in the React uploader
+
+## Update 2025-08-03T04:31Z
+- Batch uploads trigger orchestrator after each commit and show per-stage progress bars
+- Next: expose ingestion metrics and error details through dashboard
+
+## Update 2025-08-03T05:10Z
+- Reject unreadable, oversized (>1GB), or disallowed files without stalling batches
+- Next: propagate skip reasons to frontend and refine retry UX
+## Update 2025-08-03T06:30Z
+- Added filename and path metadata during vector ingestion to satisfy Chromadb
+- Next: ensure batch uploads succeed without metadata errors
+
+## Update 2025-08-03T07:30Z
+- Guarded vector add with metadata sanitization and retry to avoid ingestion failures
+- Next: observe batch uploads to ensure all files index correctly
+
+## Update 2025-08-03T09:40Z
+- `VectorDatabaseManager` now inserts placeholder metadata when none is provided, preventing Chroma errors
+- Next: test large batch uploads to confirm ingestion remains stable
+
+## Update 2025-08-03T08:27Z
+- Wrapped Chroma `add` calls in a retry with default metadata so malformed files are skipped without stalling uploads
+- Next: verify batch uploads proceed even when some documents contain empty metadata
+
+## Update 2025-08-03T11:00Z
+- Switched document ingestion to subprocesses and kill on timeout to prevent frozen uploads
+- Next: surface timeout skips in UI
+
+## Update 2025-08-03T12:30Z
+- Append processed filenames to each batch so agent session reinitializes when chunks succeed
+- Next: report skipped files back to users for troubleshooting
