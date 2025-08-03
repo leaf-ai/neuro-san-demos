@@ -41,7 +41,9 @@ function Dashboard() {
   const [showSettings,setShowSettings] = useState(false);
   useEffect(()=>{
     const btn=document.getElementById('settings-btn');
-    if(btn) btn.onclick=()=>setShowSettings(true);
+    const handler = e=>{e.preventDefault();setShowSettings(true);};
+    if(btn) btn.addEventListener('click', handler);
+    return ()=>{if(btn) btn.removeEventListener('click', handler);};
   },[]);
   return (
     <div>

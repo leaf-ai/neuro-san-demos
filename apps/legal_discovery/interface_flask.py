@@ -7,9 +7,10 @@ import subprocess
 import threading
 import time
 import hashlib
+import json
 
 from datetime import datetime
-from multiprocessing import Process, set_start_method
+from multiprocessing import Process, Queue, set_start_method
 
 # pylint: disable=import-error
 import schedule
@@ -35,6 +36,7 @@ from apps.legal_discovery.database import db
 from apps.legal_discovery.models import (
     Case,
     Document,
+    DocumentMetadata,
     LegalReference,
     TimelineEvent,
     CalendarEvent,
@@ -476,6 +478,35 @@ def cleanup_upload_folder(max_age_hours: int = 24) -> None:
             except FileNotFoundError:
                 continue
 
+
+def ingest_wrapper(
+    q: Queue,
+    save_path: str,
+    doc_id: int,
+    case_id: int,
+    full_metadata: dict,
+    chroma_metadata: dict,
+) -> None:
+    """Extract, vectorize, and relate a document in a worker process."""
+    try:
+        processor = DocumentProcessor()
+        text = processor.extract_text(save_path) or ""
+        VectorDatabaseManager().add_documents(
+            [text], [chroma_metadata], [str(doc_id)]
+        )
+        kg = KnowledgeGraphManager()
+        result = kg.run_query(
+            "MERGE (c:Case {id: $id}) RETURN id(c) as cid", {"id": case_id}
+        )
+        case_node = result[0]["cid"] if result else None
+        doc_node = kg.create_node("Document", full_metadata)
+        if case_node:
+            kg.create_relationship(case_node, doc_node, "HAS_DOCUMENT")
+        kg.close()
+        q.put(None)
+    except Exception as ex:  # pragma: no cover - best effort
+        q.put(ex)
+
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 MAX_TIMEOUT = 30  # seconds per file
 
@@ -492,13 +523,15 @@ def upload_files():
     case_id = case.id if case else 1
 
     def record_skip(name, reason):
+        skipped.append(name)
         app.logger.warning(f"[SKIP] {name} — {reason}")
         with open("skipped_files.log", "a", encoding="utf-8") as f:
             f.write(f"[{datetime.utcnow().isoformat()}] {name} — {reason}\n")
 
     for batch_index, batch in enumerate([files[i:i + 10] for i in range(0, len(files), 10)]):
         app.logger.info(f"Starting batch {batch_index + 1}")
-        vector_mgr = VectorDatabaseManager()
+        batch_processed: list[str] = []
+        tasks: list[tuple] = []
 
         for file in batch:
             raw_name = os.path.normpath(file.filename)
@@ -510,7 +543,6 @@ def upload_files():
                 record_skip(raw_name, "file too large")
                 continue
 
-            # Hash the file with timeout and size check
             hasher, total_read = hashlib.sha256(), 0
             start_time = time.time()
             try:
@@ -538,57 +570,95 @@ def upload_files():
                 record_skip(raw_name, f"save error: {exc}")
                 continue
 
-            try:
-                doc = Document(case_id=case_id, name=filename, file_path=save_path, content_hash=file_hash)
-                db.session.add(doc)
-                db.session.flush()
+            doc = Document(case_id=case_id, name=filename, file_path=save_path, content_hash=file_hash)
+            db.session.add(doc)
+            db.session.flush()
 
-                def ingest():
-                    processor = DocumentProcessor()
-                    text = processor.extract_text(save_path) or ""
+            full_metadata = {
+                "filename": filename,
+                "path": save_path,
+                "case_id": case_id,
+                "document_id": str(doc.id),
+                "sha256": file_hash,
+                "upload_time": str(time.time()),
+            }
+            chroma_metadata = {
+                k: str(v)
+                for k, v in full_metadata.items()
+                if isinstance(v, (str, int, float, bool))
+            }
 
-                    full_metadata = {
-                        "filename": filename,
-                        "path": save_path,
-                        "case_id": case_id,
-                        "document_id": str(doc.id),
-                        "sha256": file_hash,
-                        "upload_time": str(time.time())
-                    }
+            with open(save_path + ".meta.json", "w") as f:
+                json.dump(full_metadata, f, indent=2)
 
-                    chroma_metadata = {
-                        k: str(v) for k, v in full_metadata.items()
-                        if isinstance(v, (str, int, float, bool))
-                    }
+            raw_meta = DocumentMetadata(document_id=doc.id, schema="raw", data=full_metadata)
+            chroma_meta = DocumentMetadata(document_id=doc.id, schema="chroma", data=chroma_metadata)
+            db.session.add_all([raw_meta, chroma_meta])
+            q = Queue()
+            proc = Process(
+                target=ingest_wrapper,
+                args=(
+                    q,
+                    save_path,
+                    doc.id,
+                    case_id,
+                    full_metadata,
+                    chroma_metadata,
+                ),
+            )
+            proc.start()
+            tasks.append((proc, q, doc, raw_name, filename, save_path, raw_meta, chroma_meta))
 
-                    with open(save_path + ".meta.json", "w") as f:
-                        json.dump(full_metadata, f, indent=2)
-
-                    doc.metadata_json = full_metadata  # assumes JSONB support in your model
-                    vector_mgr.add_documents([text], [chroma_metadata], [str(doc.id)])
-
-                    kg = KnowledgeGraphManager()
-                    result = kg.run_query("MERGE (c:Case {id: $id}) RETURN id(c) as cid", {"id": case_id})
-                    case_node = result[0]["cid"] if result else None
-                    doc_node = kg.create_node("Document", full_metadata)
-                    if case_node:
-                        kg.create_relationship(case_node, doc_node, "HAS_DOCUMENT")
-                    kg.close()
-
-                def wrap_ingest(queue):
+        for proc, q, doc, raw_name, filename, save_path, raw_meta, chroma_meta in tasks:
+            proc.join(MAX_TIMEOUT)
+            if proc.is_alive():
+                proc.terminate()
+                proc.join(timeout=5)
+                if proc.is_alive():  # pragma: no cover - best effort
+                    proc.kill()
+                    proc.join()
+                record_skip(raw_name, "ingestion timeout")
+                db.session.delete(doc)
+                db.session.delete(raw_meta)
+                db.session.delete(chroma_meta)
+                for ext in ("", ".meta.json"):
                     try:
-                        queue.put(ingest())
-                    except Exception as ex:
-                        queue.put(ex)
+                        os.remove(save_path + ext)
+                    except OSError:
+                        pass
+                continue
 
-                q = Queue()
-                proc = Process(target=wrap_ingest, args=(q_
+            result = q.get() if not q.empty() else None
+            if isinstance(result, Exception):
+                record_skip(raw_name, f"ingestion error: {result}")
+                db.session.delete(doc)
+                db.session.delete(raw_meta)
+                db.session.delete(chroma_meta)
+                for ext in ("", ".meta.json"):
+                    try:
+                        os.remove(save_path + ext)
+                    except OSError:
+                        pass
+            else:
+                processed.append(filename)
+                batch_processed.append(filename)
 
-            if batch_processed:
-                reinitialize_legal_discovery_session()
-                user_input_queue.put(
-                    "process all files ingested within your scope and produce a basic overview and report."
-                )
+        try:
+            db.session.commit()
+        except Exception as exc:  # pragma: no cover - best effort
+            db.session.rollback()
+            app.logger.error("Batch commit failed: %s", exc)
+
+        try:
+            VectorDatabaseManager().client.persist()
+        except Exception:  # pragma: no cover - best effort
+            app.logger.warning("Vector DB persist failed")
+
+        if batch_processed:
+            reinitialize_legal_discovery_session()
+            user_input_queue.put(
+                "process all files ingested within your scope and produce a basic overview and report."
+            )
 
     return jsonify({"status": "ok", "processed": processed, "skipped": skipped})
 
@@ -914,6 +984,23 @@ def analyze_graph():
     except Exception as exc:  # pragma: no cover - optional analysis may fail
         app.logger.error("Graph analysis failed: %s", exc)
         return jsonify({"error": str(exc)}), 500
+    return jsonify({"status": "ok", "data": results})
+
+
+@app.route("/api/graph/cypher", methods=["POST"])
+def run_cypher_query():
+    """Execute an arbitrary Cypher query against the knowledge graph."""
+    data = request.get_json(force=True) or {}
+    query = data.get("query", "")
+    if not query:
+        return jsonify({"error": "missing query"}), 400
+    kg = KnowledgeGraphManager()
+    try:
+        results = kg.run_query(query)
+    except Exception as exc:  # pragma: no cover - user queries may fail
+        kg.close()
+        return jsonify({"error": str(exc)}), 400
+    kg.close()
     return jsonify({"status": "ok", "data": results})
 
 

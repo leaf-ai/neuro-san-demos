@@ -1,6 +1,5 @@
-include "registries/aaosa.hocon"
-
 {
+    include "registries/aaosa.hocon"
     "llm_config": {
         "model_name": "gemini-2.5-flash",
     },

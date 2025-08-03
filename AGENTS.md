@@ -488,3 +488,31 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Hardened file ingestion with explicit termination and skip logging for files exceeding 30s
 - Shifted UI palette toward smoky greys with translucent glass panels
 - Next: audit skipped_uploads.log for recurring file issues and polish remaining grey theme elements
+
+## Update 2025-08-03T17:30Z
+- Overhauled dashboard and timeline with a glassy neon-blue "alien warship" theme
+- Introduced shared design tokens via CSS variables, React `theme.js` and Figma export
+- Next: extend token usage across all components and confirm Docker build serves new assets
+
+## Update 2025-08-03T18:30Z
+- Repaired file ingestion subprocess block to resolve gunicorn syntax errors
+- Restored queue-based timeout handling and batch tracking in `interface_flask.py`
+- Next: verify gunicorn startup in Docker
+
+## Update 2025-08-03T19:50Z
+- Batched document commits with dual-schema metadata storage and concurrent ingestion processes
+- Skipped and logged files that exceed 30s without halting batch progress
+- Next: monitor batch commit performance and tune concurrency
+
+## Update 2025-08-03T20:30Z
+- Moved AAOSA include inside root object in `legal_discovery.hocon` to resolve parse errors during agent initialization
+- Next: confirm configuration loads and tests pass
+
+## Update 2025-08-03T21:45Z
+- Hoisted document ingestion wrapper to module scope so multiprocessing can spawn workers without pickling errors
+- Next: ensure batch uploads run cleanly and surface skipped files in UI
+
+## Update 2025-08-03T22:40Z
+- Wired settings button to trigger modal and exposed `/api/graph/cypher` endpoint with starter query buttons
+- Shifted dashboard container to dark gunmetal glass for clearer contrast against neon cards
+- Next: enrich cypher results formatting and continue tightening glass theme consistency
