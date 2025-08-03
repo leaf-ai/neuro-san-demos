@@ -484,3 +484,7 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Added neon glow styling for active tabs and wired aaosa macros into `legal_discovery.hocon`
 - Next: extend AAOSA pattern to remaining agents and expose drafted outputs in UI summaries
 
+## Update 2025-08-03T16:00Z
+- Hardened file ingestion with explicit termination and skip logging for files exceeding 30s
+- Shifted UI palette toward smoky greys with translucent glass panels
+- Next: audit skipped_uploads.log for recurring file issues and polish remaining grey theme elements

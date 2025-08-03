@@ -96,8 +96,8 @@ def _gather_upload_paths() -> list[str]:
     return paths
 
 
+def _initialize_agent() -> None:
 
-def initialize_agent() -> None:
     """Set up the legal discovery assistant in a background thread."""
     global legal_discovery_session, legal_discovery_thread
     with app.app_context():
@@ -483,274 +483,106 @@ MAX_TIMEOUT = 30  # seconds per file
 def upload_files():
     upload_root = app.config["UPLOAD_FOLDER"]
     os.makedirs(upload_root, exist_ok=True)
-
     files = request.files.getlist("files")
     if not files:
-        return jsonify({"error": "No files part"}), 400
+        return jsonify({"error": "No files provided"}), 400
 
     processed, skipped = [], []
+    case = Case.query.first()
+    case_id = case.id if case else 1
 
-    with app.app_context():
-        case = Case.query.first()
-        case_id = case.id if case else 1
+    def record_skip(name, reason):
+        app.logger.warning(f"[SKIP] {name} — {reason}")
+        with open("skipped_files.log", "a", encoding="utf-8") as f:
+            f.write(f"[{datetime.utcnow().isoformat()}] {name} — {reason}\n")
 
-for batch_index, batch in enumerate(chunked(files, 10)):
-    app.logger.info(f"Starting batch {batch_index + 1}")
-    vector_mgr = VectorDatabaseManager()
-    batch_processed = []
+    for batch_index, batch in enumerate([files[i:i + 10] for i in range(0, len(files), 10)]):
+        app.logger.info(f"Starting batch {batch_index + 1}")
+        vector_mgr = VectorDatabaseManager()
 
-    for file in batch:
-        raw_name = os.path.normpath(file.filename)
-        app.logger.info(f"Processing: {raw_name}")
+        for file in batch:
+            raw_name = os.path.normpath(file.filename)
+            if not raw_name or not allowed_file(raw_name):
+                record_skip(raw_name, "disallowed or blank filename")
+                continue
 
-        if not raw_name or not allowed_file(raw_name):
-            skipped.append(raw_name)
-            app.logger.warning(f"Disallowed or blank file: {raw_name}")
-            continue
+            if getattr(file, "content_length", None) and file.content_length > MAX_FILE_SIZE:
+                record_skip(raw_name, "file too large")
+                continue
 
-        if getattr(file, "content_length", None) and file.content_length > MAX_FILE_SIZE:
-            skipped.append(raw_name)
-            app.logger.warning(f"File too large: {raw_name}")
-            continue
-
-        # Hash with timeout + size check
-        start_time = time.time()
-        hasher, total_read = hashlib.sha256(), 0
-        try:
-            for chunk in iter(lambda: file.stream.read(8192), b""):
-                hasher.update(chunk)
-                total_read += len(chunk)
-                if time.time() - start_time > MAX_TIMEOUT:
-                    raise TimeoutError("Hashing exceeded time limit")
-                if total_read > MAX_FILE_SIZE:
-                    raise TimeoutError("File exceeded max size during hash")
-            file.stream.seek(0)
-        except TimeoutError as te:
-            app.logger.warning(f"Skipped file {raw_name}: {te}")
-            skipped.append(raw_name)
-            continue
-        except Exception as exc:
-            app.logger.error(f"Error reading {raw_name}: {exc}")
-            skipped.append(raw_name)
-            continue
-
-        file_hash = hasher.hexdigest()
-        if Document.query.filter_by(content_hash=file_hash).first():
-            skipped.append(raw_name)
-            app.logger.info(f"Duplicate file hash: {raw_name}")
-            continue
-
-        # ✅ At this point, the file is validated and ready for save + ingest...
-
-                    skipped.append(raw_name)
-                    continue
-
-                file_hash = hasher.hexdigest()
-                if Document.query.filter_by(content_hash=file_hash).first():
-                    skipped.append(raw_name)
-                    continue
-
-                filename = unique_filename(filename)
-                save_path = os.path.join(upload_root, filename)
-                os.makedirs(os.path.dirname(save_path), exist_ok=True)
-
-                try:
-                    file.save(save_path)
-                    elapsed = time.time() - start_time
-                    if elapsed > 30 or (time.time() - batch_start) > 30:
-                        skipped.append(raw_name)
-                        try:
-                            os.remove(save_path)
-                        except OSError:
-                            pass
-                        continue
-
-                    doc = Document(
-                        case_id=case_id,
-                        name=filename,
-                        file_path=save_path,
-                        content_hash=file_hash,
-                    )
-                    db.session.add(doc)
-                    db.session.flush()
-
-                    def ingest() -> None:
-                        processor = DocumentProcessor()
-                        text = processor.extract_text(save_path) or ""
-                        metadata = {
-                            "filename": filename,
-                            "path": save_path,
-                            "document_id": str(doc.id),
-                        }
-                        metadata = {k: v for k, v in metadata.items() if v}
-                        if not metadata:
-                            metadata = {"filename": filename or os.path.basename(save_path)}
-                        try:
-                            vector_mgr.add_documents([text], [metadata], [str(doc.id)])
-                        except ValueError as exc:  # pragma: no cover - best effort
-                            app.logger.warning(
-                                "Vector add failed for %s: %s; retrying with placeholder metadata",
-                                save_path,
-                                exc,
-                            )
-                            vector_mgr.add_documents(
-                                [text],
-                                [{"filename": filename or os.path.basename(save_path)}],
-                                [str(doc.id)],
-                            )
-                        kg = None
-                        try:
-                            kg = KnowledgeGraphManager()
-                            result = kg.run_query(
-                                "MERGE (c:Case {id: $id}) RETURN id(c) as cid",
-                                {"id": case_id},
-                            )
-                            case_node = result[0]["cid"] if result else None
-                            doc_node = kg.create_node(
-                                "Document",
-                                {
-                                    "name": filename,
-                                    "path": save_path,
-                                    "document_id": doc.id,
-                                },
-                            )
-                            if case_node is not None:
-                                kg.create_relationship(case_node, doc_node, "HAS_DOCUMENT")
-                        finally:
-                            if kg:
-                                kg.close()
-
-                    remaining = min(30 - (time.time() - start_time), batch_remaining)
-                    proc = Process(target=ingest)
-                    proc.start()
-                    proc.join(timeout=max(1, remaining))
-                    if proc.is_alive():
-                        proc.terminate()
-                        proc.join()
-                        raise TimeoutError
-                    if proc.exitcode != 0:
-                        raise TimeoutError
-
-                    db.session.commit()
-                    processed.append(filename)
-                    batch_processed.append(filename)
-                except TimeoutError:
-                    db.session.rollback()
-                    skipped.append(raw_name)
-                    app.logger.error("Ingestion timed out for %s", save_path)
-                    try:
-                        os.remove(save_path)
-                    except OSError:
-                        pass
-                except Exception as exc:  # pragma: no cover - best effort
-                    db.session.rollback()
-                    skipped.append(raw_name)
-                    app.logger.error("Ingestion failed for %s: %s", save_path, exc)
-                    try:
-                        os.remove(save_path)
-                    except OSError:
-                        pass
+            # Hash the file with timeout and size check
+            hasher, total_read = hashlib.sha256(), 0
+            start_time = time.time()
             try:
-                vector_mgr.client.persist()
-            except Exception:  # pragma: no cover - best effort
-                app.logger.warning("Vector DB persist failed")
+                for chunk in iter(lambda: file.stream.read(8192), b""):
+                    hasher.update(chunk)
+                    total_read += len(chunk)
+                    if time.time() - start_time > MAX_TIMEOUT or total_read > MAX_FILE_SIZE:
+                        raise TimeoutError("Exceeded time/size limit during hash")
+                file.stream.seek(0)
+            except Exception as exc:
+                record_skip(raw_name, f"hashing error: {exc}")
+                continue
 
-            if batch_processed:
-                reinitialize_legal_discovery_session()
-                user_input_queue.put(
-                    "process all files ingested within your scope and produce a basic overview and report."
-                )
+            file_hash = hasher.hexdigest()
+            if Document.query.filter_by(content_hash=file_hash).first():
+                record_skip(raw_name, "duplicate hash")
+                continue
 
-    return jsonify({"status": "ok", "processed": processed, "skipped": skipped})
-
-                try:
-                    doc = Document(
-                        case_id=case_id,
-                        name=filename,
-                        file_path=save_path,
-                        content_hash=file_hash,
-                    )
-                    db.session.add(doc)
-                    db.session.flush()
-
-                    def ingest():
-                        try:
-                            processor = DocumentProcessor()
-                            text = processor.extract_text(save_path) or ""
-
-                            full_metadata = {
-    "filename": filename,
-    "path": save_path,
-    "case_id": case_id,
-    "document_id": str(doc.id),
-    "sha256": file_hash,
-    "upload_time": str(time.time()),
-}
-
-chroma_metadata = {
-    k: str(v) for k, v in full_metadata.items()
-    if v is not None and isinstance(v, (str, int, float, bool))
-}
-
-# Store full metadata for forensic processing if supported
-doc.metadata_json = full_metadata  # assumes Document model supports JSON column
-
-# Also save metadata to disk for forensic traceability
-with open(save_path + '.meta.json', 'w') as f:
-    import json
-    json.dump(full_metadata, f, indent=2)
-
-                            try:
-                                vector_mgr.add_documents([text], [chroma_metadata], [str(doc.id)])
-                            except ValueError as exc:
-                                app.logger.warning(
-                                    f"Vector add failed for {save_path}: {exc}; retrying with fallback metadata"
-                                )
-                                fallback_metadata = {"filename": str(filename)}  # Fallback if chroma_metadata fails
-                                vector_mgr.add_documents([text], [fallback_metadata], [str(doc.id)])
-
-                            kg = KnowledgeGraphManager()
-                            result = kg.run_query(
-                                "MERGE (c:Case {id: $id}) RETURN id(c) as cid", {"id": case_id}
-                            )
-                            case_node = result[0]["cid"] if result else None
-                            doc_node = kg.create_node("Document", metadata)
-                            if case_node:
-                                kg.create_relationship(case_node, doc_node, "HAS_DOCUMENT")
-                            kg.close()
-
-                        except Exception as ex:
-                            app.logger.error(f"Ingest failed for {filename}:\n{traceback.format_exc()}")
-                            raise
-
-                    proc = Process(target=ingest)
-                    proc.start()
-                    proc.join(timeout=MAX_TIMEOUT)
-
-                    if proc.is_alive():
-                        proc.terminate()
-                        proc.join()
-                        raise TimeoutError(f"Ingest timed out for {filename}")
-                    if proc.exitcode != 0:
-                        raise RuntimeError(f"Ingest process failed for {filename}")
-
-                    db.session.commit()
-                    processed.append(filename)
-                    batch_processed.append(filename)
-
-                except Exception as e:
-                    db.session.rollback()
-                    skipped.append(raw_name)
-                    app.logger.warning(f"Ingest failed for {raw_name}: {e}")
-                    try:
-                        os.remove(save_path)
-                    except OSError:
-                        pass
+            filename = unique_filename(raw_name)
+            save_path = os.path.join(upload_root, filename)
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            try:
+                file.save(save_path)
+            except Exception as exc:
+                record_skip(raw_name, f"save error: {exc}")
+                continue
 
             try:
-                vector_mgr.client.persist()
-            except Exception as ve:
-                app.logger.warning(f"Vector DB persist failed: {ve}")
+                doc = Document(case_id=case_id, name=filename, file_path=save_path, content_hash=file_hash)
+                db.session.add(doc)
+                db.session.flush()
+
+                def ingest():
+                    processor = DocumentProcessor()
+                    text = processor.extract_text(save_path) or ""
+
+                    full_metadata = {
+                        "filename": filename,
+                        "path": save_path,
+                        "case_id": case_id,
+                        "document_id": str(doc.id),
+                        "sha256": file_hash,
+                        "upload_time": str(time.time())
+                    }
+
+                    chroma_metadata = {
+                        k: str(v) for k, v in full_metadata.items()
+                        if isinstance(v, (str, int, float, bool))
+                    }
+
+                    with open(save_path + ".meta.json", "w") as f:
+                        json.dump(full_metadata, f, indent=2)
+
+                    doc.metadata_json = full_metadata  # assumes JSONB support in your model
+                    vector_mgr.add_documents([text], [chroma_metadata], [str(doc.id)])
+
+                    kg = KnowledgeGraphManager()
+                    result = kg.run_query("MERGE (c:Case {id: $id}) RETURN id(c) as cid", {"id": case_id})
+                    case_node = result[0]["cid"] if result else None
+                    doc_node = kg.create_node("Document", full_metadata)
+                    if case_node:
+                        kg.create_relationship(case_node, doc_node, "HAS_DOCUMENT")
+                    kg.close()
+
+                def wrap_ingest(queue):
+                    try:
+                        queue.put(ingest())
+                    except Exception as ex:
+                        queue.put(ex)
+
+                q = Queue()
+                proc = Process(target=wrap_ingest, args=(q_
 
             if batch_processed:
                 reinitialize_legal_discovery_session()

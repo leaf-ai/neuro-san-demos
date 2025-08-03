@@ -387,3 +387,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Integrated AAOSA macros into `legal_discovery.hocon` and enhanced tab styling with neon glow
 - Next: stream drafted document summaries back to the dashboard
 
+## Update 2025-08-03T16:00Z
+- Logged skipped uploads and enforced 30s kill switches so hung files no longer freeze batches
+- Restyled dashboard with smoky glass greys and backdrop blur for a spaceship-like feel
+- Next: surface skip reasons in UI and tighten grey theme across components
