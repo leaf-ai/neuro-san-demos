@@ -3,16 +3,30 @@ function UploadSection() {
   const inputRef = React.useRef();
   const [tree, setTree] = useState([]);
   const [prog,setProg] = useState(0);
-  const upload = () => {
-    const files = inputRef.current.files;
+  const [current,setCurrent] = useState('');
+  const upload = async () => {
+    const files = Array.from(inputRef.current.files);
     if (!files.length) return;
-    const fd = new FormData();
-    for (const f of files) fd.append('files', f, f.webkitRelativePath||f.name);
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST','/api/upload');
-    xhr.upload.onprogress = e=>{if(e.lengthComputable) setProg(Math.round((e.loaded/e.total)*100));};
-    xhr.onload = () => { setProg(0); fetchFiles(); };
-    xhr.send(fd);
+    let uploaded = 0;
+    for (let i = 0; i < files.length; i += 10) {
+      const batch = files.slice(i, i + 10);
+      for (const f of batch) {
+        setCurrent(f.name);
+        const fd = new FormData();
+        fd.append('files', f, f.webkitRelativePath || f.name);
+        await new Promise(res => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST','/api/upload');
+          xhr.onload = xhr.onerror = () => res();
+          xhr.send(fd);
+        });
+        uploaded += 1;
+        setProg(Math.round((uploaded / files.length) * 100));
+      }
+    }
+    setCurrent('');
+    setProg(0);
+    fetchFiles();
   };
   const fetchFiles = () => {
     fetch('/api/files').then(r=>r.json()).then(d=>setTree(d.data||[]));
@@ -39,7 +53,10 @@ function UploadSection() {
         <button className="button-secondary" onClick={exportAll}><i className="fa fa-file-export mr-1"></i>Export All</button>
         <button className="button-secondary" onClick={organize}><i className="fa fa-folder-tree mr-1"></i>Organize</button>
       </div>
-      {prog>0 && <progress value={prog} max="100" className="w-full mb-2"></progress>}
+      {prog>0 && (<>
+        <progress value={prog} max="100" className="w-full mb-2"></progress>
+        {current && <p className="text-xs mb-2">Uploading: {current}</p>}
+      </>)}
       <div className="folder-tree text-sm"><ul>{renderNodes(tree)}</ul></div>
     </section>
   );
