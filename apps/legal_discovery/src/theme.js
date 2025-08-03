@@ -1,6 +1,7 @@
 export const theme = {
   colors: {
     background: 'var(--color-bg)',
+    container: 'var(--container-bg)',
     surface: 'var(--color-surface)',
     accent: 'var(--color-accent)',
     text: 'var(--color-text)',

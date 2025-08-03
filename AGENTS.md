@@ -507,3 +507,12 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 ## Update 2025-08-03T20:30Z
 - Moved AAOSA include inside root object in `legal_discovery.hocon` to resolve parse errors during agent initialization
 - Next: confirm configuration loads and tests pass
+
+## Update 2025-08-03T21:45Z
+- Hoisted document ingestion wrapper to module scope so multiprocessing can spawn workers without pickling errors
+- Next: ensure batch uploads run cleanly and surface skipped files in UI
+
+## Update 2025-08-03T22:40Z
+- Wired settings button to trigger modal and exposed `/api/graph/cypher` endpoint with starter query buttons
+- Shifted dashboard container to dark gunmetal glass for clearer contrast against neon cards
+- Next: enrich cypher results formatting and continue tightening glass theme consistency

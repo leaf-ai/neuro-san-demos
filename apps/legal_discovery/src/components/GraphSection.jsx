@@ -6,6 +6,8 @@ function GraphSection() {
   const [edges,setEdges] = useState([]);
   const [subnet,setSubnet] = useState('');
   const [search,setSearch] = useState('');
+  const [cypher,setCypher] = useState('');
+  const [cypherResult,setCypherResult] = useState(null);
   const cyRef = useRef(null);
   const [exporting,setExporting] = useState(false);
   const [analysis,setAnalysis] = useState([]);
@@ -53,6 +55,12 @@ function GraphSection() {
     const url = '/api/graph/analyze' + (subnet?`?subnet=${encodeURIComponent(subnet)}`:'');
     fetchJSON(url).then(d=>setAnalysis(d.data||[]));
   };
+  const runCypher = (preset) => {
+    const query = preset || cypher;
+    if(!query) return;
+    fetch('/api/graph/cypher',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query})})
+      .then(r=>r.json()).then(d=>setCypherResult(d.data||d.error||null));
+  };
   return (
     <section className="card">
       <h2>Knowledge Graph</h2>
@@ -64,8 +72,20 @@ function GraphSection() {
         <button className="button-secondary" onClick={exportGraph}><i className="fa fa-file-export mr-1"></i>Export</button>
         <button className="button-secondary" onClick={analyze}><i className="fa fa-network-wired mr-1"></i>Analyze</button>
       </div>
+      <div className="flex flex-wrap gap-2 mb-2">
+        <textarea value={cypher} onChange={e=>setCypher(e.target.value)} placeholder="MATCH (n) RETURN n LIMIT 25" className="p-1 rounded flex-1" rows={2}></textarea>
+        <div className="flex flex-col gap-2">
+          <button className="button-secondary" onClick={()=>runCypher()}>Run</button>
+          <button className="button-secondary" onClick={()=>runCypher("MATCH (n)-[r]->(m) RETURN n,r,m LIMIT 50")}>Populate</button>
+          <button className="button-secondary" onClick={()=>runCypher("MATCH (d:Document) WHERE d.category='fraud' RETURN d LIMIT 25")}>Fraud</button>
+          <button className="button-secondary" onClick={()=>runCypher("MATCH (d:Document) WHERE d.category='financial' RETURN d LIMIT 25")}>Financial Docs</button>
+        </div>
+      </div>
       {exporting && <p className="text-sm mb-1">Exporting...</p>}
       <div id="graph" style={{height:'300px', border:'1px solid var(--border-colour)'}}></div>
+      {cypherResult && (
+        <pre className="mt-2 p-2 text-xs overflow-x-auto" style={{background:'rgba(0,0,0,0.3)'}}>{JSON.stringify(cypherResult,null,2)}</pre>
+      )}
       {!!analysis.length && (
         <div className="mt-2 text-sm">
           <h3 className="font-bold mb-1">Central Entities</h3>

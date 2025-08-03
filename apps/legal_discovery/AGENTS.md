@@ -406,3 +406,13 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Commit uploads per 10-file batch with concurrent ingestion and dual-schema metadata storage
 - Log and skip 30s timeouts without halting remaining uploads
 - Next: expose skipped file details in dashboard UI
+
+## Update 2025-08-03T21:45Z
+- Moved ingestion wrapper to top level so multiprocessing can start worker processes in upload route
+- Next: monitor batch uploads for stable completion and report skipped files to users
+
+## Update 2025-08-03T22:40Z
+- Fixed dormant settings button by binding click handler and rendering modal with flex display
+- Added preset Cypher query buttons and backend endpoint so graph exploration works without manual query knowledge
+- Darkened dashboard backdrop with gunmetal gradient to differentiate cards
+- Next: style query results output and refine hover animations across components

@@ -478,6 +478,35 @@ def cleanup_upload_folder(max_age_hours: int = 24) -> None:
             except FileNotFoundError:
                 continue
 
+
+def ingest_wrapper(
+    q: Queue,
+    save_path: str,
+    doc_id: int,
+    case_id: int,
+    full_metadata: dict,
+    chroma_metadata: dict,
+) -> None:
+    """Extract, vectorize, and relate a document in a worker process."""
+    try:
+        processor = DocumentProcessor()
+        text = processor.extract_text(save_path) or ""
+        VectorDatabaseManager().add_documents(
+            [text], [chroma_metadata], [str(doc_id)]
+        )
+        kg = KnowledgeGraphManager()
+        result = kg.run_query(
+            "MERGE (c:Case {id: $id}) RETURN id(c) as cid", {"id": case_id}
+        )
+        case_node = result[0]["cid"] if result else None
+        doc_node = kg.create_node("Document", full_metadata)
+        if case_node:
+            kg.create_relationship(case_node, doc_node, "HAS_DOCUMENT")
+        kg.close()
+        q.put(None)
+    except Exception as ex:  # pragma: no cover - best effort
+        q.put(ex)
+
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 MAX_TIMEOUT = 30  # seconds per file
 
@@ -565,25 +594,19 @@ def upload_files():
             raw_meta = DocumentMetadata(document_id=doc.id, schema="raw", data=full_metadata)
             chroma_meta = DocumentMetadata(document_id=doc.id, schema="chroma", data=chroma_metadata)
             db.session.add_all([raw_meta, chroma_meta])
-
-            def ingest_wrapper(q):
-                try:
-                    processor = DocumentProcessor()
-                    text = processor.extract_text(save_path) or ""
-                    VectorDatabaseManager().add_documents([text], [chroma_metadata], [str(doc.id)])
-                    kg = KnowledgeGraphManager()
-                    result = kg.run_query("MERGE (c:Case {id: $id}) RETURN id(c) as cid", {"id": case_id})
-                    case_node = result[0]["cid"] if result else None
-                    doc_node = kg.create_node("Document", full_metadata)
-                    if case_node:
-                        kg.create_relationship(case_node, doc_node, "HAS_DOCUMENT")
-                    kg.close()
-                    q.put(None)
-                except Exception as ex:  # pragma: no cover - best effort
-                    q.put(ex)
-
             q = Queue()
-            proc = Process(target=ingest_wrapper, args=(q,))
+            proc = Process(
+                target=ingest_wrapper,
+                args=(
+                    q,
+                    save_path,
+                    doc.id,
+                    case_id,
+                    full_metadata,
+                    chroma_metadata,
+                ),
+            )
+
             proc.start()
             tasks.append((proc, q, doc, raw_name, filename, save_path, raw_meta, chroma_meta))
 
@@ -962,6 +985,23 @@ def analyze_graph():
     except Exception as exc:  # pragma: no cover - optional analysis may fail
         app.logger.error("Graph analysis failed: %s", exc)
         return jsonify({"error": str(exc)}), 500
+    return jsonify({"status": "ok", "data": results})
+
+
+@app.route("/api/graph/cypher", methods=["POST"])
+def run_cypher_query():
+    """Execute an arbitrary Cypher query against the knowledge graph."""
+    data = request.get_json(force=True) or {}
+    query = data.get("query", "")
+    if not query:
+        return jsonify({"error": "missing query"}), 400
+    kg = KnowledgeGraphManager()
+    try:
+        results = kg.run_query(query)
+    except Exception as exc:  # pragma: no cover - user queries may fail
+        kg.close()
+        return jsonify({"error": str(exc)}), 400
+    kg.close()
     return jsonify({"status": "ok", "data": results})
 
 
