@@ -18,8 +18,8 @@ RUN rm -rf apps/legal_discovery/node_modules
 # Make port 5001 available to the world outside this container
 EXPOSE 5001
 
-# Define environment variable
-ENV NAME World
+# Set default registry paths for the agent network
+ENV AGENT_MANIFEST_FILE=/usr/src/app/registries/manifest.hocon
 ENV AGENT_LLM_INFO_FILE=/usr/src/app/registries/llm_config.hocon
 
 # Run the Flask application via gunicorn with eventlet for SocketIO support

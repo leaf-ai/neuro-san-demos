@@ -10,20 +10,20 @@
 
 /* Dark colour palette variables */
 :root {
-    --primary-color: #f97316;            /* bright orange accent */
-    --secondary-color: #334155;          /* dark slate for panels */
-    --background-start: #0f172a;         /* dark gradient start */
-    --background-end:   #1e293b;         /* dark gradient end */
-    --chat-bg: #1e293b;                  /* chat container background */
-    --user-bg: #14532d;                  /* user message bubble */
-    --speech-bg: #1e3a8a;                /* assistant speech bubble */
-    --thought-bg: #78350f;               /* assistant thought bubble */
-    --card-bg: #334155;                  /* card/panel background */
-    --border-colour: #475569;            /* border colour for cards */
-    --text-colour: #f8fafc;              /* primary text colour */
-    --subtitle-colour: #94a3b8;          /* secondary text */
-    --nav-bg: #1e293b;                   /* navigation bar */
-    --nav-text: #f8fafc;                 /* navigation text */
+    --primary-color: #9ca3af;            /* smoky grey accent */
+    --secondary-color: #1f2937;          /* dark slate for panels */
+    --background-start: #111827;         /* dark gradient start */
+    --background-end:   #1f2937;         /* dark gradient end */
+    --chat-bg: rgba(31,41,55,0.8);       /* chat container background */
+    --user-bg: #374151;                  /* user message bubble */
+    --speech-bg: #4b5563;                /* assistant speech bubble */
+    --thought-bg: #6b7280;               /* assistant thought bubble */
+    --card-bg: rgba(31,41,55,0.6);       /* card/panel background */
+    --border-colour: rgba(255,255,255,0.08); /* subtle borders */
+    --text-colour: #e5e7eb;              /* primary text colour */
+    --subtitle-colour: #9ca3af;          /* secondary text */
+    --nav-bg: rgba(17,24,39,0.8);        /* navigation bar */
+    --nav-text: #e5e7eb;                 /* navigation text */
 }
 
 html, body {
@@ -40,8 +40,10 @@ html, body {
     max-width: 800px;
     margin: 40px auto 20px auto;
     background: var(--card-bg);
+    border: 1px solid var(--border-colour);
     border-radius: 20px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(12px);
     padding: 40px 32px 28px 32px;
     position: relative;
 }
@@ -60,6 +62,7 @@ nav {
     position: sticky;
     top: 0;
     z-index: 50;
+    backdrop-filter: blur(8px);
 }
 
 nav a {
@@ -107,6 +110,7 @@ h2 {
     border: 1px solid var(--border-colour);
     border-radius: 12px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(6px);
     padding: 24px;
     margin-bottom: 24px;
 }
@@ -154,6 +158,7 @@ h2 {
 .tab-button.active {
     background: var(--primary-color);
     color: #ffffff;
+    box-shadow: 0 0 10px var(--primary-color), inset 0 0 5px var(--primary-color);
 }
 
 .tab-content {

@@ -3,8 +3,12 @@ import logging
 import os
 import queue
 import re
+import subprocess
+import threading
 import time
+import hashlib
 from datetime import datetime
+from multiprocessing import Process, set_start_method
 
 # pylint: disable=import-error
 import schedule
@@ -21,15 +25,23 @@ from apps.legal_discovery.legal_discovery import (
     tear_down_legal_discovery_assistant,
 )
 
-from . import settings
-from .database import db
-from .models import (
+from pyhocon import ConfigFactory
+
+from apps.legal_discovery import settings
+from apps.legal_discovery.database import db
+from apps.legal_discovery.models import (
     Case,
     Document,
     LegalReference,
     TimelineEvent,
     CalendarEvent,
+    LegalTheory,
 )
+
+set_start_method("spawn", force=True)
+
+# Configure logging before any other setup so early steps are captured
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 
 # Resolve project root relative to this file so Docker and local runs share paths
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -45,6 +57,15 @@ os.environ["AGENT_LLM_INFO_FILE"] = os.environ.get(
     "AGENT_LLM_INFO_FILE",
     os.path.join(BASE_DIR, "registries", "llm_config.hocon"),
 )
+# Ensure the React build exists so the dashboard can render
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+BUNDLE_PATH = os.path.join(STATIC_DIR, "bundle.js")
+if not os.path.exists(BUNDLE_PATH):
+    logging.info("No frontend bundle found; running npm build")
+    subprocess.run(
+        ["npm", "--prefix", os.path.dirname(__file__), "run", "build", "--silent"],
+        check=True,
+    )
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", os.urandom(24).hex())
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///legal_discovery.db"
@@ -53,11 +74,13 @@ db.init_app(app)
 socketio = SocketIO(app)
 thread_started = False  # pylint: disable=invalid-name
 
-# Configure logging
-logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 app.logger.setLevel(logging.getLevelName(os.environ.get("LOG_LEVEL", "INFO")))
 
 user_input_queue = queue.Queue()
+
+# Shared agent session and worker thread are initialized asynchronously
+legal_discovery_session = None
+legal_discovery_thread = None
 
 
 def _gather_upload_paths() -> list[str]:
@@ -69,23 +92,33 @@ def _gather_upload_paths() -> list[str]:
             paths.append(os.path.join(dirpath, fname))
     return paths
 
-with app.app_context():
 
+def _initialize_agent() -> None:
+    """Set up the legal discovery assistant in a background thread."""
+    global legal_discovery_session, legal_discovery_thread
+    with app.app_context():
+        app.logger.info("Setting up legal discovery assistant...")
+        legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant(
+            _gather_upload_paths()
+        )
+        app.logger.info("...legal discovery assistant set up.")
+
+
+with app.app_context():
     db.create_all()
     if not Case.query.first():
         default_case = Case(name="Default Case")
         db.session.add(default_case)
         db.session.commit()
 
-    app.logger.info("Setting up legal discovery assistant...")
-    legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant(_gather_upload_paths())
-    app.logger.info("...legal discovery assistant set up.")
+threading.Thread(target=_initialize_agent, daemon=True).start()
 
 
 def reinitialize_legal_discovery_session() -> None:
     """Reload the agent session with the latest uploaded files."""
     global legal_discovery_session, legal_discovery_thread
-    tear_down_legal_discovery_assistant(legal_discovery_session)
+    if legal_discovery_session is not None:
+        tear_down_legal_discovery_assistant(legal_discovery_session)
     legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant(
         _gather_upload_paths()
     )
@@ -99,6 +132,8 @@ def legal_discovery_thinking_process():
         thoughts = "thought: hmm, let's see now..."
         while True:
             socketio.sleep(1)
+            if legal_discovery_session is None:
+                continue
 
             app.logger.debug("Calling legal_discovery_thinker...")
             thoughts, legal_discovery_thread = legal_discovery_thinker(
@@ -219,6 +254,7 @@ from coded_tools.legal_discovery.knowledge_graph_manager import KnowledgeGraphMa
 from coded_tools.legal_discovery.timeline_manager import TimelineManager
 from coded_tools.legal_discovery.research_tools import ResearchTools
 from coded_tools.legal_discovery.document_modifier import DocumentModifier
+from coded_tools.legal_discovery.document_drafter import DocumentDrafter
 from coded_tools.legal_discovery.document_processor import DocumentProcessor
 from coded_tools.legal_discovery.task_tracker import TaskTracker
 from coded_tools.legal_discovery.vector_database_manager import (
@@ -229,9 +265,11 @@ from coded_tools.legal_discovery.presentation_generator import PresentationGener
 from coded_tools.legal_discovery.graph_analyzer import GraphAnalyzer
 
 
-UPLOAD_FOLDER = "uploads"
+# Allow hosting the corpus on an attached volume via UPLOAD_ROOT
+UPLOAD_FOLDER = os.environ.get("UPLOAD_ROOT", os.path.join(BASE_DIR, "uploads"))
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {"pdf", "txt", "csv", "doc", "docx", "ppt", "pptx", "jpg", "jpeg", "png", "gif"}
+MAX_FILE_SIZE = 1 * 1024 * 1024 * 1024  # 1GB
 
 # Singleton task tracker instance for quick task management
 task_tracker = TaskTracker()
@@ -240,6 +278,24 @@ task_tracker = TaskTracker()
 def allowed_file(filename: str) -> bool:
     """Check if the file has an allowed extension."""
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def unique_filename(filename: str) -> str:
+    """Return a filesystem-safe name that does not overwrite existing uploads."""
+    base_dir = app.config["UPLOAD_FOLDER"]
+    name, ext = os.path.splitext(filename)
+    candidate = filename
+    counter = 1
+    while os.path.exists(os.path.join(base_dir, candidate)):
+        candidate = f"{name}_{counter}{ext}"
+        counter += 1
+    return candidate
+
+
+def chunked(items: list, size: int) -> list[list]:
+    """Yield successive ``size``-sized chunks from ``items``."""
+    for i in range(0, len(items), size):
+        yield items[i : i + size]
 
 
 def build_file_tree(directory: str, root_length: int) -> list:
@@ -261,6 +317,28 @@ def list_files():
     if not os.path.exists(root):
         return jsonify({"status": "ok", "data": []})
     data = build_file_tree(root, len(root))
+    return jsonify({"status": "ok", "data": data})
+
+
+@app.route("/api/agents", methods=["GET"])
+def list_agents():
+    """Return agent team names from the legal discovery registry."""
+    config_path = os.path.join(BASE_DIR, "registries", "legal_discovery.hocon")
+    cfg = ConfigFactory.parse_file(config_path)
+    orchestrator = cfg.get("tools")[0]
+    agents = [{"name": name} for name in orchestrator.get("tools", [])]
+    return jsonify({"status": "ok", "data": agents})
+
+
+@app.route("/api/topics", methods=["GET"])
+def list_topics():
+    """Return distinct legal theory topics from the database."""
+    case_id = request.args.get("case_id")
+    query = LegalTheory.query
+    if case_id:
+        query = query.filter_by(case_id=case_id)
+    topics = query.with_entities(LegalTheory.theory_name).distinct().all()
+    data = [{"label": name} for (name,) in topics]
     return jsonify({"status": "ok", "data": data})
 
 
@@ -399,49 +477,189 @@ def cleanup_upload_folder(max_age_hours: int = 24) -> None:
 
 @app.route("/api/upload", methods=["POST"])
 def upload_files():
-    if not os.path.exists(UPLOAD_FOLDER):
-        os.makedirs(UPLOAD_FOLDER)
+    upload_root = app.config["UPLOAD_FOLDER"]
+    os.makedirs(upload_root, exist_ok=True)
 
     files = request.files.getlist("files")
-
     if not files:
         return jsonify({"error": "No files part"}), 400
+
+    processed, skipped = [], []
+    skipped_log = os.path.join(upload_root, "skipped_uploads.log")
+
+    def record_skip(name: str, reason: str) -> None:
+        skipped.append(name)
+        try:
+            with open(skipped_log, "a", encoding="utf-8") as fh:
+                fh.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')}\t{name}\t{reason}\n")
+        except OSError:
+            pass
 
     with app.app_context():
         case = Case.query.first()
         case_id = case.id if case else 1
 
-        for file in files:
-            if file.filename == "":
-                continue
-            filename = secure_filename(os.path.normpath(file.filename))
-            if filename.startswith("..") or not allowed_file(filename):
-                continue
+        for batch in chunked(files, 10):
+            batch_start = time.time()
+            vector_mgr = VectorDatabaseManager()
+            batch_processed: list[str] = []
+            for file in batch:
+                if file.filename == "":
+                    continue
+                raw_name = os.path.normpath(file.filename)
+                batch_remaining = 30 - (time.time() - batch_start)
+                if batch_remaining <= 0:
+                    record_skip(raw_name, "batch timeout")
+                    continue
 
-            save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-            os.makedirs(os.path.dirname(save_path), exist_ok=True)
-            file.save(save_path)
+                filename = secure_filename(raw_name)
+                if filename.startswith("..") or not allowed_file(filename):
+                    record_skip(raw_name, "disallowed file")
+                    continue
 
-            # store document record
-            doc = Document(case_id=case_id, name=filename, file_path=save_path)
-            db.session.add(doc)
-            db.session.commit()
+                if getattr(file, "content_length", None) and file.content_length > MAX_FILE_SIZE:
+                    record_skip(raw_name, "file too large")
+                    continue
 
-            # extract text and add to vector DB
+                start_time = time.time()
+                hasher = hashlib.sha256()
+                total_read = 0
+                try:
+                    for chunk in iter(lambda: file.stream.read(8192), b""):
+                        hasher.update(chunk)
+                        total_read += len(chunk)
+                        if time.time() - start_time > 30 or total_read > MAX_FILE_SIZE:
+                            break
+                    file.stream.seek(0)
+                except Exception as exc:  # pragma: no cover - best effort
+                    record_skip(raw_name, "read error")
+                    app.logger.error("Failed reading %s: %s", raw_name, exc)
+                    continue
+
+                if time.time() - start_time > 30 or total_read > MAX_FILE_SIZE:
+                    record_skip(raw_name, "read timeout or size limit")
+                    continue
+
+                file_hash = hasher.hexdigest()
+                if Document.query.filter_by(content_hash=file_hash).first():
+                    record_skip(raw_name, "duplicate")
+                    continue
+
+                filename = unique_filename(filename)
+                save_path = os.path.join(upload_root, filename)
+                os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
+                try:
+                    file.save(save_path)
+                    elapsed = time.time() - start_time
+                    if elapsed > 30 or (time.time() - batch_start) > 30:
+                        record_skip(raw_name, "save timeout")
+                        try:
+                            os.remove(save_path)
+                        except OSError:
+                            pass
+                        continue
+
+                    doc = Document(
+                        case_id=case_id,
+                        name=filename,
+                        file_path=save_path,
+                        content_hash=file_hash,
+                    )
+                    db.session.add(doc)
+                    db.session.flush()
+
+                    def ingest() -> None:
+                        processor = DocumentProcessor()
+                        text = processor.extract_text(save_path) or ""
+                        metadata = {
+                            "filename": filename,
+                            "path": save_path,
+                            "document_id": str(doc.id),
+                        }
+                        metadata = {k: v for k, v in metadata.items() if v}
+                        if not metadata:
+                            metadata = {"filename": filename or os.path.basename(save_path)}
+                        try:
+                            vector_mgr.add_documents([text], [metadata], [str(doc.id)])
+                        except ValueError as exc:  # pragma: no cover - best effort
+                            app.logger.warning(
+                                "Vector add failed for %s: %s; retrying with placeholder metadata",
+                                save_path,
+                                exc,
+                            )
+                            vector_mgr.add_documents(
+                                [text],
+                                [{"filename": filename or os.path.basename(save_path)}],
+                                [str(doc.id)],
+                            )
+                        kg = None
+                        try:
+                            kg = KnowledgeGraphManager()
+                            result = kg.run_query(
+                                "MERGE (c:Case {id: $id}) RETURN id(c) as cid",
+                                {"id": case_id},
+                            )
+                            case_node = result[0]["cid"] if result else None
+                            doc_node = kg.create_node(
+                                "Document",
+                                {
+                                    "name": filename,
+                                    "path": save_path,
+                                    "document_id": doc.id,
+                                },
+                            )
+                            if case_node is not None:
+                                kg.create_relationship(case_node, doc_node, "HAS_DOCUMENT")
+                        finally:
+                            if kg:
+                                kg.close()
+
+                    remaining = min(30 - (time.time() - start_time), batch_remaining)
+                    proc = Process(target=ingest)
+                    proc.start()
+                    proc.join(timeout=max(1, remaining))
+                    if proc.is_alive():
+                        proc.terminate()
+                        proc.join(timeout=5)
+                        if proc.is_alive():  # pragma: no cover - best effort
+                            proc.kill()
+                            proc.join()
+                        raise TimeoutError
+                    if proc.exitcode != 0:
+                        raise TimeoutError
+
+                    db.session.commit()
+                    processed.append(filename)
+                    batch_processed.append(filename)
+                except TimeoutError:
+                    db.session.rollback()
+                    record_skip(raw_name, "ingestion timeout")
+                    app.logger.error("Ingestion timed out for %s", save_path)
+                    try:
+                        os.remove(save_path)
+                    except OSError:
+                        pass
+                except Exception as exc:  # pragma: no cover - best effort
+                    db.session.rollback()
+                    record_skip(raw_name, "ingestion error")
+                    app.logger.error("Ingestion failed for %s: %s", save_path, exc)
+                    try:
+                        os.remove(save_path)
+                    except OSError:
+                        pass
             try:
-                processor = DocumentProcessor()
-                text = processor.extract_text(save_path)
-                VectorDatabaseManager().add_documents([text], [{}], [str(doc.id)])
-            except Exception as exc:  # pragma: no cover - best effort
-                app.logger.error("Ingestion failed for %s: %s", save_path, exc)
+                vector_mgr.client.persist()
+            except Exception:  # pragma: no cover - best effort
+                app.logger.warning("Vector DB persist failed")
 
-    # Reload session metadata so new files are visible to the agent network
-    reinitialize_legal_discovery_session()
+            if batch_processed:
+                reinitialize_legal_discovery_session()
+                user_input_queue.put(
+                    "process all files ingested within your scope and produce a basic overview and report."
+                )
 
-    user_input_queue.put(
-        "process all files ingested within your scope and produce a basic overview and report."
-    )
-    return jsonify({"message": "Files uploaded and processing started"})
+    return jsonify({"status": "ok", "processed": processed, "skipped": skipped})
 
 
 @app.route("/api/export", methods=["GET"])
@@ -515,15 +733,43 @@ def bates_stamp_document():
     return jsonify({"message": "File stamped", "output": f"{file_path}_stamped.pdf"})
 
 
+@app.route("/api/document/draft", methods=["POST"])
+def draft_document():
+    """Create or update a DOCX document using DocumentDrafter."""
+    data = request.get_json() or {}
+    filepath = data.get("filepath")
+    content = data.get("content", "")
+    action = data.get("action", "create")
+    level = int(data.get("level", 1))
+    if not filepath:
+        return jsonify({"error": "Missing filepath"}), 400
+    drafter = DocumentDrafter()
+    try:
+        if action == "paragraph":
+            drafter.add_paragraph(filepath, content)
+        elif action == "heading":
+            drafter.add_heading(filepath, content, level)
+        else:
+            drafter.create_document(filepath, content)
+    except Exception as exc:  # pragma: no cover - file system errors
+        return jsonify({"error": str(exc)}), 500
+    return jsonify({"status": "ok", "output": filepath})
+
+
 @app.route("/api/vector/add", methods=["POST"])
 def vector_add_documents():
     """Add documents to the vector database."""
     data = request.get_json() or {}
     documents = data.get("documents")
     ids = data.get("ids")
-    metadatas = data.get("metadatas", [{} for _ in (documents or [])])
     if not documents or not ids:
         return jsonify({"error": "Missing documents or ids"}), 400
+    metadatas = data.get("metadatas") or [
+        {"source": "api"} for _ in documents
+    ]
+    metadatas = [md if md else {"source": "api"} for md in metadatas]
+    if len(metadatas) != len(documents):
+        return jsonify({"error": "Invalid metadata length"}), 400
     manager = VectorDatabaseManager()
     manager.add_documents(documents, metadatas, ids)
     return jsonify({"status": "ok"})
@@ -876,7 +1122,8 @@ def handle_user_input(json, *_):
 def cleanup():
     """Tear things down on exit."""
     app.logger.info("Bye!")
-    tear_down_legal_discovery_assistant(legal_discovery_session)
+    if legal_discovery_session is not None:
+        tear_down_legal_discovery_assistant(legal_discovery_session)
     socketio.stop()
 
 
