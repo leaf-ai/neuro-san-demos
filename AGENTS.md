@@ -451,3 +451,7 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Trigger orchestrator after each 10-file batch and persist vectors immediately
 - Added progress bars for vector, knowledge, and Neo4j stages in React uploader
 - Next: expose detailed ingestion metrics via API
+
+## Update 2025-08-03T05:10Z
+- Guarded upload route against unreadable or oversized files and enforced 1GB limit
+- Next: surface skip reasons in UI and monitor ingestion stability

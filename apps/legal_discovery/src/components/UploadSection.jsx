@@ -37,7 +37,6 @@ function UploadSection() {
     setNeoProg(0);
     fetchFiles();
     window.dispatchEvent(new Event('graphRefresh'));
-
   };
   const fetchFiles = () => {
     fetch('/api/files').then(r=>r.json()).then(d=>setTree(d.data||[]));

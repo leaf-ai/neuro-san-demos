@@ -266,6 +266,7 @@ from coded_tools.legal_discovery.graph_analyzer import GraphAnalyzer
 UPLOAD_FOLDER = os.environ.get("UPLOAD_ROOT", os.path.join(BASE_DIR, "uploads"))
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {"pdf", "txt", "csv", "doc", "docx", "ppt", "pptx", "jpg", "jpeg", "png", "gif"}
+MAX_FILE_SIZE = 1 * 1024 * 1024 * 1024  # 1GB
 
 # Singleton task tracker instance for quick task management
 task_tracker = TaskTracker()
@@ -494,7 +495,6 @@ def upload_files():
                 if file.filename == "":
                     continue
                 raw_name = os.path.normpath(file.filename)
-
                 batch_remaining = 30 - (time.time() - batch_start)
                 if batch_remaining <= 0:
                     skipped.append(raw_name)
@@ -505,15 +505,27 @@ def upload_files():
                     skipped.append(raw_name)
                     continue
 
+                if getattr(file, "content_length", None) and file.content_length > MAX_FILE_SIZE:
+
+                    skipped.append(raw_name)
+                    continue
+
                 start_time = time.time()
                 hasher = hashlib.sha256()
-                for chunk in iter(lambda: file.stream.read(8192), b""):
-                    hasher.update(chunk)
-                    if time.time() - start_time > 30:
-                        break
-                file.stream.seek(0)
+                total_read = 0
+                try:
+                    for chunk in iter(lambda: file.stream.read(8192), b""):
+                        hasher.update(chunk)
+                        total_read += len(chunk)
+                        if time.time() - start_time > 30 or total_read > MAX_FILE_SIZE:
+                            break
+                    file.stream.seek(0)
+                except Exception as exc:  # pragma: no cover - best effort
+                    skipped.append(raw_name)
+                    app.logger.error("Failed reading %s: %s", raw_name, exc)
+                    continue
 
-                if time.time() - start_time > 30:
+                if time.time() - start_time > 30 or total_read > MAX_FILE_SIZE:
                     skipped.append(raw_name)
                     continue
 
@@ -612,7 +624,6 @@ def upload_files():
                 )
 
     return jsonify({"status": "ok", "processed": processed, "skipped": skipped})
-
 
 
 @app.route("/api/export", methods=["GET"])

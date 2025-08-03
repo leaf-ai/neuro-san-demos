@@ -354,3 +354,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-03T04:31Z
 - Batch uploads trigger orchestrator after each commit and show per-stage progress bars
 - Next: expose ingestion metrics and error details through dashboard
+
+## Update 2025-08-03T05:10Z
+- Reject unreadable, oversized (>1GB), or disallowed files without stalling batches
+- Next: propagate skip reasons to frontend and refine retry UX
