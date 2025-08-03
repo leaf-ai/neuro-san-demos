@@ -391,3 +391,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Logged skipped uploads and enforced 30s kill switches so hung files no longer freeze batches
 - Restyled dashboard with smoky glass greys and backdrop blur for a spaceship-like feel
 - Next: surface skip reasons in UI and tighten grey theme across components
+
+## Update 2025-08-03T17:30Z
+- Applied alien warship glass theme with neon accents across dashboard and timeline
+- Added reusable design tokens (`theme.js`, `figma_tokens.json`) for UI expansion
+- Next: integrate tokens into remaining React components and verify Docker styling
