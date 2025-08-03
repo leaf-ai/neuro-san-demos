@@ -37,6 +37,7 @@
     --nav-text: var(--color-text);
     --accent-colour: var(--color-accent);
     --container-bg: linear-gradient(145deg, rgba(31,38,45,0.75), rgba(12,14,18,0.75));
+
 }
 
 html, body {

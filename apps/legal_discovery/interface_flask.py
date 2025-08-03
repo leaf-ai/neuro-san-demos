@@ -606,6 +606,7 @@ def upload_files():
                     chroma_metadata,
                 ),
             )
+
             proc.start()
             tasks.append((proc, q, doc, raw_name, filename, save_path, raw_meta, chroma_meta))
 
