@@ -528,6 +528,7 @@ def upload_files():
                     skipped.append(raw_name)
                     continue
 
+
                 file_hash = hasher.hexdigest()
                 if Document.query.filter_by(content_hash=file_hash).first():
                     skipped.append(raw_name)
@@ -581,6 +582,7 @@ def upload_files():
                                 [{"filename": filename or os.path.basename(save_path)}],
                                 [str(doc.id)],
                             )
+
                         kg = None
                         try:
                             kg = KnowledgeGraphManager()

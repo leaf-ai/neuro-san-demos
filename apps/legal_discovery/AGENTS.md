@@ -369,3 +369,4 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-03T09:40Z
 - `VectorDatabaseManager` now inserts placeholder metadata when none is provided, preventing Chroma errors
 - Next: test large batch uploads to confirm ingestion remains stable
+
