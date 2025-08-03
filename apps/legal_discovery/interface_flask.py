@@ -506,6 +506,7 @@ def upload_files():
                     continue
 
                 if getattr(file, "content_length", None) and file.content_length > MAX_FILE_SIZE:
+
                     skipped.append(raw_name)
                     continue
 
