@@ -25,6 +25,7 @@ function UploadSection() {
       }
     }
     setCurrent('');
+
     setProg(0);
     fetchFiles();
   };

@@ -503,6 +503,7 @@ def upload_files():
                 if Document.query.filter_by(content_hash=file_hash).first():
                     skipped.append(raw_name)
                     continue
+
                 filename = unique_filename(filename)
                 save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
                 os.makedirs(os.path.dirname(save_path), exist_ok=True)
@@ -541,6 +542,7 @@ def upload_files():
                         os.remove(save_path)
                     except OSError:
                         pass
+
                 except Exception as exc:  # pragma: no cover - best effort
                     db.session.rollback()
                     skipped.append(raw_name)
