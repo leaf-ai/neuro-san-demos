@@ -405,3 +405,81 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Added Agent Network tab with team cards in React UI
 - Documented standalone startup steps and expanded memory_bank
 - Next: verify container startup with new defaults
+
+## Update 2025-08-02T22:08Z
+- Added missing rfc3987 dependency for Chromadb startup
+- Converted Flask imports to absolute paths so gunicorn serves the UI
+- Next: ensure frontend build assets are referenced consistently
+
+## Update 2025-08-02T22:23Z
+- Automatically build React assets when bundle.js is absent and include generated CSS
+- Next: confirm dashboard renders in browser and broaden API coverage
+
+## Update 2025-08-02T23:05Z
+- Set manifest path in Legal Discovery Dockerfile and removed placeholder env var
+- Dropped repo bind mount from docker-compose so built frontend assets are served
+- Next: build compose stack to verify UI loads in container
+
+## Update 2025-08-02T23:48Z
+- Initialize legal discovery agent in background thread so Flask responds immediately
+- Next: exercise UI once container stack is available
+
+## Update 2025-08-03T00:20Z
+- Exposed agent and topic APIs and fixed front-end build wiring
+- Next: verify docker compose serves dashboard assets reliably
+
+## Update 2025-08-03T01:40Z
+- Hardened file ingestion: skip malformed uploads, avoid overwrites, and batch files to prevent freezes
+- Next: monitor upload throughput and refine vector database indexing
+
+## Update 2025-08-03T02:20Z
+- Added per-file hashing and timeout to skip duplicates and hung uploads
+- Frontend now reports current file during batch uploads
+- Next: investigate UI rendering in browser and optimize ingestion throughput
+
+## Update 2025-08-03T02:48Z
+- Uploads now feed documents into vector DB and Neo4j with 30s per-batch timeout
+- Added UPLOAD_ROOT for external corpus storage and mounted volume in docker-compose
+- React uploader batches requests and refreshes the knowledge graph after ingestion
+- Next: exercise full analysis pipeline and confirm graph updates appear in UI
+
+## Update 2025-08-03T04:07Z
+- Enforced 30s per-file ingestion timeouts to skip hung uploads without freezing batches
+- Next: watch upload pipeline for edge-case failures and expand error reporting to UI
+
+## Update 2025-08-03T04:31Z
+- Trigger orchestrator after each 10-file batch and persist vectors immediately
+- Added progress bars for vector, knowledge, and Neo4j stages in React uploader
+- Next: expose detailed ingestion metrics via API
+
+## Update 2025-08-03T05:10Z
+- Guarded upload route against unreadable or oversized files and enforced 1GB limit
+- Next: surface skip reasons in UI and monitor ingestion stability
+## Update 2025-08-03T06:30Z
+- Ensured vector ingestion supplies filename metadata to satisfy Chroma requirements
+- Next: verify large batch uploads no longer error on empty metadata
+
+## Update 2025-08-03T07:30Z
+- Sanitized vector metadata and added fallback retry to prevent empty metadata errors during ingestion
+- Next: monitor vector ingestion for remaining edge cases
+
+## Update 2025-08-03T09:40Z
+- Normalised vector metadata in `VectorDatabaseManager` so every document includes a placeholder entry
+- Next: monitor uploads for any remaining vector ingestion issues
+
+## Update 2025-08-03T08:27Z
+- Hardened vector database writes with an automatic retry using placeholder metadata to prevent ingestion stalls
+- Next: watch batch uploads for any files that still fail to index
+
+## Update 2025-08-03T11:00Z
+- Run file ingestion in separate processes and terminate tasks exceeding 30s so uploads never hang
+- Next: monitor memory usage during large uploads
+
+## Update 2025-08-03T12:30Z
+- Track processed files per batch so agent session reloads after each successful chunk
+- Next: monitor ingestion logs for skipped files and prompt reloads
+
+## Update 2025-08-03T13:45Z
+- Introduced Document Drafter agent with AAOSA delegation and frontend panel
+- Added neon glow styling for active tabs and wired aaosa macros into `legal_discovery.hocon`
+- Next: extend AAOSA pattern to remaining agents and expose drafted outputs in UI summaries

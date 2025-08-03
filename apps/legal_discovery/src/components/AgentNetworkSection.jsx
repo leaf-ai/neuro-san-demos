@@ -61,7 +61,8 @@ const AGENT_NETWORK_DATA = [
     tools: [
       { name: 'PresentationGenerator', description: 'Creates and formats legal presentations.' },
       { name: 'SubpoenaManager', description: 'Manages the issuance and tracking of subpoenas.' },
-      { name: 'DocumentModifier', description: 'Modifies and formats legal documents.' }
+      { name: 'DocumentModifier', description: 'Modifies and formats legal documents.' },
+      { name: 'DocumentDrafter', description: 'Drafts pleadings and other legal documents.' }
     ]
   }
 ];

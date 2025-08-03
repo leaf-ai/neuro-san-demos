@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { fetchJSON } from "../utils";
 /* global cytoscape */
 function GraphSection() {
@@ -9,11 +9,16 @@ function GraphSection() {
   const cyRef = useRef(null);
   const [exporting,setExporting] = useState(false);
   const [analysis,setAnalysis] = useState([]);
-  const load = () => {
+  const load = useCallback(() => {
     const url = '/api/graph' + (subnet?`?subnet=${encodeURIComponent(subnet)}`:'');
     fetchJSON(url).then(d=>{setNodes(d.data.nodes||[]);setEdges(d.data.edges||[]);});
-  };
+  }, [subnet]);
   useEffect(load, []);
+  useEffect(() => {
+    const handler = () => load();
+    window.addEventListener('graphRefresh', handler);
+    return () => window.removeEventListener('graphRefresh', handler);
+  }, [load]);
   useEffect(() => {
     if(!nodes.length && !edges.length) return;
     const cy = cytoscape({

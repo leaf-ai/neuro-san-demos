@@ -7,6 +7,7 @@ import UploadSection from "./components/UploadSection";
 import TimelineSection from "./components/TimelineSection";
 import GraphSection from "./components/GraphSection";
 import DocToolsSection from "./components/DocToolsSection";
+import DocumentDraftSection from "./components/DocumentDraftSection";
 import ForensicSection from "./components/ForensicSection";
 import VectorSection from "./components/VectorSection";
 import TasksSection from "./components/TasksSection";
@@ -60,7 +61,12 @@ function Dashboard() {
       <div className="tab-content" style={{display: tab==='upload'?'block':'none'}} id="tab-upload"><UploadSection/></div>
       <div className="tab-content" style={{display: tab==='timeline'?'block':'none'}} id="tab-timeline"><TimelineSection/></div>
       <div className="tab-content" style={{display: tab==='graph'?'block':'none'}} id="tab-graph"><GraphSection/></div>
-      <div className="tab-content" style={{display: tab==='docs'?'block':'none'}} id="tab-docs"><DocToolsSection/></div>
+      <div className="tab-content" style={{display: tab==='docs'?'block':'none'}} id="tab-docs">
+        <div className="card-grid">
+          <DocToolsSection/>
+          <DocumentDraftSection/>
+        </div>
+      </div>
       <div className="tab-content" style={{display: tab==='forensic'?'block':'none'}} id="tab-forensic"><ForensicSection/></div>
       <div className="tab-content" style={{display: tab==='vector'?'block':'none'}} id="tab-vector"><VectorSection/></div>
       <div className="tab-content" style={{display: tab==='tasks'?'block':'none'}} id="tab-tasks"><TasksSection/></div>

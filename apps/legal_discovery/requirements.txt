@@ -10,6 +10,7 @@ PyMuPDF
 pytesseract
 PyPDF2
 chromadb
+rfc3987
 neo4j
 requests
 pandas

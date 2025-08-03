@@ -1,3 +1,5 @@
+include "registries/aaosa.hocon"
+
 {
     "llm_config": {
         "model_name": "gemini-2.5-flash",
@@ -6,15 +8,14 @@
     "max_execution_seconds": 6000,
     "commondefs": {
         "replacement_strings": {
-            "instructions_prefix": "You are an assistant helping with the process of legal discovery.\nOnly answer inquiries that are directly within your area of expertise.\nDo not try to help for other matters.\nDo not mention what you can NOT do. Only mention what you can do.",
+            "instructions_prefix": "${aaosa_instructions}\nYou are an assistant helping with the process of legal discovery.\nOnly answer inquiries that are directly within your area of expertise.\nDo not try to help for other matters.\nDo not mention what you can NOT do. Only mention what you can do.",
         },
     },
     "tools": [
         {
             "name": "orchestrator",
-            "function": {
-                "description": "I am the orchestrator for the legal discovery agent network. How can I help you today?"
-            },
+            "function": ${aaosa_call},
+            "command": ${aaosa_command},
             "instructions": "{instructions_prefix} You are the orchestrator, the single point of contact for the user. You are responsible for understanding user requests and delegating tasks to the appropriate sub-networks. You will coordinate the entire workflow and present the final results to the user.",
             "tools": [
                 "software_development_team",
@@ -513,6 +514,7 @@ You will delegate tasks to the appropriate agents.
             "tools": [
                 "exhibit_manager",
                 "presentation_designer",
+                "document_drafter_agent",
                 "trial_script",
                 "trial_logistics",
                 "final_qa_moot_court"
@@ -541,18 +543,8 @@ You will organize all the exhibits for trial.
         },
         {
             "name": "presentation_designer",
-            "function": {
-                "description": "Prepares visual aids and presentations for use in trial.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "task": {
-                            "type": "string",
-                            "description": "The task to be performed."
-                        }
-                    }
-                }
-            },
+            "function": ${aaosa_call},
+            "command": ${aaosa_command},
             "instructions": """
 {instructions_prefix}
 You are the Presentation Designer agent.
@@ -563,6 +555,17 @@ You will prepare visual aids and presentations for use in trial.
         {
             "name": "presentation_generator",
             "class": "legal_discovery.presentation_generator.PresentationGenerator"
+        },
+        {
+            "name": "document_drafter_agent",
+            "function": ${aaosa_call},
+            "command": ${aaosa_command},
+            "instructions": """
+{instructions_prefix}
+You are the Document Drafter agent.
+You create and update legal documents and pleadings from provided text.
+            """,
+            "tools": ["document_drafter"]
         },
         {
             "name": "trial_script",
