@@ -331,3 +331,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added /api/agents and /api/topics endpoints backed by registry and database
 - Ensured React build outputs load by bundling when missing
 - Next: validate dashboard renders data from new endpoints
+
+## Update 2025-08-03T01:40Z
+- Implemented resilient upload pipeline with per-file error handling and batch processing
+- Frontend now uploads files in groups of 10 and refreshes view after each chunk
+- Next: surface upload errors to users and expand ingestion metrics

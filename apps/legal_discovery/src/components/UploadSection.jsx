@@ -3,16 +3,24 @@ function UploadSection() {
   const inputRef = React.useRef();
   const [tree, setTree] = useState([]);
   const [prog,setProg] = useState(0);
-  const upload = () => {
-    const files = inputRef.current.files;
+  const upload = async () => {
+    const files = Array.from(inputRef.current.files);
     if (!files.length) return;
-    const fd = new FormData();
-    for (const f of files) fd.append('files', f, f.webkitRelativePath||f.name);
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST','/api/upload');
-    xhr.upload.onprogress = e=>{if(e.lengthComputable) setProg(Math.round((e.loaded/e.total)*100));};
-    xhr.onload = () => { setProg(0); fetchFiles(); };
-    xhr.send(fd);
+    for (let i = 0; i < files.length; i += 10) {
+      const fd = new FormData();
+      for (const f of files.slice(i, i + 10)) {
+        fd.append('files', f, f.webkitRelativePath || f.name);
+      }
+      await new Promise(res => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST','/api/upload');
+        xhr.upload.onprogress = e=>{if(e.lengthComputable) setProg(Math.round((e.loaded/e.total)*100));};
+        xhr.onload = xhr.onerror = () => res();
+        xhr.send(fd);
+      });
+    }
+    setProg(0);
+    fetchFiles();
   };
   const fetchFiles = () => {
     fetch('/api/files').then(r=>r.json()).then(d=>setTree(d.data||[]));

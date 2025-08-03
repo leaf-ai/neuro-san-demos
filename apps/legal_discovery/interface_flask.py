@@ -274,6 +274,24 @@ def allowed_file(filename: str) -> bool:
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+def unique_filename(filename: str) -> str:
+    """Return a filesystem-safe name that does not overwrite existing uploads."""
+    base_dir = app.config["UPLOAD_FOLDER"]
+    name, ext = os.path.splitext(filename)
+    candidate = filename
+    counter = 1
+    while os.path.exists(os.path.join(base_dir, candidate)):
+        candidate = f"{name}_{counter}{ext}"
+        counter += 1
+    return candidate
+
+
+def chunked(items: list, size: int) -> list[list]:
+    """Yield successive ``size``-sized chunks from ``items``."""
+    for i in range(0, len(items), size):
+        yield items[i : i + size]
+
+
 def build_file_tree(directory: str, root_length: int) -> list:
     """Recursively build a file tree structure."""
     tree = []
@@ -461,41 +479,56 @@ def upload_files():
     if not files:
         return jsonify({"error": "No files part"}), 400
 
+    processed, skipped = [], []
+
     with app.app_context():
         case = Case.query.first()
         case_id = case.id if case else 1
 
-        for file in files:
-            if file.filename == "":
-                continue
-            filename = secure_filename(os.path.normpath(file.filename))
-            if filename.startswith("..") or not allowed_file(filename):
-                continue
+        for batch in chunked(files, 10):
+            for file in batch:
+                if file.filename == "":
+                    continue
+                raw_name = os.path.normpath(file.filename)
+                filename = secure_filename(raw_name)
+                if filename.startswith("..") or not allowed_file(filename):
+                    skipped.append(raw_name)
+                    continue
+                filename = unique_filename(filename)
+                save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+                os.makedirs(os.path.dirname(save_path), exist_ok=True)
+                try:
+                    file.save(save_path)
+                    doc = Document(case_id=case_id, name=filename, file_path=save_path)
+                    db.session.add(doc)
+                    db.session.flush()
+                    processor = DocumentProcessor()
+                    text = processor.extract_text(save_path)
+                    VectorDatabaseManager().add_documents([text], [{}], [str(doc.id)])
+                    db.session.commit()
+                    processed.append(filename)
+                except Exception as exc:  # pragma: no cover - best effort
+                    db.session.rollback()
+                    skipped.append(raw_name)
+                    app.logger.error("Ingestion failed for %s: %s", save_path, exc)
+                    try:
+                        os.remove(save_path)
+                    except OSError:
+                        pass
 
-            save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-            os.makedirs(os.path.dirname(save_path), exist_ok=True)
-            file.save(save_path)
+    if processed:
+        reinitialize_legal_discovery_session()
+        user_input_queue.put(
+            "process all files ingested within your scope and produce a basic overview and report."
+        )
 
-            # store document record
-            doc = Document(case_id=case_id, name=filename, file_path=save_path)
-            db.session.add(doc)
-            db.session.commit()
-
-            # extract text and add to vector DB
-            try:
-                processor = DocumentProcessor()
-                text = processor.extract_text(save_path)
-                VectorDatabaseManager().add_documents([text], [{}], [str(doc.id)])
-            except Exception as exc:  # pragma: no cover - best effort
-                app.logger.error("Ingestion failed for %s: %s", save_path, exc)
-
-    # Reload session metadata so new files are visible to the agent network
-    reinitialize_legal_discovery_session()
-
-    user_input_queue.put(
-        "process all files ingested within your scope and produce a basic overview and report."
+    return jsonify(
+        {
+            "message": "Files processed",
+            "processed": processed,
+            "skipped": skipped,
+        }
     )
-    return jsonify({"message": "Files uploaded and processing started"})
 
 
 @app.route("/api/export", methods=["GET"])

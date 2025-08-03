@@ -427,3 +427,7 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 ## Update 2025-08-03T00:20Z
 - Exposed agent and topic APIs and fixed front-end build wiring
 - Next: verify docker compose serves dashboard assets reliably
+
+## Update 2025-08-03T01:40Z
+- Hardened file ingestion: skip malformed uploads, avoid overwrites, and batch files to prevent freezes
+- Next: monitor upload throughput and refine vector database indexing
