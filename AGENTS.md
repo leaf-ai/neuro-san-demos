@@ -458,3 +458,11 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 ## Update 2025-08-03T06:30Z
 - Ensured vector ingestion supplies filename metadata to satisfy Chroma requirements
 - Next: verify large batch uploads no longer error on empty metadata
+
+## Update 2025-08-03T07:30Z
+- Sanitized vector metadata and added fallback retry to prevent empty metadata errors during ingestion
+- Next: monitor vector ingestion for remaining edge cases
+
+## Update 2025-08-03T09:40Z
+- Normalised vector metadata in `VectorDatabaseManager` so every document includes a placeholder entry
+- Next: monitor uploads for any remaining vector ingestion issues

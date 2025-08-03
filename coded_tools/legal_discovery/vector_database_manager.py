@@ -16,7 +16,26 @@ class VectorDatabaseManager(CodedTool):
         :param metadatas: A list of metadata dictionaries corresponding to the documents.
         :param ids: A list of unique IDs for the documents.
         """
-        self.collection.add(documents=documents, metadatas=metadatas, ids=ids)
+        # Chroma requires a non-empty metadata dict for every document. Some
+        # ingestion paths may supply missing or empty metadata, so normalise the
+        # list here to guarantee valid placeholders are present. This protects
+        # against `ValueError: Expected metadata to be a non-empty dict` without
+        # modifying the upstream library.
+        safe_metadatas: list[dict] = []
+        # Pad the metadata list to match documents length if needed
+        if len(metadatas) < len(documents):
+            metadatas = metadatas + [{}] * (len(documents) - len(metadatas))
+        for md, doc_id in zip(metadatas, ids):
+            if not isinstance(md, dict) or not md:
+                safe_metadatas.append({"source": "unknown", "id": doc_id})
+            else:
+                # Remove keys with falsy values to avoid serialisation issues
+                cleaned = {k: v for k, v in md.items() if v}
+                if cleaned:
+                    safe_metadatas.append(cleaned)
+                else:
+                    safe_metadatas.append({"source": "unknown", "id": doc_id})
+        self.collection.add(documents=documents, metadatas=safe_metadatas, ids=ids)
 
     def query(self, query_texts: list[str], n_results: int = 10) -> dict:
         """

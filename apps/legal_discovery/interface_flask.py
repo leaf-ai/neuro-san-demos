@@ -528,27 +528,6 @@ def upload_files():
                     skipped.append(raw_name)
                     continue
 
-                    skipped.append(raw_name)
-                    continue
-
-                start_time = time.time()
-                hasher = hashlib.sha256()
-                total_read = 0
-                try:
-                    for chunk in iter(lambda: file.stream.read(8192), b""):
-                        hasher.update(chunk)
-                        total_read += len(chunk)
-                        if time.time() - start_time > 30 or total_read > MAX_FILE_SIZE:
-                            break
-                    file.stream.seek(0)
-                except Exception as exc:  # pragma: no cover - best effort
-                    skipped.append(raw_name)
-                    app.logger.error("Failed reading %s: %s", raw_name, exc)
-                    continue
-
-                if time.time() - start_time > 30 or total_read > MAX_FILE_SIZE:
-                    skipped.append(raw_name)
-                    continue
 
                 file_hash = hasher.hexdigest()
                 if Document.query.filter_by(content_hash=file_hash).first():
@@ -581,18 +560,28 @@ def upload_files():
 
                     def ingest() -> None:
                         processor = DocumentProcessor()
-                        text = processor.extract_text(save_path)
-                        vector_mgr.add_documents(
-                            [text],
-                            [
-                                {
-                                    "filename": filename,
-                                    "path": save_path,
-                                    "document_id": str(doc.id),
-                                }
-                            ],
-                            [str(doc.id)],
-                        )
+                        text = processor.extract_text(save_path) or ""
+                        metadata = {
+                            "filename": filename,
+                            "path": save_path,
+                            "document_id": str(doc.id),
+                        }
+                        metadata = {k: v for k, v in metadata.items() if v}
+                        if not metadata:
+                            metadata = {"filename": filename or os.path.basename(save_path)}
+                        try:
+                            vector_mgr.add_documents([text], [metadata], [str(doc.id)])
+                        except ValueError as exc:  # pragma: no cover - best effort
+                            app.logger.warning(
+                                "Vector add failed for %s: %s; retrying with placeholder metadata",
+                                save_path,
+                                exc,
+                            )
+                            vector_mgr.add_documents(
+                                [text],
+                                [{"filename": filename or os.path.basename(save_path)}],
+                                [str(doc.id)],
+                            )
 
                         kg = None
                         try:

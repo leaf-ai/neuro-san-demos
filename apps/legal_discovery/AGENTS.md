@@ -362,3 +362,11 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added filename and path metadata during vector ingestion to satisfy Chromadb
 - Next: ensure batch uploads succeed without metadata errors
 
+## Update 2025-08-03T07:30Z
+- Guarded vector add with metadata sanitization and retry to avoid ingestion failures
+- Next: observe batch uploads to ensure all files index correctly
+
+## Update 2025-08-03T09:40Z
+- `VectorDatabaseManager` now inserts placeholder metadata when none is provided, preventing Chroma errors
+- Next: test large batch uploads to confirm ingestion remains stable
+
