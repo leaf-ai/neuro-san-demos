@@ -358,3 +358,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-03T05:10Z
 - Reject unreadable, oversized (>1GB), or disallowed files without stalling batches
 - Next: propagate skip reasons to frontend and refine retry UX
+## Update 2025-08-03T06:30Z
+- Added filename and path metadata during vector ingestion to satisfy Chromadb
+- Next: ensure batch uploads succeed without metadata errors
+

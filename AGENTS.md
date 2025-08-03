@@ -455,3 +455,6 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 ## Update 2025-08-03T05:10Z
 - Guarded upload route against unreadable or oversized files and enforced 1GB limit
 - Next: surface skip reasons in UI and monitor ingestion stability
+## Update 2025-08-03T06:30Z
+- Ensured vector ingestion supplies filename metadata to satisfy Chroma requirements
+- Next: verify large batch uploads no longer error on empty metadata

@@ -506,6 +506,27 @@ def upload_files():
                     continue
 
                 if getattr(file, "content_length", None) and file.content_length > MAX_FILE_SIZE:
+                    skipped.append(raw_name)
+                    continue
+
+                start_time = time.time()
+                hasher = hashlib.sha256()
+                total_read = 0
+                try:
+                    for chunk in iter(lambda: file.stream.read(8192), b""):
+                        hasher.update(chunk)
+                        total_read += len(chunk)
+                        if time.time() - start_time > 30 or total_read > MAX_FILE_SIZE:
+                            break
+                    file.stream.seek(0)
+                except Exception as exc:  # pragma: no cover - best effort
+                    skipped.append(raw_name)
+                    app.logger.error("Failed reading %s: %s", raw_name, exc)
+                    continue
+
+                if time.time() - start_time > 30 or total_read > MAX_FILE_SIZE:
+                    skipped.append(raw_name)
+                    continue
 
                     skipped.append(raw_name)
                     continue
@@ -561,7 +582,18 @@ def upload_files():
                     def ingest() -> None:
                         processor = DocumentProcessor()
                         text = processor.extract_text(save_path)
-                        vector_mgr.add_documents([text], [{}], [str(doc.id)])
+                        vector_mgr.add_documents(
+                            [text],
+                            [
+                                {
+                                    "filename": filename,
+                                    "path": save_path,
+                                    "document_id": str(doc.id),
+                                }
+                            ],
+                            [str(doc.id)],
+                        )
+
                         kg = None
                         try:
                             kg = KnowledgeGraphManager()
@@ -703,9 +735,14 @@ def vector_add_documents():
     data = request.get_json() or {}
     documents = data.get("documents")
     ids = data.get("ids")
-    metadatas = data.get("metadatas", [{} for _ in (documents or [])])
     if not documents or not ids:
         return jsonify({"error": "Missing documents or ids"}), 400
+    metadatas = data.get("metadatas") or [
+        {"source": "api"} for _ in documents
+    ]
+    metadatas = [md if md else {"source": "api"} for md in metadatas]
+    if len(metadatas) != len(documents):
+        return jsonify({"error": "Invalid metadata length"}), 400
     manager = VectorDatabaseManager()
     manager.add_documents(documents, metadatas, ids)
     return jsonify({"status": "ok"})

@@ -16,7 +16,6 @@ services:
     volumes:
       - uploads_data:/usr/src/app/uploads
 
-
   neo4j:
     image: neo4j:4.4
     ports:
