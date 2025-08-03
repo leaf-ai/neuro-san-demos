@@ -6,6 +6,8 @@ import re
 import subprocess
 import threading
 import time
+import hashlib
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from datetime import datetime
 
 # pylint: disable=import-error
@@ -24,7 +26,6 @@ from apps.legal_discovery.legal_discovery import (
 )
 
 from pyhocon import ConfigFactory
-
 
 from apps.legal_discovery import settings
 from apps.legal_discovery.database import db
@@ -494,19 +495,54 @@ def upload_files():
                 if filename.startswith("..") or not allowed_file(filename):
                     skipped.append(raw_name)
                     continue
+                hasher = hashlib.sha256()
+                for chunk in iter(lambda: file.stream.read(8192), b""):
+                    hasher.update(chunk)
+                file.stream.seek(0)
+                file_hash = hasher.hexdigest()
+                if Document.query.filter_by(content_hash=file_hash).first():
+                    skipped.append(raw_name)
+                    continue
+
                 filename = unique_filename(filename)
                 save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
                 os.makedirs(os.path.dirname(save_path), exist_ok=True)
                 try:
                     file.save(save_path)
-                    doc = Document(case_id=case_id, name=filename, file_path=save_path)
+                    doc = Document(
+                        case_id=case_id,
+                        name=filename,
+                        file_path=save_path,
+                        content_hash=file_hash,
+                    )
                     db.session.add(doc)
                     db.session.flush()
-                    processor = DocumentProcessor()
-                    text = processor.extract_text(save_path)
-                    VectorDatabaseManager().add_documents([text], [{}], [str(doc.id)])
+
+                    def ingest() -> None:
+                        processor = DocumentProcessor()
+                        text = processor.extract_text(save_path)
+                        mgr = VectorDatabaseManager()
+                        mgr.add_documents([text], [{}], [str(doc.id)])
+                        try:
+                            mgr.client.persist()
+                        except Exception:  # pragma: no cover - best effort
+                            app.logger.warning("Vector DB persist failed")
+
+                    with ThreadPoolExecutor(max_workers=1) as ex:
+                        future = ex.submit(ingest)
+                        future.result(timeout=30)
+
                     db.session.commit()
                     processed.append(filename)
+                except TimeoutError:
+                    db.session.rollback()
+                    skipped.append(raw_name)
+                    app.logger.error("Ingestion timed out for %s", save_path)
+                    try:
+                        os.remove(save_path)
+                    except OSError:
+                        pass
+
                 except Exception as exc:  # pragma: no cover - best effort
                     db.session.rollback()
                     skipped.append(raw_name)

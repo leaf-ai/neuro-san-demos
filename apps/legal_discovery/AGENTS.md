@@ -336,3 +336,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Implemented resilient upload pipeline with per-file error handling and batch processing
 - Frontend now uploads files in groups of 10 and refreshes view after each chunk
 - Next: surface upload errors to users and expand ingestion metrics
+
+## Update 2025-08-03T02:20Z
+- Display current filename during uploads and dedupe by SHA256 hash
+- Backend rejects files that exceed a 30s ingestion timeout and persists batches
+- Next: verify dashboard renders in browser and tune timeout threshold

@@ -431,3 +431,8 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 ## Update 2025-08-03T01:40Z
 - Hardened file ingestion: skip malformed uploads, avoid overwrites, and batch files to prevent freezes
 - Next: monitor upload throughput and refine vector database indexing
+
+## Update 2025-08-03T02:20Z
+- Added per-file hashing and timeout to skip duplicates and hung uploads
+- Frontend now reports current file during batch uploads
+- Next: investigate UI rendering in browser and optimize ingestion throughput
