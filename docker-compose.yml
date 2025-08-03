@@ -12,8 +12,6 @@ services:
     depends_on:
       - neo4j
       - tesseract
-    volumes:
-      - .:/usr/src/app
 
   neo4j:
     image: neo4j:4.4

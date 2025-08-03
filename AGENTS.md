@@ -405,3 +405,29 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Added Agent Network tab with team cards in React UI
 - Documented standalone startup steps and expanded memory_bank
 - Next: verify container startup with new defaults
+
+## Update 2025-08-02T22:08Z
+- Added missing rfc3987 dependency for Chromadb startup
+- Converted Flask imports to absolute paths so gunicorn serves the UI
+- Next: ensure frontend build assets are referenced consistently
+
+## Update 2025-08-02T22:23Z
+- Automatically build React assets when bundle.js is absent and include generated CSS
+- Next: confirm dashboard renders in browser and broaden API coverage
+
+## Update 2025-08-02T23:05Z
+- Set manifest path in Legal Discovery Dockerfile and removed placeholder env var
+- Dropped repo bind mount from docker-compose so built frontend assets are served
+- Next: build compose stack to verify UI loads in container
+
+## Update 2025-08-02T23:48Z
+- Initialize legal discovery agent in background thread so Flask responds immediately
+- Next: exercise UI once container stack is available
+
+## Update 2025-08-03T00:20Z
+- Exposed agent and topic APIs and fixed front-end build wiring
+- Next: verify docker compose serves dashboard assets reliably
+
+## Update 2025-08-03T01:40Z
+- Hardened file ingestion: skip malformed uploads, avoid overwrites, and batch files to prevent freezes
+- Next: monitor upload throughput and refine vector database indexing
