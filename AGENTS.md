@@ -493,3 +493,13 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Overhauled dashboard and timeline with a glassy neon-blue "alien warship" theme
 - Introduced shared design tokens via CSS variables, React `theme.js` and Figma export
 - Next: extend token usage across all components and confirm Docker build serves new assets
+
+## Update 2025-08-03T18:30Z
+- Repaired file ingestion subprocess block to resolve gunicorn syntax errors
+- Restored queue-based timeout handling and batch tracking in `interface_flask.py`
+- Next: verify gunicorn startup in Docker
+
+## Update 2025-08-03T19:50Z
+- Batched document commits with dual-schema metadata storage and concurrent ingestion processes
+- Skipped and logged files that exceed 30s without halting batch progress
+- Next: monitor batch commit performance and tune concurrency
