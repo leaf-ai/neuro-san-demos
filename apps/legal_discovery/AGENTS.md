@@ -452,3 +452,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Upload pipeline stores originals securely and serves redacted copies
 - Document tree marks privileged files for review with stealth icon
 - Next: surface override controls in dashboard
+
+## Update 2025-08-04T10:14Z
+- Added dispute and origin relationships to KnowledgeGraphManager and cause subgraph export
+- Expanded ontology tests and graph relationship coverage
+- Next: incorporate scoring weights and timeline overlays in theory engine

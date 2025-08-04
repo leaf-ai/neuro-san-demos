@@ -9,3 +9,11 @@ def test_loads_ontology_and_accesses_cause():
     assert cause is not None
     assert "elements" in cause
     assert "defenses" in cause
+
+
+def test_defenses_indicators_and_missing_cause():
+    loader = OntologyLoader()
+    fraud = loader.get_cause("Fraud")
+    assert "defenses" in fraud and "Truth" in fraud["defenses"]
+    assert "indicators" in fraud and "false statement" in fraud["indicators"]
+    assert loader.get_cause("Nonexistent") is None
