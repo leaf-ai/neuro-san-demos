@@ -9,6 +9,9 @@ class DummyKG:
             return [{"text": "Contract between A and B"}]
         return []
 
+    def get_cause_subgraph(self, cause):
+        return ["n"], ["e"]
+
     def close(self):
         pass
 
@@ -23,6 +26,13 @@ class TestLegalTheoryEngine(unittest.TestCase):
         self.assertTrue(elements["Existence of a contract"]["facts"])
         self.assertIn("defenses", breach)
         self.assertIn("indicators", breach)
+        engine.close()
+
+    def test_get_theory_subgraph(self):
+        engine = LegalTheoryEngine(kg=DummyKG())
+        nodes, edges = engine.get_theory_subgraph("Fraud")
+        self.assertEqual(nodes, ["n"])
+        self.assertEqual(edges, ["e"])
         engine.close()
 
 

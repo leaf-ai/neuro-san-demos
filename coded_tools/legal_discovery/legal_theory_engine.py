@@ -50,5 +50,9 @@ class LegalTheoryEngine(CodedTool):
         suggestions.sort(key=lambda s: s["score"], reverse=True)
         return suggestions
 
+    def get_theory_subgraph(self, cause: str):
+        """Expose subgraph retrieval for a specific cause of action."""
+        return self.kg.get_cause_subgraph(cause)
+
     def close(self) -> None:
         self.kg.close()

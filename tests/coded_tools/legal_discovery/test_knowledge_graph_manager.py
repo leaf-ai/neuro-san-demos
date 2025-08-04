@@ -47,5 +47,31 @@ class TestKnowledgeGraphManager(unittest.TestCase):
         self.kg_manager.delete_node(doc_id)
         self.kg_manager.delete_node(case_id)
 
+    def test_linking_and_cause_subgraph(self):
+        try:
+            doc_id = self.kg_manager.create_node("Document", {"name": "Doc"})
+            fact_id = self.kg_manager.create_node("Fact", {"text": "A fact"})
+        except RuntimeError as exc:
+            self.skipTest(str(exc))
+
+        self.kg_manager.link_fact_to_element(
+            fact_id, "Fraud", "Misrepresentation"
+        )
+        self.kg_manager.link_document_dispute(fact_id, doc_id)
+        self.kg_manager.link_fact_origin(fact_id, "Email", "Email1")
+        nodes, edges = self.kg_manager.get_cause_subgraph("Fraud")
+        labels = {tuple(n["labels"]) for n in nodes}
+        self.assertIn(("CauseOfAction",), labels)
+        edge_types = {e["type"] for e in edges}
+        self.assertIn("SUPPORTS", edge_types)
+        self.assertIn("BELONGS_TO", edge_types)
+        self.assertIn("DISPUTED_BY", edge_types)
+        self.assertIn("ORIGINATED_IN", edge_types)
+        self.kg_manager.delete_node(fact_id)
+        self.kg_manager.delete_node(doc_id)
+        self.kg_manager.run_query("MATCH (n:Email {name:'Email1'}) DETACH DELETE n")
+        self.kg_manager.run_query("MATCH (n:Element {name:'Misrepresentation'}) DETACH DELETE n")
+        self.kg_manager.run_query("MATCH (n:CauseOfAction {name:'Fraud'}) DETACH DELETE n")
+
 if __name__ == '__main__':
     unittest.main()
