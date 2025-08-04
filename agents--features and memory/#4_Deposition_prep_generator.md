@@ -1,128 +1,97 @@
-✅ Deposition Prep Generator: Technical Plan of Action
-GOAL:
-Automate deposition outlines by linking witnesses to documents, extracting facts, and generating question sets based on available evidence.
+Improved Prompt: Comprehensive Deposition Preparation Automation Plan
 
-1. Witness–Document Linking
-📌 NLP Pipeline Enhancement
-Tooling: spaCy (custom legal model), or HuggingFace transformer with entity linking.
+Objective:
+Develop an automated system for generating deposition outlines by efficiently linking witnesses to relevant documents, extracting pertinent facts, and formulating tailored question sets based on the evidence available. This plan will guide the coding agent in implementing the necessary features and functionalities using advanced AI models, specifically Codex or ChatGPT.
 
-Process:
+1. Witness-Document Linking
+Enhancement of NLP Pipeline
+Tools: Utilize spaCy with a custom legal model or Hugging Face transformers optimized for entity linking and relation extraction.
 
-NER + Role Classifier: During ingestion, tag all people in the document and classify their role:
+Process Steps:
 
-Witness, Party, Lawyer, Expert, Judge, etc.
+Named Entity Recognition (NER) & Role Classification:
 
-Use dependency parsing or relation extraction (e.g. via spaCy’s ent_rel patterns or transformers with REBEL) to connect entities to actions/facts.
+Implement a tagging system during document ingestion to identify and classify entities into roles such as Witness, Party, Lawyer, Expert, and Judge.
+Leverage dependency parsing or relation extraction techniques (e.g., spaCy’s ent_rel patterns or REBEL with transformers) to establish connections between entities and their corresponding actions/facts.
+Data Storage Strategy:
 
-📌 Data Storage
-PostgreSQL:
+PostgreSQL Implementation:
 
-witnesses table: stores names, roles, associated case, linked user ID if available.
+Create a witnesses table to store the following attributes:
+id, name, role, associated_case, linked_user_id
+Establish a many-to-many (M:N) relationship table called document_witness_link to connect documents and witnesses.
+Neo4j Graph Database Setup:
 
-document_witness_link: M:N table linking docs and witnesses.
-
-Neo4j Graph:
-
-Nodes: (Witness {name, role})
-
-Edges:
-
+Define nodes for Witness with properties {name, role}.
+Establish edges to represent relationships:
 (:Document)-[:MENTIONS|LINKED_TO]->(:Witness)
-
 (:Fact)-[:ASSERTED_BY]->(:Witness)
-
 2. Fact & Evidence Aggregation
-📌 Evidence Corpus
+Evidence Corpus Development
+
 Build or query from:
+Facts extracted during the document ingestion process.
+Vector search results to identify document similarities.
+Entity-aware chunking to maintain contextual integrity of facts.
+Consistency Checking Mechanism:
 
-Facts extracted during ingestion
-
-Vector search results for document similarity
-
-Entity-aware chunking (keep facts and context together)
-
-📌 Consistency Checking
-Use contradiction detection (e.g. via entailment model like RoBERTa trained on MNLI):
-
-Detect when two docs/witnesses state conflicting timelines or conclusions.
-
-Flag for review.
-
+Implement a contradiction detection system using an entailment model (e.g., RoBERTa trained on MNLI) to identify conflicting timelines or conclusions between documents and witnesses. Flag these inconsistencies for further review.
 3. Question Generation Module
-📌 File: deposition_prep.py
-a. Input:
+File Structure:
+
+Create a Python file named deposition_prep.py.
+Input Parameters:
+
 witness_id
+Optional parameters: scope (date range, Bates range, topic)
+Processing Steps:
 
-Optional: scope (date range, Bates range, topic)
-
-b. Steps:
-Pull all facts/docs tied to witness.
-
-Bucket by:
-
+Retrieve all facts and documents associated with the specified witness.
+Organize the retrieved information into categories:
 Chronology
-
 Subject Matter
-
 Legal Issue
+Prompt Template for Question Generation:
 
-Use prompt template:
-
-pgsql
-Copy code
-You are preparing for a deposition of {witness_name}, who is mentioned in the following facts: {facts}.
-Generate detailed questions grouped by category: background, events, inconsistencies, damages.
-Include source reference (e.g. document name or Bates number) for each.
-Generate 10–20 questions per witness using:
-
-Claude 3 / GPT-4 / Gemini (adjust prompt to your LLM)
-
-Optionally fine-tune a mini LLM for local usage
-
+You are preparing for a deposition of {witness_name}, who is mentioned in the following facts: {facts}. 
+Based on this information, generate a comprehensive set of detailed questions categorized into:
+1. Background
+2. Events
+3. Inconsistencies
+4. Damages
+Ensure to include source references (e.g., document name or Bates number) for each question. Aim to generate 10-20 questions per witness using the capabilities of Codex/ChatGPT.
 4. UI/UX Integration
-📌 Tabs & Panels
+User Interface Design:
+
 New Tab: “Deposition Prep”
+Sidebar Features:
 
-Sidebar:
-
-Dropdown: Select Case → Witness
-
-Checkbox: “Include documents marked as privileged?”
-
+Dropdown menu for selecting Case and Witness.
+Checkbox option: “Include documents marked as privileged?”
 Button: “Generate Questions”
+Main Panel Features:
 
-Main Panel:
+Editable question list with inline references to linked documents/facts.
+Action buttons: “Regenerate”, “Flag Fact”, “Export Outline”
+Export Functionality:
 
-Editable question list
-
-Inline reference to linked document/fact
-
-Buttons: “Regenerate”, “Flag Fact”, “Export Outline”
-
-📌 Export
-PDF or Word export via python-docx or WeasyPrint
-
-Include:
-
-Witness name, case ID
-
+Implement PDF or Word export options using libraries such as python-docx or WeasyPrint. The export should include:
+Witness name
+Case ID
 Timestamp
-
-Question numbering
-
-Bates refs (as hyperlinked footnotes)
-
+Numbered questions
+Bates references as hyperlinked footnotes.
 5. Audit & Human Review
-📌 Permissions:
-Only attorneys or case admins can approve or export questions.
+Permissions Management:
 
-Add a review log (table: deposition_review_log) with:
-
+Restrict approval and export capabilities to attorneys or case administrators.
+Create a review log table (deposition_review_log) with the following schema:
 reviewer_id, timestamp, approved, notes, witness_id
-
-🔧 Optional Enhancements (Stretch Goals)
+6. Optional Enhancements (Stretch Goals)
 Feature	Description
-📊 Topic Heatmap	Show witness-topic intensity map
-🧠 Reinforcement Loop	Attorneys can “thumbs up/down” question quality to fine-tune model
-🎯 Salient Docs First	Rank documents by importance to witness using centrality or vector relevance
-🕵️‍♂️ Contradiction Mode	Show fact pairs with contradiction risk score
+Topic Heatmap	Visualize the intensity of topics associated with each witness.
+Reinforcement Loop	Allow attorneys to provide feedback on question quality to refine the model.
+Salient Docs First	Prioritize document ranking by relevance to the witness using centrality or vector relevance techniques.
+Contradiction Mode	Display pairs of facts with a risk score for potential contradictions.
+Desired Output:
+A step-by-step, detailed, and comprehensive technical plan of action for building an automated deposition preparation tool, tailored for Codex or ChatGPT. The plan should be clear enough to direct a coding agent through implementation, ensuring all components are covered and optimized for legal use cases.
