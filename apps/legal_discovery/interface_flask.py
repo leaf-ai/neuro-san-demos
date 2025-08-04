@@ -10,7 +10,7 @@ import hashlib
 import json
 
 from datetime import datetime
-from multiprocessing import Process, Queue, set_start_method
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
 
 # pylint: disable=import-error
 import schedule
@@ -42,8 +42,6 @@ from apps.legal_discovery.models import (
     CalendarEvent,
     LegalTheory,
 )
-
-set_start_method("spawn", force=True)
 
 # Configure logging before any other setup so early steps are captured
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
@@ -83,6 +81,8 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 socketio = SocketIO(app)
+executor = ThreadPoolExecutor(max_workers=int(os.environ.get("INGESTION_WORKERS", "4")))
+atexit.register(executor.shutdown)
 thread_started = False  # pylint: disable=invalid-name
 
 app.logger.setLevel(logging.getLevelName(os.environ.get("LOG_LEVEL", "INFO")))
@@ -485,33 +485,26 @@ def cleanup_upload_folder(max_age_hours: int = 24) -> None:
                 continue
 
 
-def ingest_wrapper(
-    q: Queue,
+def ingest_document(
     save_path: str,
     doc_id: int,
     case_id: int,
     full_metadata: dict,
     chroma_metadata: dict,
 ) -> None:
-    """Extract, vectorize, and relate a document in a worker process."""
-    try:
-        processor = DocumentProcessor()
-        text = processor.extract_text(save_path) or ""
-        VectorDatabaseManager().add_documents(
-            [text], [chroma_metadata], [str(doc_id)]
-        )
-        kg = KnowledgeGraphManager()
-        result = kg.run_query(
-            "MERGE (c:Case {id: $id}) RETURN id(c) as cid", {"id": case_id}
-        )
-        case_node = result[0]["cid"] if result else None
-        doc_node = kg.create_node("Document", full_metadata)
-        if case_node:
-            kg.create_relationship(case_node, doc_node, "HAS_DOCUMENT")
-        kg.close()
-        q.put(None)
-    except Exception as ex:  # pragma: no cover - best effort
-        q.put(ex)
+    """Extract, vectorize, and relate a document in the background."""
+    processor = DocumentProcessor()
+    text = processor.extract_text(save_path) or ""
+    VectorDatabaseManager().add_documents([text], [chroma_metadata], [str(doc_id)])
+    kg = KnowledgeGraphManager()
+    result = kg.run_query(
+        "MERGE (c:Case {id: $id}) RETURN id(c) as cid", {"id": case_id}
+    )
+    case_node = result[0]["cid"] if result else None
+    doc_node = kg.create_node("Document", full_metadata)
+    if case_node:
+        kg.create_relationship(case_node, doc_node, "HAS_DOCUMENT")
+    kg.close()
 
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 MAX_TIMEOUT = 30  # seconds per file
@@ -537,7 +530,7 @@ def upload_files():
     for batch_index, batch in enumerate([files[i:i + 10] for i in range(0, len(files), 10)]):
         app.logger.info(f"Starting batch {batch_index + 1}")
         batch_processed: list[str] = []
-        tasks: list[tuple] = []
+        futures: list[tuple] = []
 
         for file in batch:
             raw_name = os.path.normpath(file.filename)
@@ -600,30 +593,20 @@ def upload_files():
             raw_meta = DocumentMetadata(document_id=doc.id, schema="raw", data=full_metadata)
             chroma_meta = DocumentMetadata(document_id=doc.id, schema="chroma", data=chroma_metadata)
             db.session.add_all([raw_meta, chroma_meta])
-            q = Queue()
-            proc = Process(
-                target=ingest_wrapper,
-                args=(
-                    q,
-                    save_path,
-                    doc.id,
-                    case_id,
-                    full_metadata,
-                    chroma_metadata,
-                ),
+            future = executor.submit(
+                ingest_document,
+                save_path,
+                doc.id,
+                case_id,
+                full_metadata,
+                chroma_metadata,
             )
+            futures.append((future, doc, raw_name, filename, save_path, raw_meta, chroma_meta))
 
-            proc.start()
-            tasks.append((proc, q, doc, raw_name, filename, save_path, raw_meta, chroma_meta))
-
-        for proc, q, doc, raw_name, filename, save_path, raw_meta, chroma_meta in tasks:
-            proc.join(MAX_TIMEOUT)
-            if proc.is_alive():
-                proc.terminate()
-                proc.join(timeout=5)
-                if proc.is_alive():  # pragma: no cover - best effort
-                    proc.kill()
-                    proc.join()
+        for future, doc, raw_name, filename, save_path, raw_meta, chroma_meta in futures:
+            try:
+                future.result(timeout=MAX_TIMEOUT)
+            except TimeoutError:
                 record_skip(raw_name, "ingestion timeout")
                 db.session.delete(doc)
                 db.session.delete(raw_meta)
@@ -633,11 +616,8 @@ def upload_files():
                         os.remove(save_path + ext)
                     except OSError:
                         pass
-                continue
-
-            result = q.get() if not q.empty() else None
-            if isinstance(result, Exception):
-                record_skip(raw_name, f"ingestion error: {result}")
+            except Exception as exc:  # pragma: no cover - best effort
+                record_skip(raw_name, f"ingestion error: {exc}")
                 db.session.delete(doc)
                 db.session.delete(raw_meta)
                 db.session.delete(chroma_meta)
