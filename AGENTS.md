@@ -522,3 +522,7 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Pointed vector database manager to an external Chroma service
 - Extended docker-compose with a PostgreSQL service and wiring for Chroma
 - Next: refine graph exploration UI and document deployment steps
+
+## Update 2025-08-04T02:00Z
+- Parallelized document ingestion using a thread pool with per-file timeouts
+- Next: observe upload performance and tune worker counts

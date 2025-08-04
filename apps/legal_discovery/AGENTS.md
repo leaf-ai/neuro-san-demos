@@ -422,3 +422,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Vector database manager now uses `HttpClient` for external Postgres-backed Chroma
 - `docker-compose.yml` includes a PostgreSQL service for persistent storage
 - Next: surface ingestion metrics and improve graph exploration usability
+
+## Update 2025-08-04T02:00Z
+- Switched upload route to a thread pool for parallel file processing with 30s timeouts
+- Next: monitor executor load and refine async workflow
