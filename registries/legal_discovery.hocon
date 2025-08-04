@@ -703,6 +703,10 @@ You will draft motions, briefs, and legal documents as needed.
             "class": "legal_discovery.document_drafter.DocumentDrafter"
         },
         {
+            "name": "fact_extractor",
+            "class": "legal_discovery.fact_extractor.FactExtractor"
+        },
+        {
             "name": "litigation_training",
             "function": {
                 "description": "Provides practical litigation coaching and education.",

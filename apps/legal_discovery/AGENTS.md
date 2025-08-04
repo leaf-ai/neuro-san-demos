@@ -426,3 +426,14 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-04T02:00Z
 - Switched upload route to a thread pool for parallel file processing with 30s timeouts
 - Next: monitor executor load and refine async workflow
+
+## Update 2025-08-04T03:00Z
+- Added relational models for causes of action, elements, defenses and facts
+- Introduced ontology loader with initial JSON schema
+- Added unit test scaffold for ontology loading
+- Next: integrate fact extractor and graph persistence
+
+## Update 2025-08-04T??Z
+- Implemented `FactExtractor` leveraging spaCy to pull parties, dates and actions
+- Added spaCy requirement and unit test
+- Next: connect extractor to upload pipeline and persist facts/relationships

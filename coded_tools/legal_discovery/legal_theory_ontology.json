@@ -1,0 +1,39 @@
+{
+  "causes_of_action": {
+    "Breach of Contract": {
+      "elements": [
+        "Existence of a contract",
+        "Plaintiff's performance or excuse",
+        "Defendant's breach",
+        "Damages"
+      ],
+      "defenses": [
+        "Lack of Consideration",
+        "Statute of Frauds"
+      ],
+      "indicators": [
+        "signed agreement",
+        "non-performance",
+        "payment records"
+      ]
+    },
+    "Fraud": {
+      "elements": [
+        "Misrepresentation",
+        "Knowledge of falsity",
+        "Intent to induce reliance",
+        "Justifiable reliance",
+        "Damages"
+      ],
+      "defenses": [
+        "Truth",
+        "No reliance"
+      ],
+      "indicators": [
+        "false statement",
+        "email referencing misstatement",
+        "damage evidence"
+      ]
+    }
+  }
+}
