@@ -452,3 +452,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Upload pipeline stores originals securely and serves redacted copies
 - Document tree marks privileged files for review with stealth icon
 - Next: surface override controls in dashboard
+
+## Update 2025-08-04T11:00Z
+- Expanded legal theory ontology with negligence, defamation, false imprisonment, intentional infliction of emotional distress, and strict products liability.
+- LegalTheoryEngine now exposes defenses and factual indicators alongside element support scores.
+- Next: implement weighted scoring and add jurisdiction-specific defenses.
