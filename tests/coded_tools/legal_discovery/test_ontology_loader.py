@@ -17,3 +17,10 @@ def test_defenses_indicators_and_missing_cause():
     assert "defenses" in fraud and "Truth" in fraud["defenses"]
     assert "indicators" in fraud and "false statement" in fraud["indicators"]
     assert loader.get_cause("Nonexistent") is None
+
+def test_loader_handles_additional_causes():
+    loader = OntologyLoader()
+    negligence = loader.get_cause("Negligence")
+    assert negligence is not None
+    assert "Breach" in negligence["elements"]
+

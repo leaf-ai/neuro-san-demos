@@ -22,6 +22,8 @@ class LegalTheoryEngine(CodedTool):
         suggestions: List[Dict[str, Any]] = []
         for cause, data in ontology.items():
             elements = data.get("elements", [])
+            defenses = data.get("defenses", [])
+            indicators = data.get("indicators", [])
             element_results: List[Dict[str, Any]] = []
             supported = 0
             for element in elements:
@@ -36,7 +38,15 @@ class LegalTheoryEngine(CodedTool):
                     supported += 1
                 element_results.append({"name": element, "facts": facts})
             score = supported / len(elements) if elements else 0
-            suggestions.append({"cause": cause, "score": score, "elements": element_results})
+            suggestions.append(
+                {
+                    "cause": cause,
+                    "score": score,
+                    "elements": element_results,
+                    "defenses": defenses,
+                    "indicators": indicators,
+                }
+            )
         suggestions.sort(key=lambda s: s["score"], reverse=True)
         return suggestions
 

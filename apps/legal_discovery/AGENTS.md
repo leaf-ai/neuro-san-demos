@@ -457,3 +457,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added dispute and origin relationships to KnowledgeGraphManager and cause subgraph export
 - Expanded ontology tests and graph relationship coverage
 - Next: incorporate scoring weights and timeline overlays in theory engine
+## Update 2025-08-04T11:00Z
+
+- Expanded legal theory ontology with negligence, defamation, false imprisonment, intentional infliction of emotional distress, and strict products liability.
+- LegalTheoryEngine now exposes defenses and factual indicators alongside element support scores.
+- Next: implement weighted scoring and add jurisdiction-specific defenses.

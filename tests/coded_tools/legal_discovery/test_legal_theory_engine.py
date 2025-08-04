@@ -24,6 +24,8 @@ class TestLegalTheoryEngine(unittest.TestCase):
         self.assertAlmostEqual(breach["score"], 0.25)
         elements = {e["name"]: e for e in breach["elements"]}
         self.assertTrue(elements["Existence of a contract"]["facts"])
+        self.assertIn("defenses", breach)
+        self.assertIn("indicators", breach)
         engine.close()
 
     def test_get_theory_subgraph(self):
