@@ -7,14 +7,8 @@ services:
       dockerfile: apps/legal_discovery/Dockerfile
     ports:
       - "8080:5001"
-    env_file:
-      - .env
-    depends_on:
-      - neo4j
-      - tesseract
-
     volumes:
-      - uploads_data:/usr/src/app/uploads
+      - /mnt/e/docker_volumes/legal_discovery/uploads:/usr/src/app/uploads
 
   neo4j:
     image: neo4j:4.4
@@ -22,9 +16,16 @@ services:
       - "7474:7474"
       - "7687:7687"
     environment:
-      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
+      - NEO4J_AUTH=neo4j/dAUypMUkdIYM8ikq72iHqXqCgvb7WojrLtszvDQa4Uo
     volumes:
-      - neo4j_data:/data
+      - /mnt/e/docker_volumes/neo4j/data:/data
+
+  chromadb:
+    image: chromadb/chroma
+    ports:
+      - "8000:8000"
+    volumes:
+      - /mnt/e/docker_volumes/chroma:/chroma_data
 
   tesseract:
     image: tesseractshadow/tesseract4re
@@ -32,5 +33,5 @@ services:
       - "5000:5000"
 
 volumes:
-  neo4j_data:
-  uploads_data:
+  neo4j_data: - /mnt/e/docker_volumes/neo4j/data:/data
+  uploads_data: - /mnt/e/docker_volumes/chroma:/chroma_data
