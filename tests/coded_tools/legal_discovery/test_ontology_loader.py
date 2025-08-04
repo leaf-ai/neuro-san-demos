@@ -9,3 +9,10 @@ def test_loads_ontology_and_accesses_cause():
     assert cause is not None
     assert "elements" in cause
     assert "defenses" in cause
+
+
+def test_loader_handles_additional_causes():
+    loader = OntologyLoader()
+    negligence = loader.get_cause("Negligence")
+    assert negligence is not None
+    assert "Breach" in negligence["elements"]
