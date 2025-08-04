@@ -27,5 +27,25 @@ class TestKnowledgeGraphManager(unittest.TestCase):
         # Clean up
         self.kg_manager.delete_node(node_id)
 
+    def test_add_fact(self):
+        doc_id = self.kg_manager.create_node("Document", {"name": "Doc"})
+        case_id = self.kg_manager.create_node("Case", {"id": 1})
+        fact = {
+            "text": "Alice signed a contract",
+            "parties": ["Alice", "Bob"],
+            "dates": ["2024-05-05"],
+            "actions": ["sign"],
+        }
+        fact_id = self.kg_manager.add_fact(case_id, doc_id, fact)
+        self.assertIsInstance(fact_id, int)
+        rel = self.kg_manager.run_query(
+            "MATCH (d:Document)-[:HAS_FACT]->(f:Fact) WHERE id(d)=$d AND id(f)=$f RETURN f",
+            {"d": doc_id, "f": fact_id},
+        )
+        self.assertTrue(rel)
+        self.kg_manager.delete_node(fact_id)
+        self.kg_manager.delete_node(doc_id)
+        self.kg_manager.delete_node(case_id)
+
 if __name__ == '__main__':
     unittest.main()

@@ -67,6 +67,21 @@ class KnowledgeGraphManager(CodedTool):
         )
         self.run_query(query, {"start_node_id": start_node_id, "end_node_id": end_node_id, "props": properties or {}})
 
+    def add_fact(self, case_node_id: int, document_node_id: int, fact: dict) -> int:
+        """Create a Fact node and link it to case and document nodes."""
+        fact_props = {
+            "text": fact.get("text", ""),
+            "parties": fact.get("parties", []),
+            "dates": fact.get("dates", []),
+            "actions": fact.get("actions", []),
+        }
+        fact_id = self.create_node("Fact", fact_props)
+        if case_node_id is not None:
+            self.create_relationship(case_node_id, fact_id, "HAS_FACT")
+        if document_node_id is not None:
+            self.create_relationship(document_node_id, fact_id, "HAS_FACT")
+        return fact_id
+
     def get_node(self, node_id: int) -> dict:
         """
         Retrieves a node from the knowledge graph.
