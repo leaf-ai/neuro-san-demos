@@ -437,3 +437,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Implemented `FactExtractor` leveraging spaCy to pull parties, dates and actions
 - Added spaCy requirement and unit test
 - Next: connect extractor to upload pipeline and persist facts/relationships
+## Update 2025-08-04T05:30Z
+- Integrated `FactExtractor` into ingestion flow storing JSON facts in SQL and Neo4j
+- Added `add_fact` helper to `KnowledgeGraphManager`
+- Next: link facts to ontology elements and expose theory suggestions

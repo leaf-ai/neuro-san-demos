@@ -206,6 +206,9 @@ class Fact(db.Model):
     )
     element_id = db.Column(db.Integer, db.ForeignKey("element.id"), nullable=True)
     text = db.Column(db.Text, nullable=False)
+    parties = db.Column(db.JSON, nullable=True)
+    dates = db.Column(db.JSON, nullable=True)
+    actions = db.Column(db.JSON, nullable=True)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
     document = db.relationship("Document", backref=db.backref("facts", lazy=True))

@@ -115,3 +115,8 @@ For full details on any specific feature, agent, or deployment step, see the lat
 
 WE STARTED ON #3, INSTEAD OF #1. DEAL WITH IT, FINISH IMPLEMENTING #3, AND THEN WE WILL MOVE TO #1, #2, ETC
 
+## Update 2025-08-04T05:30Z
+- Completed 3.2 by wiring `FactExtractor` into the upload pipeline
+- Persisted extracted facts to SQL and Neo4j via new graph helper
+- Next 3.3: relate facts to ontology elements and score theory candidates
+

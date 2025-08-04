@@ -41,6 +41,7 @@ from apps.legal_discovery.models import (
     TimelineEvent,
     CalendarEvent,
     LegalTheory,
+    Fact,
 )
 
 # Configure logging before any other setup so early steps are captured
@@ -268,6 +269,7 @@ from coded_tools.legal_discovery.research_tools import ResearchTools
 from coded_tools.legal_discovery.document_modifier import DocumentModifier
 from coded_tools.legal_discovery.document_drafter import DocumentDrafter
 from coded_tools.legal_discovery.document_processor import DocumentProcessor
+from coded_tools.legal_discovery.fact_extractor import FactExtractor
 from coded_tools.legal_discovery.task_tracker import TaskTracker
 from coded_tools.legal_discovery.vector_database_manager import VectorDatabaseManager
 from coded_tools.legal_discovery.subpoena_manager import SubpoenaManager
@@ -504,6 +506,21 @@ def ingest_document(
     doc_node = kg.create_node("Document", full_metadata)
     if case_node:
         kg.create_relationship(case_node, doc_node, "HAS_DOCUMENT")
+
+    extractor = FactExtractor()
+    for fact in extractor.extract(text):
+        fact_row = Fact(
+            case_id=case_id,
+            document_id=doc_id,
+            text=fact["text"],
+            parties=fact["parties"],
+            dates=fact["dates"],
+            actions=fact["actions"],
+        )
+        db.session.add(fact_row)
+        if case_node or doc_node:
+            kg.add_fact(case_node, doc_node, fact)
+
     kg.close()
 
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
