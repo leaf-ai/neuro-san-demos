@@ -80,3 +80,8 @@ For full details on any specific feature, agent, or deployment step, see the lat
 
 
 we are now working on implementing a major feature, so stand by, this is  A GDDMN PLACEHOLDER ARRRRRRRGGGGGGGHHh!!!!!!!!!!!!
+## Update 2025-08-04T09:30Z
+- Added privilege detection and redaction pipeline using spaCy keywords
+- Stored originals in `_original` with reviewable redacted copies and audit logs
+- Upload UI now flags privileged files with a stealth icon
+- Next: build attorney review dashboard and refine classifier precision

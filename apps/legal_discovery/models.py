@@ -36,12 +36,26 @@ class Document(db.Model):
     case_id = db.Column(db.Integer, db.ForeignKey("case.id"), nullable=False)
     name = db.Column(db.String(255), nullable=False)
     bates_number = db.Column(db.String(100), nullable=True)
-    privilege_status = db.Column(db.String(50), nullable=True)
     file_path = db.Column(db.String(255), nullable=False)
     content_hash = db.Column(db.String(64), nullable=False, unique=True)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
+    is_privileged = db.Column(db.Boolean, nullable=False, default=False)
+    is_redacted = db.Column(db.Boolean, nullable=False, default=False)
+    needs_review = db.Column(db.Boolean, nullable=False, default=False)
     metadata_entries = db.relationship(
         "DocumentMetadata",
+        backref="document",
+        lazy=True,
+        cascade="all, delete-orphan",
+    )
+    redaction_logs = db.relationship(
+        "RedactionLog",
+        backref="document",
+        lazy=True,
+        cascade="all, delete-orphan",
+    )
+    redaction_audits = db.relationship(
+        "RedactionAudit",
         backref="document",
         lazy=True,
         cascade="all, delete-orphan",
@@ -53,6 +67,24 @@ class DocumentMetadata(db.Model):
     document_id = db.Column(db.Integer, db.ForeignKey("document.id"), nullable=False)
     schema = db.Column(db.String(50), nullable=False)
     data = db.Column(db.JSON, nullable=False)
+
+
+class RedactionLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    document_id = db.Column(db.Integer, db.ForeignKey("document.id"), nullable=False)
+    start = db.Column(db.Integer, nullable=False)
+    end = db.Column(db.Integer, nullable=False)
+    label = db.Column(db.String(100), nullable=False)
+    reason = db.Column(db.String(255), nullable=True)
+
+
+class RedactionAudit(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    document_id = db.Column(db.Integer, db.ForeignKey("document.id"), nullable=False)
+    reviewer = db.Column(db.String(255), nullable=True)
+    action = db.Column(db.String(20), nullable=False)
+    timestamp = db.Column(db.DateTime, server_default=db.func.now())
+    reason = db.Column(db.Text, nullable=True)
 
 
 class KnowledgeGraph(db.Model):

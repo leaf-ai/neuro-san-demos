@@ -20,6 +20,7 @@ from .graph_analyzer import GraphAnalyzer
 from .ontology_loader import OntologyLoader
 from .fact_extractor import FactExtractor
 from .legal_theory_engine import LegalTheoryEngine
+from .privilege_detector import PrivilegeDetector
 
 __all__ = [
     "CaseManagementTools",
@@ -42,4 +43,5 @@ __all__ = [
     "OntologyLoader",
     "FactExtractor",
     "LegalTheoryEngine",
+    "PrivilegeDetector",
 ]
