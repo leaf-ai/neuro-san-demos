@@ -84,4 +84,34 @@ For full details on any specific feature, agent, or deployment step, see the lat
 - Introduced ontology loader unit test
 - Next: build fact extraction pipeline and Neo4j graph persistence
 
+- ## Update 2025-08-03T22:40Z
+- Wired settings button to trigger modal and exposed `/api/graph/cypher` endpoint with starter query buttons
+- Shifted dashboard container to dark gunmetal glass for clearer contrast against neon cards
+- Next: enrich cypher results formatting and continue tightening glass theme consistency
+
+## Update 2025-08-04T00:30Z
+- Added PostgreSQL configuration for Flask via `DATABASE_URL` with SQLite fallback
+- Pointed vector database manager to an external Chroma service
+- Extended docker-compose with a PostgreSQL service and wiring for Chroma
+- Next: refine graph exploration UI and document deployment steps
+
+## Update 2025-08-04T02:00Z
+- Parallelized document ingestion using a thread pool with per-file timeouts
+- Next: observe upload performance and tune worker counts
+
+## Update 2025-08-04T03:00Z
+- Added legal theory ontology and loader for case theory mapping
+- Expanded models with CauseOfAction, Element, Defense and Fact tables
+- Introduced ontology loader unit test
+- Next: build fact extraction pipeline and Neo4j graph persistence
+
+## Update 2025-08-04T??Z
+- Added spaCy-based `FactExtractor` for parties, dates and actions
+- Included dependency in legal_discovery requirements and covered with unit test
+- Next: integrate extractor with upload pipeline and graph storage
+- We are continuing to build out feature #3 in this folder-- please check '#_legal_theory_mapping.md'
+- In future commits, please update THIS file, instead of the usual AGENTS.md file, for the time being.
+- when you make an update to this file, make a note of which substep (part of the # feature) you have finished, and which #.# comes next :)
+
 WE STARTED ON #3, INSTEAD OF #1. DEAL WITH IT, FINISH IMPLEMENTING #3, AND THEN WE WILL MOVE TO #1, #2, ETC
+
