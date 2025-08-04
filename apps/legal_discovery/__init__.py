@@ -1,10 +1,9 @@
 """Flask application factory for the Legal Discovery module."""
 
-from .interface_flask import app as _app
-
-__all__ = ["create_app", "_app"]
+__all__ = ["create_app"]
 
 
 def create_app():
     """Return the configured Flask application."""
-    return _app
+    from .interface_flask import app
+    return app
