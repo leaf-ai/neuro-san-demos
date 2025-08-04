@@ -51,7 +51,10 @@ function UploadSection() {
       <div className="folder-contents"><ul>{renderNodes(n.children)}</ul></div>
     </li>
   ) : (
-    <li key={i} className="file" onClick={() => window.open('/uploads/'+n.path,'_blank')}>{n.name}</li>
+    <li key={i} className={`file ${n.privileged ? 'privileged' : ''}`} onClick={() => window.open('/uploads/'+n.path,'_blank')}>
+      {n.name}
+      {n.privileged && <i className="fa fa-user-secret ml-1" />}
+    </li>
   ));
   return (
     <section className="card">
