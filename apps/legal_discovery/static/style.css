@@ -557,3 +557,8 @@ progress::-webkit-progress-value {
     background:var(--primary-color);
     border-radius:50%;
 }
+
+.theory-supported {
+    color: var(--primary-color);
+    text-shadow: 0 0 6px var(--color-accent-glow);
+}

@@ -17,6 +17,7 @@ import SubpoenaSection from "./components/SubpoenaSection";
 import PresentationSection from "./components/PresentationSection";
 import AgentNetworkSection from "./components/AgentNetworkSection";
 import SettingsModal from "./components/SettingsModal";
+import LegalTheorySection from "./components/LegalTheorySection";
 const TABS = [
   {id:'network', label:'Agent Network', icon:'fa-sitemap'},
   {id:'overview', label:'Overview', icon:'fa-home'},
@@ -26,6 +27,7 @@ const TABS = [
   {id:'upload', label:'Ingestion', icon:'fa-upload'},
   {id:'timeline', label:'Timeline', icon:'fa-clock'},
   {id:'graph', label:'Graph', icon:'fa-project-diagram'},
+  {id:'theory', label:'Case Theory', icon:'fa-balance-scale'},
   {id:'docs', label:'Discovery Tools', icon:'fa-file-alt'},
   {id:'forensic', label:'Forensics', icon:'fa-search-dollar'},
   {id:'vector', label:'Vector DB', icon:'fa-database'},
@@ -63,6 +65,7 @@ function Dashboard() {
       <div className="tab-content" style={{display: tab==='upload'?'block':'none'}} id="tab-upload"><UploadSection/></div>
       <div className="tab-content" style={{display: tab==='timeline'?'block':'none'}} id="tab-timeline"><TimelineSection/></div>
       <div className="tab-content" style={{display: tab==='graph'?'block':'none'}} id="tab-graph"><GraphSection/></div>
+      <div className="tab-content" style={{display: tab==='theory'?'block':'none'}} id="tab-theory"><LegalTheorySection/></div>
       <div className="tab-content" style={{display: tab==='docs'?'block':'none'}} id="tab-docs">
         <div className="card-grid">
           <DocToolsSection/>

@@ -120,3 +120,9 @@ WE STARTED ON #3, INSTEAD OF #1. DEAL WITH IT, FINISH IMPLEMENTING #3, AND THEN 
 - Persisted extracted facts to SQL and Neo4j via new graph helper
 - Next 3.3: relate facts to ontology elements and score theory candidates
 
+## Update 2025-08-04T07:00Z
+- Finished 3.3 by linking facts to ontology elements and causes in Neo4j
+- Implemented 3.4 LegalTheoryEngine with scoring and `/api/theories/suggest`
+- Delivered 3.5 Case Theory dashboard tab with neon element highlight
+- Next: proceed to feature #1 planning and implementation
+
