@@ -516,3 +516,9 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Wired settings button to trigger modal and exposed `/api/graph/cypher` endpoint with starter query buttons
 - Shifted dashboard container to dark gunmetal glass for clearer contrast against neon cards
 - Next: enrich cypher results formatting and continue tightening glass theme consistency
+
+## Update 2025-08-04T00:30Z
+- Added PostgreSQL configuration for Flask via `DATABASE_URL` with SQLite fallback
+- Pointed vector database manager to an external Chroma service
+- Extended docker-compose with a PostgreSQL service and wiring for Chroma
+- Next: refine graph exploration UI and document deployment steps

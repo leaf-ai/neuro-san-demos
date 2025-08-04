@@ -7,8 +7,26 @@ services:
       dockerfile: apps/legal_discovery/Dockerfile
     ports:
       - "8080:5001"
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://postgres:postgres@postgres:5432/legal_discovery
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+    depends_on:
+      - postgres
+      - chromadb
     volumes:
       - /mnt/e/docker_volumes/legal_discovery/uploads:/usr/src/app/uploads
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=legal_discovery
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - /mnt/e/docker_volumes/postgres/data:/var/lib/postgresql/data
 
   neo4j:
     image: neo4j:4.4
@@ -24,6 +42,15 @@ services:
     image: chromadb/chroma
     ports:
       - "8000:8000"
+    environment:
+      - CHROMA_DB_IMPL=postgresql
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DATABASE=chroma
+    depends_on:
+      - postgres
     volumes:
       - /mnt/e/docker_volumes/chroma:/chroma_data
 
@@ -31,7 +58,3 @@ services:
     image: tesseractshadow/tesseract4re
     ports:
       - "5000:5000"
-
-volumes:
-  neo4j_data: - /mnt/e/docker_volumes/neo4j/data:/data
-  uploads_data: - /mnt/e/docker_volumes/chroma:/chroma_data

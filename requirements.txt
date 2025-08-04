@@ -62,6 +62,7 @@ beautifulsoup4
 python-docx
 python-pptx
 flask-sqlalchemy
+psycopg2-binary
 langchain-google-genai
 openai
 pyvis
