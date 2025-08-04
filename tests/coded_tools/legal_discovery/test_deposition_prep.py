@@ -1,0 +1,147 @@
+import os
+import sys
+from flask import Flask
+
+sys.path.insert(0, os.path.abspath("."))
+
+from apps.legal_discovery.database import db
+from apps.legal_discovery.models import (
+    Case,
+    Document,
+    Witness,
+    DocumentWitnessLink,
+    Fact,
+    FactConflict,
+)
+from coded_tools.legal_discovery.deposition_prep import DepositionPrep
+
+
+class DummyResponse:
+    class Choice:
+        def __init__(self, content):
+            self.message = type("obj", (), {"content": content})
+
+    def __init__(self, content):
+        self.choices = [DummyResponse.Choice(content)]
+
+
+def setup_app():
+    app = Flask(__name__)
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    db.init_app(app)
+    with app.app_context():
+        db.create_all()
+    return app
+
+
+def test_generate_questions(monkeypatch):
+    app = setup_app()
+    with app.app_context():
+        case = Case(name="Test", description="")
+        db.session.add(case)
+        db.session.commit()
+        doc = Document(
+            case_id=case.id,
+            name="Doc1",
+            bates_number="B1",
+            file_path="/tmp/doc1",
+            content_hash="h1",
+        )
+        witness = Witness(name="Alice", role="Witness", associated_case=case.id)
+        db.session.add_all([doc, witness])
+        db.session.commit()
+        link = DocumentWitnessLink(document_id=doc.id, witness_id=witness.id)
+        db.session.add(link)
+        fact = Fact(
+            case_id=case.id,
+            document_id=doc.id,
+            text="Alice met Bob",
+            witness_id=witness.id,
+        )
+        db.session.add(fact)
+        db.session.commit()
+
+        def mock_openai():
+            class Client:
+                class chat:
+                    class completions:
+                        @staticmethod
+                        def create(model, messages, temperature):
+                            return DummyResponse(
+                                '[{"category": "Background", "question": "State your name", "source": "Doc1"}]'
+                            )
+
+            return Client()
+
+        monkeypatch.setattr(
+            "coded_tools.legal_discovery.deposition_prep.OpenAI", mock_openai
+        )
+
+        questions = DepositionPrep.generate_questions(witness.id)
+        assert len(questions) == 1
+        assert questions[0]["category"] == "Background"
+        assert questions[0]["source"] == "Doc1"
+
+
+def test_detect_contradictions_and_export(monkeypatch, tmp_path):
+    app = setup_app()
+    with app.app_context():
+        case = Case(name="C1", description="")
+        db.session.add(case)
+        db.session.commit()
+        doc = Document(
+            case_id=case.id,
+            name="DocA",
+            bates_number="B100",
+            file_path="/tmp/docA",
+            content_hash="hA",
+        )
+        witness = Witness(name="Bob", role="Witness", associated_case=case.id)
+        db.session.add_all([doc, witness])
+        db.session.commit()
+        link = DocumentWitnessLink(document_id=doc.id, witness_id=witness.id)
+        db.session.add(link)
+        fact1 = Fact(
+            case_id=case.id,
+            document_id=doc.id,
+            text="Bob was present on Monday",
+            witness_id=witness.id,
+        )
+        fact2 = Fact(
+            case_id=case.id,
+            document_id=doc.id,
+            text="Bob was absent on Monday",
+            witness_id=witness.id,
+        )
+        db.session.add_all([fact1, fact2])
+        db.session.commit()
+
+        def mock_openai():
+            class Client:
+                class chat:
+                    class completions:
+                        @staticmethod
+                        def create(model, messages, temperature):
+                            content = messages[0]["content"]
+                            if content.startswith("Do these statements contradict"):
+                                return DummyResponse(
+                                    '{"contradiction": true, "score": 0.95}'
+                                )
+                            return DummyResponse(
+                                '[{"category": "Events", "question": "Where were you on Monday?", "source": "DocA"}]'
+                            )
+
+            return Client()
+
+        monkeypatch.setattr(
+            "coded_tools.legal_discovery.deposition_prep.OpenAI", mock_openai
+        )
+
+        # detect contradictions and generate questions
+        questions = DepositionPrep.generate_questions(witness.id)
+        assert FactConflict.query.count() == 1
+        pdf_path = tmp_path / "out.pdf"
+        DepositionPrep.export_questions(witness.id, str(pdf_path))
+        assert pdf_path.exists()
+        assert pdf_path.stat().st_size > 0
