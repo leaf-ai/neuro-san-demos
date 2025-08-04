@@ -17,6 +17,7 @@ from .timeline_manager import TimelineManager
 from .vector_database_manager import VectorDatabaseManager
 from .web_scraper import WebScraper
 from .graph_analyzer import GraphAnalyzer
+from .ontology_loader import OntologyLoader
 
 __all__ = [
     "CaseManagementTools",
@@ -36,4 +37,5 @@ __all__ = [
     "VectorDatabaseManager",
     "WebScraper",
     "GraphAnalyzer",
+    "OntologyLoader",
 ]

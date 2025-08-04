@@ -526,3 +526,9 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 ## Update 2025-08-04T02:00Z
 - Parallelized document ingestion using a thread pool with per-file timeouts
 - Next: observe upload performance and tune worker counts
+
+## Update 2025-08-04T03:00Z
+- Added legal theory ontology and loader for case theory mapping
+- Expanded models with CauseOfAction, Element, Defense and Fact tables
+- Introduced ontology loader unit test
+- Next: build fact extraction pipeline and Neo4j graph persistence

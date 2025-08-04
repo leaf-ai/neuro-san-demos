@@ -163,3 +163,53 @@ class CalendarEvent(db.Model):
     title = db.Column(db.String(255), nullable=False)
     event_date = db.Column(db.DateTime, nullable=False)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+
+class CauseOfAction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False, unique=True)
+    description = db.Column(db.Text, nullable=True)
+    elements = db.relationship(
+        "Element", backref="cause", lazy=True, cascade="all, delete-orphan"
+    )
+    defenses = db.relationship(
+        "Defense", backref="cause", lazy=True, cascade="all, delete-orphan"
+    )
+
+
+class Element(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    cause_id = db.Column(
+        db.Integer, db.ForeignKey("cause_of_action.id"), nullable=False
+    )
+    name = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+
+
+class Defense(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    cause_id = db.Column(
+        db.Integer, db.ForeignKey("cause_of_action.id"), nullable=False
+    )
+    name = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+
+
+class Fact(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    case_id = db.Column(db.Integer, db.ForeignKey("case.id"), nullable=False)
+    document_id = db.Column(
+        db.Integer, db.ForeignKey("document.id"), nullable=False
+    )
+    legal_theory_id = db.Column(
+        db.Integer, db.ForeignKey("legal_theory.id"), nullable=True
+    )
+    element_id = db.Column(db.Integer, db.ForeignKey("element.id"), nullable=True)
+    text = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+    document = db.relationship("Document", backref=db.backref("facts", lazy=True))
+    legal_theory = db.relationship(
+        "LegalTheory", backref=db.backref("facts", lazy=True)
+    )
+    element = db.relationship("Element", backref=db.backref("facts", lazy=True))
