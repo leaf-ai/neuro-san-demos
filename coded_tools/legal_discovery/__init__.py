@@ -18,6 +18,7 @@ from .vector_database_manager import VectorDatabaseManager
 from .web_scraper import WebScraper
 from .graph_analyzer import GraphAnalyzer
 from .ontology_loader import OntologyLoader
+from .fact_extractor import FactExtractor
 
 __all__ = [
     "CaseManagementTools",
@@ -38,4 +39,5 @@ __all__ = [
     "WebScraper",
     "GraphAnalyzer",
     "OntologyLoader",
+    "FactExtractor",
 ]

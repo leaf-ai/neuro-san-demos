@@ -532,3 +532,8 @@ echo "Setup complete. To activate the virtual environment, run 'source venv/bin/
 - Expanded models with CauseOfAction, Element, Defense and Fact tables
 - Introduced ontology loader unit test
 - Next: build fact extraction pipeline and Neo4j graph persistence
+
+## Update 2025-08-04T??Z
+- Added spaCy-based `FactExtractor` for parties, dates and actions
+- Included dependency in legal_discovery requirements and covered with unit test
+- Next: integrate extractor with upload pipeline and graph storage

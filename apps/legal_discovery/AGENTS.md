@@ -432,3 +432,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Introduced ontology loader with initial JSON schema
 - Added unit test scaffold for ontology loading
 - Next: integrate fact extractor and graph persistence
+
+## Update 2025-08-04T??Z
+- Implemented `FactExtractor` leveraging spaCy to pull parties, dates and actions
+- Added spaCy requirement and unit test
+- Next: connect extractor to upload pipeline and persist facts/relationships
