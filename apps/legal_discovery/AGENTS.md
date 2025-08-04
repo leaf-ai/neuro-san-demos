@@ -416,3 +416,9 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added preset Cypher query buttons and backend endpoint so graph exploration works without manual query knowledge
 - Darkened dashboard backdrop with gunmetal gradient to differentiate cards
 - Next: style query results output and refine hover animations across components
+
+## Update 2025-08-04T00:30Z
+- Enabled PostgreSQL via `DATABASE_URL` and wired Chroma host/port through environment variables
+- Vector database manager now uses `HttpClient` for external Postgres-backed Chroma
+- `docker-compose.yml` includes a PostgreSQL service for persistent storage
+- Next: surface ingestion metrics and improve graph exploration usability

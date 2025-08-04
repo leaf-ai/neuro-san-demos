@@ -6,6 +6,7 @@ Neuro SAN's legal discovery agent network.
 ## Prerequisites
 
 - [Docker](https://docs.docker.com/get-docker/) and `docker-compose`
+- A running PostgreSQL instance (the provided `docker-compose.yml` spins one up automatically)
 - API keys configured in `.env`
 
 Make a copy of `.env.example` to `.env` and fill in the required values. In

@@ -73,7 +73,13 @@ if not os.path.exists(BUNDLE_PATH):
     )
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", os.urandom(24).hex())
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///legal_discovery.db"
+# Allow the primary relational store to be configured at runtime. Default to
+# SQLite for local development but override with an environment-provided
+# PostgreSQL connection string when available so the application scales under
+# concurrent load.
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+    "DATABASE_URL", "sqlite:///legal_discovery.db"
+)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 socketio = SocketIO(app)

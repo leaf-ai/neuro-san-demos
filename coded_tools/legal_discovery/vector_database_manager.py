@@ -1,4 +1,5 @@
 import logging
+import os
 
 import chromadb
 from neuro_san.interfaces.coded_tool import CodedTool
@@ -7,7 +8,11 @@ from neuro_san.interfaces.coded_tool import CodedTool
 class VectorDatabaseManager(CodedTool):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.client = chromadb.Client()
+        host = os.getenv("CHROMA_HOST", "localhost")
+        port = int(os.getenv("CHROMA_PORT", "8000"))
+        # Use the HTTP client so vector storage can reside on an external
+        # Chroma service backed by PostgreSQL for concurrent access.
+        self.client = chromadb.HttpClient(host=host, port=port)
         self.collection = self.client.get_or_create_collection("legal_documents")
 
     def add_documents(self, documents: list[str], metadatas: list[dict], ids: list[str]):
