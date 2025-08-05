@@ -78,9 +78,8 @@ def test_generate_questions(monkeypatch):
 
             return Client()
 
-        monkeypatch.setattr(
-            "coded_tools.legal_discovery.deposition_prep.OpenAI", mock_openai
-        )
+        deposition_prep_module = sys.modules[DepositionPrep.__module__]
+        monkeypatch.setattr(deposition_prep_module, "OpenAI", mock_openai)
 
         questions = DepositionPrep.generate_questions(witness.id)
         assert len(questions) == 1
@@ -140,17 +139,24 @@ def test_detect_contradictions_and_export(monkeypatch, tmp_path):
 
             return Client()
 
-        monkeypatch.setattr(
-            "coded_tools.legal_discovery.deposition_prep.OpenAI", mock_openai
-        )
+        deposition_prep_module = sys.modules[DepositionPrep.__module__]
+        monkeypatch.setattr(deposition_prep_module, "OpenAI", mock_openai)
 
         # detect contradictions and generate questions
         questions = DepositionPrep.generate_questions(witness.id)
         assert FactConflict.query.count() == 1
         pdf_path = tmp_path / "out.pdf"
-        DepositionPrep.export_questions(witness.id, str(pdf_path), reviewer.id)
-        assert pdf_path.exists()
-        assert pdf_path.stat().st_size > 0
+        docx_path = tmp_path / "out.docx"
+        returned_pdf = DepositionPrep.export_questions(
+            witness.id, str(pdf_path), reviewer.id
+        )
+        returned_docx = DepositionPrep.export_questions(
+            witness.id, str(docx_path), reviewer.id
+        )
+        assert returned_pdf == str(pdf_path)
+        assert returned_docx == str(docx_path)
+        assert pdf_path.exists() and pdf_path.stat().st_size > 0
+        assert docx_path.exists() and docx_path.stat().st_size > 0
 
 
 def test_review_logging_and_permissions(tmp_path):
@@ -186,8 +192,13 @@ def test_review_logging_and_permissions(tmp_path):
             DepositionPrep.log_review(witness.id, paralegal.id, True)
 
         with pytest.raises(PermissionError):
-            DepositionPrep.export_questions(witness.id, str(tmp_path / "x.docx"), paralegal.id)
-        DepositionPrep.export_questions(witness.id, str(tmp_path / "y.docx"), attorney.id)
-        DepositionPrep.export_questions(witness.id, str(pdf_path))
-        assert pdf_path.exists()
-        assert pdf_path.stat().st_size > 0
+            DepositionPrep.export_questions(
+                witness.id, str(tmp_path / "x.docx"), paralegal.id
+            )
+
+        docx_path = tmp_path / "y.docx"
+        pdf_path = tmp_path / "y.pdf"
+        DepositionPrep.export_questions(witness.id, str(docx_path), attorney.id)
+        DepositionPrep.export_questions(witness.id, str(pdf_path), attorney.id)
+        assert docx_path.exists() and docx_path.stat().st_size > 0
+        assert pdf_path.exists() and pdf_path.stat().st_size > 0
