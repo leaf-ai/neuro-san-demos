@@ -34,6 +34,41 @@ class TaskDependency(db.Model):
     depends_on_id = db.Column(db.Integer, db.ForeignKey("task.id"), nullable=False)
 
 
+class MessageVisibility(enum.Enum):
+    PUBLIC = "public"
+    PRIVATE = "private"
+    ATTORNEY_ONLY = "attorney_only"
+
+
+class Conversation(db.Model):
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    title = db.Column(db.String(255), nullable=True)
+    participants = db.Column(db.JSON, nullable=False, default=list)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    messages = db.relationship(
+        "Message", backref="conversation", lazy=True, cascade="all, delete-orphan"
+    )
+
+
+class Message(db.Model):
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    conversation_id = db.Column(
+        db.String(36), db.ForeignKey("conversation.id"), nullable=False, index=True
+    )
+    sender_id = db.Column(db.Integer, db.ForeignKey("agent.id"), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, server_default=db.func.now())
+    document_ids = db.Column(db.JSON, nullable=True)
+    reply_to_id = db.Column(db.String(36), db.ForeignKey("message.id"), nullable=True)
+    visibility = db.Column(
+        db.Enum(MessageVisibility), nullable=False, default=MessageVisibility.PUBLIC
+    )
+    vector_id = db.Column(db.String(255), nullable=True)
+
+    sender = db.relationship("Agent", backref=db.backref("messages", lazy=True))
+    reply_to = db.relationship("Message", remote_side=[id])
+
+
 class DocumentSource(enum.Enum):
     USER = "user"
     OPP_COUNSEL = "opp_counsel"
@@ -129,6 +164,7 @@ class ChainEventType(enum.Enum):
     VERSIONED = "VERSIONED"
     DELETED = "DELETED"
     EXPORTED = "EXPORTED"
+    ACCESSED = "ACCESSED"
 
 
 class ChainOfCustodyLog(db.Model):

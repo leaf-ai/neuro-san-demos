@@ -38,6 +38,7 @@ from pyhocon import ConfigFactory
 from werkzeug.utils import secure_filename
 
 from apps.legal_discovery import settings
+from coded_tools.legal_discovery import RetrievalChatAgent
 from apps.legal_discovery.database import db
 from coded_tools.legal_discovery.deposition_prep import DepositionPrep
 from apps.legal_discovery.legal_discovery import (
@@ -1412,9 +1413,22 @@ def theory_graph():
 def query_agent():
     data = request.get_json() or {}
     text = data.get("text")
-    if text:
-        user_input_queue.put(text)
-    return jsonify({"status": "ok"})
+    if not text:
+        return jsonify({"status": "error", "error": "text required"}), 400
+    user_input_queue.put(text)
+    agent = RetrievalChatAgent()
+    result = agent.query(
+        question=text,
+        sender_id=data.get("sender_id", 0),
+        conversation_id=data.get("conversation_id"),
+    )
+    if result.get("facts"):
+        socketio.emit(
+            "update_speech",
+            {"data": "\n".join(result["facts"])},
+            namespace="/chat",
+        )
+    return jsonify({"status": "ok", "message_id": result["message_id"]})
 
 
 @app.route("/api/export/report", methods=["POST"])
