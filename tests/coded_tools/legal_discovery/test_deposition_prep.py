@@ -1,5 +1,6 @@
 import os
 import sys
+import pytest
 from flask import Flask
 
 sys.path.insert(0, os.path.abspath("."))
@@ -12,6 +13,9 @@ from apps.legal_discovery.models import (
     DocumentWitnessLink,
     Fact,
     FactConflict,
+    Agent,
+    DepositionQuestion,
+    DepositionReviewLog
 )
 from coded_tools.legal_discovery.deposition_prep import DepositionPrep
 
@@ -98,6 +102,8 @@ def test_detect_contradictions_and_export(monkeypatch, tmp_path):
             content_hash="hA",
         )
         witness = Witness(name="Bob", role="Witness", associated_case=case.id)
+        reviewer = Agent(name="Ann", role="attorney")
+        db.session.add_all([doc, witness, reviewer])
         db.session.add_all([doc, witness])
         db.session.commit()
         link = DocumentWitnessLink(document_id=doc.id, witness_id=witness.id)
@@ -142,6 +148,46 @@ def test_detect_contradictions_and_export(monkeypatch, tmp_path):
         questions = DepositionPrep.generate_questions(witness.id)
         assert FactConflict.query.count() == 1
         pdf_path = tmp_path / "out.pdf"
+        DepositionPrep.export_questions(witness.id, str(pdf_path), reviewer.id)
+        assert pdf_path.exists()
+        assert pdf_path.stat().st_size > 0
+
+
+def test_review_logging_and_permissions(tmp_path):
+    app = setup_app()
+    with app.app_context():
+        case = Case(name="C2", description="")
+        db.session.add(case)
+        db.session.commit()
+        doc = Document(
+            case_id=case.id,
+            name="DocB",
+            bates_number="B200",
+            file_path="/tmp/docB",
+            content_hash="hB",
+        )
+        witness = Witness(name="Eve", role="Witness", associated_case=case.id)
+        attorney = Agent(name="Terry", role="attorney")
+        paralegal = Agent(name="Paula", role="paralegal")
+        db.session.add_all([doc, witness, attorney, paralegal])
+        db.session.commit()
+        question = DepositionQuestion(
+            witness_id=witness.id,
+            category="Background",
+            question="State your address",
+            source="DocB",
+        )
+        db.session.add(question)
+        db.session.commit()
+
+        DepositionPrep.log_review(witness.id, attorney.id, True, "looks good")
+        assert DepositionReviewLog.query.count() == 1
+        with pytest.raises(PermissionError):
+            DepositionPrep.log_review(witness.id, paralegal.id, True)
+
+        with pytest.raises(PermissionError):
+            DepositionPrep.export_questions(witness.id, str(tmp_path / "x.docx"), paralegal.id)
+        DepositionPrep.export_questions(witness.id, str(tmp_path / "y.docx"), attorney.id)
         DepositionPrep.export_questions(witness.id, str(pdf_path))
         assert pdf_path.exists()
         assert pdf_path.stat().st_size > 0
