@@ -126,3 +126,17 @@ WE STARTED ON #3, INSTEAD OF #1. DEAL WITH IT, FINISH IMPLEMENTING #3, AND THEN 
 - Delivered 3.5 Case Theory dashboard tab with neon element highlight
 - Next: proceed to feature #1 planning and implementation
 
+## Update 2025-08-04T08:30Z
+- Began feature #4 deposition prep generator: introduced witness models, question generation tool, export endpoint and React tab.
+- Next: add contradiction detection and PDF export options.
+
+## Update 2025-08-04T09:30Z
+- Added FactConflict model and contradiction detection during deposition prep.
+- Export now supports PDF with case metadata and source footnotes; React tab offers DOCX/PDF buttons with styled list items.
+- Next: implement review logging and attorney approval workflow.
+
+## Update 2025-08-04T14:30Z
+- Logged deposition reviews with permission checks and restricted exports to attorneys or case admins.
+- Added approval panel in React with reviewer notes and subtle hover styling for questions.
+- Next: explore optional enhancements like topic heatmaps and feedback-driven refinement.
+

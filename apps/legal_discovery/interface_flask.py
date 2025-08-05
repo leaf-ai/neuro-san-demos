@@ -18,6 +18,7 @@ from flask import Flask
 from flask import jsonify
 from flask import render_template
 from flask import request
+from flask import send_file
 from werkzeug.utils import secure_filename
 from flask_socketio import SocketIO
 
@@ -33,6 +34,7 @@ from pyhocon import ConfigFactory
 
 from apps.legal_discovery import settings
 from apps.legal_discovery.database import db
+from coded_tools.legal_discovery.deposition_prep import DepositionPrep
 from apps.legal_discovery.models import (
     Case,
     Document,
@@ -44,6 +46,9 @@ from apps.legal_discovery.models import (
     Fact,
     RedactionLog,
     RedactionAudit,
+    Witness,
+    DepositionQuestion,
+    DepositionReviewLog,
 )
 
 # Configure logging before any other setup so early steps are captured
@@ -961,6 +966,77 @@ def manage_cases():
     cases = Case.query.all()
     data = [{"id": c.id, "name": c.name} for c in cases]
     return jsonify({"status": "ok", "data": data})
+
+
+@app.route("/api/witnesses", methods=["GET", "POST"])
+def manage_witnesses():
+    if request.method == "POST":
+        data = request.get_json() or {}
+        name = data.get("name")
+        case_id = data.get("case_id")
+        if not name:
+            return jsonify({"error": "Missing name"}), 400
+        witness = Witness(name=name, role=data.get("role"), associated_case=case_id)
+        db.session.add(witness)
+        db.session.commit()
+        return jsonify({"status": "ok", "id": witness.id})
+    case_id = request.args.get("case_id", type=int)
+    query = Witness.query
+    if case_id:
+        query = query.filter_by(associated_case=case_id)
+    witnesses = query.all()
+    data = [{"id": w.id, "name": w.name} for w in witnesses]
+    return jsonify({"status": "ok", "data": data})
+
+
+@app.route("/api/deposition/questions", methods=["POST"])
+def generate_deposition_questions():
+    data = request.get_json() or {}
+    witness_id = data.get("witness_id")
+    include_privileged = data.get("include_privileged", False)
+    if not witness_id:
+        return jsonify({"error": "Missing witness_id"}), 400
+    questions = DepositionPrep.generate_questions(
+        witness_id, include_privileged=include_privileged
+    )
+    return jsonify({"status": "ok", "data": questions})
+
+
+@app.route("/api/deposition/questions/<int:question_id>/flag", methods=["POST"])
+def flag_deposition_question(question_id: int):
+    DepositionPrep.flag_question(question_id)
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/deposition/export/<int:witness_id>", methods=["GET"])
+def export_deposition_questions(witness_id: int):
+    fmt = request.args.get("format", "docx")
+    reviewer_id = request.args.get("reviewer_id", type=int)
+    if not reviewer_id:
+        return jsonify({"error": "Missing reviewer_id"}), 400
+    os.makedirs("exports", exist_ok=True)
+    path = os.path.join("exports", f"deposition_{witness_id}.{fmt}")
+    try:
+        DepositionPrep.export_questions(witness_id, path, reviewer_id)
+    except PermissionError:
+        return jsonify({"error": "Forbidden"}), 403
+    return send_file(path, as_attachment=True)
+
+
+@app.route("/api/deposition/review", methods=["POST"])
+def review_deposition():
+    data = request.get_json() or {}
+    witness_id = data.get("witness_id")
+    reviewer_id = data.get("reviewer_id")
+    approved = data.get("approved", False)
+    notes = data.get("notes")
+    if not witness_id or not reviewer_id:
+        return jsonify({"error": "Missing witness_id or reviewer_id"}), 400
+    try:
+        DepositionPrep.log_review(witness_id, reviewer_id, approved, notes)
+    except PermissionError:
+        return jsonify({"error": "Forbidden"}), 403
+    return jsonify({"status": "ok"})
 
 
 @app.route("/api/subpoena/draft", methods=["POST"])

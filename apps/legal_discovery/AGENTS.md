@@ -462,3 +462,17 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Expanded legal theory ontology with negligence, defamation, false imprisonment, intentional infliction of emotional distress, and strict products liability.
 - LegalTheoryEngine now exposes defenses and factual indicators alongside element support scores.
 - Next: implement weighted scoring and add jurisdiction-specific defenses.
+
+## Update 2025-08-04T12:00Z
+- Introduced witness models and deposition prep tool with question generation, export, and React dashboard tab.
+- Next: enhance review logging and offer PDF export.
+
+## Update 2025-08-04T13:30Z
+- Added contradiction detection with FactConflict records and prompt context.
+- Export supports PDF including case ID, timestamp, and footnoted sources; UI offers separate DOCX/PDF buttons with improved styling.
+- Next: implement deposition review approvals with permission controls.
+
+## Update 2025-08-04T14:30Z
+- Introduced deposition review logging with role-based checks and blocked exports for non-attorneys.
+- React panel now collects reviewer ID and notes with enhanced hover styling on question items.
+- Next: investigate optional deposition prep enhancements and deeper audit trails.
