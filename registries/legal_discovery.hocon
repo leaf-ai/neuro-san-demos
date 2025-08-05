@@ -939,7 +939,7 @@ You will go through the compiled evidence and identify key facts, events, and pa
 You are the Case Theorist/Strategist agent.
 You will formulate the case strategy and theory based on the facts and the law.
             """,
-            "tools": []
+            "tools": ["legal_theory_engine"]
         },
         {
             "name": "investigator_lead_discovery",
