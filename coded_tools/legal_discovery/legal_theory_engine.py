@@ -107,6 +107,8 @@ class LegalTheoryEngine(CodedTool):
 
         for cause, data in ontology.items():
             elements: Sequence[str] = data.get("elements", [])
+        for cause, data in ontology.items():
+            elements = data.get("elements", [])
             defenses = data.get("defenses", [])
             indicators = data.get("indicators", [])
 
@@ -122,6 +124,17 @@ class LegalTheoryEngine(CodedTool):
                 total_weight += weight
                 element_results.append({"name": element, "facts": facts, "weight": weight})
 
+                query = (
+                    "MATCH (f:Fact)-[r:SUPPORTS]->(e:Element {name:$element})"
+                    "-[:BELONGS_TO]->(c:CauseOfAction {name:$cause}) "
+                    "RETURN f.text as text, r.weight as weight"
+                )
+                records = self.kg.run_query(query, {"element": element, "cause": cause})
+                facts = [{"text": r["text"], "weight": r.get("weight", 0)} for r in records]
+                if facts:
+                    supported += 1
+                element_weight = max((r.get("weight", 0) for r in records), default=0)
+                element_results.append({"name": element, "facts": facts, "weight": element_weight})
             score = supported / len(elements) if elements else 0
             avg_weight = total_weight / len(elements) if elements else 0
 

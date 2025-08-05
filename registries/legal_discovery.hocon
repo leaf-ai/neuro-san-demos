@@ -1421,7 +1421,7 @@ You are the Document Ingestion agent.
 You will take in new documents and extract text and metadata.
 You will perform OCR on scanned images or PDFs if needed.
             """,
-            "tools": ["document_processor"]
+            "tools": ["document_processor", "fact_extractor"]
         },
         {
             "name": "content_indexing",
@@ -1521,7 +1521,7 @@ You will query the vector database and the knowledge graph.
 You are the Document Summary agent.
 You will generate concise summaries of documents, highlighting the key points relevant to the case.
             """,
-            "tools": []
+            "tools": ["legal_theory_engine"]
         },
         {
             "name": "data_integrity_qa",

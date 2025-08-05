@@ -95,6 +95,13 @@ nav a:hover {
     text-shadow: 0 0 8px var(--color-accent-glow);
 }
 
+nav a:focus,
+nav a:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    box-shadow: 0 0 4px var(--color-accent-glow);
+}
+
 header h1 {
     margin: 0;
     font-size: 2.2em;
@@ -571,7 +578,22 @@ progress::-webkit-progress-value {
     text-shadow: 0 0 6px var(--color-accent-glow);
 }
 
-.element-bar {
+/* Exhibit table styling */
+.exhibit-table th {
+    background: var(--nav-bg);
+    color: var(--primary-color);
+    text-align: left;
+    padding: 6px;
+}
+
+.exhibit-table td {
+    padding: 6px;
+}
+
+.exhibit-table tr:hover {
+    background: rgba(255,255,255,0.05);
+
+  .element-bar {
     background: rgba(255, 255, 255, 0.1);
     height: 4px;
     border-radius: 2px;
