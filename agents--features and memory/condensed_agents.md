@@ -140,3 +140,7 @@ WE STARTED ON #3, INSTEAD OF #1. DEAL WITH IT, FINISH IMPLEMENTING #3, AND THEN 
 - Export now supports PDF with case metadata and source footnotes; React tab offers DOCX/PDF buttons with styled list items.
 - Next: implement review logging and attorney approval workflow.
 
+## Update 2025-08-05T12:00Z
+- Added unit tests for fact–element linking, theory scoring, and `/api/theories/suggest` endpoint
+- Documented usage examples in legal_discovery README
+- Next: expand endpoint coverage and refine theory docs

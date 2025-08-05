@@ -16,6 +16,22 @@ class DummyKG:
         pass
 
 
+class ScoringKG:
+    def run_query(self, query, params):
+        element = params["element"]
+        if element == "Existence of a contract":
+            return [{"text": "Contract exists", "weight": 0.9}]
+        if element == "Plaintiff's performance or excuse":
+            return [{"text": "Performance", "weight": 0.8}]
+        return []
+
+    def get_cause_subgraph(self, cause):
+        return [], []
+
+    def close(self):
+        pass
+
+
 class TestLegalTheoryEngine(unittest.TestCase):
     def test_suggest_theories(self):
         engine = LegalTheoryEngine(kg=DummyKG())
@@ -31,6 +47,18 @@ class TestLegalTheoryEngine(unittest.TestCase):
         self.assertTrue(elements["Existence of a contract"]["facts"])
         self.assertIn("defenses", breach)
         self.assertIn("indicators", breach)
+        engine.close()
+
+    def test_suggestion_scoring(self):
+        engine = LegalTheoryEngine(kg=ScoringKG())
+        theories = engine.suggest_theories()
+        top = theories[0]
+        self.assertEqual(top["cause"], "Breach of Contract")
+        self.assertAlmostEqual(top["score"], 0.5)
+        elements = {e["name"]: e for e in top["elements"]}
+        self.assertAlmostEqual(
+            elements["Plaintiff's performance or excuse"]["weight"], 0.8
+        )
         engine.close()
 
     def test_get_theory_subgraph(self):

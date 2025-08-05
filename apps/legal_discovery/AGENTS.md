@@ -482,3 +482,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added spaCy model and graph dependencies to requirements and Dockerfiles.
 - Registered FactExtractor and LegalTheoryEngine in agent registry.
 - Next: verify graph visualisations and theory suggestions.
+## Update 2025-08-05T12:00Z
+- Added tests for fact-element linking, theory scoring, and API endpoint coverage
+- Documented `/api/theories/suggest` usage in README
+- Next: broaden graph visualisations and extend endpoint coverage
