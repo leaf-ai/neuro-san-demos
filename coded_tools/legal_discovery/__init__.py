@@ -23,6 +23,7 @@ from .legal_theory_engine import LegalTheoryEngine
 from .privilege_detector import PrivilegeDetector
 from .bates_numbering import BatesNumberingService, stamp_pdf
 from .deposition_prep import DepositionPrep
+from .chat_agent import RetrievalChatAgent
 
 __all__ = [
     "CaseManagementTools",
@@ -49,4 +50,5 @@ __all__ = [
     "BatesNumberingService",
     "stamp_pdf",
     "DepositionPrep",
+    "RetrievalChatAgent",
 ]

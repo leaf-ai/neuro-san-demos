@@ -562,3 +562,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-05T11:13Z
 - Removed duplicate logging import in vector database manager
 - Next: none
+## Update 2025-08-06T00:00Z
+- Added conversation and message tables for chat memory with privilege-aware visibility
+- Implemented retrieval chat agent querying vector/graph stores with audit logging
+- React chat panel now uses Socket.IO client for real-time updates
+- Next: expand chat tests and manage multi-conversation UI
