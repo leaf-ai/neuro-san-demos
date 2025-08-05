@@ -54,6 +54,7 @@ from apps.legal_discovery.models import (
     DepositionQuestion,
     DepositionReviewLog,
 )
+from .exhibit_routes import exhibits_bp
 
 # Configure logging before any other setup so early steps are captured
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
@@ -93,6 +94,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 socketio = SocketIO(app)
+app.register_blueprint(exhibits_bp)
 executor = ThreadPoolExecutor(max_workers=int(os.environ.get("INGESTION_WORKERS", "4")))
 atexit.register(executor.shutdown)
 thread_started = False  # pylint: disable=invalid-name
