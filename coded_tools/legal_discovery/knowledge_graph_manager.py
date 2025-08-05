@@ -114,6 +114,11 @@ class KnowledgeGraphManager(CodedTool):
         origin_id = self._get_or_create_by_name(origin_label, origin_name)
         self.create_relationship(fact_id, origin_id, "ORIGINATED_IN")
 
+    def relate_fact_to_element(self, fact_node_id: int, element_node_id: int) -> None:
+        """Create a SUPPORTS relationship between an existing Fact and Element."""
+        query = "MATCH (f:Fact), (e:Element) " "WHERE id(f) = $fid AND id(e) = $eid " "MERGE (f)-[:SUPPORTS]->(e)"
+        self.run_query(query, {"fid": fact_node_id, "eid": element_node_id})
+
     def get_node(self, node_id: int) -> dict:
         """
         Retrieves a node from the knowledge graph.
@@ -220,6 +225,19 @@ class KnowledgeGraphManager(CodedTool):
 
         return nodes, edges
 
+    def cause_support_scores(self) -> list[dict]:
+        """Return satisfaction counts and confidence for each cause of action."""
+        query = (
+            "MATCH (c:CauseOfAction)<-[:BELONGS_TO]-(e:Element) "
+            "OPTIONAL MATCH (e)<-[:SUPPORTS]-(f:Fact) "
+            "WITH c, e, COUNT(f) as fact_count "
+            "WITH c, COUNT(DISTINCT e) as total_elements, "
+            "COUNT(DISTINCT CASE WHEN fact_count > 0 THEN e END) as satisfied_elements "
+            "RETURN c.name as cause, total_elements, satisfied_elements, "
+            "CASE WHEN total_elements=0 THEN 0 ELSE toFloat(satisfied_elements)/total_elements END as confidence"
+        )
+        return [dict(record) for record in self.run_query(query)]
+
     def get_subgraph(self, label: str):
         """Retrieve a subgraph for nodes with a given label."""
         nodes_query = f"MATCH (n:{label}) RETURN id(n) as id, labels(n) as labels, properties(n) as properties"
@@ -252,12 +270,9 @@ class KnowledgeGraphManager(CodedTool):
         query = "MATCH (n) WHERE id(n) = $node_id DETACH DELETE n"
         self.run_query(query, {"node_id": node_id})
 
-    def delete_relationship(
-        self, start_node_id: int, end_node_id: int, relationship_type: str
-    ) -> None:
+    def delete_relationship(self, start_node_id: int, end_node_id: int, relationship_type: str) -> None:
         """Delete a specific relationship between two nodes."""
-        query = (
-            "MATCH (a)-[r:{rtype}]->(b) "
-            "WHERE id(a) = $start AND id(b) = $end DELETE r"
-        ).format(rtype=relationship_type)
+        query = ("MATCH (a)-[r:{rtype}]->(b) " "WHERE id(a) = $start AND id(b) = $end DELETE r").format(
+            rtype=relationship_type
+        )
         self.run_query(query, {"start": start_node_id, "end": end_node_id})

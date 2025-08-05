@@ -505,6 +505,13 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Export supports PDF including case ID, timestamp, and footnoted sources; UI offers separate DOCX/PDF buttons with improved styling.
 - Next: implement deposition review approvals with permission controls.
 
+## Update 2025-08-04T14:30Z
+- Linked facts to ontology elements and generated cause support scores.
+- Next: weight confidence by document credibility and expose metrics in UI.
+## Update 2025-08-04T15:00Z
+- Documented knowledge graph tests and re-ran suite after review fixes.
+- Next: refine scoring weights for cause support metrics.
+
 ## Update 2025-08-05T03:22Z
 - Added spaCy model and graph dependencies to requirements and Dockerfiles.
 - Registered FactExtractor and LegalTheoryEngine in agent registry.
