@@ -21,6 +21,19 @@ function GraphSection() {
     window.addEventListener('graphRefresh', handler);
     return () => window.removeEventListener('graphRefresh', handler);
   }, [load]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      const cause = e.detail && e.detail.cause;
+      if (!cause) return;
+      fetchJSON(`/api/theories/graph?cause=${encodeURIComponent(cause)}`).then(d => {
+        setNodes(d.nodes || []);
+        setEdges(d.edges || []);
+      });
+    };
+    window.addEventListener('loadTheoryGraph', handler);
+    return () => window.removeEventListener('loadTheoryGraph', handler);
+  }, []);
   useEffect(() => {
     if(!nodes.length && !edges.length) return;
     const cy = cytoscape({

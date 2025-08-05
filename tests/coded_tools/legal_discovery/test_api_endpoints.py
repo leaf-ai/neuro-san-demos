@@ -1,5 +1,5 @@
 import unittest
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from coded_tools.legal_discovery.legal_theory_engine import LegalTheoryEngine
 
 
@@ -25,6 +25,11 @@ class TestAPIEndpoints(unittest.TestCase):
         def suggest():
             return jsonify(self.engine.suggest_theories())
 
+        @app.route("/api/theories/graph")
+        def graph():
+            nodes, edges = self.engine.get_theory_subgraph(request.args.get("cause", ""))
+            return jsonify({"nodes": nodes, "edges": edges})
+
         self.client = app.test_client()
 
     def tearDown(self):
@@ -36,6 +41,13 @@ class TestAPIEndpoints(unittest.TestCase):
         data = resp.get_json()
         self.assertIsInstance(data, list)
         self.assertTrue(any(t["cause"] == "Breach of Contract" for t in data))
+
+    def test_theories_graph_endpoint(self):
+        resp = self.client.get("/api/theories/graph?cause=Fraud")
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertIn("nodes", data)
+        self.assertIn("edges", data)
 
 
 if __name__ == "__main__":

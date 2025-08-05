@@ -91,19 +91,21 @@ class KnowledgeGraphManager(CodedTool):
         return self.create_node(label, {"name": name})
 
     def link_fact_to_element(
-        self, fact_id: int, cause: str, element: str, weight: float = 1.0
+        self, fact_id: int, cause: str, element: str, weight: float | None = None
     ) -> None:
-        """Link an existing fact to an element and cause with a weighted relationship."""
+        """Link an existing fact to an element and cause of action.
+
+        A ``SUPPORTS`` edge is created from the ``Fact`` to the ``Element`` and
+        a ``BELONGS_TO`` edge from the ``Element`` to the ``CauseOfAction``.  If
+        ``weight`` is provided it is stored on the ``SUPPORTS`` relationship so
+        later scoring can take it into account.
+        """
+
         cause_id = self._get_or_create_by_name("CauseOfAction", cause)
         element_id = self._get_or_create_by_name("Element", element)
         self.create_relationship(element_id, cause_id, "BELONGS_TO")
-        self.create_relationship(fact_id, element_id, "SUPPORTS", {"weight": weight})
-    def link_fact_to_element(self, fact_id: int, cause: str, element: str) -> None:
-        """Link an existing fact to an element and cause of action."""
-        cause_id = self._get_or_create_by_name("CauseOfAction", cause)
-        element_id = self._get_or_create_by_name("Element", element)
-        self.create_relationship(element_id, cause_id, "BELONGS_TO")
-        self.create_relationship(fact_id, element_id, "SUPPORTS")
+        props = {"weight": weight} if weight is not None else None
+        self.create_relationship(fact_id, element_id, "SUPPORTS", props)
 
     def link_document_dispute(self, fact_id: int, document_node_id: int) -> None:
         """Link a fact to a document that disputes it."""
@@ -190,19 +192,19 @@ class KnowledgeGraphManager(CodedTool):
         )
 
         edges_query = (
-            "MATCH (e:Element)-[:BELONGS_TO]->(c:CauseOfAction {name:$cause}) "
-            "RETURN id(e) as source, id(c) as target, 'BELONGS_TO' as type "
+            "MATCH (e:Element)-[r:BELONGS_TO]->(c:CauseOfAction {name:$cause}) "
+            "RETURN id(e) as source, id(c) as target, 'BELONGS_TO' as type, properties(r) as properties "
             "UNION "
-            "MATCH (f:Fact)-[:SUPPORTS]->(e:Element)-[:BELONGS_TO]->(c:CauseOfAction {name:$cause}) "
-            "RETURN id(f) as source, id(e) as target, 'SUPPORTS' as type "
+            "MATCH (f:Fact)-[r:SUPPORTS]->(e:Element)-[:BELONGS_TO]->(c:CauseOfAction {name:$cause}) "
+            "RETURN id(f) as source, id(e) as target, 'SUPPORTS' as type, properties(r) as properties "
             "UNION "
-            "MATCH (f:Fact)-[:SUPPORTS]->(e:Element)-[:BELONGS_TO]->(c:CauseOfAction {name:$cause}), "
-            "(f)-[:DISPUTED_BY]->(d:Document) "
-            "RETURN id(f) as source, id(d) as target, 'DISPUTED_BY' as type "
+            "MATCH (f:Fact)-[s:SUPPORTS]->(e:Element)-[:BELONGS_TO]->(c:CauseOfAction {name:$cause}), "
+            "(f)-[r:DISPUTED_BY]->(d:Document) "
+            "RETURN id(f) as source, id(d) as target, 'DISPUTED_BY' as type, properties(r) as properties "
             "UNION "
-            "MATCH (f:Fact)-[:SUPPORTS]->(e:Element)-[:BELONGS_TO]->(c:CauseOfAction {name:$cause}), "
-            "(f)-[:ORIGINATED_IN]->(o) "
-            "RETURN id(f) as source, id(o) as target, 'ORIGINATED_IN' as type"
+            "MATCH (f:Fact)-[s:SUPPORTS]->(e:Element)-[:BELONGS_TO]->(c:CauseOfAction {name:$cause}), "
+            "(f)-[r:ORIGINATED_IN]->(o) "
+            "RETURN id(f) as source, id(o) as target, 'ORIGINATED_IN' as type, properties(r) as properties"
         )
 
         nodes = [
@@ -219,6 +221,7 @@ class KnowledgeGraphManager(CodedTool):
                 "source": record["source"],
                 "target": record["target"],
                 "type": record["type"],
+                "properties": record.get("properties", {}),
             }
             for record in self.run_query(edges_query, {"cause": cause})
         ]

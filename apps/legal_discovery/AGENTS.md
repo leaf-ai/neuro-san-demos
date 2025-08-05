@@ -523,3 +523,18 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added tests for fact-element linking, theory scoring, and API endpoint coverage
 - Documented `/api/theories/suggest` usage in README
 - Next: broaden graph visualisations and extend endpoint coverage
+
+## Update 2025-08-05T15:00Z
+- Linked facts to supporting elements with `SUPPORTS` edges and tallied satisfied elements in `LegalTheoryEngine`
+- Exposed `/api/theories/suggest` endpoint returning ranked theories with supporting facts
+- Next: expand graph visualisation and refine element weighting metrics
+
+## Update 2025-08-05T18:00Z
+- Added weighted edge data to `get_cause_subgraph` and exposed `/api/theories/graph`
+- Refined theory scoring to average element weights for ranking
+- Next: surface graph visuals in dashboard and tune weighting heuristics
+
+## Update 2025-08-05T20:00Z
+- Surfaced cause-of-action graphs in the dashboard via event dispatch
+- Scoring now blends element weights with coverage ratio
+- Next: tune weighting thresholds and annotate graph nodes with fact counts

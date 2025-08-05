@@ -58,7 +58,9 @@ class TestKnowledgeGraphManager(unittest.TestCase):
         except RuntimeError as exc:
             self.skipTest(str(exc))
 
-        self.kg_manager.link_fact_to_element(fact_id, "Fraud", "Misrepresentation")
+        self.kg_manager.link_fact_to_element(
+            fact_id, "Fraud", "Misrepresentation", weight=0.7
+        )
         self.kg_manager.link_document_dispute(fact_id, doc_id)
         self.kg_manager.link_fact_origin(fact_id, "Email", "Email1")
         nodes, edges = self.kg_manager.get_cause_subgraph("Fraud")
@@ -69,6 +71,8 @@ class TestKnowledgeGraphManager(unittest.TestCase):
         self.assertIn("BELONGS_TO", edge_types)
         self.assertIn("DISPUTED_BY", edge_types)
         self.assertIn("ORIGINATED_IN", edge_types)
+        support_edge = next(e for e in edges if e["type"] == "SUPPORTS")
+        self.assertAlmostEqual(support_edge.get("properties", {}).get("weight"), 0.7)
         self.kg_manager.delete_node(fact_id)
         self.kg_manager.delete_node(doc_id)
         self.kg_manager.run_query("MATCH (n:Email {name:'Email1'}) DETACH DELETE n")
@@ -94,7 +98,13 @@ class TestKnowledgeGraphManager(unittest.TestCase):
         self.kg_manager.delete_node(cause_id)
 
 
-if __name__ == "__main__":
+import unittest
+
+class TestKnowledgeGraphManager(unittest.TestCase):
+    def setUp(self):
+        from your_module import KnowledgeGraphManager
+        self.kg_manager = KnowledgeGraphManager()
+
     def test_link_fact_to_element_creates_relationships(self):
         try:
             fact_id = self.kg_manager.create_node("Fact", {"text": "Link fact"})
@@ -102,6 +112,7 @@ if __name__ == "__main__":
             self.skipTest(str(exc))
 
         self.kg_manager.link_fact_to_element(fact_id, "Fraud", "Intent to induce reliance")
+
         rel = self.kg_manager.run_query(
             (
                 "MATCH (f:Fact)-[:SUPPORTS]->(e:Element)-[:BELONGS_TO]->"
@@ -109,7 +120,9 @@ if __name__ == "__main__":
             ),
             {"f": fact_id, "cause": "Fraud", "element": "Intent to induce reliance"},
         )
+
         self.assertTrue(rel)
+
         self.kg_manager.delete_node(fact_id)
         self.kg_manager.run_query(
             "MATCH (n:Element {name:$e}) DETACH DELETE n", {"e": "Intent to induce reliance"}
@@ -118,5 +131,5 @@ if __name__ == "__main__":
             "MATCH (n:CauseOfAction {name:$c}) DETACH DELETE n", {"c": "Fraud"}
         )
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
