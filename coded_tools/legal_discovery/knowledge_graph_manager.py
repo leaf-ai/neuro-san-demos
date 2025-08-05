@@ -90,6 +90,14 @@ class KnowledgeGraphManager(CodedTool):
             return result[0]["id"]
         return self.create_node(label, {"name": name})
 
+    def link_fact_to_element(
+        self, fact_id: int, cause: str, element: str, weight: float = 1.0
+    ) -> None:
+        """Link an existing fact to an element and cause with a weighted relationship."""
+        cause_id = self._get_or_create_by_name("CauseOfAction", cause)
+        element_id = self._get_or_create_by_name("Element", element)
+        self.create_relationship(element_id, cause_id, "BELONGS_TO")
+        self.create_relationship(fact_id, element_id, "SUPPORTS", {"weight": weight})
     def link_fact_to_element(self, fact_id: int, cause: str, element: str) -> None:
         """Link an existing fact to an element and cause of action."""
         cause_id = self._get_or_create_by_name("CauseOfAction", cause)

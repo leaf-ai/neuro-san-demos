@@ -93,3 +93,23 @@ Insights from the analysis are also forwarded to the agent network.
 ### Case Management API
 
 Use `/api/cases` to list existing cases or create a new one. POST requests require a JSON body with a `name` field and return the created case ID.
+
+### Theory Suggestions API
+
+Facts extracted from uploaded documents can be linked to ontology elements in the knowledge graph. Once linked, the `LegalTheoryEngine` scores each cause of action based on the proportion of supported elements.
+
+```python
+from coded_tools.legal_discovery.knowledge_graph_manager import KnowledgeGraphManager
+
+kg = KnowledgeGraphManager()
+fact_id = kg.create_node("Fact", {"text": "Alice signed a contract"})
+kg.link_fact_to_element(fact_id, "Breach of Contract", "Existence of a contract")
+```
+
+Call the REST endpoint to retrieve scored theory suggestions:
+
+```bash
+curl http://localhost:5001/api/theories/suggest
+```
+
+The response returns each cause with a `score` from 0 to 1 and the supporting facts for its elements.

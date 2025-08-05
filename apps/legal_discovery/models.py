@@ -42,6 +42,9 @@ class Document(db.Model):
     is_privileged = db.Column(db.Boolean, nullable=False, default=False)
     is_redacted = db.Column(db.Boolean, nullable=False, default=False)
     needs_review = db.Column(db.Boolean, nullable=False, default=False)
+    is_exhibit = db.Column(db.Boolean, nullable=False, default=False)
+    exhibit_number = db.Column(db.String(50), unique=True)
+    exhibit_title = db.Column(db.String(255))
     metadata_entries = db.relationship(
         "DocumentMetadata",
         backref="document",
@@ -65,6 +68,22 @@ class Document(db.Model):
         secondary="document_witness_link",
         backref=db.backref("documents", lazy=True),
     )
+
+
+class ExhibitCounter(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    case_id = db.Column(db.Integer, db.ForeignKey("case.id"), nullable=False, unique=True)
+    next_num = db.Column(db.Integer, nullable=False, default=1)
+
+
+class ExhibitAuditLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    case_id = db.Column(db.Integer, db.ForeignKey("case.id"), nullable=False)
+    document_id = db.Column(db.Integer, db.ForeignKey("document.id"), nullable=True)
+    user = db.Column(db.String(255), nullable=True)
+    action = db.Column(db.String(50), nullable=False)
+    timestamp = db.Column(db.DateTime, server_default=db.func.now())
+    details = db.Column(db.JSON, nullable=True)
 
 
 class DocumentMetadata(db.Model):

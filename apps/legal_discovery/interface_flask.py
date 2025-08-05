@@ -10,11 +10,23 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from datetime import datetime
+from difflib import SequenceMatcher
 
 # pylint: disable=import-error
 import schedule
 from flask import Flask, jsonify, render_template, request, send_file
 from flask_socketio import SocketIO
+
+import spacy
+from spacy.cli import download as spacy_download
+
+from apps.legal_discovery.legal_discovery import legal_discovery_thinker
+from apps.legal_discovery.legal_discovery import (
+    set_up_legal_discovery_assistant,
+    tear_down_legal_discovery_assistant,
+)
+
+
 from more_itertools import chunked
 from pyhocon import ConfigFactory
 from werkzeug.utils import secure_filename
@@ -44,6 +56,7 @@ from apps.legal_discovery.models import (
     Witness,
 )
 from coded_tools.legal_discovery.deposition_prep import DepositionPrep
+from .exhibit_routes import exhibits_bp
 
 # Configure logging before any other setup so early steps are captured
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
@@ -81,6 +94,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:/
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 socketio = SocketIO(app)
+app.register_blueprint(exhibits_bp)
 executor = ThreadPoolExecutor(max_workers=int(os.environ.get("INGESTION_WORKERS", "4")))
 atexit.register(executor.shutdown)
 thread_started = False  # pylint: disable=invalid-name
@@ -309,6 +323,38 @@ def chunked(items: list, size: int) -> list[list]:
         yield items[i : i + size]
 
 
+_NLP = None
+
+
+def match_elements(text: str, ontology: dict) -> list[tuple[str, str, float]]:
+    """Return (cause, element, weight) triples whose semantics appear in ``text``."""
+    global _NLP
+    if _NLP is None:
+        try:
+            _NLP = spacy.load("en_core_web_sm")
+        except OSError:  # pragma: no cover - model download is slow
+            spacy_download("en_core_web_sm")
+            _NLP = spacy.load("en_core_web_sm")
+
+    doc = _NLP(text.lower())
+    text_lemmas = {t.lemma_ for t in doc if not t.is_stop and t.is_alpha}
+    matches: list[tuple[str, str, float]] = []
+    for cause, data in ontology.get("causes_of_action", {}).items():
+        for element in data.get("elements", []):
+            elem_doc = _NLP(element.lower())
+            elem_lemmas = {t.lemma_ for t in elem_doc if not t.is_stop and t.is_alpha}
+            if not elem_lemmas:
+                continue
+            overlap = text_lemmas & elem_lemmas
+            jaccard = len(overlap) / len(elem_lemmas)
+            seq_ratio = SequenceMatcher(None, text.lower(), element.lower()).ratio()
+            weight = 0.7 * seq_ratio + 0.3 * jaccard
+            if weight >= 0.45:
+                matches.append((cause, element, weight))
+    return matches
+
+
+def build_file_tree(directory: str, root_length: int) -> list:
 def match_elements(text: str, ontology: dict) -> list[tuple[str, str]]:
     """Return (cause, element) pairs whose keywords appear in ``text``."""
     matches: list[tuple[str, str]] = []
@@ -569,6 +615,7 @@ def ingest_document(
 
     extractor = FactExtractor()
     ontology = OntologyLoader().load()
+    for fact in extractor.extract(text):
     for fact in extractor.extract(redacted_text):
         fact_row = Fact(
             case_id=case_id,
@@ -598,6 +645,8 @@ def ingest_document(
         if fact_id is not None:
             for cause, element in matches:
                 kg.link_fact_to_element(fact_id, cause, element)
+            for cause, element, weight in match_elements(fact["text"], ontology):
+                kg.link_fact_to_element(fact_id, cause, element, weight)
 
     kg.close()
 

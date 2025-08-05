@@ -31,6 +31,9 @@ ENV APP_HOME=/usr/local/${USERNAME}
 ENV APP_SOURCE=${APP_HOME}/myapp
 ENV PIP3_VERSION=25.0.1
 
+# Install system dependencies for graph processing
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential graphviz libgraphviz-dev && rm -rf /var/lib/apt/lists/*
+
 # Explicitly get the desired pip version
 RUN pip3 install --upgrade pip==${PIP3_VERSION} --no-cache-dir
 
@@ -51,6 +54,9 @@ FROM python:3.12-slim AS final
 
 # Set the shell and options in each FROM section per hadolint recommendations
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+# Install runtime dependencies for graph processing
+RUN apt-get update && apt-get install -y --no-install-recommends graphviz && rm -rf /var/lib/apt/lists/*
 
 # Set up user for app running in container
 ENV USERNAME=neuro-san

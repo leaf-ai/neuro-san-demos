@@ -22,6 +22,14 @@ function LegalTheorySection() {
           <h3 className="font-bold">{t.cause} - {(t.score*100).toFixed(0)}%</h3>
           <ul className="list-disc list-inside text-sm">
             {t.elements.map(e => (
+              <li key={e.name} className={e.weight > 0 ? "theory-supported" : ""}>
+                <div className="flex justify-between items-center">
+                  <span>{e.name}</span>
+                  <span className="text-xs text-gray-400">{(e.weight*100).toFixed(0)}%</span>
+                </div>
+                <div className="element-bar mt-1">
+                  <div className="element-bar-fill" style={{width: `${e.weight*100}%`}}></div>
+                </div>
               <li key={e.name} className={e.facts.length ? "theory-supported" : ""}>
                 {e.name}
                 {e.facts.length ? <span className="text-xs text-gray-400 ml-1">({e.facts.length})</span> : null}
