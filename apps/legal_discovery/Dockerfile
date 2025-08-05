@@ -8,8 +8,9 @@ RUN npm --prefix apps/legal_discovery run build --silent
 
 FROM python:3.12-slim
 WORKDIR /usr/src/app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential graphviz libgraphviz-dev && rm -rf /var/lib/apt/lists/*
+COPY apps/legal_discovery/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt && python -m spacy download en_core_web_sm
 
 COPY . .
 COPY --from=frontend /app/apps/legal_discovery/static apps/legal_discovery/static
