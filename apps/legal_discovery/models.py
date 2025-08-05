@@ -42,6 +42,9 @@ class Document(db.Model):
     is_privileged = db.Column(db.Boolean, nullable=False, default=False)
     is_redacted = db.Column(db.Boolean, nullable=False, default=False)
     needs_review = db.Column(db.Boolean, nullable=False, default=False)
+    is_exhibit = db.Column(db.Boolean, nullable=False, default=False)
+    exhibit_number = db.Column(db.String(50), unique=True)
+    exhibit_title = db.Column(db.String(255))
     metadata_entries = db.relationship(
         "DocumentMetadata",
         backref="document",
@@ -65,6 +68,22 @@ class Document(db.Model):
         secondary="document_witness_link",
         backref=db.backref("documents", lazy=True),
     )
+
+
+class ExhibitCounter(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    case_id = db.Column(db.Integer, db.ForeignKey("case.id"), nullable=False, unique=True)
+    next_num = db.Column(db.Integer, nullable=False, default=1)
+
+
+class ExhibitAuditLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    case_id = db.Column(db.Integer, db.ForeignKey("case.id"), nullable=False)
+    document_id = db.Column(db.Integer, db.ForeignKey("document.id"), nullable=True)
+    user = db.Column(db.String(255), nullable=True)
+    action = db.Column(db.String(50), nullable=False)
+    timestamp = db.Column(db.DateTime, server_default=db.func.now())
+    details = db.Column(db.JSON, nullable=True)
 
 
 class DocumentMetadata(db.Model):
@@ -207,6 +226,7 @@ class Deposition(db.Model):
     deposition_date = db.Column(db.DateTime, nullable=False)
     transcript_path = db.Column(db.String(255), nullable=True)
 
+
 class CalendarEvent(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     case_id = db.Column(db.Integer, db.ForeignKey("case.id"), nullable=False)
@@ -219,28 +239,20 @@ class CauseOfAction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False, unique=True)
     description = db.Column(db.Text, nullable=True)
-    elements = db.relationship(
-        "Element", backref="cause", lazy=True, cascade="all, delete-orphan"
-    )
-    defenses = db.relationship(
-        "Defense", backref="cause", lazy=True, cascade="all, delete-orphan"
-    )
+    elements = db.relationship("Element", backref="cause", lazy=True, cascade="all, delete-orphan")
+    defenses = db.relationship("Defense", backref="cause", lazy=True, cascade="all, delete-orphan")
 
 
 class Element(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    cause_id = db.Column(
-        db.Integer, db.ForeignKey("cause_of_action.id"), nullable=False
-    )
+    cause_id = db.Column(db.Integer, db.ForeignKey("cause_of_action.id"), nullable=False)
     name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=True)
 
 
 class Defense(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    cause_id = db.Column(
-        db.Integer, db.ForeignKey("cause_of_action.id"), nullable=False
-    )
+    cause_id = db.Column(db.Integer, db.ForeignKey("cause_of_action.id"), nullable=False)
     name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=True)
 
@@ -248,13 +260,9 @@ class Defense(db.Model):
 class Fact(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     case_id = db.Column(db.Integer, db.ForeignKey("case.id"), nullable=False)
-    document_id = db.Column(
-        db.Integer, db.ForeignKey("document.id"), nullable=False
-    )
-    legal_theory_id = db.Column(
-        db.Integer, db.ForeignKey("legal_theory.id"), nullable=True
-    )
-    element_id = db.Column(db.Integer, db.ForeignKey("element.id"), nullable=True)
+    document_id = db.Column(db.Integer, db.ForeignKey("document.id"), nullable=False)
+    legal_theory_id = db.Column(db.Integer, db.ForeignKey("legal_theory.id"), nullable=True)
+    element_id = db.Column(db.Integer, db.ForeignKey("element.id"), nullable=True, index=True)
     text = db.Column(db.Text, nullable=False)
     parties = db.Column(db.JSON, nullable=True)
     dates = db.Column(db.JSON, nullable=True)
@@ -263,9 +271,7 @@ class Fact(db.Model):
     witness_id = db.Column(db.Integer, db.ForeignKey("witness.id"), nullable=True)
 
     document = db.relationship("Document", backref=db.backref("facts", lazy=True))
-    legal_theory = db.relationship(
-        "LegalTheory", backref=db.backref("facts", lazy=True)
-    )
+    legal_theory = db.relationship("LegalTheory", backref=db.backref("facts", lazy=True))
     element = db.relationship("Element", backref=db.backref("facts", lazy=True))
     witness = db.relationship("Witness", backref=db.backref("facts", lazy=True))
 
@@ -292,6 +298,7 @@ class DepositionReviewLog(db.Model):
 
     witness = db.relationship("Witness", backref=db.backref("reviews", lazy=True))
     reviewer = db.relationship("Agent", backref=db.backref("deposition_reviews", lazy=True))
+
 
 class FactConflict(db.Model):
     id = db.Column(db.Integer, primary_key=True)

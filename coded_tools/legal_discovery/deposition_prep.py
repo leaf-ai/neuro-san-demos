@@ -169,6 +169,7 @@ class DepositionPrep:
         reviewer = Agent.query.get(reviewer_id)
         if not reviewer or reviewer.role not in {"attorney", "case_admin"}:
             raise PermissionError("Reviewer lacks permission")
+    def export_questions(witness_id: int, file_path: str) -> str:
         witness = Witness.query.get_or_404(witness_id)
         questions = (
             DepositionQuestion.query.filter_by(witness_id=witness_id)

@@ -1,5 +1,9 @@
+"""Tests for linking facts to elements and scoring causes of action."""
+
 import unittest
+
 from coded_tools.legal_discovery.knowledge_graph_manager import KnowledgeGraphManager
+
 
 class TestKnowledgeGraphManager(unittest.TestCase):
     def setUp(self):
@@ -21,8 +25,8 @@ class TestKnowledgeGraphManager(unittest.TestCase):
         # Get the node
         node = self.kg_manager.get_node(node_id)
         self.assertIsNotNone(node)
-        self.assertEqual(node['name'], properties['name'])
-        self.assertEqual(node['value'], properties['value'])
+        self.assertEqual(node["name"], properties["name"])
+        self.assertEqual(node["value"], properties["value"])
 
         # Clean up
         self.kg_manager.delete_node(node_id)
@@ -54,9 +58,7 @@ class TestKnowledgeGraphManager(unittest.TestCase):
         except RuntimeError as exc:
             self.skipTest(str(exc))
 
-        self.kg_manager.link_fact_to_element(
-            fact_id, "Fraud", "Misrepresentation"
-        )
+        self.kg_manager.link_fact_to_element(fact_id, "Fraud", "Misrepresentation")
         self.kg_manager.link_document_dispute(fact_id, doc_id)
         self.kg_manager.link_fact_origin(fact_id, "Email", "Email1")
         nodes, edges = self.kg_manager.get_cause_subgraph("Fraud")
@@ -72,6 +74,49 @@ class TestKnowledgeGraphManager(unittest.TestCase):
         self.kg_manager.run_query("MATCH (n:Email {name:'Email1'}) DETACH DELETE n")
         self.kg_manager.run_query("MATCH (n:Element {name:'Misrepresentation'}) DETACH DELETE n")
         self.kg_manager.run_query("MATCH (n:CauseOfAction {name:'Fraud'}) DETACH DELETE n")
+
+    def test_cause_support_scores(self):
+        try:
+            cause_id = self.kg_manager.create_node("CauseOfAction", {"name": "Negligence"})
+            element_id = self.kg_manager.create_node("Element", {"name": "Duty"})
+            self.kg_manager.create_relationship(element_id, cause_id, "BELONGS_TO")
+            fact_id = self.kg_manager.create_node("Fact", {"text": "There was a duty"})
+            self.kg_manager.relate_fact_to_element(fact_id, element_id)
+            scores = self.kg_manager.cause_support_scores()
+        except RuntimeError as exc:
+            self.skipTest(str(exc))
+        negligence = next(s for s in scores if s["cause"] == "Negligence")
+        self.assertEqual(negligence["total_elements"], 1)
+        self.assertEqual(negligence["satisfied_elements"], 1)
+        self.assertEqual(negligence["confidence"], 1.0)
+        self.kg_manager.delete_node(fact_id)
+        self.kg_manager.delete_node(element_id)
+        self.kg_manager.delete_node(cause_id)
+
+
+if __name__ == "__main__":
+    def test_link_fact_to_element_creates_relationships(self):
+        try:
+            fact_id = self.kg_manager.create_node("Fact", {"text": "Link fact"})
+        except RuntimeError as exc:
+            self.skipTest(str(exc))
+
+        self.kg_manager.link_fact_to_element(fact_id, "Fraud", "Intent to induce reliance")
+        rel = self.kg_manager.run_query(
+            (
+                "MATCH (f:Fact)-[:SUPPORTS]->(e:Element)-[:BELONGS_TO]->"
+                "(c:CauseOfAction {name:$cause}) WHERE id(f)=$f AND e.name=$element RETURN e"
+            ),
+            {"f": fact_id, "cause": "Fraud", "element": "Intent to induce reliance"},
+        )
+        self.assertTrue(rel)
+        self.kg_manager.delete_node(fact_id)
+        self.kg_manager.run_query(
+            "MATCH (n:Element {name:$e}) DETACH DELETE n", {"e": "Intent to induce reliance"}
+        )
+        self.kg_manager.run_query(
+            "MATCH (n:CauseOfAction {name:$c}) DETACH DELETE n", {"c": "Fraud"}
+        )
 
 if __name__ == '__main__':
     unittest.main()

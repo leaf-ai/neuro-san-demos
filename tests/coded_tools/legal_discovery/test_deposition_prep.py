@@ -15,7 +15,7 @@ from apps.legal_discovery.models import (
     FactConflict,
     Agent,
     DepositionQuestion,
-    DepositionReviewLog,
+    DepositionReviewLog
 )
 from coded_tools.legal_discovery.deposition_prep import DepositionPrep
 
@@ -104,6 +104,7 @@ def test_detect_contradictions_and_export(monkeypatch, tmp_path):
         witness = Witness(name="Bob", role="Witness", associated_case=case.id)
         reviewer = Agent(name="Ann", role="attorney")
         db.session.add_all([doc, witness, reviewer])
+        db.session.add_all([doc, witness])
         db.session.commit()
         link = DocumentWitnessLink(document_id=doc.id, witness_id=witness.id)
         db.session.add(link)
@@ -187,3 +188,6 @@ def test_review_logging_and_permissions(tmp_path):
         with pytest.raises(PermissionError):
             DepositionPrep.export_questions(witness.id, str(tmp_path / "x.docx"), paralegal.id)
         DepositionPrep.export_questions(witness.id, str(tmp_path / "y.docx"), attorney.id)
+        DepositionPrep.export_questions(witness.id, str(pdf_path))
+        assert pdf_path.exists()
+        assert pdf_path.stat().st_size > 0
