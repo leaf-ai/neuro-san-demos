@@ -65,6 +65,7 @@ from apps.legal_discovery.models import (
     TimelineEvent,
     Witness,
     ChainOfCustodyLog,
+    DocumentSource,
 )
 from coded_tools.legal_discovery.deposition_prep import DepositionPrep
 from .exhibit_routes import exhibits_bp
@@ -378,6 +379,7 @@ def build_file_tree(directory: str, root_length: int, docs: dict[str, Document])
         if doc:
             node["privileged"] = doc.is_privileged
             node["id"] = doc.id
+            node["source"] = doc.source.value
         if entry.is_dir():
             node["children"] = build_file_tree(entry.path, root_length, docs)
         tree.append(node)
@@ -529,21 +531,24 @@ def _categorize_name(name: str) -> str:
     return "Other"
 
 
-def _paths_to_tree(paths: list) -> list:
+def _paths_to_tree(entries: list[dict]) -> list:
     tree = {}
-    for p in paths:
+    for e in entries:
+        p, src = e["path"], e.get("source")
         parts = p.split(os.sep)
         node = tree
         for part in parts[:-1]:
             node = node.setdefault(part, {})
-        node.setdefault("_files", []).append(parts[-1])
+        node.setdefault("_files", []).append((parts[-1], src))
 
     def convert(d, prefix=""):
         items = []
         for name, val in sorted(d.items()):
             if name == "_files":
-                for fname in val:
-                    items.append({"name": fname, "path": os.path.join(prefix, fname)})
+                for fname, src in val:
+                    items.append(
+                        {"name": fname, "path": os.path.join(prefix, fname), "source": src}
+                    )
             else:
                 items.append(
                     {
@@ -565,12 +570,16 @@ def organized_files():
         return jsonify({"status": "ok", "data": {}})
 
     files = _collect_paths(root)
-    categories = {}
+    docs = {
+        os.path.relpath(doc.file_path, root): doc.source.value
+        for doc in Document.query.all()
+    }
+    categories: dict[str, list[dict]] = {}
     for path in files:
         cat = _categorize_name(os.path.basename(path))
-        categories.setdefault(cat, []).append(path)
+        categories.setdefault(cat, []).append({"path": path, "source": docs.get(path)})
 
-    data = {cat: _paths_to_tree(paths) for cat, paths in categories.items()}
+    data = {cat: _paths_to_tree(entries) for cat, entries in categories.items()}
     return jsonify({"status": "ok", "data": data})
 
 
@@ -702,6 +711,12 @@ def upload_files():
     if not files:
         return jsonify({"error": "No files provided"}), 400
 
+    source_str = request.form.get("source", "user")
+    try:
+        source_enum = DocumentSource(source_str)
+    except ValueError:
+        return jsonify({"error": "Invalid source"}), 400
+
     processed, skipped = [], []
     case = Case.query.first()
     case_id = case.id if case else 1
@@ -756,7 +771,13 @@ def upload_files():
                 record_skip(raw_name, f"save error: {exc}")
                 continue
 
-            doc = Document(case_id=case_id, name=filename, file_path=redacted_path, content_hash=file_hash)
+            doc = Document(
+                case_id=case_id,
+                name=filename,
+                file_path=redacted_path,
+                content_hash=file_hash,
+                source=source_enum,
+            )
             db.session.add(doc)
             db.session.flush()
 
@@ -768,8 +789,13 @@ def upload_files():
                 "document_id": str(doc.id),
                 "sha256": file_hash,
                 "upload_time": str(time.time()),
+                "source": source_str,
             }
-            chroma_metadata = {k: str(v) for k, v in full_metadata.items() if isinstance(v, (str, int, float, bool))}
+            chroma_metadata = {
+                k: str(v)
+                for k, v in full_metadata.items()
+                if isinstance(v, (str, int, float, bool))
+            }
 
             with open(redacted_path + ".meta.json", "w") as f:
                 json.dump(full_metadata, f, indent=2)

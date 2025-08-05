@@ -28,28 +28,54 @@ class VectorDatabaseManager(CodedTool):
         # list here to guarantee valid placeholders are present. This protects
         # against `ValueError: Expected metadata to be a non-empty dict` without
         # modifying the upstream library.
+        safe_docs: list[str] = []
         safe_metadatas: list[dict] = []
+        safe_ids: list[str] = []
+
         # Pad the metadata list to match documents length if needed
         if len(metadatas) < len(documents):
             metadatas = metadatas + [{}] * (len(documents) - len(metadatas))
-        for md, doc_id in zip(metadatas, ids):
+
+        for doc, md, doc_id in zip(documents, metadatas, ids):
+            # Skip if ID already exists
+            try:
+                existing = self.collection.get(ids=[doc_id])
+                if existing and existing.get("ids"):
+                    continue
+            except Exception:  # pragma: no cover - best effort
+                pass
+
+            # Similarity check to avoid near-duplicates
+            try:
+                res = self.collection.query(query_texts=[doc], n_results=1)
+                if res.get("ids") and res["ids"][0]:
+                    if res.get("distances") and res["distances"][0][0] < 0.1:
+                        continue
+            except Exception:  # pragma: no cover - best effort
+                pass
+
+            safe_docs.append(doc)
+            safe_ids.append(doc_id)
             if not isinstance(md, dict) or not md:
                 safe_metadatas.append({"source": "unknown", "id": doc_id})
             else:
-                # Remove keys with falsy values to avoid serialisation issues
                 cleaned = {k: v for k, v in md.items() if v}
                 if cleaned:
                     safe_metadatas.append(cleaned)
                 else:
                     safe_metadatas.append({"source": "unknown", "id": doc_id})
+
+        if not safe_docs:
+            return
+
         try:
-            self.collection.add(documents=documents, metadatas=safe_metadatas, ids=ids)
+            self.collection.add(documents=safe_docs, metadatas=safe_metadatas, ids=safe_ids)
         except ValueError as exc:
             logging.warning(
                 "Vector add failed (%s); retrying with placeholder metadata", exc
             )
-            fallback = [{"source": "unknown", "id": i} for i in ids]
-            self.collection.add(documents=documents, metadatas=fallback, ids=ids)
+            fallback = [{"source": "unknown", "id": i} for i in safe_ids]
+            self.collection.add(documents=safe_docs, metadatas=fallback, ids=safe_ids)
 
     def query(self, query_texts: list[str], n_results: int = 10) -> dict:
         """

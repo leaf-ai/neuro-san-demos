@@ -553,3 +553,12 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Integrated logging utility across ingest, redaction, stamping, and export flows
 - Exposed retrieval API and React dashboard panel for chain logs
 - Next: extend filtering and export options for audit reports
+## Update 2025-08-05T11:12Z
+- Added `DocumentSource` enum and `source` field with migration
+- Upload pipeline records source and returns it in file APIs
+- Vector database now skips duplicate/similar documents
+- React upload panel offers source selection, filtering, and color coding
+- Next: fix failing KnowledgeGraphManager relationship test
+## Update 2025-08-05T11:13Z
+- Removed duplicate logging import in vector database manager
+- Next: none
