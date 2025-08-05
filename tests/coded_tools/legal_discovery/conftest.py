@@ -1,6 +1,7 @@
 import sys
 import types
 import pathlib
+import importlib.util
 
 # Ensure repository root on path
 ROOT = pathlib.Path(__file__).resolve().parents[3]
@@ -13,8 +14,18 @@ pkg = types.ModuleType("coded_tools.legal_discovery")
 pkg.__path__ = [str(package_path)]
 sys.modules.setdefault("coded_tools.legal_discovery", pkg)
 
-# Skip tests requiring optional heavy dependencies
-import importlib.util
-collect_ignore = []
-if importlib.util.find_spec("weasyprint") is None:
-    collect_ignore.append("test_deposition_prep.py")
+# Provide a lightweight stub for weasyprint if it's not installed
+if importlib.util.find_spec("weasyprint") is None:  # pragma: no cover - environment specific
+    weasyprint = types.ModuleType("weasyprint")
+
+    class HTML:  # type: ignore
+        def __init__(self, string: str | None = None, *_, **__):
+            self.string = string
+
+        def write_pdf(self, target: str) -> None:
+            # Write a tiny PDF header so tests can confirm output file creation
+            with open(target, "wb") as fh:
+                fh.write(b"%PDF-1.4\n%stub")
+
+    weasyprint.HTML = HTML
+    sys.modules["weasyprint"] = weasyprint

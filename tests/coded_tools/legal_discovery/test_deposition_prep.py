@@ -144,7 +144,15 @@ def test_detect_contradictions_and_export(monkeypatch, tmp_path):
 
         # detect contradictions and generate questions
         questions = DepositionPrep.generate_questions(witness.id)
+        assert len(questions) == 1
+        assert questions[0]["source"] == "DocA"
         assert FactConflict.query.count() == 1
+        conflict = FactConflict.query.first()
+        assert conflict.witness_id == witness.id
+        assert {conflict.fact1_id, conflict.fact2_id} == {fact1.id, fact2.id}
+        assert conflict.score == pytest.approx(0.95)
+        assert "present on Monday" in conflict.description
+        assert "absent on Monday" in conflict.description
         pdf_path = tmp_path / "out.pdf"
         docx_path = tmp_path / "out.docx"
         returned_pdf = DepositionPrep.export_questions(
@@ -186,10 +194,18 @@ def test_review_logging_and_permissions(tmp_path):
         db.session.add(question)
         db.session.commit()
 
-        DepositionPrep.log_review(witness.id, attorney.id, True, "looks good")
+        result = DepositionPrep.log_review(witness.id, attorney.id, True, "looks good")
+        assert result["approved"] is True
+        assert result["notes"] == "looks good"
         assert DepositionReviewLog.query.count() == 1
+        log = DepositionReviewLog.query.first()
+        assert log.reviewer_id == attorney.id
+        assert log.witness_id == witness.id
+        assert log.approved is True
+        assert log.notes == "looks good"
         with pytest.raises(PermissionError):
             DepositionPrep.log_review(witness.id, paralegal.id, True)
+        assert DepositionReviewLog.query.count() == 1
 
         with pytest.raises(PermissionError):
             DepositionPrep.export_questions(
