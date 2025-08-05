@@ -1094,12 +1094,6 @@ def review_deposition():
     return jsonify({"status": "ok"})
 
 
-    os.makedirs("exports", exist_ok=True)
-    path = os.path.join("exports", f"deposition_{witness_id}.{fmt}")
-    DepositionPrep.export_questions(witness_id, path)
-    return send_file(path, as_attachment=True)
-
-
 @app.route("/api/subpoena/draft", methods=["POST"])
 def draft_subpoena():
     """Draft a subpoena document using SubpoenaManager."""

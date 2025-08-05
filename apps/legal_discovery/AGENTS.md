@@ -543,3 +543,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Upgraded privilege detection with legal spaCy model support and textcat scoring
 - Logged redaction snippets and added privilege override API/UI controls
 - Next: polish reviewer workflow and monitor classifier performance
+
+## Update 2025-08-05T22:30Z
+- Removed outdated deposition export from review endpoint to enforce reviewer IDs and avoid undefined variables
+- Next: add unit tests covering deposition review logging
