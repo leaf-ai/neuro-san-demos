@@ -82,6 +82,23 @@ class KnowledgeGraphManager(CodedTool):
             self.create_relationship(document_node_id, fact_id, "HAS_FACT")
         return fact_id
 
+    def _get_or_create_by_name(self, label: str, name: str) -> int:
+        """Return the ID of a node with the given name, creating it if needed."""
+        query = f"MATCH (n:{label} {{name: $name}}) RETURN id(n) as id"
+        result = self.run_query(query, {"name": name})
+        if result:
+            return result[0]["id"]
+        return self.create_node(label, {"name": name})
+
+    def link_fact_to_element(
+        self, fact_id: int, cause: str, element: str, weight: float = 1.0
+    ) -> None:
+        """Link an existing fact to an element and cause with a weighted relationship."""
+        cause_id = self._get_or_create_by_name("CauseOfAction", cause)
+        element_id = self._get_or_create_by_name("Element", element)
+        self.create_relationship(element_id, cause_id, "BELONGS_TO")
+        self.create_relationship(fact_id, element_id, "SUPPORTS", {"weight": weight})
+
     def get_node(self, node_id: int) -> dict:
         """
         Retrieves a node from the knowledge graph.

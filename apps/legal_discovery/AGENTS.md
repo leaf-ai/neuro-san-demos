@@ -441,3 +441,14 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Integrated `FactExtractor` into ingestion flow storing JSON facts in SQL and Neo4j
 - Added `add_fact` helper to `KnowledgeGraphManager`
 - Next: link facts to ontology elements and expose theory suggestions
+
+## Update 2025-08-04T07:00Z
+- Linked extracted facts to ontology elements and causes in Neo4j
+- Added LegalTheoryEngine with `/api/theories/suggest` and Case Theory dashboard tab
+- Highlighted supported elements with neon glow for clarity
+- Next: refine scoring metrics and broaden ontology coverage
+
+## Update 2025-08-04T09:30Z
+- Weighted element links with spaCy similarity and Jaccard heuristics
+- Surfaced element scores in Case Theory tab with neon progress bars
+- Next: expand ontology vocabulary and tune similarity thresholds

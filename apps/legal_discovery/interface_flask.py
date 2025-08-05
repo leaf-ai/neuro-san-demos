@@ -11,6 +11,7 @@ import json
 
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
+from difflib import SequenceMatcher
 
 # pylint: disable=import-error
 import schedule
@@ -20,6 +21,9 @@ from flask import render_template
 from flask import request
 from werkzeug.utils import secure_filename
 from flask_socketio import SocketIO
+
+import spacy
+from spacy.cli import download as spacy_download
 
 from apps.legal_discovery.legal_discovery import legal_discovery_thinker
 from apps.legal_discovery.legal_discovery import (
@@ -270,6 +274,8 @@ from coded_tools.legal_discovery.document_modifier import DocumentModifier
 from coded_tools.legal_discovery.document_drafter import DocumentDrafter
 from coded_tools.legal_discovery.document_processor import DocumentProcessor
 from coded_tools.legal_discovery.fact_extractor import FactExtractor
+from coded_tools.legal_discovery.ontology_loader import OntologyLoader
+from coded_tools.legal_discovery.legal_theory_engine import LegalTheoryEngine
 from coded_tools.legal_discovery.task_tracker import TaskTracker
 from coded_tools.legal_discovery.vector_database_manager import VectorDatabaseManager
 from coded_tools.legal_discovery.subpoena_manager import SubpoenaManager
@@ -308,6 +314,37 @@ def chunked(items: list, size: int) -> list[list]:
     """Yield successive ``size``-sized chunks from ``items``."""
     for i in range(0, len(items), size):
         yield items[i : i + size]
+
+
+_NLP = None
+
+
+def match_elements(text: str, ontology: dict) -> list[tuple[str, str, float]]:
+    """Return (cause, element, weight) triples whose semantics appear in ``text``."""
+    global _NLP
+    if _NLP is None:
+        try:
+            _NLP = spacy.load("en_core_web_sm")
+        except OSError:  # pragma: no cover - model download is slow
+            spacy_download("en_core_web_sm")
+            _NLP = spacy.load("en_core_web_sm")
+
+    doc = _NLP(text.lower())
+    text_lemmas = {t.lemma_ for t in doc if not t.is_stop and t.is_alpha}
+    matches: list[tuple[str, str, float]] = []
+    for cause, data in ontology.get("causes_of_action", {}).items():
+        for element in data.get("elements", []):
+            elem_doc = _NLP(element.lower())
+            elem_lemmas = {t.lemma_ for t in elem_doc if not t.is_stop and t.is_alpha}
+            if not elem_lemmas:
+                continue
+            overlap = text_lemmas & elem_lemmas
+            jaccard = len(overlap) / len(elem_lemmas)
+            seq_ratio = SequenceMatcher(None, text.lower(), element.lower()).ratio()
+            weight = 0.7 * seq_ratio + 0.3 * jaccard
+            if weight >= 0.45:
+                matches.append((cause, element, weight))
+    return matches
 
 
 def build_file_tree(directory: str, root_length: int) -> list:
@@ -508,6 +545,7 @@ def ingest_document(
         kg.create_relationship(case_node, doc_node, "HAS_DOCUMENT")
 
     extractor = FactExtractor()
+    ontology = OntologyLoader().load()
     for fact in extractor.extract(text):
         fact_row = Fact(
             case_id=case_id,
@@ -518,8 +556,12 @@ def ingest_document(
             actions=fact["actions"],
         )
         db.session.add(fact_row)
+        fact_id = None
         if case_node or doc_node:
-            kg.add_fact(case_node, doc_node, fact)
+            fact_id = kg.add_fact(case_node, doc_node, fact)
+        if fact_id is not None:
+            for cause, element, weight in match_elements(fact["text"], ontology):
+                kg.link_fact_to_element(fact_id, cause, element, weight)
 
     kg.close()
 
@@ -1091,6 +1133,15 @@ def research():
     tool = ResearchTools()
     results = tool.search(query, source) if query else []
     return jsonify({"status": "ok", "data": results})
+
+
+@app.route("/api/theories/suggest", methods=["GET"])
+def suggest_theories():
+    """Return ranked legal theory candidates."""
+    engine = LegalTheoryEngine()
+    theories = engine.suggest_theories()
+    engine.close()
+    return jsonify({"status": "ok", "theories": theories})
 
 
 @app.route("/api/query", methods=["POST"])

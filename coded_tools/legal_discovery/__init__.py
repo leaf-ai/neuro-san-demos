@@ -19,6 +19,7 @@ from .web_scraper import WebScraper
 from .graph_analyzer import GraphAnalyzer
 from .ontology_loader import OntologyLoader
 from .fact_extractor import FactExtractor
+from .legal_theory_engine import LegalTheoryEngine
 
 __all__ = [
     "CaseManagementTools",
@@ -40,4 +41,5 @@ __all__ = [
     "GraphAnalyzer",
     "OntologyLoader",
     "FactExtractor",
+    "LegalTheoryEngine",
 ]
