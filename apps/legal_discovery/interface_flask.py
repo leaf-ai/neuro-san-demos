@@ -361,19 +361,6 @@ def match_elements(text: str, ontology: dict) -> list[tuple[str, str, float]]:
     return matches
 
 
-def build_file_tree(directory: str, root_length: int) -> list:
-def match_elements(text: str, ontology: dict) -> list[tuple[str, str]]:
-    """Return (cause, element) pairs whose keywords appear in ``text``."""
-    matches: list[tuple[str, str]] = []
-    lower = text.lower()
-    for cause, data in ontology.get("causes_of_action", {}).items():
-        for element in data.get("elements", []):
-            tokens = [t for t in element.lower().split() if len(t) > 3]
-            if any(tok in lower for tok in tokens):
-                matches.append((cause, element))
-    return matches
-
-
 def build_file_tree(directory: str, root_length: int, docs: dict[str, Document]) -> list:
     """Recursively build a file tree structure."""
     tree = []
@@ -1292,6 +1279,18 @@ def suggest_theories():
     theories = engine.suggest_theories()
     engine.close()
     return jsonify({"status": "ok", "theories": theories})
+
+
+@app.route("/api/theories/graph", methods=["GET"])
+def theory_graph():
+    """Return graph data for a specific cause of action."""
+    cause = request.args.get("cause")
+    if not cause:
+        return jsonify({"status": "error", "error": "cause required"}), 400
+    engine = LegalTheoryEngine()
+    nodes, edges = engine.get_theory_subgraph(cause)
+    engine.close()
+    return jsonify({"status": "ok", "nodes": nodes, "edges": edges})
 
 
 @app.route("/api/query", methods=["POST"])

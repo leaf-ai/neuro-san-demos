@@ -55,7 +55,7 @@ class TestKnowledgeGraphManager(unittest.TestCase):
             self.skipTest(str(exc))
 
         self.kg_manager.link_fact_to_element(
-            fact_id, "Fraud", "Misrepresentation"
+            fact_id, "Fraud", "Misrepresentation", weight=0.7
         )
         self.kg_manager.link_document_dispute(fact_id, doc_id)
         self.kg_manager.link_fact_origin(fact_id, "Email", "Email1")
@@ -67,6 +67,8 @@ class TestKnowledgeGraphManager(unittest.TestCase):
         self.assertIn("BELONGS_TO", edge_types)
         self.assertIn("DISPUTED_BY", edge_types)
         self.assertIn("ORIGINATED_IN", edge_types)
+        support_edge = next(e for e in edges if e["type"] == "SUPPORTS")
+        self.assertAlmostEqual(support_edge.get("properties", {}).get("weight"), 0.7)
         self.kg_manager.delete_node(fact_id)
         self.kg_manager.delete_node(doc_id)
         self.kg_manager.run_query("MATCH (n:Email {name:'Email1'}) DETACH DELETE n")

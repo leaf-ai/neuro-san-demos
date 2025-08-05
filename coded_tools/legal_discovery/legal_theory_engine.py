@@ -107,49 +107,36 @@ class LegalTheoryEngine(CodedTool):
 
         for cause, data in ontology.items():
             elements: Sequence[str] = data.get("elements", [])
-        for cause, data in ontology.items():
-            elements = data.get("elements", [])
             defenses = data.get("defenses", [])
             indicators = data.get("indicators", [])
 
             element_results: List[Dict[str, Any]] = []
-            supported = 0
             total_weight = 0.0
+            supported = 0
 
             for element in elements:
                 facts = self._facts_for_element(cause, element)
-                weight = max((f.get("weight", 0) for f in facts), default=0)
                 if facts:
                     supported += 1
+                weight = max((f.get("weight", 0) for f in facts), default=0.0)
                 total_weight += weight
                 element_results.append({"name": element, "facts": facts, "weight": weight})
 
-                query = (
-                    "MATCH (f:Fact)-[r:SUPPORTS]->(e:Element {name:$element})"
-                    "-[:BELONGS_TO]->(c:CauseOfAction {name:$cause}) "
-                    "RETURN f.text as text, r.weight as weight"
-                )
-                records = self.kg.run_query(query, {"element": element, "cause": cause})
-                facts = [{"text": r["text"], "weight": r.get("weight", 0)} for r in records]
-                if facts:
-                    supported += 1
-                element_weight = max((r.get("weight", 0) for r in records), default=0)
-                element_results.append({"name": element, "facts": facts, "weight": element_weight})
-            score = supported / len(elements) if elements else 0
-            avg_weight = total_weight / len(elements) if elements else 0
+            weight_avg = total_weight / len(elements) if elements else 0
+            coverage = supported / len(elements) if elements else 0
+            score = (weight_avg + coverage) / 2
 
             suggestions.append(
                 {
                     "cause": cause,
                     "score": score,
-                    "avg_weight": avg_weight,
                     "elements": element_results,
                     "defenses": defenses,
                     "indicators": indicators,
                 }
             )
 
-        suggestions.sort(key=lambda s: (s["score"], s.get("avg_weight", 0)), reverse=True)
+        suggestions.sort(key=lambda s: s["score"], reverse=True)
         return suggestions
 
     def get_theory_subgraph(self, cause: str):

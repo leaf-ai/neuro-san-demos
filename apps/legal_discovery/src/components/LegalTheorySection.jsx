@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 function LegalTheorySection() {
   const [theories, setTheories] = useState([]);
   const [loading, setLoading] = useState(false);
+
   const load = () => {
     setLoading(true);
     fetch("/api/theories/suggest").then(r => r.json()).then(d => {
@@ -10,7 +11,13 @@ function LegalTheorySection() {
       setLoading(false);
     });
   };
+
+  const showGraph = (cause) => {
+    window.dispatchEvent(new CustomEvent('loadTheoryGraph', { detail: { cause } }));
+  };
+
   useEffect(() => { load(); }, []);
+
   return (
     <section className="card">
       <h2>Case Theory</h2>
@@ -19,7 +26,12 @@ function LegalTheorySection() {
       </button>
       {theories.map(t => (
         <div key={t.cause} className="mb-2">
-          <h3 className="font-bold">{t.cause} - {(t.score*100).toFixed(0)}%</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold">{t.cause} - {(t.score*100).toFixed(0)}%</h3>
+            <button className="button-secondary" onClick={() => showGraph(t.cause)}>
+              <i className="fa fa-project-diagram mr-1"></i>Graph
+            </button>
+          </div>
           <ul className="list-disc list-inside text-sm">
             {t.elements.map(e => (
               <li key={e.name} className={e.weight > 0 ? "theory-supported" : ""}>
@@ -30,9 +42,6 @@ function LegalTheorySection() {
                 <div className="element-bar mt-1">
                   <div className="element-bar-fill" style={{width: `${e.weight*100}%`}}></div>
                 </div>
-              <li key={e.name} className={e.facts.length ? "theory-supported" : ""}>
-                {e.name}
-                {e.facts.length ? <span className="text-xs text-gray-400 ml-1">({e.facts.length})</span> : null}
               </li>
             ))}
           </ul>

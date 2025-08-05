@@ -50,8 +50,8 @@ class TestLegalTheoryEngine(unittest.TestCase):
         theories = engine.suggest_theories()
 
         breach = next(t for t in theories if t["cause"] == "Breach of Contract")
-        # One of four elements is supported by the dummy graph
-        self.assertAlmostEqual(breach["score"], 0.25)
+        # Score blends element weights with coverage ratio
+        self.assertAlmostEqual(breach["score"], 0.2375)
 
         elements = {e["name"]: e for e in breach["elements"]}
         self.assertAlmostEqual(elements["Existence of a contract"]["weight"], 0.9)
@@ -68,7 +68,7 @@ class TestLegalTheoryEngine(unittest.TestCase):
         theories = engine.suggest_theories()
         top = theories[0]
         self.assertEqual(top["cause"], "Breach of Contract")
-        self.assertAlmostEqual(top["score"], 0.5)
+        self.assertAlmostEqual(top["score"], 0.4625)
         elements = {e["name"]: e for e in top["elements"]}
         self.assertAlmostEqual(
             elements["Plaintiff's performance or excuse"]["weight"], 0.8
