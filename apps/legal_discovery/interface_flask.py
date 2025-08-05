@@ -11,6 +11,7 @@ import json
 
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
+from difflib import SequenceMatcher
 
 # pylint: disable=import-error
 import schedule
@@ -18,8 +19,12 @@ from flask import Flask
 from flask import jsonify
 from flask import render_template
 from flask import request
+from flask import send_file
 from werkzeug.utils import secure_filename
 from flask_socketio import SocketIO
+
+import spacy
+from spacy.cli import download as spacy_download
 
 from apps.legal_discovery.legal_discovery import legal_discovery_thinker
 from apps.legal_discovery.legal_discovery import (
@@ -33,6 +38,7 @@ from pyhocon import ConfigFactory
 
 from apps.legal_discovery import settings
 from apps.legal_discovery.database import db
+from coded_tools.legal_discovery.deposition_prep import DepositionPrep
 from apps.legal_discovery.models import (
     Case,
     Document,
@@ -44,6 +50,9 @@ from apps.legal_discovery.models import (
     Fact,
     RedactionLog,
     RedactionAudit,
+    Witness,
+    DepositionQuestion,
+    DepositionReviewLog,
 )
 from .exhibit_routes import exhibits_bp
 
@@ -321,6 +330,38 @@ def chunked(items: list, size: int) -> list[list]:
         yield items[i : i + size]
 
 
+_NLP = None
+
+
+def match_elements(text: str, ontology: dict) -> list[tuple[str, str, float]]:
+    """Return (cause, element, weight) triples whose semantics appear in ``text``."""
+    global _NLP
+    if _NLP is None:
+        try:
+            _NLP = spacy.load("en_core_web_sm")
+        except OSError:  # pragma: no cover - model download is slow
+            spacy_download("en_core_web_sm")
+            _NLP = spacy.load("en_core_web_sm")
+
+    doc = _NLP(text.lower())
+    text_lemmas = {t.lemma_ for t in doc if not t.is_stop and t.is_alpha}
+    matches: list[tuple[str, str, float]] = []
+    for cause, data in ontology.get("causes_of_action", {}).items():
+        for element in data.get("elements", []):
+            elem_doc = _NLP(element.lower())
+            elem_lemmas = {t.lemma_ for t in elem_doc if not t.is_stop and t.is_alpha}
+            if not elem_lemmas:
+                continue
+            overlap = text_lemmas & elem_lemmas
+            jaccard = len(overlap) / len(elem_lemmas)
+            seq_ratio = SequenceMatcher(None, text.lower(), element.lower()).ratio()
+            weight = 0.7 * seq_ratio + 0.3 * jaccard
+            if weight >= 0.45:
+                matches.append((cause, element, weight))
+    return matches
+
+
+def build_file_tree(directory: str, root_length: int) -> list:
 def match_elements(text: str, ontology: dict) -> list[tuple[str, str]]:
     """Return (cause, element) pairs whose keywords appear in ``text``."""
     matches: list[tuple[str, str]] = []
@@ -601,6 +642,7 @@ def ingest_document(
 
     extractor = FactExtractor()
     ontology = OntologyLoader().load()
+    for fact in extractor.extract(text):
     for fact in extractor.extract(redacted_text):
         fact_row = Fact(
             case_id=case_id,
@@ -615,8 +657,8 @@ def ingest_document(
         if case_node or doc_node:
             fact_id = kg.add_fact(case_node, doc_node, fact)
         if fact_id is not None:
-            for cause, element in match_elements(fact["text"], ontology):
-                kg.link_fact_to_element(fact_id, cause, element)
+            for cause, element, weight in match_elements(fact["text"], ontology):
+                kg.link_fact_to_element(fact_id, cause, element, weight)
 
     kg.close()
 
@@ -963,6 +1005,55 @@ def manage_cases():
     cases = Case.query.all()
     data = [{"id": c.id, "name": c.name} for c in cases]
     return jsonify({"status": "ok", "data": data})
+
+
+@app.route("/api/witnesses", methods=["GET", "POST"])
+def manage_witnesses():
+    if request.method == "POST":
+        data = request.get_json() or {}
+        name = data.get("name")
+        case_id = data.get("case_id")
+        if not name:
+            return jsonify({"error": "Missing name"}), 400
+        witness = Witness(name=name, role=data.get("role"), associated_case=case_id)
+        db.session.add(witness)
+        db.session.commit()
+        return jsonify({"status": "ok", "id": witness.id})
+    case_id = request.args.get("case_id", type=int)
+    query = Witness.query
+    if case_id:
+        query = query.filter_by(associated_case=case_id)
+    witnesses = query.all()
+    data = [{"id": w.id, "name": w.name} for w in witnesses]
+    return jsonify({"status": "ok", "data": data})
+
+
+@app.route("/api/deposition/questions", methods=["POST"])
+def generate_deposition_questions():
+    data = request.get_json() or {}
+    witness_id = data.get("witness_id")
+    include_privileged = data.get("include_privileged", False)
+    if not witness_id:
+        return jsonify({"error": "Missing witness_id"}), 400
+    questions = DepositionPrep.generate_questions(
+        witness_id, include_privileged=include_privileged
+    )
+    return jsonify({"status": "ok", "data": questions})
+
+
+@app.route("/api/deposition/questions/<int:question_id>/flag", methods=["POST"])
+def flag_deposition_question(question_id: int):
+    DepositionPrep.flag_question(question_id)
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/deposition/export/<int:witness_id>", methods=["GET"])
+def export_deposition_questions(witness_id: int):
+    fmt = request.args.get("format", "docx")
+    os.makedirs("exports", exist_ok=True)
+    path = os.path.join("exports", f"deposition_{witness_id}.{fmt}")
+    DepositionPrep.export_questions(witness_id, path)
+    return send_file(path, as_attachment=True)
 
 
 @app.route("/api/subpoena/draft", methods=["POST"])

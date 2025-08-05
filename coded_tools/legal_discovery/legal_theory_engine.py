@@ -28,15 +28,16 @@ class LegalTheoryEngine(CodedTool):
             supported = 0
             for element in elements:
                 query = (
-                    "MATCH (f:Fact)-[:SUPPORTS]->(e:Element {name:$element})"
+                    "MATCH (f:Fact)-[r:SUPPORTS]->(e:Element {name:$element})"
                     "-[:BELONGS_TO]->(c:CauseOfAction {name:$cause}) "
-                    "RETURN f.text as text"
+                    "RETURN f.text as text, r.weight as weight"
                 )
                 records = self.kg.run_query(query, {"element": element, "cause": cause})
-                facts = [r["text"] for r in records]
+                facts = [{"text": r["text"], "weight": r.get("weight", 0)} for r in records]
                 if facts:
                     supported += 1
-                element_results.append({"name": element, "facts": facts})
+                element_weight = max((r.get("weight", 0) for r in records), default=0)
+                element_results.append({"name": element, "facts": facts, "weight": element_weight})
             score = supported / len(elements) if elements else 0
             suggestions.append(
                 {

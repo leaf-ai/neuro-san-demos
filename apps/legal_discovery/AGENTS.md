@@ -447,6 +447,12 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added LegalTheoryEngine with `/api/theories/suggest` and Case Theory dashboard tab
 - Highlighted supported elements with neon glow for clarity
 - Next: refine scoring metrics and broaden ontology coverage
+
+## Update 2025-08-04T09:30Z
+- Weighted element links with spaCy similarity and Jaccard heuristics
+- Surfaced element scores in Case Theory tab with neon progress bars
+- Next: expand ontology vocabulary and tune similarity thresholds
+
 ## Update 2025-08-04T09:30Z
 - Automated privilege detection with redaction logs and audit trail
 - Upload pipeline stores originals securely and serves redacted copies
@@ -489,3 +495,21 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added React Exhibits tab with assignment, binder and ZIP export controls.
 - Styled exhibit table headers for better visual hierarchy.
 - Next: support exhibit reordering and privilege filters in UI.
+
+## Update 2025-08-04T12:00Z
+- Introduced witness models and deposition prep tool with question generation, export, and React dashboard tab.
+- Next: enhance review logging and offer PDF export.
+
+## Update 2025-08-04T13:30Z
+- Added contradiction detection with FactConflict records and prompt context.
+- Export supports PDF including case ID, timestamp, and footnoted sources; UI offers separate DOCX/PDF buttons with improved styling.
+- Next: implement deposition review approvals with permission controls.
+
+## Update 2025-08-05T03:22Z
+- Added spaCy model and graph dependencies to requirements and Dockerfiles.
+- Registered FactExtractor and LegalTheoryEngine in agent registry.
+- Next: verify graph visualisations and theory suggestions.
+## Update 2025-08-05T12:00Z
+- Added tests for fact-element linking, theory scoring, and API endpoint coverage
+- Documented `/api/theories/suggest` usage in README
+- Next: broaden graph visualisations and extend endpoint coverage
