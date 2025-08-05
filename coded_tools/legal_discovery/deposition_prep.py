@@ -165,11 +165,15 @@ class DepositionPrep:
         }
 
     @staticmethod
-    def export_questions(witness_id: int, file_path: str, reviewer_id: int) -> str:
+    def export_questions(
+        witness_id: int, file_path: str, reviewer_id: int
+    ) -> str:
+        """Export deposition questions to PDF or DOCX for an authorized reviewer."""
+
         reviewer = Agent.query.get(reviewer_id)
         if not reviewer or reviewer.role not in {"attorney", "case_admin"}:
             raise PermissionError("Reviewer lacks permission")
-    def export_questions(witness_id: int, file_path: str) -> str:
+
         witness = Witness.query.get_or_404(witness_id)
         questions = (
             DepositionQuestion.query.filter_by(witness_id=witness_id)
@@ -217,6 +221,7 @@ class DepositionPrep:
                 for i, src in enumerate(sources, 1):
                     doc.add_paragraph(f"[{i}] {src}")
             doc.save(file_path)
+
         return file_path
 
     @staticmethod
