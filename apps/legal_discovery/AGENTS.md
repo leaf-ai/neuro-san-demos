@@ -477,3 +477,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added contradiction detection with FactConflict records and prompt context.
 - Export supports PDF including case ID, timestamp, and footnoted sources; UI offers separate DOCX/PDF buttons with improved styling.
 - Next: implement deposition review approvals with permission controls.
+
+## Update 2025-08-05T03:22Z
+- Added spaCy model and graph dependencies to requirements and Dockerfiles.
+- Registered FactExtractor and LegalTheoryEngine in agent registry.
+- Next: verify graph visualisations and theory suggestions.

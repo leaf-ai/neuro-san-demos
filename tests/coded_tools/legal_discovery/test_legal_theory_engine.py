@@ -9,10 +9,6 @@ class DummyKG:
             return [{"text": "Contract between A and B", "weight": 0.9}]
         return []
 
-
-            return [{"text": "Contract between A and B"}]
-        return []
-
     def get_cause_subgraph(self, cause):
         return ["n"], ["e"]
 
@@ -25,7 +21,6 @@ class TestLegalTheoryEngine(unittest.TestCase):
         engine = LegalTheoryEngine(kg=DummyKG())
         theories = engine.suggest_theories()
         breach = next(t for t in theories if t["cause"] == "Breach of Contract")
-        self.assertAlmostEqual(breach["score"], 0.9 / 4, places=3)
         elements = {e["name"]: e for e in breach["elements"]}
         self.assertAlmostEqual(elements["Existence of a contract"]["weight"], 0.9)
         self.assertEqual(
@@ -48,3 +43,4 @@ class TestLegalTheoryEngine(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

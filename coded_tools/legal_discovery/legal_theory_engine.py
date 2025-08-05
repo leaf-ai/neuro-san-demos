@@ -22,7 +22,10 @@ class LegalTheoryEngine(CodedTool):
         suggestions: List[Dict[str, Any]] = []
         for cause, data in ontology.items():
             elements = data.get("elements", [])
+            defenses = data.get("defenses", [])
+            indicators = data.get("indicators", [])
             element_results: List[Dict[str, Any]] = []
+            supported = 0
             for element in elements:
                 query = (
                     "MATCH (f:Fact)-[r:SUPPORTS]->(e:Element {name:$element})"
@@ -30,37 +33,11 @@ class LegalTheoryEngine(CodedTool):
                     "RETURN f.text as text, r.weight as weight"
                 )
                 records = self.kg.run_query(query, {"element": element, "cause": cause})
-                facts = [
-                    {"text": r["text"], "weight": r.get("weight", 0)} for r in records
-                ]
-                element_weight = max((r.get("weight", 0) for r in records), default=0)
-                element_results.append(
-                    {"name": element, "facts": facts, "weight": element_weight}
-                )
-            score = (
-                sum(e["weight"] for e in element_results) / len(elements)
-                if elements
-                else 0
-            )
-            suggestions.append({"cause": cause, "score": score, "elements": element_results})
-        suggestions.sort(key=lambda s: s["score"], reverse=True)
-        return suggestions
-
-            defenses = data.get("defenses", [])
-            indicators = data.get("indicators", [])
-            element_results: List[Dict[str, Any]] = []
-            supported = 0
-            for element in elements:
-                query = (
-                    "MATCH (f:Fact)-[:SUPPORTS]->(e:Element {name:$element})"
-                    "-[:BELONGS_TO]->(c:CauseOfAction {name:$cause}) "
-                    "RETURN f.text as text"
-                )
-                records = self.kg.run_query(query, {"element": element, "cause": cause})
-                facts = [r["text"] for r in records]
+                facts = [{"text": r["text"], "weight": r.get("weight", 0)} for r in records]
                 if facts:
                     supported += 1
-                element_results.append({"name": element, "facts": facts})
+                element_weight = max((r.get("weight", 0) for r in records), default=0)
+                element_results.append({"name": element, "facts": facts, "weight": element_weight})
             score = supported / len(elements) if elements else 0
             suggestions.append(
                 {
