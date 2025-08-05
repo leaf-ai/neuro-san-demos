@@ -11,6 +11,7 @@ import json
 
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
+from difflib import SequenceMatcher
 
 # pylint: disable=import-error
 import schedule
@@ -21,6 +22,9 @@ from flask import request
 from flask import send_file
 from werkzeug.utils import secure_filename
 from flask_socketio import SocketIO
+
+import spacy
+from spacy.cli import download as spacy_download
 
 from apps.legal_discovery.legal_discovery import legal_discovery_thinker
 from apps.legal_discovery.legal_discovery import (
@@ -324,6 +328,38 @@ def chunked(items: list, size: int) -> list[list]:
         yield items[i : i + size]
 
 
+_NLP = None
+
+
+def match_elements(text: str, ontology: dict) -> list[tuple[str, str, float]]:
+    """Return (cause, element, weight) triples whose semantics appear in ``text``."""
+    global _NLP
+    if _NLP is None:
+        try:
+            _NLP = spacy.load("en_core_web_sm")
+        except OSError:  # pragma: no cover - model download is slow
+            spacy_download("en_core_web_sm")
+            _NLP = spacy.load("en_core_web_sm")
+
+    doc = _NLP(text.lower())
+    text_lemmas = {t.lemma_ for t in doc if not t.is_stop and t.is_alpha}
+    matches: list[tuple[str, str, float]] = []
+    for cause, data in ontology.get("causes_of_action", {}).items():
+        for element in data.get("elements", []):
+            elem_doc = _NLP(element.lower())
+            elem_lemmas = {t.lemma_ for t in elem_doc if not t.is_stop and t.is_alpha}
+            if not elem_lemmas:
+                continue
+            overlap = text_lemmas & elem_lemmas
+            jaccard = len(overlap) / len(elem_lemmas)
+            seq_ratio = SequenceMatcher(None, text.lower(), element.lower()).ratio()
+            weight = 0.7 * seq_ratio + 0.3 * jaccard
+            if weight >= 0.45:
+                matches.append((cause, element, weight))
+    return matches
+
+
+def build_file_tree(directory: str, root_length: int) -> list:
 def match_elements(text: str, ontology: dict) -> list[tuple[str, str]]:
     """Return (cause, element) pairs whose keywords appear in ``text``."""
     matches: list[tuple[str, str]] = []
@@ -604,6 +640,7 @@ def ingest_document(
 
     extractor = FactExtractor()
     ontology = OntologyLoader().load()
+    for fact in extractor.extract(text):
     for fact in extractor.extract(redacted_text):
         fact_row = Fact(
             case_id=case_id,
@@ -618,8 +655,8 @@ def ingest_document(
         if case_node or doc_node:
             fact_id = kg.add_fact(case_node, doc_node, fact)
         if fact_id is not None:
-            for cause, element in match_elements(fact["text"], ontology):
-                kg.link_fact_to_element(fact_id, cause, element)
+            for cause, element, weight in match_elements(fact["text"], ontology):
+                kg.link_fact_to_element(fact_id, cause, element, weight)
 
     kg.close()
 

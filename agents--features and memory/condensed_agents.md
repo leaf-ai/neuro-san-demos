@@ -126,6 +126,11 @@ WE STARTED ON #3, INSTEAD OF #1. DEAL WITH IT, FINISH IMPLEMENTING #3, AND THEN 
 - Delivered 3.5 Case Theory dashboard tab with neon element highlight
 - Next: proceed to feature #1 planning and implementation
 
+## Update 2025-08-04T09:30Z
+- Enhanced theory mapping with spaCy-weighted element matching and progress bars
+- Completed 3.6 improving NLP heuristics and weighting for case theory scores
+- Next: pivot to feature #1 research planning
+=======
 ## Update 2025-08-04T08:30Z
 - Began feature #4 deposition prep generator: introduced witness models, question generation tool, export endpoint and React tab.
 - Next: add contradiction detection and PDF export options.
