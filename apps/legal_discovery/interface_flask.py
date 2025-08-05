@@ -1,4 +1,6 @@
 import atexit
+import hashlib
+import json
 import logging
 import os
 import queue
@@ -6,50 +8,42 @@ import re
 import subprocess
 import threading
 import time
-import hashlib
-import json
-
-from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
+from datetime import datetime
 
 # pylint: disable=import-error
 import schedule
-from flask import Flask
-from flask import jsonify
-from flask import render_template
-from flask import request
-from flask import send_file
-from werkzeug.utils import secure_filename
+from flask import Flask, jsonify, render_template, request, send_file
 from flask_socketio import SocketIO
-
-from apps.legal_discovery.legal_discovery import legal_discovery_thinker
-from apps.legal_discovery.legal_discovery import (
-    set_up_legal_discovery_assistant,
-    tear_down_legal_discovery_assistant,
-)
-
-
 from more_itertools import chunked
 from pyhocon import ConfigFactory
+from werkzeug.utils import secure_filename
 
 from apps.legal_discovery import settings
 from apps.legal_discovery.database import db
-from coded_tools.legal_discovery.deposition_prep import DepositionPrep
+from apps.legal_discovery.legal_discovery import (
+    legal_discovery_thinker,
+    set_up_legal_discovery_assistant,
+    tear_down_legal_discovery_assistant,
+)
 from apps.legal_discovery.models import (
-    Case,
-    Document,
-    DocumentMetadata,
-    LegalReference,
-    TimelineEvent,
     CalendarEvent,
-    LegalTheory,
-    Fact,
-    RedactionLog,
-    RedactionAudit,
-    Witness,
+    Case,
+    CauseOfAction,
     DepositionQuestion,
     DepositionReviewLog,
+    Document,
+    DocumentMetadata,
+    Element,
+    Fact,
+    LegalReference,
+    LegalTheory,
+    RedactionAudit,
+    RedactionLog,
+    TimelineEvent,
+    Witness,
 )
+from coded_tools.legal_discovery.deposition_prep import DepositionPrep
 
 # Configure logging before any other setup so early steps are captured
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
@@ -83,9 +77,7 @@ app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", os.urandom(24).hex
 # SQLite for local development but override with an environment-provided
 # PostgreSQL connection string when available so the application scales under
 # concurrent load.
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
-    "DATABASE_URL", "sqlite:///legal_discovery.db"
-)
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///legal_discovery.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 socketio = SocketIO(app)
@@ -113,14 +105,11 @@ def _gather_upload_paths() -> list[str]:
 
 
 def _initialize_agent() -> None:
-
     """Set up the legal discovery assistant in a background thread."""
     global legal_discovery_session, legal_discovery_thread
     with app.app_context():
         app.logger.info("Setting up legal discovery assistant...")
-        legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant(
-            _gather_upload_paths()
-        )
+        legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant(_gather_upload_paths())
         app.logger.info("...legal discovery assistant set up.")
 
 
@@ -139,9 +128,7 @@ def reinitialize_legal_discovery_session() -> None:
     global legal_discovery_session, legal_discovery_thread
     if legal_discovery_session is not None:
         tear_down_legal_discovery_assistant(legal_discovery_session)
-    legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant(
-        _gather_upload_paths()
-    )
+    legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant(_gather_upload_paths())
     app.logger.info("Legal discovery session reinitialized")
 
 
@@ -268,24 +255,22 @@ import shutil
 
 from flask import send_from_directory
 
-
-from coded_tools.legal_discovery.forensic_tools import ForensicTools
-from coded_tools.legal_discovery.knowledge_graph_manager import KnowledgeGraphManager
-from coded_tools.legal_discovery.timeline_manager import TimelineManager
-from coded_tools.legal_discovery.research_tools import ResearchTools
-from coded_tools.legal_discovery.document_modifier import DocumentModifier
 from coded_tools.legal_discovery.document_drafter import DocumentDrafter
+from coded_tools.legal_discovery.document_modifier import DocumentModifier
 from coded_tools.legal_discovery.document_processor import DocumentProcessor
 from coded_tools.legal_discovery.fact_extractor import FactExtractor
-from coded_tools.legal_discovery.privilege_detector import PrivilegeDetector
-from coded_tools.legal_discovery.ontology_loader import OntologyLoader
-from coded_tools.legal_discovery.legal_theory_engine import LegalTheoryEngine
-from coded_tools.legal_discovery.task_tracker import TaskTracker
-from coded_tools.legal_discovery.vector_database_manager import VectorDatabaseManager
-from coded_tools.legal_discovery.subpoena_manager import SubpoenaManager
-from coded_tools.legal_discovery.presentation_generator import PresentationGenerator
+from coded_tools.legal_discovery.forensic_tools import ForensicTools
 from coded_tools.legal_discovery.graph_analyzer import GraphAnalyzer
-
+from coded_tools.legal_discovery.knowledge_graph_manager import KnowledgeGraphManager
+from coded_tools.legal_discovery.legal_theory_engine import LegalTheoryEngine
+from coded_tools.legal_discovery.ontology_loader import OntologyLoader
+from coded_tools.legal_discovery.presentation_generator import PresentationGenerator
+from coded_tools.legal_discovery.privilege_detector import PrivilegeDetector
+from coded_tools.legal_discovery.research_tools import ResearchTools
+from coded_tools.legal_discovery.subpoena_manager import SubpoenaManager
+from coded_tools.legal_discovery.task_tracker import TaskTracker
+from coded_tools.legal_discovery.timeline_manager import TimelineManager
+from coded_tools.legal_discovery.vector_database_manager import VectorDatabaseManager
 
 # Allow hosting the corpus on an attached volume via UPLOAD_ROOT
 UPLOAD_FOLDER = os.environ.get("UPLOAD_ROOT", os.path.join(BASE_DIR, "uploads"))
@@ -359,10 +344,7 @@ def list_files():
     root = os.path.abspath(app.config["UPLOAD_FOLDER"])
     if not os.path.exists(root):
         return jsonify({"status": "ok", "data": []})
-    docs = {
-        os.path.relpath(doc.file_path, root): doc
-        for doc in Document.query.all()
-    }
+    docs = {os.path.relpath(doc.file_path, root): doc for doc in Document.query.all()}
     data = build_file_tree(root, len(root), docs)
     return jsonify({"status": "ok", "data": data})
 
@@ -388,11 +370,7 @@ def review_redaction(doc_id: int):
         doc.needs_review = False
     else:
         return jsonify({"error": "Invalid action"}), 400
-    db.session.add(
-        RedactionAudit(
-            document_id=doc.id, reviewer=reviewer, action=action, reason=reason
-        )
-    )
+    db.session.add(RedactionAudit(document_id=doc.id, reviewer=reviewer, action=action, reason=reason))
     db.session.commit()
     return jsonify({"status": "ok"})
 
@@ -453,15 +431,8 @@ def calendar_events():
     case_id = request.args.get("case_id")
     if not case_id:
         return jsonify({"status": "ok", "data": []})
-    events = (
-        CalendarEvent.query.filter_by(case_id=case_id)
-        .order_by(CalendarEvent.event_date)
-        .all()
-    )
-    data = [
-        {"id": e.id, "date": e.event_date.strftime("%Y-%m-%d"), "title": e.title}
-        for e in events
-    ]
+    events = CalendarEvent.query.filter_by(case_id=case_id).order_by(CalendarEvent.event_date).all()
+    data = [{"id": e.id, "date": e.event_date.strftime("%Y-%m-%d"), "title": e.title} for e in events]
     return jsonify({"status": "ok", "data": data})
 
 
@@ -579,11 +550,7 @@ def ingest_document(
         doc.is_redacted = True
         doc.needs_review = True
         for s in spans:
-            db.session.add(
-                RedactionLog(
-                    document_id=doc_id, start=s.start, end=s.end, label=s.label
-                )
-            )
+            db.session.add(RedactionLog(document_id=doc_id, start=s.start, end=s.end, label=s.label))
     else:
         shutil.copy(original_path, redacted_path)
         redacted_text = text
@@ -594,9 +561,7 @@ def ingest_document(
 
     VectorDatabaseManager().add_documents([redacted_text], [chroma_metadata], [str(doc_id)])
     kg = KnowledgeGraphManager()
-    result = kg.run_query(
-        "MERGE (c:Case {id: $id}) RETURN id(c) as cid", {"id": case_id}
-    )
+    result = kg.run_query("MERGE (c:Case {id: $id}) RETURN id(c) as cid", {"id": case_id})
     case_node = result[0]["cid"] if result else None
     doc_node = kg.create_node("Document", full_metadata)
     if case_node:
@@ -614,17 +579,32 @@ def ingest_document(
             actions=fact["actions"],
         )
         db.session.add(fact_row)
+        matches = match_elements(fact["text"], ontology)
+        if matches:
+            cause_name, element_name = matches[0]
+            element_row = (
+                Element.query.join(CauseOfAction)
+                .filter(
+                    CauseOfAction.name == cause_name,
+                    Element.name == element_name,
+                )
+                .first()
+            )
+            if element_row:
+                fact_row.element_id = element_row.id
         fact_id = None
         if case_node or doc_node:
             fact_id = kg.add_fact(case_node, doc_node, fact)
         if fact_id is not None:
-            for cause, element in match_elements(fact["text"], ontology):
+            for cause, element in matches:
                 kg.link_fact_to_element(fact_id, cause, element)
 
     kg.close()
 
+
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 MAX_TIMEOUT = 30  # seconds per file
+
 
 @app.route("/api/upload", methods=["POST"])
 def upload_files():
@@ -644,7 +624,7 @@ def upload_files():
         with open("skipped_files.log", "a", encoding="utf-8") as f:
             f.write(f"[{datetime.utcnow().isoformat()}] {name} — {reason}\n")
 
-    for batch_index, batch in enumerate([files[i:i + 10] for i in range(0, len(files), 10)]):
+    for batch_index, batch in enumerate([files[i : i + 10] for i in range(0, len(files), 10)]):
         app.logger.info(f"Starting batch {batch_index + 1}")
         batch_processed: list[str] = []
         futures: list[tuple] = []
@@ -701,11 +681,7 @@ def upload_files():
                 "sha256": file_hash,
                 "upload_time": str(time.time()),
             }
-            chroma_metadata = {
-                k: str(v)
-                for k, v in full_metadata.items()
-                if isinstance(v, (str, int, float, bool))
-            }
+            chroma_metadata = {k: str(v) for k, v in full_metadata.items() if isinstance(v, (str, int, float, bool))}
 
             with open(redacted_path + ".meta.json", "w") as f:
                 json.dump(full_metadata, f, indent=2)
@@ -769,6 +745,7 @@ def upload_files():
             )
 
     return jsonify({"status": "ok", "processed": processed, "skipped": skipped})
+
 
 @app.route("/api/export", methods=["GET"])
 def export_files():
@@ -872,9 +849,7 @@ def vector_add_documents():
     ids = data.get("ids")
     if not documents or not ids:
         return jsonify({"error": "Missing documents or ids"}), 400
-    metadatas = data.get("metadatas") or [
-        {"source": "api"} for _ in documents
-    ]
+    metadatas = data.get("metadatas") or [{"source": "api"} for _ in documents]
     metadatas = [md if md else {"source": "api"} for md in metadatas]
     if len(metadatas) != len(documents):
         return jsonify({"error": "Invalid metadata length"}), 400
@@ -996,9 +971,7 @@ def generate_deposition_questions():
     include_privileged = data.get("include_privileged", False)
     if not witness_id:
         return jsonify({"error": "Missing witness_id"}), 400
-    questions = DepositionPrep.generate_questions(
-        witness_id, include_privileged=include_privileged
-    )
+    questions = DepositionPrep.generate_questions(witness_id, include_privileged=include_privileged)
     return jsonify({"status": "ok", "data": questions})
 
 
@@ -1135,9 +1108,7 @@ def analyze_graph():
     analyzer = GraphAnalyzer()
     try:
         results = analyzer.analyze_centrality(subnet)
-        user_input_queue.put(
-            "Provide insights on the most connected entities in the case graph."
-        )
+        user_input_queue.put("Provide insights on the most connected entities in the case graph.")
     except Exception as exc:  # pragma: no cover - optional analysis may fail
         app.logger.error("Graph analysis failed: %s", exc)
         return jsonify({"error": str(exc)}), 500
@@ -1211,11 +1182,7 @@ def get_timeline():
     if not query:
         return jsonify({"status": "ok", "data": []})
 
-    events = (
-        TimelineEvent.query.filter_by(case_id=query)
-        .order_by(TimelineEvent.event_date)
-        .all()
-    )
+    events = TimelineEvent.query.filter_by(case_id=query).order_by(TimelineEvent.event_date).all()
 
     data = []
     for event in events:

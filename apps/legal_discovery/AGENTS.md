@@ -471,3 +471,9 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added contradiction detection with FactConflict records and prompt context.
 - Export supports PDF including case ID, timestamp, and footnoted sources; UI offers separate DOCX/PDF buttons with improved styling.
 - Next: implement deposition review approvals with permission controls.
+## Update 2025-08-04T14:30Z
+- Linked facts to ontology elements and generated cause support scores.
+- Next: weight confidence by document credibility and expose metrics in UI.
+## Update 2025-08-04T15:00Z
+- Documented knowledge graph tests and re-ran suite after review fixes.
+- Next: refine scoring weights for cause support metrics.
