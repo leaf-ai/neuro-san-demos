@@ -64,9 +64,11 @@ from apps.legal_discovery.models import (
     RedactionLog,
     TimelineEvent,
     Witness,
+    ChainOfCustodyLog,
 )
 from coded_tools.legal_discovery.deposition_prep import DepositionPrep
 from .exhibit_routes import exhibits_bp
+from .chain_logger import ChainEventType, log_event
 
 # Configure logging before any other setup so early steps are captured
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
@@ -627,13 +629,19 @@ def ingest_document(
                     reason=s.text,
                 )
             )
+        db.session.commit()
+        log_event(
+            doc_id,
+            ChainEventType.REDACTED,
+            metadata={"spans": [(s.start, s.end) for s in spans]},
+        )
     else:
         shutil.copy(original_path, redacted_path)
         redacted_text = text
         doc.is_privileged = False
         doc.is_redacted = False
         doc.needs_review = False
-    db.session.commit()
+        db.session.commit()
 
     VectorDatabaseManager().add_documents([redacted_text], [chroma_metadata], [str(doc_id)])
     kg = KnowledgeGraphManager()
@@ -679,6 +687,7 @@ def ingest_document(
                 kg.link_fact_to_element(fact_id, cause, element, weight)
 
     kg.close()
+    log_event(doc_id, ChainEventType.INGESTED, metadata={"path": redacted_path})
 
 
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
@@ -828,8 +837,37 @@ def upload_files():
 
 @app.route("/api/export", methods=["GET"])
 def export_files():
+    archive = "processed_files.zip"
     shutil.make_archive("processed_files", "zip", UPLOAD_FOLDER)
-    return send_from_directory(".", "processed_files.zip", as_attachment=True)
+    for doc in Document.query.all():
+        log_event(doc.id, ChainEventType.EXPORTED, metadata={"archive": archive})
+    return send_from_directory(".", archive, as_attachment=True)
+
+
+@app.route("/api/chain", methods=["GET"])
+def get_chain_log():
+    doc_id = request.args.get("document_id", type=int)
+    if not doc_id:
+        return jsonify({"error": "Missing document_id"}), 400
+    entries = (
+        ChainOfCustodyLog.query.filter_by(document_id=doc_id)
+        .order_by(ChainOfCustodyLog.timestamp)
+        .all()
+    )
+    return jsonify(
+        {
+            "document_id": doc_id,
+            "events": [
+                {
+                    "type": e.event_type.value,
+                    "timestamp": e.timestamp.isoformat(),
+                    "user_id": e.user_id,
+                    "metadata": e.event_metadata,
+                }
+                for e in entries
+            ],
+        }
+    )
 
 
 @app.route("/api/agents/forensic_analysis", methods=["POST"])
@@ -878,6 +916,9 @@ def redact_document():
         modifier.redact_text(file_path, text)
     except Exception as exc:  # pragma: no cover - filesystem errors
         return jsonify({"error": str(exc)}), 500
+    doc = Document.query.filter_by(file_path=file_path).first()
+    if doc:
+        log_event(doc.id, ChainEventType.REDACTED, metadata={"text": text})
     return jsonify({"message": "File redacted", "output": f"{file_path}_redacted.pdf"})
 
 
@@ -894,6 +935,9 @@ def bates_stamp_document():
         modifier.bates_stamp(file_path, prefix)
     except Exception as exc:  # pragma: no cover - filesystem errors
         return jsonify({"error": str(exc)}), 500
+    doc = Document.query.filter_by(file_path=file_path).first()
+    if doc:
+        log_event(doc.id, ChainEventType.STAMPED, metadata={"prefix": prefix})
     return jsonify({"message": "File stamped", "output": f"{file_path}_stamped.pdf"})
 
 
