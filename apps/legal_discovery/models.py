@@ -34,6 +34,12 @@ class TaskDependency(db.Model):
     depends_on_id = db.Column(db.Integer, db.ForeignKey("task.id"), nullable=False)
 
 
+class DocumentSource(enum.Enum):
+    USER = "user"
+    OPP_COUNSEL = "opp_counsel"
+    COURT = "court"
+
+
 class Document(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     case_id = db.Column(db.Integer, db.ForeignKey("case.id"), nullable=False)
@@ -42,6 +48,7 @@ class Document(db.Model):
     file_path = db.Column(db.String(255), nullable=False)
     content_hash = db.Column(db.String(64), nullable=False, unique=True)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
+    source = db.Column(db.Enum(DocumentSource), nullable=False, default=DocumentSource.USER)
     is_privileged = db.Column(db.Boolean, nullable=False, default=False)
     is_redacted = db.Column(db.Boolean, nullable=False, default=False)
     needs_review = db.Column(db.Boolean, nullable=False, default=False)
