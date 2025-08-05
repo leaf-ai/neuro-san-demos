@@ -20,6 +20,9 @@ from .graph_analyzer import GraphAnalyzer
 from .ontology_loader import OntologyLoader
 from .fact_extractor import FactExtractor
 from .legal_theory_engine import LegalTheoryEngine
+from .privilege_detector import PrivilegeDetector
+from .bates_numbering import BatesNumberingService, stamp_pdf
+from .deposition_prep import DepositionPrep
 
 __all__ = [
     "CaseManagementTools",
@@ -42,4 +45,8 @@ __all__ = [
     "OntologyLoader",
     "FactExtractor",
     "LegalTheoryEngine",
+    "PrivilegeDetector",
+    "BatesNumberingService",
+    "stamp_pdf",
+    "DepositionPrep",
 ]

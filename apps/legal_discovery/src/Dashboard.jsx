@@ -18,6 +18,7 @@ import PresentationSection from "./components/PresentationSection";
 import AgentNetworkSection from "./components/AgentNetworkSection";
 import SettingsModal from "./components/SettingsModal";
 import LegalTheorySection from "./components/LegalTheorySection";
+import DepositionPrepSection from "./components/DepositionPrepSection";
 const TABS = [
   {id:'network', label:'Agent Network', icon:'fa-sitemap'},
   {id:'overview', label:'Overview', icon:'fa-home'},
@@ -35,7 +36,8 @@ const TABS = [
   {id:'case', label:'Case Mgmt', icon:'fa-folder-open'},
   {id:'research', label:'Legal Research', icon:'fa-book-open'},
   {id:'subpoena', label:'Subpoena', icon:'fa-gavel'},
-  {id:'presentation', label:'Trial Prep', icon:'fa-slideshare'}
+  {id:'presentation', label:'Trial Prep', icon:'fa-slideshare'},
+  {id:'deposition', label:'Deposition Prep', icon:'fa-user-tie'}
 ];
 
 function Dashboard() {
@@ -79,6 +81,7 @@ function Dashboard() {
       <div className="tab-content" style={{display: tab==='research'?'block':'none'}} id="tab-research"><ResearchSection/></div>
       <div className="tab-content" style={{display: tab==='subpoena'?'block':'none'}} id="tab-subpoena"><SubpoenaSection/></div>
       <div className="tab-content" style={{display: tab==='presentation'?'block':'none'}} id="tab-presentation"><PresentationSection/></div>
+      <div className="tab-content" style={{display: tab==='deposition'?'block':'none'}} id="tab-deposition"><DepositionPrepSection/></div>
       <SettingsModal open={showSettings} onClose={()=>setShowSettings(false)}/>
     </div>
   );

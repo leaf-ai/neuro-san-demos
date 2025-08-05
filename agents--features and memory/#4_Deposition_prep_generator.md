@@ -1,128 +1,141 @@
-✅ Deposition Prep Generator: Technical Plan of Action
-GOAL:
-Automate deposition outlines by linking witnesses to documents, extracting facts, and generating question sets based on available evidence.
+**Improved Prompt:**
 
-1. Witness–Document Linking
-📌 NLP Pipeline Enhancement
-Tooling: spaCy (custom legal model), or HuggingFace transformer with entity linking.
+---
 
-Process:
+**🗂️ Comprehensive Exhibit & Trial Binder Creator Development Plan**
 
-NER + Role Classifier: During ingestion, tag all people in the document and classify their role:
+⚖️ **Objective:**
+Create a meticulous, step-by-step implementation guide for developing a trial-ready exhibit binder system. This system should include functionality for cover sheets, Bates numbering, privilege management, and chain-of-custody documentation, ensuring legal integrity throughout the process. 
 
-Witness, Party, Lawyer, Expert, Judge, etc.
+---
 
-Use dependency parsing or relation extraction (e.g. via spaCy’s ent_rel patterns or transformers with REBEL) to connect entities to actions/facts.
+### **System Design Overview:**
 
-📌 Data Storage
-PostgreSQL:
+**1. Core Components:**
+   - **Document Model Extension:** Enhance the existing SQL Document model to support exhibit-specific attributes.
+   - **Exhibit Manager Service:** Develop a dedicated service for managing exhibit-related operations.
+   - **User Interface Integration:** Create an intuitive UI for tagging, organizing, and exporting exhibits.
+   - **Binder Generation Logic:** Implement functionality for generating binders in PDF/ZIP formats.
+   - **Compliance Checks:** Integrate a cross-checking system for legal compliance before export.
 
-witnesses table: stores names, roles, associated case, linked user ID if available.
+---
 
-document_witness_link: M:N table linking docs and witnesses.
+### **Detailed Implementation Steps:**
 
-Neo4j Graph:
+#### **Step 1: Document Model Extension**
 
-Nodes: (Witness {name, role})
+1. **Database Schema Updates:**
+   - Modify the existing Document SQL model to include the following fields:
+     ```python
+     class Document(db.Model):
+         ...
+         is_exhibit = db.Column(db.Boolean, default=False)
+         exhibit_number = db.Column(db.String, unique=True)
+         exhibit_title = db.Column(db.String)
+     ```
 
-Edges:
+2. **Neo4j Node Update:**
+   - Update the corresponding Neo4j node structure to reflect these new fields.
 
-(:Document)-[:MENTIONS|LINKED_TO]->(:Witness)
+---
 
-(:Fact)-[:ASSERTED_BY]->(:Witness)
+#### **Step 2: Exhibit Manager Service Development**
 
-2. Fact & Evidence Aggregation
-📌 Evidence Corpus
-Build or query from:
+1. **Service File Creation:**
+   - Create a new service file named `exhibit_manager.py`.
 
-Facts extracted during ingestion
+2. **Function for Assigning Exhibit Numbers:**
+   - Implement a function to assign exhibit numbers:
+     ```python
+     def assign_exhibit_number(document_id, title=None):
+         next_num = get_next_exhibit_counter()
+         doc = Document.query.get(document_id)
+         doc.exhibit_number = f"EX_{next_num:04}"
+         doc.exhibit_title = title or doc.name
+         doc.is_exhibit = True
+         db.session.commit()
+     ```
 
-Vector search results for document similarity
+3. **Exhibit Counter Table:**
+   - Create a new SQL table `exhibit_counter` to manage the next available exhibit number per case.
 
-Entity-aware chunking (keep facts and context together)
+---
 
-📌 Consistency Checking
-Use contradiction detection (e.g. via entailment model like RoBERTa trained on MNLI):
+#### **Step 3: User Interface Integration**
 
-Detect when two docs/witnesses state conflicting timelines or conclusions.
+1. **Document View Modifications:**
+   - Add a checkbox labeled “Mark as Exhibit” in the document view.
+   - Implement an AJAX call to `assign_exhibit_number` when the checkbox is selected.
 
-Flag for review.
+2. **Exhibit Organizer View:**
+   - Develop a new tab titled "Exhibits" featuring:
+     - A sortable table with columns for Exhibit Number, Title, Bates Start, Page Count, and Privilege Flag.
+     - Functionality to reorder, retitle, and remove exhibit status.
 
-3. Question Generation Module
-📌 File: deposition_prep.py
-a. Input:
-witness_id
+---
 
-Optional: scope (date range, Bates range, topic)
+#### **Step 4: PDF Binder Generation**
 
-b. Steps:
-Pull all facts/docs tied to witness.
+1. **Cover Sheet Renderer Implementation:**
+   - Utilize libraries like ReportLab or PyMuPDF to create cover sheets for each exhibit:
+     ```python
+     def create_cover_sheet(exhibit):
+         ...
+     ```
 
-Bucket by:
+2. **PDF Merging Logic:**
+   - Implement a function to merge cover sheets with exhibit files:
+     ```python
+     def generate_binder(case_id):
+         ...
+         for exhibit in exhibits:
+             cover_sheet = create_cover_sheet(exhibit)
+             merge_pdf(cover_sheet, exhibit.file_path)
+         save_final_binder(case_id)
+     ```
 
-Chronology
+---
 
-Subject Matter
+#### **Step 5: Export Options Implementation**
 
-Legal Issue
+1. **Export Binder Button:**
+   - Create an "Export Binder" button in the UI with options for:
+     - Full PDF binder.
+     - ZIP of all exhibits with a JSON metadata file.
 
-Use prompt template:
+2. **Export Format Structures:**
+   - Define the directory structure for TrialPad and OnCue exports:
+     ```
+     TrialPad_Exhibits/
+       EX_0001_Title.pdf
+       manifest.json
+     ```
 
-pgsql
-Copy code
-You are preparing for a deposition of {witness_name}, who is mentioned in the following facts: {facts}.
-Generate detailed questions grouped by category: background, events, inconsistencies, damages.
-Include source reference (e.g. document name or Bates number) for each.
-Generate 10–20 questions per witness using:
+---
 
-Claude 3 / GPT-4 / Gemini (adjust prompt to your LLM)
+#### **Step 6: Validation & Safety Checks**
 
-Optionally fine-tune a mini LLM for local usage
+1. **Compliance Checks Before Export:**
+   - Implement validation functions to ensure:
+     - All exhibits have Bates numbers.
+     - Privileged documents are flagged appropriately.
 
-4. UI/UX Integration
-📌 Tabs & Panels
-New Tab: “Deposition Prep”
+2. **Audit Logging:**
+   - Create an `exhibit_audit_log` table to track:
+     - User actions on exhibits.
+     - Timestamps and modifications made.
 
-Sidebar:
+---
 
-Dropdown: Select Case → Witness
+### **Expected Outcome:**
+By following this implementation plan, you will achieve:
+- A streamlined and legally compliant exhibit preparation process.
+- An organized output suitable for court presentation.
+- A robust backend infrastructure supporting trial workflows.
 
-Checkbox: “Include documents marked as privileged?”
+---
 
-Button: “Generate Questions”
+**Please provide a complete step-by-step implementation plan, including code snippets and clear instructions for each component outlined above. Focus on technical accuracy and clarity to facilitate development.** 
 
-Main Panel:
-
-Editable question list
-
-Inline reference to linked document/fact
-
-Buttons: “Regenerate”, “Flag Fact”, “Export Outline”
-
-📌 Export
-PDF or Word export via python-docx or WeasyPrint
-
-Include:
-
-Witness name, case ID
-
-Timestamp
-
-Question numbering
-
-Bates refs (as hyperlinked footnotes)
-
-5. Audit & Human Review
-📌 Permissions:
-Only attorneys or case admins can approve or export questions.
-
-Add a review log (table: deposition_review_log) with:
-
-reviewer_id, timestamp, approved, notes, witness_id
-
-🔧 Optional Enhancements (Stretch Goals)
-Feature	Description
-📊 Topic Heatmap	Show witness-topic intensity map
-🧠 Reinforcement Loop	Attorneys can “thumbs up/down” question quality to fine-tune model
-🎯 Salient Docs First	Rank documents by importance to witness using centrality or vector relevance
-🕵️‍♂️ Contradiction Mode	Show fact pairs with contradiction risk score
+**Desired Outcome:** A comprehensive, highly detailed, and technical plan for execution with clear steps and sub-steps.  
+**Target Model:** Codex/ChatGPT.

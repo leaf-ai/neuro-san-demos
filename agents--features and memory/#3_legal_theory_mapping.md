@@ -1,211 +1,142 @@
-⚖️ Legal Theory Mapping (Expanded)
-🎯 Problem (Reframed)
-Legal professionals are drowning in facts and documents, but litigation isn’t won on facts alone — it’s won on legal theories: persuasive, structured narratives backed by admissible evidence that satisfy the elements of a claim or defense.
+# Enhanced Prompt for Legal Theory Mapping System
 
-Right now, building those theories is:
+## ⚖️ Legal Theory Mapping (Expanded)
 
-Manual
+### 🎯 Problem Statement
+Legal professionals are inundated with facts and documents, yet litigation success hinges on crafting compelling legal theories. These theories are persuasive, structured narratives supported by admissible evidence that address the elements of a claim or defense. Currently, the process of developing these theories is:
 
-Time-consuming
+- **Manual**
+- **Time-consuming**
+- **Highly dependent on individual experience**
 
-Highly dependent on individual experience
+### ✅ Solution Vision
+Develop a system that can automatically generate legal theories grounded in your document corpus and legal knowledge graph. This system will leverage:
 
-✅ Your Solution Vision
-Create a system that auto-generates legal theories grounded in your document corpus and legal knowledge graph, using a mix of:
+- **Natural Language Processing (NLP) and embeddings**
+- **Ontologies of causes of action and elements**
+- **Graph reasoning**
+- **Retrieval-augmented generation (RAG)**
 
-NLP/embeddings
+### 🧠 System Architecture & Flow
 
-Ontologies of causes of action and elements
+#### 1. Legal Theory Ontology
+Create a structured model of legal theories, including:
 
-Graph reasoning
+- **Causes of Action** (e.g., breach of contract, fraud, battery)
+- **Required Elements** for each cause
+- **Possible Defenses**
+- **Typical Factual Indicators** (e.g., false statement, reliance, damages)
 
-Retrieval-augmented generation (RAG)
+**Data Source Options:**
+- California Jury Instructions (CACI)
+- Cornell's Legal Information Institute (LII)
+- Manual extraction (begin with a few causes, expand over time)
 
-🧠 System Architecture & Flow
-1. Legal Theory Ontology
-You need a structured model of legal theories.
-This includes:
+#### 2. Fact/Theme Extraction via Embeddings
+Utilize existing resources such as a vector store and a document processor with Chroma/Neo4j. Implement the following steps:
 
-Causes of action (e.g., breach of contract, fraud, battery)
+- Break documents into semantic chunks.
+- Apply entity recognition and topic modeling to extract:
+  - Parties
+  - Actions
+  - Dates
+  - Causality
+  - Contradictions
+- Use vector similarity and keyword hybrid queries to tag evidence with:
+  - Likely causes of action
+  - Elements satisfied
+  - Inferred relationships
 
-Required elements for each cause
+#### 3. Graph-Based Case Theory Model
+Store and visualize relationships in Neo4j:
 
-Possible defenses
-
-Typical factual indicators (e.g., false statement, reliance, damages)
-
-🛠 Data source options:
-
-CA Jury Instructions (CACI)
-
-Cornell's LII
-
-Manual extraction (start with a few causes, expand over time)
-
-2. Fact/Theme Extraction via Embeddings
-You already have:
-
-A vector store
-
-A document processor
-
-Chroma/Neo4j in play
-
-Here’s how to leverage that:
-
-Break all docs into semantic chunks
-
-Apply entity recognition and topic modeling to pull:
-
-Parties
-
-Actions
-
-Dates
-
-Causality
-
-Contradictions
-
-Use vector similarity + keyword hybrid queries to tag evidence with likely:
-
-Causes of action
-
-Elements satisfied
-
-Inferred relationships
-
-3. Graph-Based Case Theory Model
-Store relationships in Neo4j:
-
-ruby
-Copy code
+```plaintext
 (:Fact)-[:SUPPORTS]->(:Element)-[:BELONGS_TO]->(:CauseOfAction)
 (:Fact)-[:DISPUTED_BY]->(:Document)
 (:Fact)-[:ORIGINATED_IN]->(:Deposition|:Email|:Message)
 (:CauseOfAction)-[:DEFENDED_BY]->(:Defense)
-→ This gives you visual, queryable maps of your case theories.
+```
 
-4. Legal Theory Suggestion Engine
-Use a multi-step agent process:
+This provides visual, queryable maps of case theories.
 
-Query: For each cause of action in your ontology, check if any elements are satisfied by facts in the evidence.
+#### 4. Legal Theory Suggestion Engine
+Implement a multi-step agent process:
 
-Aggregate: Build clusters of facts supporting a theory
+- **Query**: For each cause of action, verify if any elements are satisfied by facts in the evidence.
+- **Aggregate**: Cluster facts supporting a theory.
+- **Rank**: Score theories based on:
+  - Number of elements satisfied
+  - Strength of factual support
+  - Consistency across documents
+- **Generate Summary**: Produce a legal theory candidate such as:
 
-Rank: Score theories by:
-
-Number of elements satisfied
-
-Strength of factual support
-
-Consistency across documents
-
-Generate Summary: Output a legal theory candidate like:
-
-plaintext
-Copy code
+```plaintext
 Suggested Theory: Intentional Infliction of Emotional Distress
-
 - Extreme & outrageous conduct: Texts from May 3–6 show repeated threats.
 - Intent: Language such as “I want you to suffer” (May 4).
 - Severe emotional distress: Deposition of Plaintiff, lines 210–232.
-You can generate these via RAG + prompt engineering from your Neo4j & Chroma data.
+```
 
-5. Interactive Legal Theory Builder UI
-Let the user:
+Generate these via RAG and prompt engineering from your Neo4j & Chroma data.
 
-Click a theory (e.g., Fraud)
+#### 5. Interactive Legal Theory Builder UI
+Enable users to:
 
-See how many elements are supported
+- Click a theory (e.g., Fraud)
+- See supported elements
+- View linked documents
+- Approve, reject, or comment on theories
+- Export theories to:
+  - Motion drafts
+  - Statement of facts
+  - Pretrial statements
 
-View documents linked to each element
+### 💼 Value Proposition
+| User Type         | Benefit                                    |
+|-------------------|--------------------------------------------|
+| Solo Litigant     | Confidence in structuring claims or defenses |
+| Plaintiff-Side Firm | Faster intake and better damage theories  |
+| Defense Counsel   | Early case assessment and trial preparation |
+| Judges/Clerks     | Structured review of legal sufficiency      |
 
-Manually approve, reject, or comment
+### 🛠 Optional Enhancements
+- **Timeline Overlay**: Display when facts supporting each element occurred.
+- **Contradiction Detector**: Flag supporting facts contradicted by later documents.
+- **Jurisdiction-Aware Theories**: Filter elements based on state/federal distinctions.
 
-Export theory to:
+### 🧪 Prototype MVP Prompt
+For initial development, use the following prompt:
 
-Motion draft
+"Given this document set, suggest all possible causes of action that may apply, including a list of elements for each and which documents support each element."
 
-Statement of facts
+### Implementation Plan for Legal Theory Mapping in `neuro-san-studio-2`
 
-Pretrial statement
+#### 1. Establish Legal Theory Ontology
+- Create a structured ontology file (`legal_theory_ontology.json`) under `coded_tools/legal_discovery/`.
+- Extend `apps/legal_discovery/models.py` with relational tables.
+- Provide helper loaders to expose ontology to Flask routes and coded tools.
 
-💼 Why This Is Valuable (In Real Life)
-User Type	What They Gain
-Solo litigant	Confidence in structuring claims or defenses
-Plaintiff-side firm	Faster intake + better damage theories
-Defense counsel	Early case assessment + trial prep tools
-Judges/clerks	(Eventually) structured review of legal sufficiency
+#### 2. Implement Fact and Theme Extraction
+- Develop `fact_extractor.py` using NLP for semantic chunking and tagging.
+- Utilize `VectorDatabaseManager` for embeddings and store extracted data.
 
-🛠 Optional Power-Ups
-Timeline overlay: Show when facts supporting each element occurred
+#### 3. Extend Neo4j Graph Model
+- Enhance `KnowledgeGraphManager` for new relationship types.
+- Provide cleanup and subgraph retrieval routines.
 
-Contradiction detector: Flag when supporting facts are undermined by later docs
+#### 4. Build Legal Theory Suggestion Engine
+- Create `legal_theory_engine.py` for ontology loading and Neo4j/Chroma querying.
+- Expose REST endpoints for structured results.
 
-Jurisdiction-aware theories: Filter elements based on state/federal distinctions
+#### 5. Interactive Legal Theory Builder UI
+- Develop `LegalTheorySection.jsx` for user interaction.
+- Integrate with new Flask endpoints.
 
-🧪 Prototype MVP Prompt (for now)
-Here’s a simple dev prompt to bootstrap a prototype:
+### Configuration and Testing
+- Register new tools in `registries/legal_discovery.hocon`.
+- Update dependencies and Docker configurations.
+- Add unit tests and documentation.
 
-“Given this document set, suggest all possible causes of action that may apply, including a list of elements for each and which documents support each element.”
+Log progress in `AGENTS.md` files with completed steps and next actions.
 
-Once that works with 1–2 causes, wire it to Neo4j/Chroma and scale.
-Plan for Implementing Legal Theory Mapping in neuro-san-studio-2
-Establish Legal Theory Ontology
-
-Create a structured ontology (legal_theory_ontology.json or similar) under coded_tools/legal_discovery/ describing causes of action, required elements, common defenses, and typical factual indicators.
-
-Extend apps/legal_discovery/models.py with relational tables for CauseOfAction, Element, Defense, and Fact, linking facts to source documents and the existing LegalTheory model, which currently only holds a name and description.
-
-Provide helper loaders to expose this ontology to both Flask routes and coded tools while aligning with root instructions for production-ready code and manifest integration.
-
-Implement Fact and Theme Extraction
-
-Introduce coded_tools/legal_discovery/fact_extractor.py that uses NLP (NER, topic modeling) to break ingested documents into semantic chunks, identify parties, actions, dates, causality, and contradictions, then tag candidate causes and elements.
-
-Use existing VectorDatabaseManager for embeddings and hybrid queries; store extracted facts and metadata back into the new Fact table and Neo4j nodes.
-
-Update ingestion pipeline in interface_flask.py to invoke the extractor after each upload, ensuring Flask routes and UI remain synchronized per module guidelines.
-
-Extend Neo4j Graph Model
-
-Augment KnowledgeGraphManager with new methods to persist (:Fact)-[:SUPPORTS]->(:Element)-[:BELONGS_TO]->(:CauseOfAction) and related relationships (e.g., :DISPUTED_BY, :DEFENDED_BY), building on existing node/relationship utilities.
-
-Provide cleanup and subgraph retrieval routines for these new types to maintain visual, queryable case-theory maps.
-
-Build Legal Theory Suggestion Engine
-
-Create coded_tools/legal_discovery/legal_theory_engine.py that:
-
-Loads ontology and queries Neo4j/Chroma for supporting facts.
-
-Evaluates each cause of action by counting satisfied elements and scoring factual strength.
-
-Generates RAG-based summaries for candidate theories.
-
-Expose REST endpoints in apps/legal_discovery/interface_flask.py (e.g., /api/theories/suggest, /api/theories/<id>), returning structured results.
-
-Interactive Legal Theory Builder UI
-
-Add LegalTheorySection.jsx under apps/legal_discovery/src/components/ with a new dashboard tab allowing users to:
-
-View suggested theories, elements, and supporting documents.
-
-Approve/reject theories and export them to motion drafts or statements.
-
-Wire the component to the new Flask endpoints, apply the existing dark theme and design tokens for visual consistency, and ensure responsive behavior.
-
-Registries and Configuration
-
-Register fact_extractor and legal_theory_engine in registries/legal_discovery.hocon so the orchestrator can delegate tasks to these tools.
-
-Update apps/legal_discovery/requirements.txt and Dockerfiles/docker-compose to include new dependencies (e.g., spaCy, graph libraries) while keeping Windows compatibility and documenting any gunicorn changes.
-
-Testing and Documentation
-
-Add unit tests under tests/coded_tools/legal_discovery/ for ontology loading, fact extraction, graph persistence, and theory suggestion logic.
-
-Update apps/legal_discovery/README.md with setup instructions, data-source references (e.g., CACI, LII), and usage examples.
-
-Log progress in both AGENTS.md files before each commit, noting completed steps and next actions.
+This comprehensive plan ensures the development of a robust, automated legal theory mapping system that enhances efficiency and accuracy in legal proceedings.

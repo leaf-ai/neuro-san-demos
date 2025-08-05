@@ -36,15 +36,34 @@ class Document(db.Model):
     case_id = db.Column(db.Integer, db.ForeignKey("case.id"), nullable=False)
     name = db.Column(db.String(255), nullable=False)
     bates_number = db.Column(db.String(100), nullable=True)
-    privilege_status = db.Column(db.String(50), nullable=True)
     file_path = db.Column(db.String(255), nullable=False)
     content_hash = db.Column(db.String(64), nullable=False, unique=True)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
+    is_privileged = db.Column(db.Boolean, nullable=False, default=False)
+    is_redacted = db.Column(db.Boolean, nullable=False, default=False)
+    needs_review = db.Column(db.Boolean, nullable=False, default=False)
     metadata_entries = db.relationship(
         "DocumentMetadata",
         backref="document",
         lazy=True,
         cascade="all, delete-orphan",
+    )
+    redaction_logs = db.relationship(
+        "RedactionLog",
+        backref="document",
+        lazy=True,
+        cascade="all, delete-orphan",
+    )
+    redaction_audits = db.relationship(
+        "RedactionAudit",
+        backref="document",
+        lazy=True,
+        cascade="all, delete-orphan",
+    )
+    witnesses = db.relationship(
+        "Witness",
+        secondary="document_witness_link",
+        backref=db.backref("documents", lazy=True),
     )
 
 
@@ -53,6 +72,37 @@ class DocumentMetadata(db.Model):
     document_id = db.Column(db.Integer, db.ForeignKey("document.id"), nullable=False)
     schema = db.Column(db.String(50), nullable=False)
     data = db.Column(db.JSON, nullable=False)
+
+
+class RedactionLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    document_id = db.Column(db.Integer, db.ForeignKey("document.id"), nullable=False)
+    start = db.Column(db.Integer, nullable=False)
+    end = db.Column(db.Integer, nullable=False)
+    label = db.Column(db.String(100), nullable=False)
+    reason = db.Column(db.String(255), nullable=True)
+
+
+class RedactionAudit(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    document_id = db.Column(db.Integer, db.ForeignKey("document.id"), nullable=False)
+    reviewer = db.Column(db.String(255), nullable=True)
+    action = db.Column(db.String(20), nullable=False)
+    timestamp = db.Column(db.DateTime, server_default=db.func.now())
+    reason = db.Column(db.Text, nullable=True)
+
+
+class Witness(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    role = db.Column(db.String(50), nullable=True)
+    associated_case = db.Column(db.Integer, db.ForeignKey("case.id"), nullable=True)
+    linked_user_id = db.Column(db.Integer, nullable=True)
+
+
+class DocumentWitnessLink(db.Model):
+    document_id = db.Column(db.Integer, db.ForeignKey("document.id"), primary_key=True)
+    witness_id = db.Column(db.Integer, db.ForeignKey("witness.id"), primary_key=True)
 
 
 class KnowledgeGraph(db.Model):
@@ -210,9 +260,48 @@ class Fact(db.Model):
     dates = db.Column(db.JSON, nullable=True)
     actions = db.Column(db.JSON, nullable=True)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
+    witness_id = db.Column(db.Integer, db.ForeignKey("witness.id"), nullable=True)
 
     document = db.relationship("Document", backref=db.backref("facts", lazy=True))
     legal_theory = db.relationship(
         "LegalTheory", backref=db.backref("facts", lazy=True)
     )
     element = db.relationship("Element", backref=db.backref("facts", lazy=True))
+    witness = db.relationship("Witness", backref=db.backref("facts", lazy=True))
+
+
+class DepositionQuestion(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    witness_id = db.Column(db.Integer, db.ForeignKey("witness.id"), nullable=False)
+    category = db.Column(db.String(50), nullable=False)
+    question = db.Column(db.Text, nullable=False)
+    source = db.Column(db.String(255), nullable=True)
+    flagged = db.Column(db.Boolean, nullable=False, default=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+    witness = db.relationship("Witness", backref=db.backref("questions", lazy=True))
+
+
+class DepositionReviewLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    reviewer_id = db.Column(db.Integer, db.ForeignKey("agent.id"), nullable=False)
+    witness_id = db.Column(db.Integer, db.ForeignKey("witness.id"), nullable=False)
+    timestamp = db.Column(db.DateTime, server_default=db.func.now())
+    approved = db.Column(db.Boolean, default=False)
+    notes = db.Column(db.Text, nullable=True)
+
+    witness = db.relationship("Witness", backref=db.backref("reviews", lazy=True))
+    reviewer = db.relationship("Agent", backref=db.backref("deposition_reviews", lazy=True))
+
+class FactConflict(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    witness_id = db.Column(db.Integer, db.ForeignKey("witness.id"), nullable=False)
+    fact1_id = db.Column(db.Integer, db.ForeignKey("fact.id"), nullable=False)
+    fact2_id = db.Column(db.Integer, db.ForeignKey("fact.id"), nullable=False)
+    score = db.Column(db.Float, nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+    fact1 = db.relationship("Fact", foreign_keys=[fact1_id])
+    fact2 = db.relationship("Fact", foreign_keys=[fact2_id])
+    witness = db.relationship("Witness", backref=db.backref("conflicts", lazy=True))

@@ -130,4 +130,13 @@ WE STARTED ON #3, INSTEAD OF #1. DEAL WITH IT, FINISH IMPLEMENTING #3, AND THEN 
 - Enhanced theory mapping with spaCy-weighted element matching and progress bars
 - Completed 3.6 improving NLP heuristics and weighting for case theory scores
 - Next: pivot to feature #1 research planning
+=======
+## Update 2025-08-04T08:30Z
+- Began feature #4 deposition prep generator: introduced witness models, question generation tool, export endpoint and React tab.
+- Next: add contradiction detection and PDF export options.
+
+## Update 2025-08-04T09:30Z
+- Added FactConflict model and contradiction detection during deposition prep.
+- Export now supports PDF with case metadata and source footnotes; React tab offers DOCX/PDF buttons with styled list items.
+- Next: implement review logging and attorney approval workflow.
 

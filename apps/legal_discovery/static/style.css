@@ -485,6 +485,14 @@ pre {
     display: block;
 }
 
+.folder-tree .file.privileged {
+    color: #ff6b6b;
+}
+
+.folder-tree .file.privileged i {
+    color: var(--primary-color);
+}
+
 .highlight { background: var(--primary-color); }
 
 progress {

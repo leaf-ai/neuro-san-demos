@@ -707,6 +707,10 @@ You will draft motions, briefs, and legal documents as needed.
             "class": "legal_discovery.fact_extractor.FactExtractor"
         },
         {
+            "name": "privilege_detector",
+            "class": "legal_discovery.privilege_detector.PrivilegeDetector"
+        },
+        {
             "name": "legal_theory_engine",
             "class": "legal_discovery.legal_theory_engine.LegalTheoryEngine"
         },

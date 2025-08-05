@@ -452,3 +452,28 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Weighted element links with spaCy similarity and Jaccard heuristics
 - Surfaced element scores in Case Theory tab with neon progress bars
 - Next: expand ontology vocabulary and tune similarity thresholds
+
+## Update 2025-08-04T09:30Z
+- Automated privilege detection with redaction logs and audit trail
+- Upload pipeline stores originals securely and serves redacted copies
+- Document tree marks privileged files for review with stealth icon
+- Next: surface override controls in dashboard
+
+## Update 2025-08-04T10:14Z
+- Added dispute and origin relationships to KnowledgeGraphManager and cause subgraph export
+- Expanded ontology tests and graph relationship coverage
+- Next: incorporate scoring weights and timeline overlays in theory engine
+## Update 2025-08-04T11:00Z
+
+- Expanded legal theory ontology with negligence, defamation, false imprisonment, intentional infliction of emotional distress, and strict products liability.
+- LegalTheoryEngine now exposes defenses and factual indicators alongside element support scores.
+- Next: implement weighted scoring and add jurisdiction-specific defenses.
+
+## Update 2025-08-04T12:00Z
+- Introduced witness models and deposition prep tool with question generation, export, and React dashboard tab.
+- Next: enhance review logging and offer PDF export.
+
+## Update 2025-08-04T13:30Z
+- Added contradiction detection with FactConflict records and prompt context.
+- Export supports PDF including case ID, timestamp, and footnoted sources; UI offers separate DOCX/PDF buttons with improved styling.
+- Next: implement deposition review approvals with permission controls.

@@ -19,6 +19,7 @@ from flask import Flask
 from flask import jsonify
 from flask import render_template
 from flask import request
+from flask import send_file
 from werkzeug.utils import secure_filename
 from flask_socketio import SocketIO
 
@@ -37,6 +38,7 @@ from pyhocon import ConfigFactory
 
 from apps.legal_discovery import settings
 from apps.legal_discovery.database import db
+from coded_tools.legal_discovery.deposition_prep import DepositionPrep
 from apps.legal_discovery.models import (
     Case,
     Document,
@@ -46,6 +48,11 @@ from apps.legal_discovery.models import (
     CalendarEvent,
     LegalTheory,
     Fact,
+    RedactionLog,
+    RedactionAudit,
+    Witness,
+    DepositionQuestion,
+    DepositionReviewLog,
 )
 
 # Configure logging before any other setup so early steps are captured
@@ -274,6 +281,7 @@ from coded_tools.legal_discovery.document_modifier import DocumentModifier
 from coded_tools.legal_discovery.document_drafter import DocumentDrafter
 from coded_tools.legal_discovery.document_processor import DocumentProcessor
 from coded_tools.legal_discovery.fact_extractor import FactExtractor
+from coded_tools.legal_discovery.privilege_detector import PrivilegeDetector
 from coded_tools.legal_discovery.ontology_loader import OntologyLoader
 from coded_tools.legal_discovery.legal_theory_engine import LegalTheoryEngine
 from coded_tools.legal_discovery.task_tracker import TaskTracker
@@ -285,7 +293,11 @@ from coded_tools.legal_discovery.graph_analyzer import GraphAnalyzer
 
 # Allow hosting the corpus on an attached volume via UPLOAD_ROOT
 UPLOAD_FOLDER = os.environ.get("UPLOAD_ROOT", os.path.join(BASE_DIR, "uploads"))
+SECURE_FOLDER = os.path.join(UPLOAD_FOLDER, "_original")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(SECURE_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config["SECURE_FOLDER"] = SECURE_FOLDER
 ALLOWED_EXTENSIONS = {"pdf", "txt", "csv", "doc", "docx", "ppt", "pptx", "jpg", "jpeg", "png", "gif"}
 MAX_FILE_SIZE = 1 * 1024 * 1024 * 1024  # 1GB
 
@@ -348,13 +360,31 @@ def match_elements(text: str, ontology: dict) -> list[tuple[str, str, float]]:
 
 
 def build_file_tree(directory: str, root_length: int) -> list:
+def match_elements(text: str, ontology: dict) -> list[tuple[str, str]]:
+    """Return (cause, element) pairs whose keywords appear in ``text``."""
+    matches: list[tuple[str, str]] = []
+    lower = text.lower()
+    for cause, data in ontology.get("causes_of_action", {}).items():
+        for element in data.get("elements", []):
+            tokens = [t for t in element.lower().split() if len(t) > 3]
+            if any(tok in lower for tok in tokens):
+                matches.append((cause, element))
+    return matches
+
+
+def build_file_tree(directory: str, root_length: int, docs: dict[str, Document]) -> list:
     """Recursively build a file tree structure."""
     tree = []
     for entry in os.scandir(directory):
+        if entry.name.startswith("_"):
+            continue
         rel_path = entry.path[root_length:].lstrip(os.sep)
         node = {"path": rel_path, "name": entry.name}
+        doc = docs.get(rel_path)
+        if doc:
+            node["privileged"] = doc.is_privileged
         if entry.is_dir():
-            node["children"] = build_file_tree(entry.path, root_length)
+            node["children"] = build_file_tree(entry.path, root_length, docs)
         tree.append(node)
     return sorted(tree, key=lambda x: (not x.get("children"), x["name"]))
 
@@ -365,8 +395,42 @@ def list_files():
     root = os.path.abspath(app.config["UPLOAD_FOLDER"])
     if not os.path.exists(root):
         return jsonify({"status": "ok", "data": []})
-    data = build_file_tree(root, len(root))
+    docs = {
+        os.path.relpath(doc.file_path, root): doc
+        for doc in Document.query.all()
+    }
+    data = build_file_tree(root, len(root), docs)
     return jsonify({"status": "ok", "data": data})
+
+
+@app.route("/api/redaction/<int:doc_id>", methods=["POST"])
+def review_redaction(doc_id: int):
+    """Confirm or override a document's redaction status."""
+    data = request.get_json() or {}
+    action = data.get("action")
+    reason = data.get("reason")
+    reviewer = data.get("reviewer")
+    doc = Document.query.get_or_404(doc_id)
+    if action == "override":
+        doc.is_privileged = False
+        doc.is_redacted = False
+        doc.needs_review = False
+        orig = os.path.join(app.config["SECURE_FOLDER"], doc.name)
+        try:
+            shutil.copy(orig, doc.file_path)
+        except OSError:
+            pass
+    elif action == "confirm":
+        doc.needs_review = False
+    else:
+        return jsonify({"error": "Invalid action"}), 400
+    db.session.add(
+        RedactionAudit(
+            document_id=doc.id, reviewer=reviewer, action=action, reason=reason
+        )
+    )
+    db.session.commit()
+    return jsonify({"status": "ok"})
 
 
 @app.route("/api/agents", methods=["GET"])
@@ -525,7 +589,8 @@ def cleanup_upload_folder(max_age_hours: int = 24) -> None:
 
 
 def ingest_document(
-    save_path: str,
+    original_path: str,
+    redacted_path: str,
     doc_id: int,
     case_id: int,
     full_metadata: dict,
@@ -533,8 +598,37 @@ def ingest_document(
 ) -> None:
     """Extract, vectorize, and relate a document in the background."""
     processor = DocumentProcessor()
-    text = processor.extract_text(save_path) or ""
-    VectorDatabaseManager().add_documents([text], [chroma_metadata], [str(doc_id)])
+    text = processor.extract_text(original_path) or ""
+    detector = PrivilegeDetector()
+    privileged, spans = detector.detect(text)
+    doc = Document.query.get(doc_id)
+    if privileged:
+        keywords = [text[s.start : s.end] for s in spans]
+        if original_path.lower().endswith(".pdf"):
+            detector.redact_pdf(original_path, redacted_path, keywords)
+            redacted_text = processor.extract_text(redacted_path) or ""
+        else:
+            redacted_text = detector.redact_text(text, spans)
+            with open(redacted_path, "w", encoding="utf-8") as f:
+                f.write(redacted_text)
+        doc.is_privileged = True
+        doc.is_redacted = True
+        doc.needs_review = True
+        for s in spans:
+            db.session.add(
+                RedactionLog(
+                    document_id=doc_id, start=s.start, end=s.end, label=s.label
+                )
+            )
+    else:
+        shutil.copy(original_path, redacted_path)
+        redacted_text = text
+        doc.is_privileged = False
+        doc.is_redacted = False
+        doc.needs_review = False
+    db.session.commit()
+
+    VectorDatabaseManager().add_documents([redacted_text], [chroma_metadata], [str(doc_id)])
     kg = KnowledgeGraphManager()
     result = kg.run_query(
         "MERGE (c:Case {id: $id}) RETURN id(c) as cid", {"id": case_id}
@@ -547,6 +641,7 @@ def ingest_document(
     extractor = FactExtractor()
     ontology = OntologyLoader().load()
     for fact in extractor.extract(text):
+    for fact in extractor.extract(redacted_text):
         fact_row = Fact(
             case_id=case_id,
             document_id=doc_id,
@@ -620,21 +715,24 @@ def upload_files():
                 continue
 
             filename = unique_filename(raw_name)
-            save_path = os.path.join(upload_root, filename)
-            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            redacted_path = os.path.join(upload_root, filename)
+            original_path = os.path.join(app.config["SECURE_FOLDER"], filename)
+            os.makedirs(os.path.dirname(original_path), exist_ok=True)
+            os.makedirs(os.path.dirname(redacted_path), exist_ok=True)
             try:
-                file.save(save_path)
+                file.save(original_path)
             except Exception as exc:
                 record_skip(raw_name, f"save error: {exc}")
                 continue
 
-            doc = Document(case_id=case_id, name=filename, file_path=save_path, content_hash=file_hash)
+            doc = Document(case_id=case_id, name=filename, file_path=redacted_path, content_hash=file_hash)
             db.session.add(doc)
             db.session.flush()
 
             full_metadata = {
                 "filename": filename,
-                "path": save_path,
+                "path": redacted_path,
+                "original_path": original_path,
                 "case_id": case_id,
                 "document_id": str(doc.id),
                 "sha256": file_hash,
@@ -646,7 +744,7 @@ def upload_files():
                 if isinstance(v, (str, int, float, bool))
             }
 
-            with open(save_path + ".meta.json", "w") as f:
+            with open(redacted_path + ".meta.json", "w") as f:
                 json.dump(full_metadata, f, indent=2)
 
             raw_meta = DocumentMetadata(document_id=doc.id, schema="raw", data=full_metadata)
@@ -654,15 +752,16 @@ def upload_files():
             db.session.add_all([raw_meta, chroma_meta])
             future = executor.submit(
                 ingest_document,
-                save_path,
+                original_path,
+                redacted_path,
                 doc.id,
                 case_id,
                 full_metadata,
                 chroma_metadata,
             )
-            futures.append((future, doc, raw_name, filename, save_path, raw_meta, chroma_meta))
+            futures.append((future, doc, raw_name, filename, redacted_path, raw_meta, chroma_meta))
 
-        for future, doc, raw_name, filename, save_path, raw_meta, chroma_meta in futures:
+        for future, doc, raw_name, filename, redacted_path, raw_meta, chroma_meta in futures:
             try:
                 future.result(timeout=MAX_TIMEOUT)
             except TimeoutError:
@@ -672,7 +771,7 @@ def upload_files():
                 db.session.delete(chroma_meta)
                 for ext in ("", ".meta.json"):
                     try:
-                        os.remove(save_path + ext)
+                        os.remove(redacted_path + ext)
                     except OSError:
                         pass
             except Exception as exc:  # pragma: no cover - best effort
@@ -682,7 +781,7 @@ def upload_files():
                 db.session.delete(chroma_meta)
                 for ext in ("", ".meta.json"):
                     try:
-                        os.remove(save_path + ext)
+                        os.remove(redacted_path + ext)
                     except OSError:
                         pass
             else:
@@ -904,6 +1003,55 @@ def manage_cases():
     cases = Case.query.all()
     data = [{"id": c.id, "name": c.name} for c in cases]
     return jsonify({"status": "ok", "data": data})
+
+
+@app.route("/api/witnesses", methods=["GET", "POST"])
+def manage_witnesses():
+    if request.method == "POST":
+        data = request.get_json() or {}
+        name = data.get("name")
+        case_id = data.get("case_id")
+        if not name:
+            return jsonify({"error": "Missing name"}), 400
+        witness = Witness(name=name, role=data.get("role"), associated_case=case_id)
+        db.session.add(witness)
+        db.session.commit()
+        return jsonify({"status": "ok", "id": witness.id})
+    case_id = request.args.get("case_id", type=int)
+    query = Witness.query
+    if case_id:
+        query = query.filter_by(associated_case=case_id)
+    witnesses = query.all()
+    data = [{"id": w.id, "name": w.name} for w in witnesses]
+    return jsonify({"status": "ok", "data": data})
+
+
+@app.route("/api/deposition/questions", methods=["POST"])
+def generate_deposition_questions():
+    data = request.get_json() or {}
+    witness_id = data.get("witness_id")
+    include_privileged = data.get("include_privileged", False)
+    if not witness_id:
+        return jsonify({"error": "Missing witness_id"}), 400
+    questions = DepositionPrep.generate_questions(
+        witness_id, include_privileged=include_privileged
+    )
+    return jsonify({"status": "ok", "data": questions})
+
+
+@app.route("/api/deposition/questions/<int:question_id>/flag", methods=["POST"])
+def flag_deposition_question(question_id: int):
+    DepositionPrep.flag_question(question_id)
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/deposition/export/<int:witness_id>", methods=["GET"])
+def export_deposition_questions(witness_id: int):
+    fmt = request.args.get("format", "docx")
+    os.makedirs("exports", exist_ok=True)
+    path = os.path.join("exports", f"deposition_{witness_id}.{fmt}")
+    DepositionPrep.export_questions(witness_id, path)
+    return send_file(path, as_attachment=True)
 
 
 @app.route("/api/subpoena/draft", methods=["POST"])

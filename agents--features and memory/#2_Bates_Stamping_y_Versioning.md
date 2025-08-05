@@ -1,33 +1,39 @@
-✅ 2. Real-Time Bates Stamping & Versioning
-Goal: Eliminate versioning chaos and compliance ambiguity by automatically stamping, tracking, and forensically auditing every document from ingest to export.
+# Real-Time Bates Stamping & Versioning System
 
-🧠 Pipeline Overview
-mermaid
-Copy code
+## Objective
+The goal of this system is to eliminate versioning chaos and compliance ambiguity by automatically stamping, tracking, and forensically auditing every document from ingest to export.
+
+## Pipeline Overview
+
+```mermaid
 graph TD
-A[File Upload] --> B[Hash + Dedup Check]
-B --> C[Bates Number Assignment]
-C --> D[Version Control Layer]
-D --> E[Redacted / Normal Processing]
-E --> F[PDF Stamp + Metadata Overlay]
-F --> G[Audit Log + Persist]
-1. Bates Numbering Service
-A. DB Table: bates_counter
-sql
-Copy code
+    A[File Upload] --> B[Hash + Dedup Check]
+    B --> C[Bates Number Assignment]
+    C --> D[Version Control Layer]
+    D --> E[Redacted / Normal Processing]
+    E --> F[PDF Stamp + Metadata Overlay]
+    F --> G[Audit Log + Persist]
+```
+
+## Functional Components
+
+### 1. Bates Numbering Service
+
+#### A. Database Table: `bates_counter`
+```sql
 CREATE TABLE bates_counter (
   id SERIAL PRIMARY KEY,
   prefix TEXT NOT NULL DEFAULT 'BATES',
   current_number INTEGER NOT NULL DEFAULT 0
 );
-Initialize it once:
-
-sql
-Copy code
+```
+**Initialization:**
+```sql
 INSERT INTO bates_counter (prefix, current_number) VALUES ('ABCD', 0);
-B. Auto-Incrementing Logic (Atomic)
-python
-Copy code
+```
+
+#### B. Auto-Incrementing Logic (Atomic)
+```python
 from sqlalchemy import text
 
 def get_next_bates_number(db, prefix="ABCD"):
@@ -37,10 +43,12 @@ def get_next_bates_number(db, prefix="ABCD"):
             {"p": prefix}
         ).fetchone()
     return f"{prefix}_{row.current_number:06d}"
-2. Hashing & Version Control
-A. document_versions table
-sql
-Copy code
+```
+
+### 2. Hashing & Version Control
+
+#### A. Database Table: `document_versions`
+```sql
 CREATE TABLE document_versions (
   id UUID PRIMARY KEY,
   document_id UUID REFERENCES documents(id),
@@ -53,39 +61,36 @@ CREATE TABLE document_versions (
   uploaded_by TEXT,
   change_reason TEXT
 );
-B. Versioning Flow
-On upload:
+```
 
-Compute SHA-256
+#### B. Versioning Flow
+- **On Upload:** 
+  - Compute SHA-256.
+  - If hash matches, skip upload and notify duplicate.
+  - If hash differs, increment `version_number`, assign new Bates range.
+  - Attach metadata differences (e.g., filename, content, size, user).
 
-If hash matches → skip / notify duplicate
+### 3. Bates Stamping (Visual Overlay)
 
-If different → version_number += 1, assign new Bates range
-
-Attach metadata diff (filename, content, size, user)
-
-3. Bates Stamping (Visual Overlay)
-A. PDF Stamping (using PyMuPDF / reportlab)
-python
-Copy code
+#### A. PDF Stamping (Using PyMuPDF / ReportLab)
+```python
 def stamp_bates_number(file_path, output_path, start_bates_number):
     doc = fitz.open(file_path)
     for i, page in enumerate(doc, start=start_bates_number):
         stamp = f"ABCD_{i:06d}"
         page.insert_text((50, 20), stamp, fontsize=8, color=(0, 0, 0), overlay=True)
     doc.save(output_path)
-B. Metadata Range
-Store bates_start and bates_end on version
+```
 
-If multipage PDF: auto-assign range
+#### B. Metadata Range
+- Store `bates_start` and `bates_end` on version.
+- Auto-assign range for multipage PDFs.
+- Use document-wide stamp for single files.
 
-If single file: use doc-wide stamp
+### 4. Chain of Custody
 
-4. Chain of Custody
-Track in audit_trail:
-
-sql
-Copy code
+#### A. Database Table: `audit_trail`
+```sql
 CREATE TABLE audit_trail (
   id UUID PRIMARY KEY,
   document_version_id UUID,
@@ -94,68 +99,53 @@ CREATE TABLE audit_trail (
   user TEXT,
   note TEXT
 );
-Each action (edit, stamp, replace, export) is logged here.
+```
+- Log each action (edit, stamp, replace, export) in the audit trail.
 
-5. UI / UX Integration
-A. Upload Form
-Show real-time assigned Bates number
+### 5. UI / UX Integration
 
-Highlight version if new revision detected
+#### A. Upload Form
+- Display real-time assigned Bates number.
+- Highlight version if a new revision is detected.
 
-B. “Bates Stamp This Set” Feature
-UI button in document set view
+#### B. “Bates Stamp This Set” Feature
+- UI button in document set view.
+- Backend triggers stamping job, returns ZIP or PDF bundle.
+- CLI command: `python tools/stamp.py --set SET_ID --prefix ABCD`
 
-Backend: triggers stamping job, returns ZIP or PDF bundle
+### 6. Compliance/Export Modes
 
-CLI: python tools/stamp.py --set SET_ID --prefix ABCD
+#### A. Bulk Export
+- Export redacted or normal version based on access.
+- Include `manifest.csv` with:
+  - Filename
+  - Bates Range
+  - Hash
+  - Version ID
+  - Upload time
 
-6. Compliance/Export Modes
-A. Bulk Export
-Export redacted or normal version (based on access)
+#### B. Custom Format
+- Allow users to define:
+  - Prefix
+  - Start number
+  - Margin location (footer, header, etc.)
+  - Font size & color
 
-Include manifest.csv with:
+### 7. Testing and Forensic Validation
 
-Filename
+- **Unit Tests:**
+  - Ensure uniqueness of Bates numbers.
+  - Confirm visual overlay exists on each page.
+  - Validate consistent hash across versions.
+- **File Diff Tool:**
+  - Visual comparison between version N and N+1.
+  - Highlighted metadata changes.
 
-Bates Range
+### 8. Future Enhancements
 
-Hash
+- OCR stamping on scanned pages.
+- Blockchain-anchored chain-of-custody hashes.
+- Immutable audit trails with digital signatures.
+- AI-based version similarity scoring.
 
-Version ID
-
-Upload time
-
-B. Custom Format
-Allow users to define:
-
-Prefix
-
-Start number
-
-Margin location (footer, header, etc.)
-
-Font size & color
-
-7. Testing and Forensic Validation
-Unit tests to:
-
-Ensure uniqueness of Bates numbers
-
-Confirm visual overlay exists on each page
-
-Validate consistent hash across versions
-
-File diff tool:
-
-Visual comparison between version N and N+1
-
-Highlighted metadata changes
-
-8. Future Enhancements
-OCR stamping on scanned pages
-
-Blockchain-anchored chain-of-custody hashes
-
-Immutable audit trails with digital signature
-
-AI-based version similarity scoring
+This enhanced prompt provides a comprehensive overview of the Real-Time Bates Stamping & Versioning System, ensuring clarity and precision for implementation.

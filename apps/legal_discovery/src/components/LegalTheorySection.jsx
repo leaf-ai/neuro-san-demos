@@ -30,6 +30,9 @@ function LegalTheorySection() {
                 <div className="element-bar mt-1">
                   <div className="element-bar-fill" style={{width: `${e.weight*100}%`}}></div>
                 </div>
+              <li key={e.name} className={e.facts.length ? "theory-supported" : ""}>
+                {e.name}
+                {e.facts.length ? <span className="text-xs text-gray-400 ml-1">({e.facts.length})</span> : null}
               </li>
             ))}
           </ul>

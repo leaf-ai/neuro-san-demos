@@ -1,116 +1,210 @@
-6. Live Co‑Counsel Chat + AI Memory
-Overview
-This system serves as a hybrid legal chat assistant and memory engine that operates in real-time with human collaborators. It provides instant access to case knowledge, structured memory, and collaborative tools—all grounded in your document and graph data.
+Here’s your fully combined and formatted **Comprehensive Execution Plan for the AI-Powered Litigation Assistant** – all in one copy-pasteable chunk:
 
-🔧 System Architecture
-A. Conversation and Memory Layer
-Database Models (PostgreSQL or equivalent)
+---
 
-Conversation: tracks a thread/session with unique ID, participants, and timestamps.
+# Comprehensive Execution Plan for AI-Powered Litigation Assistant
 
-Message: linked to a conversation, stores:
+## Objective
 
-sender_id
+Develop a step-by-step execution plan for building an AI-powered litigation assistant system. This system integrates real-time co-counsel chat, structured memory, knowledge graph reasoning, and audit/compliance layers. The end product serves legal professionals by supporting fact tracking, strategy generation, document analysis, and privileged communication control.
 
-content
+---
 
-timestamp
+## 1. SYSTEM ARCHITECTURE
 
-document_ids: optional, linked evidence
+### A. Conversation & Memory Layer
 
-reply_to: message threading
+#### 1. Database Schema Design (PostgreSQL)
 
-visibility: enum (private, shared)
+* **Conversations Table**
 
-Vector Memory Index (ChromaDB or Qdrant)
+  * `id`: UUID (Primary Key)
+  * `title`: String
+  * `participants`: Array of user IDs
+  * `created_at`: Timestamp
 
-Store vector embeddings of each message.
+* **Messages Table**
 
-Store embedding references to linked documents or facts (IDs, case topics).
+  * `id`: UUID (Primary Key)
+  * `conversation_id`: Foreign Key → conversations.id
+  * `sender_id`: Foreign Key → users.id
+  * `content`: Text
+  * `timestamp`: Timestamp
+  * `document_ids`: JSONB or Foreign Key
+  * `reply_to`: Foreign Key → messages.id
+  * `visibility`: Enum (`public`, `private`, `attorney_only`)
+  * `vector_id`: Foreign Key → vector index (Chroma/Qdrant)
 
-Graph Context Cache (Neo4j)
+* **Rationale**: Normalized schema allows easy retrieval, audit compliance, versioning, and memory linking.
 
-Messages create or enhance edges between:
+#### 2. Vector Memory Storage (ChromaDB or Qdrant)
 
-Witness ↔ Document
+* On message creation:
 
-Topic ↔ Conversation
+  * Perform NER + regex for fact extraction
+  * Generate embeddings with LLM
+  * Store vectors with metadata:
 
-Fact ↔ Attorney Input
+    * `conversation_id`, `document_ids`, `sender_id`, `tags`, `timestamp`
+* Filter insertions based on privilege/public tags
 
-B. AI Co-Counsel Agent
-Retrieval-Augmented Generation (RAG) System
+#### 3. Graph Context Cache (Neo4j)
 
-On every query:
+* Extract structured references from messages:
 
-Retrieve relevant documents (via ChromaDB)
+  * `(:Person)-[:MENTIONED_IN]->(:Message)`
+  * `(:Message)-[:ABOUT]->(:Topic)`
+  * `(:Message)-[:CITES]->(:Document)`
+* Build timelines via `[:CHRONOLOGICAL_NEXT]`
+* Enable reverse lookup of legal theories linked to evidence chains
 
-Retrieve associated graph context (via Neo4j)
+---
 
-Include recent messages (conversation memory window)
+### B. AI Co-Counsel Agent
 
-Prompt LLM using:
+#### 1. Retrieval-Augmented Generation (RAG)
 
-[Query] + [Top k messages] + [Graph insights] + [Semantic documents]
+* **Inputs**:
 
-Supported Commands
+  * User query
+  * Top-k similar messages (vector store)
+  * Related documents
+  * Subgraph (Neo4j)
 
-"Search all docs mentioning 'X'"
+* **Prompt Format**:
 
-"Summarize facts from March"
+```
+You are a litigation assistant. Respond based on:
+- [Query]: {query}
+- [Messages]: {top-k semantic results}
+- [Docs]: {linked fragments}
+- [Graph]: {graph insights}
+```
 
-"Show timeline of party interactions"
+* **Response Handling**:
 
-"Suggest legal theory from current facts"
+  * Return streamed tokens to front end
+  * Log full response to vector DB and Neo4j
+  * Optionally flag contradictions or privilege concerns
 
-Agent Memory
+#### 2. Supported Commands
 
-Update memory store with every agent response
+* `/search {query}`
+* `/summarize facts`
+* `/who said {statement}`
+* `/highlight inconsistencies`
+* `/flag privilege`
+* `/link document {doc_id}`
+* `/remember [fact]`
+* `/forget [id]`
+* `/important [message_id]`
 
-Allow forget, recall, and mark as important commands from user
+---
 
-C. Front-End Integration
-Real-Time Chat UI
+### C. Front-End Integration
 
-Built with WebSockets or Socket.IO
+#### 1. Real-Time Chat UI
 
-Features:
+* **Stack**: React + Socket.IO or Django Channels
+* **Features**:
 
-Message threads
+  * Threaded chat
+  * Typing indicators
+  * Mention system
+  * Live agent responses
+  * Filter views: (All, Attorney Only, AI, Private)
 
-Typing indicators
+#### 2. Message Enhancements
 
-Identity tags (You, Co-Counsel, AI Agent)
+* Drag & drop PDF/doc attachments
+* Inline citation buttons
+* Tag messages as:
 
-Filter by public/private/shared
+  * `Exhibit`
+  * `Contradiction`
+  * `Privileged`
 
-Message Enhancements
+#### 3. Searchable Archive
 
-Attach Document (auto-links to vector + Neo4j)
+* Full-text search + vector similarity
+* Filters:
 
-Tag Topic (e.g., “Motion to Compel”, “Custody”)
+  * Time, sender, keyword, command, document tag
+* Export:
 
-Add to Outline or Flag for Review
+  * `.zip` of transcript + docs
+  * `.json` of all chat + graph refs
 
-Searchable Chat Archive
+---
 
-Full-text search with filters (date, sender, linked document, topic)
+### D. Audit & Compliance
 
-Exportable log (with or without privileged messages)
+#### 1. Message Logging
 
-D. Audit & Compliance
-All messages are timestamped and immutable.
+* All messages timestamped + immutable
+* Redacted view + full view (access controlled)
+* Snapshot system (daily)
 
-Redaction tool integrated into message view (optional).
+  * Vector DB
+  * Neo4j
+  * Chat logs
+* Append-only audit table:
 
-Privilege tagging at message level (auto + manual).
+  * `actor_id`, `action`, `target`, `timestamp`, `reason`
 
-Daily snapshot logs for forensic review.
+---
 
-🧠 Advanced Enhancements (Future)
-Thread Summarization Agent: Live summarizer of conversation threads.
+## 2. EXECUTION ROADMAP
 
-Voice-to-Text Support: Dictation feature with inline summarization.
+### Phase 1: Core Infrastructure (1–2 weeks)
 
-Multimodal Input: Accepts screenshots, scanned exhibits, annotated PDFs.
+* Build DB schema for messages + conversations
+* Deploy ChromaDB or Qdrant
+* Configure Neo4j with ontology schema
+* Write ingest processor:
 
+  * Tokenize → Embed → Save → Link → Graph
+
+### Phase 2: Agent + UI Core (2–3 weeks)
+
+* Build basic chat frontend
+* Wire Socket.IO backend
+* Create initial RAG pipeline (vector + Neo4j)
+* Enable `/search` and `/summarize` commands
+
+### Phase 3: Compliance Layer (1 week)
+
+* Build redaction support (PDF/text)
+* Create append-only audit trail
+* Implement scheduled daily snapshot job
+
+### Phase 4: Legal-Specific Enhancements (2 weeks)
+
+* Add tagging (Exhibit, Privilege, Contradiction)
+* Add citation support
+* Build export and transcript tools
+
+---
+
+## 3. FUTURE ENHANCEMENTS
+
+| Feature                    | Description                                             |
+| -------------------------- | ------------------------------------------------------- |
+| Thread Summarization Agent | Live summarization of threads                           |
+| Voice Input                | Voice-to-text capture with embedding + summary          |
+| Cross-Convo References     | Link messages across conversations on same topic        |
+| Memory Inspector           | Explore facts and memory graph visually                 |
+| Privileged Memory View     | Separate LLM memory for confidential vs public material |
+
+---
+
+## Deployment Considerations
+
+* **Storage**: Run PostgreSQL, ChromaDB, and Neo4j in Docker with mounted volumes
+* **Scaling**: Use Redis queue for long tasks (embedding, ingestion)
+* **Security**: Enable role-based access + audit redactions at message + document level
+* **Redundancy**: Backup Neo4j and Vector Store periodically
+
+---
+
+Let me know if you want this exported to Markdown or HTML.

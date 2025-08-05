@@ -1,123 +1,170 @@
-✅ Opposition Document Tracker — Technical Plan of Action
-1. Document Source Flagging
-Goal: Differentiate and tag documents based on their origin.
+**Improved Prompt: Comprehensive Technical Plan of Action for Developing an Opposition Document Tracker**
 
-🔧 DB Schema Updates
-Add a source column to the Document model:
+---
 
-python
-Copy code
+**Objective:** Develop a detailed, step-by-step technical plan for creating an Opposition Document Tracker. This tracker must efficiently manage and analyze documents from various sources, identify duplicates, detect contradictions, and provide actionable insights through an intuitive user dashboard.
+
+**Target AI Model:** Codex / ChatGPT
+
+---
+
+### **1. Document Source Flagging**
+
+**Goal:** Implement a robust system to differentiate and tag documents based on their origin.
+
+#### **1.1 Database Schema Updates**
+- **Action:** Modify the existing Document model to include a source column.
+- **Specification:**
+  - **Column Name:** `source`
+  - **Data Type:** String
+  - **Default Value:** `"user"`
+  - **Allowed Values:** `"user"`, `"opp_counsel"`, `"court"`
+
+**Example Code:**
+```python
 source = db.Column(db.String, default="user")  # values: "user", "opp_counsel", "court"
-🖼️ UI Update
-During upload:
+```
 
-Dropdown or toggle to set source:
+#### **1.2 User Interface Update**
+- **Action:** Enhance the document upload interface to allow users to specify the document source.
+- **Specification:**
+  - **UI Component:** Dropdown or toggle selector during upload.
+  - **Options:**
+    - “Uploaded by Us”
+    - “Received from Opposing Counsel”
+    - “Court Issued”
+  - **Color Coding:** Implement a color scheme in the document list to visually differentiate sources:
+    - Red = Opposing Counsel
+    - Blue = Court
 
-“Uploaded by Us”
+---
 
-“Received from Opposing Counsel”
+### **2. Deduplication & Similarity Detection**
 
-“Court Issued”
+**Goal:** Develop mechanisms to identify and manage duplicate documents and similar content.
 
-Color-code source in document list (e.g., red = opposing, blue = court)
+#### **2.1 Hash-Based Deduplication**
+- **Action:** Implement a hashing mechanism on document ingestion.
+- **Specification:**
+  - **Process:** Compute SHA-256 hash of the document content.
+  - **Database Query:** Check for existing hashes in the database.
+  
+**Example Code:**
+```python
+import hashlib
 
-2. Deduplication & Similarity Detection
-Goal: Identify overlap between user and opposing documents.
-
-🔍 Hash-Based Deduplication
-On ingest, compute content hash:
-
-python
-Copy code
 sha256 = hashlib.sha256(content.encode("utf-8")).hexdigest()
-Query DB:
-
-sql
-Copy code
+# Database Query
 SELECT id FROM document WHERE content_hash = :sha256 AND source = 'user'
-If match → flag as duplicate
+```
+- **Flagging:** If a match is found, flag the document as a duplicate.
 
-🤖 Embedding-Based Fuzzy Match
-Generate vector on ingest (if not already present)
+#### **2.2 Embedding-Based Fuzzy Matching**
+- **Action:** Generate embeddings for documents to facilitate similarity detection.
+- **Specification:**
+  - **Process:** On document ingestion, generate a vector representation.
+  - **Similarity Query:** Use ChromaDB to find similar documents based on cosine similarity (threshold > 0.90).
+  
+**Example Code:**
+```python
+from chromadb import Client
 
-Query ChromaDB for similarity (e.g., cosine sim > 0.90)
+client = Client()
+embedding = model.encode(document_content)
+similar_docs = client.query(embedding, threshold=0.90)
+```
 
-Use it to identify “partial duplicates” or paraphrased content
+---
 
-3. Contradiction & Narrative Divergence Detection
-Goal: Expose where opposing claims conflict with user evidence.
+### **3. Contradiction & Narrative Divergence Detection**
 
-🧠 NLP Pipeline – contradiction_detector.py
-Inputs:
+**Goal:** Analyze opposing claims to identify contradictions with user evidence.
 
-Opposing doc (e.g., claim: “Client never contacted X”)
+#### **3.1 NLP Pipeline Implementation**
+- **Action:** Create a pipeline for contradiction detection using NLP techniques.
+- **Specification:**
+  - **Inputs:**
+    - Opposing document (e.g., claim: “Client never contacted X”)
+    - User documents with high similarity scores.
+  - **Process:**
+    - Chunk the opposing document.
+    - For each chunk, query the vector database for top-k similar user documents.
+    - Use a pre-trained contradiction detection model.
 
-User docs w/ high similarity
-
-Steps:
-
-Chunk opposing doc
-
-For each chunk:
-
-Query vector DB for top-k similar user docs
-
-Use contradiction detection model:
-
-python
-Copy code
+**Example Code:**
+```python
 from transformers import pipeline
-contradiction = pipeline("text-classification", model="ynie/roberta-large-snli")
-If label = “contradiction” → flag discrepancy
 
-Store result in NarrativeDiscrepancy table:
+contradiction_detector = pipeline("text-classification", model="ynie/roberta-large-snli")
+for chunk in opposing_document_chunks:
+    if contradiction_detector(chunk)['label'] == "contradiction":
+        # Flag discrepancy
+```
+- **Data Storage:** Store results in the `NarrativeDiscrepancy` table.
 
-sql
-Copy code
-id | opposing_doc_id | user_doc_id | conflicting_claim | evidence_excerpt | confidence
-4. Dashboard: Opposition Evidence Tracker
-Goal: Provide visibility and actionable insights on opposing documents.
+**SQL Schema:**
+```sql
+CREATE TABLE NarrativeDiscrepancy (
+    id SERIAL PRIMARY KEY,
+    opposing_doc_id INT,
+    user_doc_id INT,
+    conflicting_claim TEXT,
+    evidence_excerpt TEXT,
+    confidence FLOAT
+);
+```
 
-📊 Dashboard Views
-Received Documents section:
+---
 
-Filter by source = opp_counsel
+### **4. Dashboard: Opposition Evidence Tracker**
 
-Show status: Duplicate ✅ | Conflict ⚠️ | Untagged ⚪
+**Goal:** Create an interactive dashboard for tracking and analyzing opposing documents.
 
-Narrative Conflicts table:
+#### **4.1 Dashboard Views**
+- **Action:** Develop a dashboard with multiple views for document tracking.
+- **Specification:**
+  - **Received Documents Section:**
+    - Filter documents by source = `opp_counsel`.
+    - Display status indicators: Duplicate ✅ | Conflict ⚠️ | Untagged ⚪.
+  - **Narrative Conflicts Table:**
+    - Show opposing claims alongside identified contradictions.
+    - Provide links to source documents.
+    - Include manual flagging options for “Request Admission” or “Impeachment Candidate.”
 
-Opposing claim vs. internal contradiction
+#### **4.2 Missing Items Notification**
+- **Action:** Prompt users when expected discovery categories are missing.
+- **Specification:** Alert users for missing items (e.g., “All contracts from 2022”).
 
-Links to source documents
+#### **4.3 Export Options**
+- **Action:** Enable users to export summaries.
+- **Specification:**
+  - Format: PDF/CSV.
+  - Contents: List of opposing documents, detected duplicates, highlighted contradictions.
 
-Manual flag for “Request Admission” or “Impeachment Candidate”
+---
 
-Missing Items:
+### **5. Optional Enhancements**
 
-Prompt user if expected discovery categories (e.g., “All contracts from 2022”) are missing from opposing production
+**Goal:** Improve user experience and analytical capabilities.
 
-📤 Export Options
-Summary report (PDF/CSV):
+#### **5.1 Timeline Overlay**
+- **Action:** Visual representation of document upload timelines.
 
-List of opposing documents
+#### **5.2 Side-by-Side Document Comparison**
+- **Action:** Allow users to compare similar opposing and user documents side-by-side.
 
-Detected duplicates
+#### **5.3 Legal Implication Analysis**
+- **Action:** Analyze contradictions involving material facts for legal implications.
 
-Highlighted contradictions
+---
 
-5. Optional Enhancements
-Timeline overlay: Show which side uploaded which doc first
+### **Instructions for AI Model:**
+- Provide detailed code snippets and explanations for each step.
+- Ensure that the specifications are clear and actionable.
+- Use clear formatting for code and SQL schemas to enhance readability.
+- Include comments in the code to explain the logic and functionality.
+- Suggest best practices for implementation, including error handling and performance optimization.
 
-Compare side-by-side view of similar opposing/user documents
+---
 
-Legal implication analysis (e.g., contradictions involving material facts)
-
-🚀 Why This Wins
-This lets litigants:
-
-Track and organize incoming productions
-
-Identify overlaps and missing items
-
-Directly confront opposing narratives with evidence
+This improved prompt is structured to guide the AI model in generating a comprehensive technical plan with detailed specifications, making it easier for developers to implement the Opposition Document Tracker effectively.

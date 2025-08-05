@@ -98,6 +98,21 @@ class KnowledgeGraphManager(CodedTool):
         element_id = self._get_or_create_by_name("Element", element)
         self.create_relationship(element_id, cause_id, "BELONGS_TO")
         self.create_relationship(fact_id, element_id, "SUPPORTS", {"weight": weight})
+    def link_fact_to_element(self, fact_id: int, cause: str, element: str) -> None:
+        """Link an existing fact to an element and cause of action."""
+        cause_id = self._get_or_create_by_name("CauseOfAction", cause)
+        element_id = self._get_or_create_by_name("Element", element)
+        self.create_relationship(element_id, cause_id, "BELONGS_TO")
+        self.create_relationship(fact_id, element_id, "SUPPORTS")
+
+    def link_document_dispute(self, fact_id: int, document_node_id: int) -> None:
+        """Link a fact to a document that disputes it."""
+        self.create_relationship(fact_id, document_node_id, "DISPUTED_BY")
+
+    def link_fact_origin(self, fact_id: int, origin_label: str, origin_name: str) -> None:
+        """Link a fact to its origin source such as Deposition or Email."""
+        origin_id = self._get_or_create_by_name(origin_label, origin_name)
+        self.create_relationship(fact_id, origin_id, "ORIGINATED_IN")
 
     def get_node(self, node_id: int) -> dict:
         """
@@ -155,6 +170,55 @@ class KnowledgeGraphManager(CodedTool):
 
         net.save_graph(output_path)
         return output_path
+
+    def get_cause_subgraph(self, cause: str):
+        """Retrieve nodes and edges connected to a cause of action."""
+        nodes_query = (
+            "MATCH (c:CauseOfAction {name:$cause}) "
+            "OPTIONAL MATCH (c)<-[:BELONGS_TO]-(e:Element) "
+            "OPTIONAL MATCH (e)<-[:SUPPORTS]-(f:Fact) "
+            "OPTIONAL MATCH (f)-[:DISPUTED_BY]->(d:Document) "
+            "OPTIONAL MATCH (f)-[:ORIGINATED_IN]->(o) "
+            "WITH collect(DISTINCT c) + collect(DISTINCT e) + collect(DISTINCT f) + "
+            "collect(DISTINCT d) + collect(DISTINCT o) as nodes "
+            "UNWIND nodes as n RETURN DISTINCT id(n) as id, labels(n) as labels, properties(n) as properties"
+        )
+
+        edges_query = (
+            "MATCH (e:Element)-[:BELONGS_TO]->(c:CauseOfAction {name:$cause}) "
+            "RETURN id(e) as source, id(c) as target, 'BELONGS_TO' as type "
+            "UNION "
+            "MATCH (f:Fact)-[:SUPPORTS]->(e:Element)-[:BELONGS_TO]->(c:CauseOfAction {name:$cause}) "
+            "RETURN id(f) as source, id(e) as target, 'SUPPORTS' as type "
+            "UNION "
+            "MATCH (f:Fact)-[:SUPPORTS]->(e:Element)-[:BELONGS_TO]->(c:CauseOfAction {name:$cause}), "
+            "(f)-[:DISPUTED_BY]->(d:Document) "
+            "RETURN id(f) as source, id(d) as target, 'DISPUTED_BY' as type "
+            "UNION "
+            "MATCH (f:Fact)-[:SUPPORTS]->(e:Element)-[:BELONGS_TO]->(c:CauseOfAction {name:$cause}), "
+            "(f)-[:ORIGINATED_IN]->(o) "
+            "RETURN id(f) as source, id(o) as target, 'ORIGINATED_IN' as type"
+        )
+
+        nodes = [
+            {
+                "id": record["id"],
+                "labels": record["labels"],
+                "properties": record["properties"],
+            }
+            for record in self.run_query(nodes_query, {"cause": cause})
+        ]
+
+        edges = [
+            {
+                "source": record["source"],
+                "target": record["target"],
+                "type": record["type"],
+            }
+            for record in self.run_query(edges_query, {"cause": cause})
+        ]
+
+        return nodes, edges
 
     def get_subgraph(self, label: str):
         """Retrieve a subgraph for nodes with a given label."""

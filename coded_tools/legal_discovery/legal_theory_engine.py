@@ -46,5 +46,37 @@ class LegalTheoryEngine(CodedTool):
         suggestions.sort(key=lambda s: s["score"], reverse=True)
         return suggestions
 
+            defenses = data.get("defenses", [])
+            indicators = data.get("indicators", [])
+            element_results: List[Dict[str, Any]] = []
+            supported = 0
+            for element in elements:
+                query = (
+                    "MATCH (f:Fact)-[:SUPPORTS]->(e:Element {name:$element})"
+                    "-[:BELONGS_TO]->(c:CauseOfAction {name:$cause}) "
+                    "RETURN f.text as text"
+                )
+                records = self.kg.run_query(query, {"element": element, "cause": cause})
+                facts = [r["text"] for r in records]
+                if facts:
+                    supported += 1
+                element_results.append({"name": element, "facts": facts})
+            score = supported / len(elements) if elements else 0
+            suggestions.append(
+                {
+                    "cause": cause,
+                    "score": score,
+                    "elements": element_results,
+                    "defenses": defenses,
+                    "indicators": indicators,
+                }
+            )
+        suggestions.sort(key=lambda s: s["score"], reverse=True)
+        return suggestions
+
+    def get_theory_subgraph(self, cause: str):
+        """Expose subgraph retrieval for a specific cause of action."""
+        return self.kg.get_cause_subgraph(cause)
+
     def close(self) -> None:
         self.kg.close()

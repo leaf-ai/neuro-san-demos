@@ -34,6 +34,91 @@
         "email referencing misstatement",
         "damage evidence"
       ]
+    },
+    "Negligence": {
+      "elements": [
+        "Duty",
+        "Breach",
+        "Causation",
+        "Damages"
+      ],
+      "defenses": [
+        "Comparative negligence",
+        "Assumption of risk"
+      ],
+      "indicators": [
+        "accident report",
+        "safety policy",
+        "injury photos"
+      ]
+    },
+    "Defamation": {
+      "elements": [
+        "Defamatory statement",
+        "Publication",
+        "Falsity",
+        "Harm"
+      ],
+      "defenses": [
+        "Truth",
+        "Privilege"
+      ],
+      "indicators": [
+        "publication records",
+        "witness statements",
+        "retraction requests"
+      ]
+    },
+    "Intentional Infliction of Emotional Distress": {
+      "elements": [
+        "Extreme and outrageous conduct",
+        "Intent or recklessness",
+        "Causation",
+        "Severe emotional distress"
+      ],
+      "defenses": [
+        "Consent",
+        "Privilege"
+      ],
+      "indicators": [
+        "threatening messages",
+        "medical records",
+        "witness testimony"
+      ]
+    },
+    "False Imprisonment": {
+      "elements": [
+        "Intentional confinement",
+        "Without lawful privilege",
+        "Against plaintiff's consent",
+        "Awareness or harm"
+      ],
+      "defenses": [
+        "Consent",
+        "Legal authority"
+      ],
+      "indicators": [
+        "security footage",
+        "police records",
+        "witness accounts"
+      ]
+    },
+    "Strict Products Liability": {
+      "elements": [
+        "Defective product",
+        "Product used foreseeably",
+        "Causation",
+        "Damages"
+      ],
+      "defenses": [
+        "Product misuse",
+        "Assumption of risk"
+      ],
+      "indicators": [
+        "product recall",
+        "design schematics",
+        "injury reports"
+      ]
     }
   }
 }
