@@ -375,6 +375,7 @@ def build_file_tree(directory: str, root_length: int, docs: dict[str, Document])
         doc = docs.get(rel_path)
         if doc:
             node["privileged"] = doc.is_privileged
+            node["id"] = doc.id
         if entry.is_dir():
             node["children"] = build_file_tree(entry.path, root_length, docs)
         tree.append(node)
@@ -416,6 +417,30 @@ def review_redaction(doc_id: int):
     db.session.add(RedactionAudit(document_id=doc.id, reviewer=reviewer, action=action, reason=reason))
     db.session.commit()
     return jsonify({"status": "ok"})
+
+
+@app.route("/api/privilege/<int:doc_id>", methods=["POST"])
+def override_privilege(doc_id: int):
+    """Manually override a document's privilege flag."""
+    data = request.get_json() or {}
+    privileged = data.get("privileged")
+    reviewer = data.get("reviewer")
+    reason = data.get("reason")
+    if privileged is None:
+        return jsonify({"error": "privileged required"}), 400
+    doc = Document.query.get_or_404(doc_id)
+    doc.is_privileged = bool(privileged)
+    doc.needs_review = False
+    db.session.add(
+        RedactionAudit(
+            document_id=doc.id,
+            reviewer=reviewer,
+            action="override_privilege",
+            reason=reason,
+        )
+    )
+    db.session.commit()
+    return jsonify({"status": "ok", "privileged": doc.is_privileged})
 
 
 @app.route("/api/agents", methods=["GET"])
@@ -593,7 +618,15 @@ def ingest_document(
         doc.is_redacted = True
         doc.needs_review = True
         for s in spans:
-            db.session.add(RedactionLog(document_id=doc_id, start=s.start, end=s.end, label=s.label))
+            db.session.add(
+                RedactionLog(
+                    document_id=doc_id,
+                    start=s.start,
+                    end=s.end,
+                    label=s.label,
+                    reason=s.text,
+                )
+            )
     else:
         shutil.copy(original_path, redacted_path)
         redacted_text = text
