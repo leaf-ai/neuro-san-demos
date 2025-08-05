@@ -73,5 +73,28 @@ class TestKnowledgeGraphManager(unittest.TestCase):
         self.kg_manager.run_query("MATCH (n:Element {name:'Misrepresentation'}) DETACH DELETE n")
         self.kg_manager.run_query("MATCH (n:CauseOfAction {name:'Fraud'}) DETACH DELETE n")
 
+    def test_link_fact_to_element_creates_relationships(self):
+        try:
+            fact_id = self.kg_manager.create_node("Fact", {"text": "Link fact"})
+        except RuntimeError as exc:
+            self.skipTest(str(exc))
+
+        self.kg_manager.link_fact_to_element(fact_id, "Fraud", "Intent to induce reliance")
+        rel = self.kg_manager.run_query(
+            (
+                "MATCH (f:Fact)-[:SUPPORTS]->(e:Element)-[:BELONGS_TO]->"
+                "(c:CauseOfAction {name:$cause}) WHERE id(f)=$f AND e.name=$element RETURN e"
+            ),
+            {"f": fact_id, "cause": "Fraud", "element": "Intent to induce reliance"},
+        )
+        self.assertTrue(rel)
+        self.kg_manager.delete_node(fact_id)
+        self.kg_manager.run_query(
+            "MATCH (n:Element {name:$e}) DETACH DELETE n", {"e": "Intent to induce reliance"}
+        )
+        self.kg_manager.run_query(
+            "MATCH (n:CauseOfAction {name:$c}) DETACH DELETE n", {"c": "Fraud"}
+        )
+
 if __name__ == '__main__':
     unittest.main()
