@@ -7,6 +7,13 @@ function UploadSection() {
   const [kgProg,setKgProg] = useState(0);
   const [neoProg,setNeoProg] = useState(0);
   const [current,setCurrent] = useState('');
+  const togglePrivilege = (id, privileged) => {
+    fetch(`/api/privilege/${id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ privileged })
+    }).then(fetchFiles);
+  };
   const upload = async () => {
     const files = Array.from(inputRef.current.files);
     if (!files.length) return;
@@ -54,6 +61,14 @@ function UploadSection() {
     <li key={i} className={`file ${n.privileged ? 'privileged' : ''}`} onClick={() => window.open('/uploads/'+n.path,'_blank')}>
       {n.name}
       {n.privileged && <i className="fa fa-user-secret ml-1" />}
+      {n.id && (
+        <button
+          className="button-secondary ml-2 text-xs"
+          onClick={e => {e.stopPropagation(); togglePrivilege(n.id, !n.privileged);}}
+        >
+          {n.privileged ? 'Mark Public' : 'Mark Privileged'}
+        </button>
+      )}
     </li>
   ));
   return (

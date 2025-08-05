@@ -85,3 +85,8 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 - Stored originals in `_original` with reviewable redacted copies and audit logs
 - Upload UI now flags privileged files with a stealth icon
 - Next: build attorney review dashboard and refine classifier precision
+
+## Update 2025-08-05T21:00Z
+- Enhanced privilege detector with legal spaCy/textcat support and span logging
+- Added API and UI controls to override privilege flags
+- Next: expand review dashboard and tune classifier accuracy

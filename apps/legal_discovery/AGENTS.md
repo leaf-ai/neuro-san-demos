@@ -538,3 +538,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Surfaced cause-of-action graphs in the dashboard via event dispatch
 - Scoring now blends element weights with coverage ratio
 - Next: tune weighting thresholds and annotate graph nodes with fact counts
+
+## Update 2025-08-05T21:00Z
+- Upgraded privilege detection with legal spaCy model support and textcat scoring
+- Logged redaction snippets and added privilege override API/UI controls
+- Next: polish reviewer workflow and monitor classifier performance
