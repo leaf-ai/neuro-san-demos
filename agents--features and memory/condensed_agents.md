@@ -126,3 +126,29 @@ WE STARTED ON #3, INSTEAD OF #1. DEAL WITH IT, FINISH IMPLEMENTING #3, AND THEN 
 - Delivered 3.5 Case Theory dashboard tab with neon element highlight
 - Next: proceed to feature #1 planning and implementation
 
+## Update 2025-08-04T12:30Z
+- Began feature #5 Exhibit & Trial Binder Creator.
+- Added exhibit fields to Document model and created ExhibitCounter and audit log tables.
+- Implemented exhibit_manager service with binder generation and export helpers.
+- Next: connect service to UI and implement comprehensive compliance checks.
+
+## Update 2025-08-04T12:45Z
+- Resolved test environment issues and confirmed binder generation works via unit tests.
+- Cleaned up exhibit manager module imports.
+- Next: build frontend controls for exhibit numbering and binder export.
+
+## Update 2025-08-04T13:30Z
+- Improved exhibit manager robustness with docstrings, idempotent assignment checks, and optional audit document links.
+- Added export ZIP test and focus-visible nav styling for accessibility.
+- Next: surface binder and ZIP export actions in the React dashboard.
+
+## Update 2025-08-04T14:00Z
+- Addressed review feedback: made exhibit assignment idempotent and fixed test imports.
+- Enhanced navigation focus style with a subtle glow for clearer keyboard cues.
+- Next: expose binder and ZIP export controls in the dashboard UI.
+
+## Update 2025-08-04T14:30Z
+- Added REST blueprint and React tab for exhibit management with binder/ZIP export.
+- Introduced neon-styled table for exhibits to polish UI aesthetics.
+- Next: implement exhibit reordering and privilege filters in organizer view.
+

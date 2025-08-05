@@ -24,3 +24,4 @@ openai
 pyvis
 networkx
 spacy
+reportlab
