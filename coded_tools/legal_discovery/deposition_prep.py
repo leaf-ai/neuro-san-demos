@@ -17,6 +17,8 @@ from apps.legal_discovery.models import (
     Document,
     DepositionQuestion,
     FactConflict,
+    Agent,
+    DepositionReviewLog,
 )
 
 PROMPT_TMPL = (
@@ -138,6 +140,35 @@ class DepositionPrep:
         return conflicts
 
     @staticmethod
+    def log_review(
+        witness_id: int,
+        reviewer_id: int,
+        approved: bool,
+        notes: Optional[str] = None,
+    ) -> Dict:
+        reviewer = Agent.query.get(reviewer_id)
+        if not reviewer or reviewer.role not in {"attorney", "case_admin"}:
+            raise PermissionError("Reviewer lacks permission")
+        witness = Witness.query.get_or_404(witness_id)
+        log = DepositionReviewLog(
+            reviewer_id=reviewer_id,
+            witness_id=witness.id,
+            approved=approved,
+            notes=notes,
+        )
+        db.session.add(log)
+        db.session.commit()
+        return {
+            "id": log.id,
+            "approved": log.approved,
+            "notes": log.notes,
+        }
+
+    @staticmethod
+    def export_questions(witness_id: int, file_path: str, reviewer_id: int) -> str:
+        reviewer = Agent.query.get(reviewer_id)
+        if not reviewer or reviewer.role not in {"attorney", "case_admin"}:
+            raise PermissionError("Reviewer lacks permission")
     def export_questions(witness_id: int, file_path: str) -> str:
         witness = Witness.query.get_or_404(witness_id)
         questions = (

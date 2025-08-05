@@ -506,6 +506,9 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Next: implement deposition review approvals with permission controls.
 
 ## Update 2025-08-04T14:30Z
+- Introduced deposition review logging with role-based checks and blocked exports for non-attorneys.
+- React panel now collects reviewer ID and notes with enhanced hover styling on question items.
+- Next: investigate optional deposition prep enhancements and deeper audit trails.
 - Linked facts to ontology elements and generated cause support scores.
 - Next: weight confidence by document credibility and expose metrics in UI.
 ## Update 2025-08-04T15:00Z

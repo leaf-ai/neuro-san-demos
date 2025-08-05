@@ -8,6 +8,8 @@ function DepositionPrepSection() {
   const [witnessId, setWitnessId] = useState("");
   const [includePriv, setIncludePriv] = useState(false);
   const [questions, setQuestions] = useState([]);
+  const [reviewerId, setReviewerId] = useState("");
+  const [notes, setNotes] = useState("");
 
   useEffect(() => {
     fetch("/api/cases").then(r => r.json()).then(d => setCases(d.data || []));
@@ -37,6 +39,24 @@ function DepositionPrepSection() {
       .then(r => r.json()).then(alertResponse);
   };
 
+  const approve = () => {
+    if (!witnessId || !reviewerId) return;
+    fetch("/api/deposition/review", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ witness_id: witnessId, reviewer_id: reviewerId, approved: true, notes })
+    }).then(r => r.json()).then(alertResponse);
+  };
+
+  const exportDoc = () => {
+    if (!witnessId || !reviewerId) return;
+    window.open(`/api/deposition/export/${witnessId}?format=docx&reviewer_id=${reviewerId}`, "_blank");
+  };
+
+  const exportPdf = () => {
+    if (!witnessId || !reviewerId) return;
+    window.open(`/api/deposition/export/${witnessId}?format=pdf&reviewer_id=${reviewerId}`, "_blank");
+=======
   const exportDoc = () => {
     if (!witnessId) return;
     window.open(`/api/deposition/export/${witnessId}?format=docx`, "_blank");
@@ -45,7 +65,7 @@ function DepositionPrepSection() {
   const exportPdf = () => {
     if (!witnessId) return;
     window.open(`/api/deposition/export/${witnessId}?format=pdf`, "_blank");
-  };
+ };
 
   return (
     <section className="card">
@@ -68,6 +88,14 @@ function DepositionPrepSection() {
         <button className="button-secondary" onClick={exportDoc}><i className="fa fa-file-word mr-1"></i>Export DOCX</button>
         <button className="button-secondary" onClick={exportPdf}><i className="fa fa-file-pdf mr-1"></i>Export PDF</button>
       </div>
+      <div className="p-2 rounded mb-2" style={{background:"var(--color-bg-alt)", border:"1px solid var(--color-accent)"}}>
+        <input type="text" placeholder="Reviewer ID" value={reviewerId} onChange={e => setReviewerId(e.target.value)} className="p-1 rounded w-full mb-2" />
+        <textarea placeholder="Notes" value={notes} onChange={e => setNotes(e.target.value)} className="p-1 rounded w-full mb-2"></textarea>
+        <button className="button-secondary w-full" onClick={approve}><i className="fa fa-check mr-1"></i>Approve Outline</button>
+      </div>
+      <ul className="text-sm space-y-2">
+        {questions.map(q => (
+          <li key={q.id} className="p-2 rounded hover:bg-gray-800" style={{ background: "var(--color-bg-alt)", borderLeft: "2px solid var(--color-accent)", transition: "background 0.3s" }}>
       <ul className="text-sm space-y-2">
         {questions.map(q => (
           <li key={q.id} className="p-2 rounded" style={{ background: "var(--color-bg-alt)", borderLeft: "2px solid var(--color-accent)" }}>

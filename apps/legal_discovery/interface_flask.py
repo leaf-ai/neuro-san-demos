@@ -14,6 +14,12 @@ from difflib import SequenceMatcher
 
 # pylint: disable=import-error
 import schedule
+from flask import Flask
+from flask import jsonify
+from flask import render_template
+from flask import request
+from flask import send_file
+from werkzeug.utils import secure_filename
 from flask import Flask, jsonify, render_template, request, send_file
 from flask_socketio import SocketIO
 
@@ -33,6 +39,7 @@ from werkzeug.utils import secure_filename
 
 from apps.legal_discovery import settings
 from apps.legal_discovery.database import db
+from coded_tools.legal_discovery.deposition_prep import DepositionPrep
 from apps.legal_discovery.legal_discovery import (
     legal_discovery_thinker,
     set_up_legal_discovery_assistant,
@@ -51,6 +58,9 @@ from apps.legal_discovery.models import (
     LegalReference,
     LegalTheory,
     RedactionAudit,
+    Witness,
+    DepositionQuestion,
+    DepositionReviewLog,
     RedactionLog,
     TimelineEvent,
     Witness,
@@ -1020,6 +1030,9 @@ def generate_deposition_questions():
     include_privileged = data.get("include_privileged", False)
     if not witness_id:
         return jsonify({"error": "Missing witness_id"}), 400
+    questions = DepositionPrep.generate_questions(
+        witness_id, include_privileged=include_privileged
+    )
     questions = DepositionPrep.generate_questions(witness_id, include_privileged=include_privileged)
     return jsonify({"status": "ok", "data": questions})
 
@@ -1033,6 +1046,34 @@ def flag_deposition_question(question_id: int):
 @app.route("/api/deposition/export/<int:witness_id>", methods=["GET"])
 def export_deposition_questions(witness_id: int):
     fmt = request.args.get("format", "docx")
+    reviewer_id = request.args.get("reviewer_id", type=int)
+    if not reviewer_id:
+        return jsonify({"error": "Missing reviewer_id"}), 400
+    os.makedirs("exports", exist_ok=True)
+    path = os.path.join("exports", f"deposition_{witness_id}.{fmt}")
+    try:
+        DepositionPrep.export_questions(witness_id, path, reviewer_id)
+    except PermissionError:
+        return jsonify({"error": "Forbidden"}), 403
+    return send_file(path, as_attachment=True)
+
+
+@app.route("/api/deposition/review", methods=["POST"])
+def review_deposition():
+    data = request.get_json() or {}
+    witness_id = data.get("witness_id")
+    reviewer_id = data.get("reviewer_id")
+    approved = data.get("approved", False)
+    notes = data.get("notes")
+    if not witness_id or not reviewer_id:
+        return jsonify({"error": "Missing witness_id or reviewer_id"}), 400
+    try:
+        DepositionPrep.log_review(witness_id, reviewer_id, approved, notes)
+    except PermissionError:
+        return jsonify({"error": "Forbidden"}), 403
+    return jsonify({"status": "ok"})
+
+
     os.makedirs("exports", exist_ok=True)
     path = os.path.join("exports", f"deposition_{witness_id}.{fmt}")
     DepositionPrep.export_questions(witness_id, path)
