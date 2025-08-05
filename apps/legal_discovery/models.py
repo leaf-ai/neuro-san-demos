@@ -1,4 +1,7 @@
 from .database import db
+import enum
+import uuid
+from sqlalchemy import event
 
 
 class Case(db.Model):
@@ -109,6 +112,38 @@ class RedactionAudit(db.Model):
     action = db.Column(db.String(20), nullable=False)
     timestamp = db.Column(db.DateTime, server_default=db.func.now())
     reason = db.Column(db.Text, nullable=True)
+
+
+class ChainEventType(enum.Enum):
+    INGESTED = "INGESTED"
+    HASHED = "HASHED"
+    REDACTED = "REDACTED"
+    STAMPED = "STAMPED"
+    VERSIONED = "VERSIONED"
+    DELETED = "DELETED"
+    EXPORTED = "EXPORTED"
+
+
+class ChainOfCustodyLog(db.Model):
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    document_id = db.Column(db.Integer, db.ForeignKey("document.id"), nullable=False)
+    event_type = db.Column(db.Enum(ChainEventType), nullable=False)
+    timestamp = db.Column(db.DateTime, server_default=db.func.now())
+    user_id = db.Column(db.Integer, db.ForeignKey("agent.id"), nullable=True)
+    event_metadata = db.Column(db.JSON, nullable=True)
+
+    document = db.relationship("Document", backref=db.backref("chain_logs", lazy=True))
+    user = db.relationship("Agent", backref=db.backref("chain_logs", lazy=True))
+
+
+@event.listens_for(ChainOfCustodyLog, "before_update")
+def _prevent_update(mapper, connection, target):  # pragma: no cover - safety measure
+    raise ValueError("ChainOfCustodyLog entries are immutable")
+
+
+@event.listens_for(ChainOfCustodyLog, "before_delete")
+def _prevent_delete(mapper, connection, target):  # pragma: no cover - safety measure
+    raise ValueError("ChainOfCustodyLog entries cannot be deleted")
 
 
 class Witness(db.Model):

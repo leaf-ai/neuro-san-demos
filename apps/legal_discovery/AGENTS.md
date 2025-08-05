@@ -547,3 +547,9 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-05T22:30Z
 - Removed outdated deposition export from review endpoint to enforce reviewer IDs and avoid undefined variables
 - Next: add unit tests covering deposition review logging
+
+## Update 2025-08-05T10:56Z
+- Added chain-of-custody logging model and event triggers
+- Integrated logging utility across ingest, redaction, stamping, and export flows
+- Exposed retrieval API and React dashboard panel for chain logs
+- Next: extend filtering and export options for audit reports
