@@ -43,6 +43,7 @@ def test_assign_and_generate_binder(tmp_path):
     with app.app_context():
         num = assign_exhibit_number(doc_id, "Title")
         assert num == "EX_0001"
+        assert Document.query.get(doc_id).exhibit_order == 1
         binder_path = tmp_path / "binder.pdf"
         result = generate_binder(case_id, binder_path)
         assert result == str(binder_path)
@@ -53,6 +54,7 @@ def test_export_zip(tmp_path):
     app, case_id, doc_id = _setup_app(tmp_path)
     with app.app_context():
         assign_exhibit_number(doc_id, "Title")
+        assert Document.query.get(doc_id).exhibit_order == 1
         zip_path = tmp_path / "exhibits.zip"
         result = export_zip(case_id, zip_path)
         assert result == str(zip_path)

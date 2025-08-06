@@ -4,7 +4,12 @@ from flask import Flask
 from reportlab.pdfgen import canvas
 
 from apps.legal_discovery.database import db
-from apps.legal_discovery.models import Case, Document
+from apps.legal_discovery.models import (
+    Case,
+    Document,
+    ChainOfCustodyLog,
+    ChainEventType,
+)
 from apps.legal_discovery.exhibit_routes import exhibits_bp
 
 def _create_pdf(path):
@@ -26,41 +31,92 @@ def _setup(tmp_path):
         db.session.add(case)
         db.session.commit()
         case_id = case.id
-        pdf_path = tmp_path / "doc.pdf"
-        _create_pdf(pdf_path)
-        doc = Document(
+
+        pdf1 = tmp_path / "doc1.pdf"
+        pdf2 = tmp_path / "doc2.pdf"
+        pdf3 = tmp_path / "doc3.pdf"
+        _create_pdf(pdf1)
+        _create_pdf(pdf2)
+        _create_pdf(pdf3)
+
+        doc1 = Document(
             case_id=case_id,
-            name="Doc",
-            file_path=str(pdf_path),
+            name="Doc1",
+            file_path=str(pdf1),
             content_hash="hash1",
             bates_number="B1",
         )
-        db.session.add(doc)
+        doc2 = Document(
+            case_id=case_id,
+            name="Doc2",
+            file_path=str(pdf2),
+            content_hash="hash2",
+            bates_number="B2",
+        )
+        doc3 = Document(
+            case_id=case_id,
+            name="Doc3",
+            file_path=str(pdf3),
+            content_hash="hash3",
+            bates_number="B3",
+            is_privileged=True,
+        )
+        db.session.add_all([doc1, doc2, doc3])
         db.session.commit()
-        doc_id = doc.id
-    return app, case_id, doc_id
+
+        db.session.add_all(
+            [
+                ChainOfCustodyLog(
+                    document_id=doc1.id, event_type=ChainEventType.INGESTED, source_team="team1"
+                ),
+                ChainOfCustodyLog(
+                    document_id=doc2.id, event_type=ChainEventType.INGESTED, source_team="team2"
+                ),
+                ChainOfCustodyLog(
+                    document_id=doc3.id, event_type=ChainEventType.INGESTED, source_team="team1"
+                ),
+            ]
+        )
+        db.session.commit()
+        return app, case_id, doc1.id, doc2.id, doc3.id
 
 
 def test_assign_list_and_exports(tmp_path):
-    app, case_id, doc_id = _setup(tmp_path)
+    app, case_id, doc1, doc2, doc3 = _setup(tmp_path)
     client = app.test_client()
 
-    res = client.post("/api/exhibits/assign", json={"document_id": doc_id, "title": "Title"})
+    res = client.post("/api/exhibits/assign", json={"document_id": doc1, "title": "T1"})
     assert res.status_code == 200
     assert res.json["exhibit_number"] == "EX_0001"
 
-    res = client.get(f"/api/exhibits?case_id={case_id}")
-    assert res.status_code == 200
-    assert res.json[0]["exhibit_number"] == "EX_0001"
-
     res = client.post("/api/exhibits/binder", json={"case_id": case_id})
     assert res.status_code == 200
-    binder_path = tmp_path / "case_{}_binder.pdf".format(case_id)
+    binder_path = tmp_path / f"case_{case_id}_binder.pdf"
     assert binder_path.exists()
 
     res = client.post("/api/exhibits/zip", json={"case_id": case_id})
     assert res.status_code == 200
-    zip_path = tmp_path / "case_{}_exhibits.zip".format(case_id)
+    zip_path = tmp_path / f"case_{case_id}_exhibits.zip"
     assert zip_path.exists()
     with zipfile.ZipFile(zip_path) as z:
         assert "manifest.json" in z.namelist()
+
+    client.post("/api/exhibits/assign", json={"document_id": doc2, "title": "T2"})
+    client.post("/api/exhibits/assign", json={"document_id": doc3, "title": "T3"})
+    res = client.post(
+        "/api/exhibits/reorder", json={"case_id": case_id, "order": [doc2, doc1, doc3]}
+    )
+    assert res.status_code == 200
+
+    res = client.get(f"/api/exhibits?case_id={case_id}")
+    assert [e["id"] for e in res.json] == [doc2, doc1]
+
+    res = client.get(
+        f"/api/exhibits?case_id={case_id}&include_privileged=true"
+    )
+    assert [e["id"] for e in res.json] == [doc2, doc1, doc3]
+
+    res = client.get(
+        f"/api/exhibits?case_id={case_id}&include_privileged=true&source_team=team1"
+    )
+    assert [e["id"] for e in res.json] == [doc1, doc3]
