@@ -698,6 +698,11 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Tests cover ingest, redaction, stamping and export logging end-to-end.
 - Next: extend chain log filters and add report export options.
 
+## Update 2025-08-08T16:00Z
+- Aggregated stipulations, contested issues and witness lists from approved theories.
+- Gemini-powered pretrial export saves editable DOCX and hooks timeline/binder modules.
+- Added unit test for export to verify timeline and binder integration.
+- Next: expose pretrial export endpoint in dashboard UI.
 
 ## Update 2025-08-06T16:29Z
 - TemplateLibrary now pulls opposition discrepancies for motion prompts.
