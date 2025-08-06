@@ -449,6 +449,7 @@ def override_privilege(doc_id: int):
         doc.id,
         ChainEventType.REDACTED,
         metadata={"override": True, "privileged": doc.is_privileged},
+        source_team="legal_discovery",
     )
     db.session.commit()
     return jsonify({"status": "ok", "privileged": doc.is_privileged})
@@ -652,6 +653,7 @@ def ingest_document(
             doc_id,
             ChainEventType.REDACTED,
             metadata={"spans": [(s.start, s.end) for s in spans]},
+            source_team="legal_discovery",
         )
     else:
         shutil.copy(original_path, redacted_path)
@@ -705,7 +707,12 @@ def ingest_document(
                 kg.link_fact_to_element(fact_id, cause, element, weight)
 
     kg.close()
-    log_event(doc_id, ChainEventType.INGESTED, metadata={"path": redacted_path})
+    log_event(
+        doc_id,
+        ChainEventType.INGESTED,
+        metadata={"path": redacted_path},
+        source_team="legal_discovery",
+    )
 
 
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
@@ -875,7 +882,12 @@ def export_files():
     archive = "processed_files.zip"
     shutil.make_archive("processed_files", "zip", UPLOAD_FOLDER)
     for doc in Document.query.all():
-        log_event(doc.id, ChainEventType.EXPORTED, metadata={"archive": archive})
+        log_event(
+            doc.id,
+            ChainEventType.EXPORTED,
+            metadata={"archive": archive},
+            source_team="legal_discovery",
+        )
     return send_from_directory(".", archive, as_attachment=True)
 
 
@@ -953,7 +965,12 @@ def redact_document():
         return jsonify({"error": str(exc)}), 500
     doc = Document.query.filter_by(file_path=file_path).first()
     if doc:
-        log_event(doc.id, ChainEventType.REDACTED, metadata={"text": text})
+        log_event(
+            doc.id,
+            ChainEventType.REDACTED,
+            metadata={"text": text},
+            source_team="legal_discovery",
+        )
     return jsonify({"message": "File redacted", "output": f"{file_path}_redacted.pdf"})
 
 
@@ -972,7 +989,12 @@ def bates_stamp_document():
         return jsonify({"error": str(exc)}), 500
     doc = Document.query.filter_by(file_path=file_path).first()
     if doc:
-        log_event(doc.id, ChainEventType.STAMPED, metadata={"prefix": prefix})
+        log_event(
+            doc.id,
+            ChainEventType.STAMPED,
+            metadata={"prefix": prefix},
+            source_team="legal_discovery",
+        )
     return jsonify({"message": "File stamped", "output": f"{file_path}_stamped.pdf"})
 
 
