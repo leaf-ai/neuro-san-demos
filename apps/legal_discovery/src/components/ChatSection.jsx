@@ -4,7 +4,11 @@ import { io } from "socket.io-client";
 function ChatSection() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const [recording, setRecording] = useState(false);
+  const [voiceModel, setVoiceModel] = useState("en-US");
   const boxRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
 
   useEffect(() => {
     const socket = io("/chat");
@@ -14,6 +18,12 @@ function ChatSection() {
     socket.on("update_user_input", (d) =>
       setMessages((m) => [...m, { type: "user", text: d.data }])
     );
+    socket.on("voice_output", (d) => {
+      if (d.audio) {
+        const audio = new Audio(`data:audio/mp3;base64,${d.audio}`);
+        audio.play();
+      }
+    });
     return () => socket.disconnect();
   }, []);
 
@@ -28,16 +38,88 @@ function ChatSection() {
     fetch("/api/query", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: input }),
+      body: JSON.stringify({ text: input, voice_model: voiceModel }),
     }).then(() => setInput(""));
+  };
+
+  const startRecording = async () => {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorderRef.current = new MediaRecorder(stream);
+    audioChunksRef.current = [];
+    mediaRecorderRef.current.ondataavailable = (e) => {
+      if (e.data.size > 0) audioChunksRef.current.push(e.data);
+    };
+    mediaRecorderRef.current.onstop = handleRecordingStop;
+    mediaRecorderRef.current.start();
+    setRecording(true);
+  };
+
+  const handleRecordingStop = async () => {
+    const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+    const reader = new FileReader();
+    reader.readAsDataURL(blob);
+    reader.onloadend = () => {
+      const base64data = reader.result.split(",")[1];
+      const recognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (recognition) {
+        const rec = new recognition();
+        rec.lang = voiceModel;
+        rec.onresult = (e) => {
+          const transcript = e.results[0][0].transcript;
+          sendVoice(base64data, transcript);
+        };
+        rec.onerror = () => sendVoice(base64data, "");
+        rec.start();
+      } else {
+        sendVoice(base64data, "");
+      }
+    };
+    setRecording(false);
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && recording) {
+      mediaRecorderRef.current.stop();
+    }
+  };
+
+  const sendVoice = (audio, transcript) => {
+    fetch("/api/voice_query", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ audio, transcript, voice_model: voiceModel }),
+    });
+    if (transcript) {
+      setMessages((m) => [...m, { type: "user", text: transcript }]);
+    }
   };
 
   return (
     <section className="card">
       <h2>Chat</h2>
+      <div className="flex items-center mb-2">
+        <select
+          value={voiceModel}
+          onChange={(e) => setVoiceModel(e.target.value)}
+          className="mr-2 bg-gray-800 text-gray-100 p-1 rounded"
+        >
+          <option value="en-US">English US</option>
+          <option value="en-GB">English UK</option>
+        </select>
+        {recording ? (
+          <button className="button-secondary" onClick={stopRecording}>
+            Stop
+          </button>
+        ) : (
+          <button className="button-secondary" onClick={startRecording}>
+            Speak
+          </button>
+        )}
+      </div>
       <div
         ref={boxRef}
-        className="chat-box overflow-y-auto" 
+        className="chat-box overflow-y-auto"
         style={{ maxHeight: "200px" }}
       >
         {messages.map((m, i) => (
