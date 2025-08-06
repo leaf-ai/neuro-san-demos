@@ -56,16 +56,7 @@ function DepositionPrepSection() {
   const exportPdf = () => {
     if (!witnessId || !reviewerId) return;
     window.open(`/api/deposition/export/${witnessId}?format=pdf&reviewer_id=${reviewerId}`, "_blank");
-=======
-  const exportDoc = () => {
-    if (!witnessId) return;
-    window.open(`/api/deposition/export/${witnessId}?format=docx`, "_blank");
   };
-
-  const exportPdf = () => {
-    if (!witnessId) return;
-    window.open(`/api/deposition/export/${witnessId}?format=pdf`, "_blank");
- };
 
   return (
     <section className="card">
@@ -93,17 +84,30 @@ function DepositionPrepSection() {
         <textarea placeholder="Notes" value={notes} onChange={e => setNotes(e.target.value)} className="p-1 rounded w-full mb-2"></textarea>
         <button className="button-secondary w-full" onClick={approve}><i className="fa fa-check mr-1"></i>Approve Outline</button>
       </div>
-      <ul className="text-sm space-y-2">
-        {questions.map(q => (
-          <li key={q.id} className="p-2 rounded hover:bg-gray-800" style={{ background: "var(--color-bg-alt)", borderLeft: "2px solid var(--color-accent)", transition: "background 0.3s" }}>
-      <ul className="text-sm space-y-2">
-        {questions.map(q => (
-          <li key={q.id} className="p-2 rounded" style={{ background: "var(--color-bg-alt)", borderLeft: "2px solid var(--color-accent)" }}>
-            [{q.category}] {q.question}{q.source && <span style={{color:'var(--color-text-muted)'}}> ({q.source})</span>}
-            <button className="ml-2 text-xs button-secondary" onClick={() => flag(q.id)}><i className="fa fa-flag mr-1"></i>Flag</button>
-          </li>
-        ))}
-      </ul>
+        <ul className="text-sm space-y-2">
+          {questions.map(q => (
+            <li
+              key={q.id}
+              className="p-2 rounded hover:bg-gray-800"
+              style={{
+                background: "var(--color-bg-alt)",
+                borderLeft: "2px solid var(--color-accent)",
+                transition: "background 0.3s"
+              }}
+            >
+              [{q.category}] {q.question}
+              {q.source && (
+                <span style={{ color: "var(--color-text-muted)" }}> ({q.source})</span>
+              )}
+              <button
+                className="ml-2 text-xs button-secondary"
+                onClick={() => flag(q.id)}
+              >
+                <i className="fa fa-flag mr-1"></i>Flag
+              </button>
+            </li>
+          ))}
+        </ul>
     </section>
   );
 }

@@ -297,6 +297,8 @@ class LegalTheory(db.Model):
     case_id = db.Column(db.Integer, db.ForeignKey("case.id"), nullable=False)
     theory_name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=True)
+    status = db.Column(db.String(20), nullable=False, default="pending")
+    review_comment = db.Column(db.Text, nullable=True)
 
 
 class Deposition(db.Model):

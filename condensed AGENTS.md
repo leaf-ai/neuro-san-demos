@@ -105,3 +105,8 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 - Introduced `TheoryConfidence` model with migration linking facts to theories with scored confidence.
 - Enhanced fact extractor to tag relationships and compute confidence from similarity and source reliability.
 - Next: expose confidence metrics through API and UI visualisations.
+
+## Update 2025-08-06T14:00Z
+- Added theory review workflow with approval, rejection and comment endpoints plus confidence bar UI.
+- Dashboard now refreshes graph and timeline on theory state changes with Cypress end-to-end coverage.
+- Next: persist per-user review metadata and expand theory analytics.

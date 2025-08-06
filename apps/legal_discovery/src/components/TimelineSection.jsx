@@ -46,6 +46,12 @@ function TimelineSection() {
       modal.style.display='flex';
     });
   }, [events]);
+
+  useEffect(() => {
+    const handler = () => load();
+    window.addEventListener('timelineRefresh', handler);
+    return () => window.removeEventListener('timelineRefresh', handler);
+  });
   return (
     <section className="card">
       <h2>Timeline</h2>

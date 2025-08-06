@@ -608,3 +608,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-06T12:30Z
 - Added confidence-weighted SUPPORTS/CONTRADICTS edges and theory acceptance routing to drafter, pretrial and timeline APIs.
 - Next: surface accepted theory outputs in dashboard UI.
+
+## Update 2025-08-06T14:00Z
+- Implemented approval, rejection and comment endpoints with UI controls and confidence bar.
+- Graph and timeline auto-refresh on theory decisions and Cypress tests cover the workflow.
+- Next: capture reviewer identity and expose theory review history.

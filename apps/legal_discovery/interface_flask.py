@@ -1458,6 +1458,15 @@ def accept_theory():
         if timeline_items:
             timeline_manager.create_timeline(cause, timeline_items)
 
+        lt = LegalTheory.query.filter_by(theory_name=cause, case_id=1).first()
+        if lt is None:
+            lt = LegalTheory(case_id=1, theory_name=cause)
+            db.session.add(lt)
+        lt.status = "approved"
+        if data.get("comment"):
+            lt.review_comment = data.get("comment")
+        db.session.commit()
+
         return jsonify(
             {
                 "status": "ok",
@@ -1468,6 +1477,41 @@ def accept_theory():
         )
     finally:
         engine.close()
+
+
+@app.route("/api/theories/reject", methods=["POST"])
+def reject_theory():
+    data = request.get_json() or {}
+    cause = data.get("cause")
+    if not cause:
+        return jsonify({"status": "error", "error": "cause required"}), 400
+
+    lt = LegalTheory.query.filter_by(theory_name=cause, case_id=1).first()
+    if lt is None:
+        lt = LegalTheory(case_id=1, theory_name=cause)
+        db.session.add(lt)
+    lt.status = "rejected"
+    if data.get("comment"):
+        lt.review_comment = data.get("comment")
+    db.session.commit()
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/theories/comment", methods=["POST"])
+def comment_theory():
+    data = request.get_json() or {}
+    cause = data.get("cause")
+    comment = data.get("comment")
+    if not cause or comment is None:
+        return jsonify({"status": "error", "error": "cause and comment required"}), 400
+
+    lt = LegalTheory.query.filter_by(theory_name=cause, case_id=1).first()
+    if lt is None:
+        lt = LegalTheory(case_id=1, theory_name=cause)
+        db.session.add(lt)
+    lt.review_comment = comment
+    db.session.commit()
+    return jsonify({"status": "ok"})
 
 
 @app.route("/api/query", methods=["POST"])
