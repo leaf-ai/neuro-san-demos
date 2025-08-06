@@ -99,3 +99,9 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 ## Update 2025-08-06T04:18Z
 - Added weasyprint stub for tests and expanded deposition prep assertions for contradiction detection and review logs
 - Next: cover additional deposition prep edge cases
+
+## Update 2025-08-06T10:30Z
+- Expanded legal theory ontology with additional causes, defenses and jurisdiction data.
+- Introduced `TheoryConfidence` model with migration linking facts to theories with scored confidence.
+- Enhanced fact extractor to tag relationships and compute confidence from similarity and source reliability.
+- Next: expose confidence metrics through API and UI visualisations.

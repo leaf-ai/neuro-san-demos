@@ -356,6 +356,27 @@ class Fact(db.Model):
     witness = db.relationship("Witness", backref=db.backref("facts", lazy=True))
 
 
+class TheoryConfidence(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    legal_theory_id = db.Column(db.Integer, db.ForeignKey("legal_theory.id"), nullable=False)
+    fact_id = db.Column(db.Integer, db.ForeignKey("fact.id"), nullable=False)
+    confidence = db.Column(db.Float, nullable=False)
+    source_team = db.Column(db.String(100), nullable=False, default="unknown")
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    __table_args__ = (
+        db.CheckConstraint("confidence >= 0 AND confidence <= 1", name="ck_theory_confidence_range"),
+    )
+
+    legal_theory = db.relationship(
+        "LegalTheory",
+        backref=db.backref("confidence_links", lazy=True, cascade="all, delete-orphan"),
+    )
+    fact = db.relationship(
+        "Fact",
+        backref=db.backref("theory_links", lazy=True, cascade="all, delete-orphan"),
+    )
+
+
 class DepositionQuestion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     witness_id = db.Column(db.Integer, db.ForeignKey("witness.id"), nullable=False)
