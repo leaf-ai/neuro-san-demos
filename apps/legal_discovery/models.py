@@ -101,6 +101,7 @@ class Document(db.Model):
     is_exhibit = db.Column(db.Boolean, nullable=False, default=False)
     exhibit_number = db.Column(db.String(50), unique=True)
     exhibit_title = db.Column(db.String(255))
+    exhibit_order = db.Column(db.Integer, nullable=False, default=0)
     metadata_entries = db.relationship(
         "DocumentMetadata",
         backref="document",

@@ -72,6 +72,7 @@ def assign_exhibit_number(
     doc.exhibit_number = f"EX_{next_num:04}"
     doc.exhibit_title = title or doc.name
     doc.is_exhibit = True
+    doc.exhibit_order = next_num
     db.session.commit()
     log_action(doc.case_id, doc.id, "ASSIGN", user, {"exhibit_number": doc.exhibit_number})
     return doc.exhibit_number
@@ -114,8 +115,8 @@ def generate_binder(case_id: int, output_path: str | None = None) -> str:
     """Combine exhibits with cover sheets into a single PDF binder."""
     validate_exhibits(case_id)
     exhibits = (
-        Document.query.filter_by(case_id=case_id, is_exhibit=True)
-        .order_by(Document.exhibit_number)
+        Document.query.filter_by(case_id=case_id, is_exhibit=True, is_privileged=False)
+        .order_by(Document.exhibit_order, Document.exhibit_number)
         .all()
     )
     writer = PdfWriter()
@@ -134,8 +135,8 @@ def export_zip(case_id: int, output_path: str | None = None) -> str:
     """Package exhibits and a manifest into a zip archive."""
     validate_exhibits(case_id)
     exhibits = (
-        Document.query.filter_by(case_id=case_id, is_exhibit=True)
-        .order_by(Document.exhibit_number)
+        Document.query.filter_by(case_id=case_id, is_exhibit=True, is_privileged=False)
+        .order_by(Document.exhibit_order, Document.exhibit_number)
         .all()
     )
     if output_path is None:

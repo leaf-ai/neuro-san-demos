@@ -613,3 +613,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Implemented approval, rejection and comment endpoints with UI controls and confidence bar.
 - Graph and timeline auto-refresh on theory decisions and Cypress tests cover the workflow.
 - Next: capture reviewer identity and expose theory review history.
+
+## Update 2025-08-06T15:30Z
+- Added `exhibit_order` column with migration and default assignment.
+- Exposed reorder API and filtered exhibit listings by privilege and source team; UI highlights privileged entries.
+- Next: add drag-and-drop reordering in React dashboard.
