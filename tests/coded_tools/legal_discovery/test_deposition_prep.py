@@ -214,7 +214,50 @@ def test_review_logging_and_permissions(tmp_path):
 
         docx_path = tmp_path / "y.docx"
         pdf_path = tmp_path / "y.pdf"
-        DepositionPrep.export_questions(witness.id, str(docx_path), attorney.id)
-        DepositionPrep.export_questions(witness.id, str(pdf_path), attorney.id)
+        returned_docx = DepositionPrep.export_questions(
+            witness.id, str(docx_path), attorney.id
+        )
+        returned_pdf = DepositionPrep.export_questions(
+            witness.id, str(pdf_path), attorney.id
+        )
+        assert returned_docx == str(docx_path)
+        assert returned_pdf == str(pdf_path)
         assert docx_path.exists() and docx_path.stat().st_size > 0
         assert pdf_path.exists() and pdf_path.stat().st_size > 0
+
+
+def test_export_questions_authorized_formats(tmp_path):
+    app = setup_app()
+    with app.app_context():
+        case = Case(name="C3", description="")
+        db.session.add(case)
+        db.session.commit()
+        doc = Document(
+            case_id=case.id,
+            name="DocC",
+            bates_number="B300",
+            file_path="/tmp/docC",
+            content_hash="hC",
+        )
+        witness = Witness(name="Rick", role="Witness", associated_case=case.id)
+        attorney = Agent(name="Rita", role="attorney")
+        db.session.add_all([doc, witness, attorney])
+        db.session.commit()
+        question = DepositionQuestion(
+            witness_id=witness.id,
+            category="General",
+            question="What is your role?",
+            source="DocC",
+        )
+        db.session.add(question)
+        db.session.commit()
+
+        pdf_path = tmp_path / "auth.pdf"
+        docx_path = tmp_path / "auth.docx"
+        pdf_ret = DepositionPrep.export_questions(witness.id, str(pdf_path), attorney.id)
+        docx_ret = DepositionPrep.export_questions(witness.id, str(docx_path), attorney.id)
+
+        assert pdf_ret == str(pdf_path)
+        assert docx_ret == str(docx_path)
+        assert pdf_path.exists() and pdf_path.stat().st_size > 0
+        assert docx_path.exists() and docx_path.stat().st_size > 0
