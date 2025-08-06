@@ -15,6 +15,7 @@ from .knowledge_graph_manager import KnowledgeGraphManager
 from .sanctions_risk_analyzer import SanctionsRiskAnalyzer
 from .vector_database_manager import VectorDatabaseManager
 from .code_editor import CodeEditor
+from .sandboxed_vm import SandboxedVM
 
 
 EventHandler = Callable[[Dict[str, Any]], None]
@@ -41,6 +42,7 @@ class CocounselAgent(CodedTool):
         self.internet_search = InternetSearch()
         self.code_editor = CodeEditor()
         self.command_prompt = CommandPrompt()
+        self.sandbox_vm = SandboxedVM()
         self.sanctions_analyzer = SanctionsRiskAnalyzer()
         self.document_fetch = DocumentFetcher()
 
