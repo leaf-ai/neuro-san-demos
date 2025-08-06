@@ -598,3 +598,9 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added Redis-backed message bus and listener module.
 - Chain-of-custody logs now record `source_team` for provenance.
 - Next: persist research insights received via message bus.
+
+## Update 2025-08-06T10:30Z
+- Extended ontology with new causes, defenses and jurisdiction mapping.
+- Added `TheoryConfidence` model and migration linking facts to theories with source provenance.
+- Upgraded fact extractor for NER tagging, relationship extraction and confidence scoring.
+- Next: surface theory confidence metrics in API responses and dashboard graphs.
