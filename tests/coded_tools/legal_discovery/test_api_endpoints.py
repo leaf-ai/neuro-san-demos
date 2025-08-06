@@ -56,6 +56,15 @@ class TestAPIEndpoints(unittest.TestCase):
             timeline.create_timeline(cause, [])
             return jsonify({"document": path, "pretrial": statement, "timeline_items": []})
 
+        @app.route("/api/theories/reject", methods=["POST"])
+        def reject():
+            return jsonify({"status": "ok"})
+
+        @app.route("/api/theories/comment", methods=["POST"])
+        def comment():
+            data = request.get_json() or {}
+            return jsonify({"status": "ok", "comment": data.get("comment")})
+
         self.client = app.test_client()
 
     def tearDown(self):
@@ -83,6 +92,20 @@ class TestAPIEndpoints(unittest.TestCase):
         self.assertIn("document", data)
         self.assertIn("pretrial", data)
         self.assertIn("timeline_items", data)
+
+    def test_theories_reject_endpoint(self):
+        resp = self.client.post("/api/theories/reject", json={"cause": "Breach of Contract"})
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertEqual(data["status"], "ok")
+
+    def test_theories_comment_endpoint(self):
+        resp = self.client.post(
+            "/api/theories/comment", json={"cause": "Breach of Contract", "comment": "test"}
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertEqual(data["comment"], "test")
 
 
 if __name__ == "__main__":
