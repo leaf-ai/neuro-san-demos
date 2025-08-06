@@ -120,3 +120,8 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 - Stored chat message embeddings with privilege-aware filtering and graph links.
 - Added vector IDs for conversations and messages with database migration.
 - Next: expand conversation-level retrieval tests and refine graph relationships.
+
+## Update 2025-08-06T12:13Z
+- Added Gemini NLI-based narrative discrepancy pipeline with database model and API endpoints.
+- Built React opposition tracker with filters and PDF/CSV export.
+- Next: link discrepancies directly to timeline events and enhance bulk analysis.

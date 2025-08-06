@@ -12,7 +12,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from datetime import datetime
 from difflib import SequenceMatcher
-from io import BytesIO
+from io import BytesIO, StringIO
+import csv
 
 # pylint: disable=import-error
 import schedule
@@ -27,6 +28,7 @@ from flask_socketio import SocketIO
 
 import spacy
 from spacy.cli import download as spacy_download
+from weasyprint import HTML
 
 try:
     from apps.legal_discovery.legal_discovery import (
@@ -74,9 +76,13 @@ from apps.legal_discovery.models import (
     ChainOfCustodyLog,
     DocumentSource,
     MessageAuditLog,
+    NarrativeDiscrepancy,
 )
 from coded_tools.legal_discovery.deposition_prep import DepositionPrep
 from coded_tools.legal_discovery.legal_crawler import LegalCrawler
+from coded_tools.legal_discovery.narrative_discrepancy_detector import (
+    NarrativeDiscrepancyDetector,
+)
 from .exhibit_routes import exhibits_bp
 from .chain_logger import ChainEventType, log_event
 
@@ -929,6 +935,78 @@ def get_chain_log():
                 for e in entries
             ],
         }
+    )
+
+
+@app.route("/api/narrative_discrepancies", methods=["GET"])
+def list_narrative_discrepancies():
+    """Return stored narrative discrepancies."""
+    case_id = request.args.get("case_id", type=int)
+    query = NarrativeDiscrepancy.query
+    if case_id:
+        query = query.join(Document, NarrativeDiscrepancy.opposing_doc_id == Document.id).filter(
+            Document.case_id == case_id
+        )
+    records = query.order_by(NarrativeDiscrepancy.created_at.desc()).all()
+    return jsonify(
+        [
+            {
+                "id": r.id,
+                "opposing_doc_id": r.opposing_doc_id,
+                "user_doc_id": r.user_doc_id,
+                "conflicting_claim": r.conflicting_claim,
+                "evidence_excerpt": r.evidence_excerpt,
+                "confidence": r.confidence,
+                "legal_theory_id": r.legal_theory_id,
+                "calendar_event_id": r.calendar_event_id,
+            }
+            for r in records
+        ]
+    )
+
+
+@app.route("/api/narrative_discrepancies/analyze", methods=["POST"])
+def analyze_narrative_discrepancy():
+    """Analyze an opposition document for discrepancies."""
+    data = request.get_json(force=True)
+    doc_id = data.get("opposing_doc_id")
+    doc = Document.query.get_or_404(doc_id)
+    detector = NarrativeDiscrepancyDetector()
+    results = detector.analyze(doc)
+    return jsonify([r.__dict__ for r in results])
+
+
+@app.route("/api/narrative_discrepancies/export", methods=["GET"])
+def export_narrative_discrepancies():
+    fmt = request.args.get("format", "csv").lower()
+    records = NarrativeDiscrepancy.query.all()
+    if fmt == "pdf":
+        rows = [
+            f"<tr><td>{r.conflicting_claim}</td><td>{r.evidence_excerpt}</td><td>{r.confidence:.2f}</td></tr>"
+            for r in records
+        ]
+        html = (
+            "<table><tr><th>Claim</th><th>Evidence</th><th>Confidence</th></tr>"
+            + "".join(rows)
+            + "</table>"
+        )
+        pdf = HTML(string=html).write_pdf()
+        return send_file(
+            BytesIO(pdf),
+            as_attachment=True,
+            download_name="narrative_discrepancies.pdf",
+            mimetype="application/pdf",
+        )
+    output = StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["conflicting_claim", "evidence_excerpt", "confidence"])
+    for r in records:
+        writer.writerow([r.conflicting_claim, r.evidence_excerpt, r.confidence])
+    return send_file(
+        BytesIO(output.getvalue().encode("utf-8")),
+        as_attachment=True,
+        download_name="narrative_discrepancies.csv",
+        mimetype="text/csv",
     )
 
 

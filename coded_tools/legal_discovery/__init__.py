@@ -32,6 +32,7 @@ from .deposition_prep import DepositionPrep
 from .chat_agent import RetrievalChatAgent
 from .auto_drafter import AutoDrafter
 from .template_library import TemplateLibrary
+from .narrative_discrepancy_detector import NarrativeDiscrepancyDetector
 
 __all__ = [
     "CaseManagementTools",
@@ -67,4 +68,5 @@ __all__ = [
     "RetrievalChatAgent",
     "AutoDrafter",
     "TemplateLibrary",
+    "NarrativeDiscrepancyDetector",
 ]

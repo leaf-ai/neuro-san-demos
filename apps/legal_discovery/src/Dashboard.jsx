@@ -22,6 +22,7 @@ import LegalTheorySection from "./components/LegalTheorySection";
 import ExhibitTab from "./components/ExhibitTab";
 import DepositionPrepSection from "./components/DepositionPrepSection";
 import ChainLogSection from "./components/ChainLogSection";
+import OppositionTrackerSection from "./components/OppositionTrackerSection";
 const TABS = [
   {id:'network', label:'Agent Network', icon:'fa-sitemap'},
   {id:'overview', label:'Overview', icon:'fa-home'},
@@ -42,6 +43,7 @@ const TABS = [
   {id:'presentation', label:'Trial Prep', icon:'fa-slideshare'},
   {id:'exhibits', label:'Exhibits', icon:'fa-book'},
   {id:'deposition', label:'Deposition Prep', icon:'fa-user-tie'},
+  {id:'opposition', label:'Opposition Tracker', icon:'fa-flag'},
   {id:'chain', label:'Chain Log', icon:'fa-link'}
 ];
 
@@ -89,6 +91,7 @@ function Dashboard() {
       <div className="tab-content" style={{display: tab==='presentation'?'block':'none'}} id="tab-presentation"><PresentationSection/></div>
       <div className="tab-content" style={{display: tab==='exhibits'?'block':'none'}} id="tab-exhibits"><ExhibitTab/></div>
       <div className="tab-content" style={{display: tab==='deposition'?'block':'none'}} id="tab-deposition"><DepositionPrepSection/></div>
+      <div className="tab-content" style={{display: tab==='opposition'?'block':'none'}} id="tab-opposition"><OppositionTrackerSection/></div>
       <div className="tab-content" style={{display: tab==='chain'?'block':'none'}} id="tab-chain"><ChainLogSection/></div>
       <SettingsModal open={showSettings} onClose={()=>setShowSettings(false)}/>
     </div>

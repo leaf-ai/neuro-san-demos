@@ -430,3 +430,28 @@ class FactConflict(db.Model):
     fact1 = db.relationship("Fact", foreign_keys=[fact1_id])
     fact2 = db.relationship("Fact", foreign_keys=[fact2_id])
     witness = db.relationship("Witness", backref=db.backref("conflicts", lazy=True))
+
+
+class NarrativeDiscrepancy(db.Model):
+    """Contradictions between opposition claims and internal evidence."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    opposing_doc_id = db.Column(db.Integer, db.ForeignKey("document.id"), nullable=False)
+    user_doc_id = db.Column(db.Integer, db.ForeignKey("document.id"), nullable=False)
+    conflicting_claim = db.Column(db.Text, nullable=False)
+    evidence_excerpt = db.Column(db.Text, nullable=False)
+    confidence = db.Column(db.Float, nullable=False)
+    legal_theory_id = db.Column(db.Integer, db.ForeignKey("legal_theory.id"), nullable=True)
+    calendar_event_id = db.Column(db.Integer, db.ForeignKey("calendar_event.id"), nullable=True)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+    opposing_document = db.relationship(
+        "Document", foreign_keys=[opposing_doc_id], backref="opposition_discrepancies"
+    )
+    user_document = db.relationship(
+        "Document", foreign_keys=[user_doc_id], backref="user_discrepancies"
+    )
+    legal_theory = db.relationship("LegalTheory", backref=db.backref("discrepancies", lazy=True))
+    calendar_event = db.relationship(
+        "CalendarEvent", backref=db.backref("discrepancies", lazy=True)
+    )

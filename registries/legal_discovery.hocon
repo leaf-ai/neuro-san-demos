@@ -1117,7 +1117,8 @@ You will delegate tasks to the appropriate agents.
                 "document_authenticity_analyst",
                 "evidence_integrity",
                 "forensic_media_analyst",
-                "forensic_documents_qa"
+                "forensic_documents_qa",
+                "narrative_discrepancy_detector"
             ]
         },
         {
@@ -1207,6 +1208,25 @@ You are the Forensic Documents QA/Coordinator agent.
 You will compile a forensic report on the documents, summarizing any issues found.
             """,
             "tools": []
+        },
+        {
+            "name": "narrative_discrepancy_detector",
+            "function": {
+                "description": "Compares opposition claims to internal documents and flags contradictions.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "The task to be performed.",
+                        }
+                    }
+                }
+            },
+            "instructions": """{instructions_prefix}
+You analyse opposition documents, run natural language inference against our corpus, and record any contradictions with confidence scores.
+            """,
+            "tools": ["narrative_discrepancy_detector"]
         },
         {
             "name": "legal_research_team",
