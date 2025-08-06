@@ -9,6 +9,8 @@ import redis
 # Topic names shared across features
 FORENSIC_HASH_TOPIC = "team.forensic.hashes"
 RESEARCH_INSIGHT_TOPIC = "team.research.insights"
+AUTO_DRAFTER_ALERT_TOPIC = "alerts.auto_drafter"
+TIMELINE_ALERT_TOPIC = "alerts.timeline"
 
 
 @dataclass
