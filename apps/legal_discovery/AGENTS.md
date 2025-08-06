@@ -677,3 +677,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Subscribed opposition tracker to forensic hash and research insight topics with cross-checking.
 - Contradictions now publish alerts for auto-drafter and timeline builder.
 - Next: extend cross-checking beyond hash comparisons.
+
+## Update 2025-08-08T10:00Z
+- Logged privilege detection spans and override actions.
+- Added tests for detector true/false positives and dashboard override flow.
+- Next: evaluate detector accuracy on larger corpora.
