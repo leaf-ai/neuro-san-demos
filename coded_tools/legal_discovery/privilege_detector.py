@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Tuple
+from typing import Callable, List, Optional, Tuple
 
 import fitz
 import spacy
@@ -23,23 +23,22 @@ class PrivilegeDetector:
     """Detect and redact attorney–client privileged content.
 
     A spaCy model with a legal domain pipeline (e.g. ``en_legal_ner_trf``) or a
-    fine‑tuned text classifier can be supplied. If the loaded model exposes a
+    fine‑tuned classifier can be supplied. If the loaded spaCy model exposes a
     ``textcat``/``textcat_multilabel`` component, its ``PRIVILEGED`` (or
-    configured) category score is used in conjunction with keyword and entity
-    matching.
+    configured) category score is used. Otherwise an optional ``classifier``
+    callable may be provided which returns a probability for privilege. This
+    score is combined with keyword and entity matching for the final decision.
     """
 
     def __init__(
         self,
-        model: str = "en_core_web_sm",
+        model: Optional[str] = None,
         textcat_label: str = "PRIVILEGED",
         threshold: float = 0.5,
+        classifier: Optional[Callable[[str], float]] = None,
     ) -> None:
-        try:
-            self.nlp = spacy.load(model)
-        except OSError:
-            spacy_download(model)
-            self.nlp = spacy.load(model)
+        self.nlp = self._load_model(model)
+        self.classifier = classifier
         self.textcat_label = textcat_label
         self.threshold = threshold
         # Keywords signalling potential privilege as a final fallback
@@ -50,6 +49,26 @@ class PrivilegeDetector:
             "legal opinion",
         }
 
+    @staticmethod
+    def _load_model(model: Optional[str]):
+        """Load a spaCy model, preferring legal pipelines when available."""
+        candidates = [model] if model else ["en_legal_ner_trf", "en_core_web_sm"]
+        for name in candidates:
+            if not name:
+                continue
+            try:
+                return spacy.load(name)
+            except OSError:
+                if name == "en_legal_ner_trf":
+                    # don't attempt to download the large legal model automatically
+                    continue
+                try:
+                    spacy_download(name)
+                    return spacy.load(name)
+                except OSError:
+                    continue
+        raise OSError("No spaCy model could be loaded")
+
     def detect(self, text: str) -> Tuple[bool, List[Span]]:
         """Return whether text appears privileged and any spans to redact."""
         doc = self.nlp(text)
@@ -57,7 +76,11 @@ class PrivilegeDetector:
         privileged = False
 
         # Use text classification if available
-        if any(p in self.nlp.pipe_names for p in ["textcat", "textcat_multilabel"]):
+        if self.classifier is not None:
+            score = self.classifier(text)
+            if score >= self.threshold:
+                privileged = True
+        elif any(p in self.nlp.pipe_names for p in ["textcat", "textcat_multilabel"]):
             score = doc.cats.get(self.textcat_label, 0.0)
             if score >= self.threshold:
                 privileged = True

@@ -10,10 +10,12 @@ function UploadSection() {
   const [source,setSource] = useState('user');
   const [filter,setFilter] = useState('all');
   const togglePrivilege = (id, privileged) => {
+    const reviewer = prompt('Reviewer (optional):') || '';
+    const reason = prompt('Reason (optional):') || '';
     fetch(`/api/privilege/${id}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ privileged })
+      body: JSON.stringify({ privileged, reviewer, reason })
     }).then(fetchFiles);
   };
   const upload = async () => {
