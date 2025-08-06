@@ -8,7 +8,7 @@ from neuro_san.internals.run_context.langchain.util.api_key_error_check import A
 #  Reads the Anthropic API keys from an environment variables,
 #  Creates a client, and submits a simple query ("What's the capital of France?").
 #  The response should includes the word "Paris".
-#  Any exceptions (Invalid API Key, Azure OpenAI access being blocked, etc.) are reported.
+#  Any exceptions (Invalid API Key, provider access being blocked, etc.) are reported.
 def test_anthropic_api_key():
 
     # Set your Anthropic details

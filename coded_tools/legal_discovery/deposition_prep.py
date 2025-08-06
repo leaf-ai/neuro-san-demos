@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
+
+import google.generativeai as genai
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from docx import Document as DocxDocument
@@ -53,6 +55,12 @@ class DepositionPrep:
 
         prompt = PROMPT_TMPL.format(name=witness.name, facts=facts_text)
 
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        response = model.generate_content(
+            prompt,
+            generation_config=genai.types.GenerationConfig(temperature=0.2),
+        )
+        content = response.text
         llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.2)
         response = llm.invoke(prompt)
         content = response.content
@@ -91,7 +99,8 @@ class DepositionPrep:
         """Identify contradictions among witness facts using an LLM."""
 
         conflicts: List[Dict] = []
-        llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0)
+        model = genai.GenerativeModel("gemini-2.5-pro")
+        llm = ChatGoogleGenerativeAI(model="gemini-2.5-pro", temperature=0)
         for i in range(len(facts)):
             for j in range(i + 1, len(facts)):
                 prompt = (
@@ -99,6 +108,11 @@ class DepositionPrep:
                     f"1. {facts[i].text}\n2. {facts[j].text}\n"
                     'Respond with JSON {"contradiction": bool, "score": float}.'
                 )
+                response = model.generate_content(
+                    prompt,
+                    generation_config=genai.types.GenerationConfig(temperature=0),
+                )
+                content = response.text
                 response = llm.invoke(prompt)
                 content = response.content
                 try:

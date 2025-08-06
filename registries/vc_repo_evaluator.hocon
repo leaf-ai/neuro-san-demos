@@ -11,8 +11,8 @@
 # END COPYRIGHT
 {
     "llm_config": {
-        "class": "openai",
-        "use_model_name": "gpt-4.1-2025-04-14",
+        "class": "google_genai",
+        "use_model_name": "gemini-1.5-flash",
     },
     "max_iterations": 40000,
     "max_execution_seconds": 6000,
@@ -362,7 +362,7 @@ For each of the following 10 sub‑criteria, give a score from 1 to 100 (1 = ver
     - Use of lightweight stacks (Flask, FastAPI, Node, etc.)
     - Resource configuration management (.env, .secrets, config.py)
     - GPU or hardware-specific indicators (e.g., CUDA, GPU folders)
-    - Cloud API or LLM dependencies (openai, rag_pipeline, agent usage)
+    - Cloud API or LLM dependencies (google-genai, rag_pipeline, agent usage)
     - Multiple scripts presence for cost control and efficient ops
     - Containerization (Dockerfile, docker-compose.yml) for resource optimization
     - Modularity enabling selective deployment (services/plugins)

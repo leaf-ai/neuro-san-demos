@@ -8,7 +8,7 @@ import google.generativeai as genai
 #  Reads the Gemini API key from an environment variable,
 #  Creates a client, and submits a simple query ("What's the capital of France?").
 #  The response should includes the word "Paris".
-#  Any exceptions (Invalid API Key, OpenAI access being blocked, etc.) are reported.
+#  Any exceptions (Invalid API Key, provider access being blocked, etc.) are reported.
 def test_gemini_api_key():
 
     # Set your Gemini details

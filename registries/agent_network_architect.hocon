@@ -36,7 +36,7 @@
 
 {
     "llm_config": {
-        "model_name": "gpt-4o",
+        "model_name": "gemini-1.5-flash",
     },
     "max_execution_seconds": 6000,
     "tools": [
@@ -236,7 +236,7 @@ Always ask for clarification if the user's intent is ambiguous.
       <li>Customize your network by editing the <code>.hocon</code> file in any text editor.</li>
     </ol>
 
-    <p><strong>Note:</strong> To activate LLM capabilities, you’ll need an API key from OpenAI, Anthropic, or Azure OpenAI. We use <strong>Ollama</strong> for local LLM orchestration.</p>
+    <p><strong>Note:</strong> To activate LLM capabilities, you’ll need an API key from Google Generative AI, Anthropic, or another supported provider. We use <strong>Ollama</strong> for local LLM orchestration.</p>
 
     <h3>Need Help or Want to Learn More?</h3>
 

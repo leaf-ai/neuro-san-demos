@@ -86,8 +86,9 @@ class Rag(CodedTool):
     async def generate_vector_store(self, url: str) -> InMemoryVectorStore:
         """
         Asynchronously loads web documents from given URLs, split them into
-        chunks, and build an in-memory vector store using Gemini embeddings.
-
+        chunks, and build an in-memory vector store using Google Generative AI
+        embeddings.
+        
         :param urls: List of URLs to fetch and embed
         :return: In-memory vector store containing the embedded document chunks
         """

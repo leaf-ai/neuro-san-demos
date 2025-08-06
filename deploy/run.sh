@@ -62,7 +62,7 @@ function run() {
     docker_cmd="docker run --rm -it \
         --name=$SERVICE_NAME \
         --network=$network \
-        -e OPENAI_API_KEY \
+        -e GOOGLE_API_KEY \
         -e ANTHROPIC_API_KEY \
         -e TOOL_REGISTRY_FILE=$1 \
         -p $SERVICE_PORT:$SERVICE_PORT \
