@@ -130,3 +130,8 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 - Expanded motion template library with motions to compel and protective order pulling facts, accepted theories and conflicts.
 - Refined Auto Draft UI with clear review status, disabled actions until approval and accent borders for edit state.
 - Next: integrate opposition metrics into prompts and enhance export formatting.
+
+## Update 2025-08-06T15:40Z
+- Consolidated deposition question export into a single permission-aware method.
+- Introduced a lightweight weasyprint stub and broadened tests for PDF/DOCX export, contradiction detection and review logging.
+- Next: broaden deposition preparation edge-case coverage.

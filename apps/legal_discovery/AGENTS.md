@@ -688,3 +688,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - React VersionHistorySection lists versions with diff view.
 - Next: extend diff comparison for non-PDF formats.
 
+## Update 2025-08-06T15:40Z
+- Merged dual deposition question export routines into a single permission-aware static method.
+- Added lightweight weasyprint stub and comprehensive tests for exports, contradiction detection and review logging.
+- Next: expand deposition prep tests for edge cases.
+
