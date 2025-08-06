@@ -633,3 +633,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added React ExhibitTab with drag-and-drop ordering plus privilege and source filters; entries show linked theories and timeline dates.
 - Extended exhibit API with source filter and links endpoint; updated tests to cover ordering, filtering, and link retrieval.
 - Next: connect exhibit links to detailed timeline view and broaden source options.
+
+## Update 2025-08-06T20:30Z
+- Enhanced exhibit export to bundle deposition excerpts, theory references, scorecards, and sanctions notes into PDF/ZIP.
+- Added tests for exhibit numbering, cross-links, and privilege exclusions.
+- Next: enrich PDF export formatting for metadata pages.
