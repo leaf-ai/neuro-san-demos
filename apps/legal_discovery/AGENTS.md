@@ -648,3 +648,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Expanded motion template library with Motion in Limine and configurable Gemini temperature.
 - Added review gating to Auto Draft UI requiring explicit approval before export.
 - Next: incorporate opposition metrics into prompts and support additional export formats.
+
+## Update 2025-08-07T12:00Z
+- Added WebRTC-enabled ChatSection with selectable voice models and Socket.IO streaming.
+- Logged chat messages and voice transcripts to MessageAuditLog with migration and integration tests.
+- Next: enhance audio quality and broaden language model support.

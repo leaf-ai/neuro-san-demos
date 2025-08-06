@@ -70,6 +70,17 @@ class Message(db.Model):
     reply_to = db.relationship("Message", remote_side=[id])
 
 
+class MessageAuditLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    message_id = db.Column(db.String(36), db.ForeignKey("message.id"), nullable=False)
+    sender = db.Column(db.String(50), nullable=False)
+    transcript = db.Column(db.Text, nullable=False)
+    voice_model = db.Column(db.String(50), nullable=True)
+    timestamp = db.Column(db.DateTime, server_default=db.func.now())
+
+    message = db.relationship("Message", backref=db.backref("audit_logs", lazy=True))
+
+
 class DocumentSource(enum.Enum):
     USER = "user"
     OPP_COUNSEL = "opp_counsel"

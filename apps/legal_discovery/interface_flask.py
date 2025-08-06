@@ -1,4 +1,5 @@
 import atexit
+import base64
 import hashlib
 import json
 import logging
@@ -11,6 +12,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from datetime import datetime
 from difflib import SequenceMatcher
+from io import BytesIO
 
 # pylint: disable=import-error
 import schedule
@@ -67,6 +69,7 @@ from apps.legal_discovery.models import (
     Witness,
     ChainOfCustodyLog,
     DocumentSource,
+    MessageAuditLog,
 )
 from coded_tools.legal_discovery.deposition_prep import DepositionPrep
 from coded_tools.legal_discovery.legal_crawler import LegalCrawler
@@ -115,6 +118,17 @@ atexit.register(executor.shutdown)
 thread_started = False  # pylint: disable=invalid-name
 
 # Shared crawler instance for legal references
+def synthesize_voice(text: str, model: str) -> str:
+    """Generate base64-encoded audio from text."""
+    try:
+        from gtts import gTTS
+
+        audio_io = BytesIO()
+        gTTS(text=text, lang=model).write_to_fp(audio_io)
+        audio_io.seek(0)
+        return base64.b64encode(audio_io.read()).decode("utf-8")
+    except Exception:  # pragma: no cover - best effort
+        return ""
 legal_crawler = LegalCrawler()
 
 app.logger.setLevel(logging.getLevelName(os.environ.get("LOG_LEVEL", "INFO")))
@@ -1600,6 +1614,61 @@ def query_agent():
             {"data": "\n".join(result["facts"])},
             namespace="/chat",
         )
+        db.session.add(
+            MessageAuditLog(
+                message_id=result["message_id"],
+                sender="assistant",
+                transcript="\n".join(result["facts"]),
+                voice_model=data.get("voice_model"),
+            )
+        )
+    db.session.add(
+        MessageAuditLog(
+            message_id=result["message_id"],
+            sender="user",
+            transcript=text,
+            voice_model=data.get("voice_model"),
+        )
+    )
+    db.session.commit()
+    return jsonify({"status": "ok", "message_id": result["message_id"]})
+
+
+@app.route("/api/voice_query", methods=["POST"])
+def voice_query():
+    data = request.get_json() or {}
+    transcript = data.get("transcript")
+    if not transcript:
+        return jsonify({"status": "error", "error": "transcript required"}), 400
+    user_input_queue.put(transcript)
+    agent = RetrievalChatAgent()
+    result = agent.query(
+        question=transcript,
+        sender_id=data.get("sender_id", 0),
+        conversation_id=data.get("conversation_id"),
+    )
+    response_text = "\n".join(result.get("facts", []))
+    if response_text:
+        socketio.emit("update_speech", {"data": response_text}, namespace="/chat")
+        audio = synthesize_voice(response_text, data.get("voice_model", "en-US"))
+        socketio.emit("voice_output", {"audio": audio}, namespace="/chat")
+        db.session.add(
+            MessageAuditLog(
+                message_id=result["message_id"],
+                sender="assistant",
+                transcript=response_text,
+                voice_model=data.get("voice_model"),
+            )
+        )
+    db.session.add(
+        MessageAuditLog(
+            message_id=result["message_id"],
+            sender="user",
+            transcript=transcript,
+            voice_model=data.get("voice_model"),
+        )
+    )
+    db.session.commit()
     return jsonify({"status": "ok", "message_id": result["message_id"]})
 
 
