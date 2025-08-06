@@ -227,3 +227,8 @@ WE STARTED ON #3, INSTEAD OF #1. DEAL WITH IT, FINISH IMPLEMENTING #3, AND THEN 
 - Added unit tests for fact–element linking, theory scoring, and `/api/theories/suggest` endpoint
 - Documented usage examples in legal_discovery README
 - Next: expand endpoint coverage and refine theory docs
+
+## Update 2025-08-08T16:00Z
+- Built Gemini-driven pretrial generator aggregating stipulations, contested issues and witnesses.
+- Export creates editable DOCX and triggers timeline and binder updates with unit tests.
+- Next: surface pretrial export controls in dashboard and expand coverage.
