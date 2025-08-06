@@ -19,6 +19,8 @@ def test_template_library_available():
     available = lib.available()
     assert "motion_to_dismiss" in available
     assert "motion_in_limine" in available
+    assert "motion_to_compel" in available
+    assert "motion_for_protective_order" in available
 
 
 def test_auto_drafter_generate(monkeypatch):

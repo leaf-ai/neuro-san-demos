@@ -667,3 +667,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added NarrativeDiscrepancy model, Gemini-powered analysis pipeline, and REST endpoints.
 - Introduced React OppositionTrackerSection with color-coded flags and export options.
 - Next: auto-link discrepancies to timeline and expand batch processing.
+
+## Update 2025-08-06T12:32Z
+- Added motions to compel and protective order templates sourcing facts, theories and conflicts.
+- Enhanced Auto Draft panel with visual review status and disabled actions until approval.
+- Next: surface opposition metrics within prompts and polish export styles.
