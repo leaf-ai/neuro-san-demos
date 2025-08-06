@@ -21,7 +21,7 @@ from typing import Optional
 from langchain_community.vectorstores import InMemoryVectorStore
 from langchain_core.documents import Document
 from langchain_core.vectorstores.base import VectorStoreRetriever
-from langchain_openai import OpenAIEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 # Invalid file path character pattern
@@ -78,7 +78,7 @@ class BaseRag(ABC):
     async def generate_vector_store(self, loader_args: Any) -> InMemoryVectorStore:
         """
         Asynchronously loads documents from a given data source, split them into
-        chunks, and build an in-memory vector store using OpenAI embeddings or
+        chunks, and build an in-memory vector store using Gemini embeddings or
         load vectorstore from memory if it is available.
 
         :param loader_args: Arguments specific to the document loader (e.g., Confluence params or PDF file paths).
@@ -87,7 +87,9 @@ class BaseRag(ABC):
         # If vector store file path is provided (abs_vector_store_path is not None), try to load vector store first.
         if self.abs_vector_store_path:
             try:
-                vectorstore = InMemoryVectorStore.load(path=self.abs_vector_store_path, embedding=OpenAIEmbeddings())
+                vectorstore = InMemoryVectorStore.load(
+                    path=self.abs_vector_store_path, embedding=GoogleGenerativeAIEmbeddings()
+                )
                 logger.info("Loaded vector store from: %s", self.abs_vector_store_path)
                 return vectorstore
             except FileNotFoundError:
@@ -104,7 +106,7 @@ class BaseRag(ABC):
         vectorstore = await InMemoryVectorStore.afrom_documents(
             documents=doc_chunks,
             collection_name="rag-in-memory",
-            embedding=OpenAIEmbeddings(),
+            embedding=GoogleGenerativeAIEmbeddings(),
         )
 
         if self.save_vector_store and self.abs_vector_store_path:

@@ -19,7 +19,7 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import InMemoryVectorStore
 from langchain_core.documents import Document
 from langchain_core.vectorstores.base import VectorStoreRetriever
-from langchain_openai import OpenAIEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from neuro_san.interfaces.coded_tool import CodedTool
 
@@ -86,7 +86,7 @@ class Rag(CodedTool):
     async def generate_vector_store(self, url: str) -> InMemoryVectorStore:
         """
         Asynchronously loads web documents from given URLs, split them into
-        chunks, and build an in-memory vector store using OpenAI embeddings.
+        chunks, and build an in-memory vector store using Gemini embeddings.
 
         :param urls: List of URLs to fetch and embed
         :return: In-memory vector store containing the embedded document chunks
@@ -104,7 +104,7 @@ class Rag(CodedTool):
         vectorstore: InMemoryVectorStore = await InMemoryVectorStore.afrom_documents(
             documents=doc_chunks,
             collection_name="rag-in-memory",
-            embedding=OpenAIEmbeddings(),
+            embedding=GoogleGenerativeAIEmbeddings(),
         )
 
         return vectorstore

@@ -15,7 +15,7 @@ from apps.legal_discovery.models import (
     FactConflict,
     Agent,
     DepositionQuestion,
-    DepositionReviewLog
+    DepositionReviewLog,
 )
 from coded_tools.legal_discovery.deposition_prep import DepositionPrep
 
@@ -66,20 +66,17 @@ def test_generate_questions(monkeypatch):
         db.session.add(fact)
         db.session.commit()
 
-        def mock_openai():
+        def mock_llm(model, temperature):
             class Client:
-                class chat:
-                    class completions:
-                        @staticmethod
-                        def create(model, messages, temperature):
-                            return DummyResponse(
-                                '[{"category": "Background", "question": "State your name", "source": "Doc1"}]'
-                            )
+                def invoke(self, prompt):
+                    return DummyResponse(
+                        '[{"category": "Background", "question": "State your name", "source": "Doc1"}]'
+                    )
 
             return Client()
 
         deposition_prep_module = sys.modules[DepositionPrep.__module__]
-        monkeypatch.setattr(deposition_prep_module, "OpenAI", mock_openai)
+        monkeypatch.setattr(deposition_prep_module, "ChatGoogleGenerativeAI", mock_llm)
 
         questions = DepositionPrep.generate_questions(witness.id)
         assert len(questions) == 1
@@ -122,25 +119,19 @@ def test_detect_contradictions_and_export(monkeypatch, tmp_path):
         db.session.add_all([fact1, fact2])
         db.session.commit()
 
-        def mock_openai():
+        def mock_llm(model, temperature):
             class Client:
-                class chat:
-                    class completions:
-                        @staticmethod
-                        def create(model, messages, temperature):
-                            content = messages[0]["content"]
-                            if content.startswith("Do these statements contradict"):
-                                return DummyResponse(
-                                    '{"contradiction": true, "score": 0.95}'
-                                )
-                            return DummyResponse(
-                                '[{"category": "Events", "question": "Where were you on Monday?", "source": "DocA"}]'
-                            )
+                def invoke(self, prompt):
+                    if prompt.startswith("Do these statements contradict"):
+                        return DummyResponse('{"contradiction": true, "score": 0.95}')
+                    return DummyResponse(
+                        '[{"category": "Events", "question": "Where were you on Monday?", "source": "DocA"}]'
+                    )
 
             return Client()
 
         deposition_prep_module = sys.modules[DepositionPrep.__module__]
-        monkeypatch.setattr(deposition_prep_module, "OpenAI", mock_openai)
+        monkeypatch.setattr(deposition_prep_module, "ChatGoogleGenerativeAI", mock_llm)
 
         # detect contradictions and generate questions
         questions = DepositionPrep.generate_questions(witness.id)
@@ -155,12 +146,8 @@ def test_detect_contradictions_and_export(monkeypatch, tmp_path):
         assert "absent on Monday" in conflict.description
         pdf_path = tmp_path / "out.pdf"
         docx_path = tmp_path / "out.docx"
-        returned_pdf = DepositionPrep.export_questions(
-            witness.id, str(pdf_path), reviewer.id
-        )
-        returned_docx = DepositionPrep.export_questions(
-            witness.id, str(docx_path), reviewer.id
-        )
+        returned_pdf = DepositionPrep.export_questions(witness.id, str(pdf_path), reviewer.id)
+        returned_docx = DepositionPrep.export_questions(witness.id, str(docx_path), reviewer.id)
         assert returned_pdf == str(pdf_path)
         assert returned_docx == str(docx_path)
         assert pdf_path.exists() and pdf_path.stat().st_size > 0
@@ -208,9 +195,7 @@ def test_review_logging_and_permissions(tmp_path):
         assert DepositionReviewLog.query.count() == 1
 
         with pytest.raises(PermissionError):
-            DepositionPrep.export_questions(
-                witness.id, str(tmp_path / "x.docx"), paralegal.id
-            )
+            DepositionPrep.export_questions(witness.id, str(tmp_path / "x.docx"), paralegal.id)
 
         docx_path = tmp_path / "y.docx"
         pdf_path = tmp_path / "y.pdf"
