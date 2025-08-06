@@ -704,3 +704,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added unit test for export to verify timeline and binder integration.
 - Next: expose pretrial export endpoint in dashboard UI.
 
+## Update 2025-08-06T16:29Z
+- TemplateLibrary now pulls opposition discrepancies for motion prompts.
+- Next: expand discrepancy formatting and link deeper opposition metrics into drafts.
+
