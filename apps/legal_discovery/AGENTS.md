@@ -704,6 +704,11 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Scores feed binder cover sheets, auto-drafter prompts, and sanctions analysis.
 - Next: calibrate scoring heuristics and expose UI weighting controls.
 
+## Update 2025-08-08T16:00Z
+- Aggregated stipulations, contested issues and witness lists from approved theories.
+- Gemini-powered pretrial export saves editable DOCX and hooks timeline/binder modules.
+- Added unit test for export to verify timeline and binder integration.
+- Next: expose pretrial export endpoint in dashboard UI.
 
 ## Update 2025-08-06T16:29Z
 - TemplateLibrary now pulls opposition discrepancies for motion prompts.

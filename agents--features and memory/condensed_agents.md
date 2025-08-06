@@ -233,3 +233,7 @@ WE STARTED ON #3, INSTEAD OF #1. DEAL WITH IT, FINISH IMPLEMENTING #3, AND THEN 
 - Document Review tab provides sortable/filtered score bars and refreshed neon styling.
 - Binder, auto-drafter and sanctions analyzer now consume scorecards.
 - Next: calibrate scoring model on larger corpora and expose weighting controls.
+## Update 2025-08-08T16:00Z
+- Built Gemini-driven pretrial generator aggregating stipulations, contested issues and witnesses.
+- Export creates editable DOCX and triggers timeline and binder updates with unit tests.
+- Next: surface pretrial export controls in dashboard and expand coverage.
