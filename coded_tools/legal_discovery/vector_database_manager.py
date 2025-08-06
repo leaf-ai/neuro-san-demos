@@ -17,7 +17,13 @@ class VectorDatabaseManager(CodedTool):
         self.msg_collection = self.client.get_or_create_collection("chat_messages")
         self.convo_collection = self.client.get_or_create_collection("conversations")
 
-    def add_documents(self, documents: list[str], metadatas: list[dict], ids: list[str]):
+    def add_documents(
+        self,
+        documents: list[str],
+        metadatas: list[dict],
+        ids: list[str],
+        embeddings: list[list[float]] | None = None,
+    ):
         """
         Adds documents to the vector database.
 
@@ -33,12 +39,14 @@ class VectorDatabaseManager(CodedTool):
         safe_docs: list[str] = []
         safe_metadatas: list[dict] = []
         safe_ids: list[str] = []
+        safe_embeddings: list[list[float]] = []
 
         # Pad the metadata list to match documents length if needed
         if len(metadatas) < len(documents):
             metadatas = metadatas + [{}] * (len(documents) - len(metadatas))
 
-        for doc, md, doc_id in zip(documents, metadatas, ids):
+        emb_iter = embeddings or [None] * len(documents)
+        for doc, md, doc_id, emb in zip(documents, metadatas, ids, emb_iter):
             # Skip if ID already exists
             try:
                 existing = self.collection.get(ids=[doc_id])
@@ -49,7 +57,10 @@ class VectorDatabaseManager(CodedTool):
 
             # Similarity check to avoid near-duplicates
             try:
-                res = self.collection.query(query_texts=[doc], n_results=1)
+                if emb is not None:
+                    res = self.collection.query(query_embeddings=[emb], n_results=1)
+                else:
+                    res = self.collection.query(query_texts=[doc], n_results=1)
                 if res.get("ids") and res["ids"][0]:
                     if res.get("distances") and res["distances"][0][0] < 0.1:
                         continue
@@ -58,6 +69,8 @@ class VectorDatabaseManager(CodedTool):
 
             safe_docs.append(doc)
             safe_ids.append(doc_id)
+            if emb is not None:
+                safe_embeddings.append(emb)
             if not isinstance(md, dict) or not md:
                 safe_metadatas.append({"source": "unknown", "id": doc_id})
             else:
@@ -71,13 +84,33 @@ class VectorDatabaseManager(CodedTool):
             return
 
         try:
-            self.collection.add(documents=safe_docs, metadatas=safe_metadatas, ids=safe_ids)
+            if embeddings:
+                self.collection.add(
+                    documents=safe_docs,
+                    metadatas=safe_metadatas,
+                    ids=safe_ids,
+                    embeddings=safe_embeddings,
+                )
+            else:
+                self.collection.add(
+                    documents=safe_docs, metadatas=safe_metadatas, ids=safe_ids
+                )
         except ValueError as exc:
             logging.warning(
                 "Vector add failed (%s); retrying with placeholder metadata", exc
             )
             fallback = [{"source": "unknown", "id": i} for i in safe_ids]
-            self.collection.add(documents=safe_docs, metadatas=fallback, ids=safe_ids)
+            if embeddings:
+                self.collection.add(
+                    documents=safe_docs,
+                    metadatas=fallback,
+                    ids=safe_ids,
+                    embeddings=safe_embeddings,
+                )
+            else:
+                self.collection.add(
+                    documents=safe_docs, metadatas=fallback, ids=safe_ids
+                )
 
     def query(self, query_texts: list[str], n_results: int = 10, where: dict | None = None) -> dict:
         """

@@ -28,11 +28,20 @@ from flask_socketio import SocketIO
 import spacy
 from spacy.cli import download as spacy_download
 
-from apps.legal_discovery.legal_discovery import legal_discovery_thinker
-from apps.legal_discovery.legal_discovery import (
-    set_up_legal_discovery_assistant,
-    tear_down_legal_discovery_assistant,
-)
+try:
+    from apps.legal_discovery.legal_discovery import (
+        legal_discovery_thinker,
+        set_up_legal_discovery_assistant,
+        tear_down_legal_discovery_assistant,
+    )
+except Exception:  # pragma: no cover - optional dependency
+    legal_discovery_thinker = None
+
+    def set_up_legal_discovery_assistant(*args, **kwargs):
+        return None, None
+
+    def tear_down_legal_discovery_assistant(*args, **kwargs):
+        return None
 
 
 from more_itertools import chunked
@@ -43,11 +52,6 @@ from apps.legal_discovery import settings
 from coded_tools.legal_discovery import RetrievalChatAgent
 from apps.legal_discovery.database import db
 from coded_tools.legal_discovery.deposition_prep import DepositionPrep
-from apps.legal_discovery.legal_discovery import (
-    legal_discovery_thinker,
-    set_up_legal_discovery_assistant,
-    tear_down_legal_discovery_assistant,
-)
 from apps.legal_discovery.models import (
     CalendarEvent,
     Case,
@@ -401,6 +405,7 @@ def build_file_tree(directory: str, root_length: int, docs: dict[str, Document])
             node["privileged"] = doc.is_privileged
             node["id"] = doc.id
             node["source"] = doc.source.value
+            node["sha256"] = doc.sha256
         if entry.is_dir():
             node["children"] = build_file_tree(entry.path, root_length, docs)
         tree.append(node)
@@ -790,7 +795,7 @@ def upload_files():
                 continue
 
             file_hash = hasher.hexdigest()
-            if Document.query.filter_by(content_hash=file_hash).first():
+            if Document.query.filter_by(sha256=file_hash).first():
                 record_skip(raw_name, "duplicate hash")
                 continue
 
@@ -809,7 +814,7 @@ def upload_files():
                 case_id=case_id,
                 name=filename,
                 file_path=redacted_path,
-                content_hash=file_hash,
+                sha256=file_hash,
                 source=source_enum,
             )
             db.session.add(doc)

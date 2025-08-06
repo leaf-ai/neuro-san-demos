@@ -55,7 +55,7 @@ import hashlib
 
 sha256 = hashlib.sha256(content.encode("utf-8")).hexdigest()
 # Database Query
-SELECT id FROM document WHERE content_hash = :sha256 AND source = 'user'
+SELECT id FROM document WHERE sha256 = :sha256 AND source = 'user'
 ```
 - **Flagging:** If a match is found, flag the document as a duplicate.
 
