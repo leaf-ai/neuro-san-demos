@@ -629,6 +629,11 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added React Auto Draft panel with manual review before export.
 - Next: expand motion templates and integrate deeper opposition metrics.
 
+## Update 2025-08-06T18:30Z
+- Embedded chat messages into Chroma with conversation vector IDs and graph links.
+- Applied privilege-aware filters to retrieval to exclude restricted content.
+- Next: broaden chat tests and surface similar message context in UI.
+
 ## Update 2025-08-06T19:00Z
 - Added React ExhibitTab with drag-and-drop ordering plus privilege and source filters; entries show linked theories and timeline dates.
 - Extended exhibit API with source filter and links endpoint; updated tests to cover ordering, filtering, and link retrieval.
