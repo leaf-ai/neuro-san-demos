@@ -26,6 +26,7 @@ class DummyResponse:
             self.message = type("obj", (), {"content": content})
 
     def __init__(self, content):
+        self.content = content
         self.choices = [DummyResponse.Choice(content)]
 
 
@@ -144,6 +145,7 @@ def test_detect_contradictions_and_export(monkeypatch, tmp_path):
         assert conflict.score == pytest.approx(0.95)
         assert "present on Monday" in conflict.description
         assert "absent on Monday" in conflict.description
+        assert conflict.created_at is not None
         pdf_path = tmp_path / "out.pdf"
         docx_path = tmp_path / "out.docx"
         returned_pdf = DepositionPrep.export_questions(witness.id, str(pdf_path), reviewer.id)
@@ -186,10 +188,12 @@ def test_review_logging_and_permissions(tmp_path):
         assert result["notes"] == "looks good"
         assert DepositionReviewLog.query.count() == 1
         log = DepositionReviewLog.query.first()
+        assert result["id"] == log.id
         assert log.reviewer_id == attorney.id
         assert log.witness_id == witness.id
         assert log.approved is True
         assert log.notes == "looks good"
+        assert log.timestamp is not None
         with pytest.raises(PermissionError):
             DepositionPrep.log_review(witness.id, paralegal.id, True)
         assert DepositionReviewLog.query.count() == 1
