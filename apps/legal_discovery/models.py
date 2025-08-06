@@ -116,6 +116,10 @@ class Document(db.Model):
     exhibit_number = db.Column(db.String(50), unique=True)
     exhibit_title = db.Column(db.String(255))
     exhibit_order = db.Column(db.Integer, nullable=False, default=0)
+    probative_value = db.Column(db.Float, nullable=True)
+    admissibility_risk = db.Column(db.Float, nullable=True)
+    narrative_alignment = db.Column(db.Float, nullable=True)
+    score_confidence = db.Column(db.Float, nullable=True)
     metadata_entries = db.relationship(
         "DocumentMetadata",
         backref="document",

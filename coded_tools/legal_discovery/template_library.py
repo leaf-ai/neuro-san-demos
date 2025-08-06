@@ -9,9 +9,10 @@ try:  # optional imports for runtime
         Fact,
         LegalTheory,
         NarrativeDiscrepancy,
+        Document,
     )
 except Exception:  # pragma: no cover - used when app context missing
-    Fact = LegalTheory = NarrativeDiscrepancy = None  # type: ignore
+    Fact = LegalTheory = NarrativeDiscrepancy = Document = None  # type: ignore
 
 
 class TemplateLibrary(CodedTool):
@@ -53,6 +54,7 @@ class TemplateLibrary(CodedTool):
         facts_text = "No facts available."
         theories_text = "No accepted theories."
         opposition_text = "No opposition recorded."
+        evidence_text = "No scored documents."
         try:
             if Fact is not None:
                 facts = Fact.query.order_by(Fact.id).all()
@@ -73,9 +75,20 @@ class TemplateLibrary(CodedTool):
                         f"- {d.conflicting_claim} vs {d.evidence_excerpt}"
                         for d in opp
                     )
+            if Document is not None:
+                docs = (
+                    Document.query.order_by(Document.probative_value.desc())
+                    .limit(3)
+                    .all()
+                )
+                if docs:
+                    evidence_text = "\n".join(
+                        f"- {d.name}: p={d.probative_value:.2f}, a={d.admissibility_risk:.2f}, n={d.narrative_alignment:.2f}"
+                        for d in docs
+                    )
         except Exception:  # pragma: no cover - missing DB/app context
             pass
 
         return template.format(
             facts=facts_text, theories=theories_text, conflicts=opposition_text
-        )
+        ) + f"\nTop Evidence:\n{evidence_text}"

@@ -24,6 +24,7 @@ import ExhibitTab from "./components/ExhibitTab";
 import DepositionPrepSection from "./components/DepositionPrepSection";
 import ChainLogSection from "./components/ChainLogSection";
 import OppositionTrackerSection from "./components/OppositionTrackerSection";
+import DocumentReviewSection from "./components/DocumentReviewSection";
 const TABS = [
   {id:'network', label:'Agent Network', icon:'fa-sitemap'},
   {id:'overview', label:'Overview', icon:'fa-home'},
@@ -31,6 +32,7 @@ const TABS = [
   {id:'chat', label:'Orchestrator', icon:'fa-comments'},
   {id:'stats', label:'Stats', icon:'fa-chart-bar'},
   {id:'upload', label:'Ingestion', icon:'fa-upload'},
+  {id:'review', label:'Doc Review', icon:'fa-list'},
   {id:'timeline', label:'Timeline', icon:'fa-clock'},
   {id:'graph', label:'Graph', icon:'fa-project-diagram'},
   {id:'theory', label:'Case Theory', icon:'fa-balance-scale'},
@@ -73,6 +75,7 @@ function Dashboard() {
       <div className="tab-content" style={{display: tab==='chat'?'block':'none'}} id="tab-chat"><ChatSection/></div>
       <div className="tab-content" style={{display: tab==='stats'?'block':'none'}} id="tab-stats"><StatsSection/></div>
       <div className="tab-content" style={{display: tab==='upload'?'block':'none'}} id="tab-upload"><UploadSection/></div>
+      <div className="tab-content" style={{display: tab==='review'?'block':'none'}} id="tab-review"><DocumentReviewSection/></div>
       <div className="tab-content" style={{display: tab==='timeline'?'block':'none'}} id="tab-timeline"><TimelineSection/></div>
       <div className="tab-content" style={{display: tab==='graph'?'block':'none'}} id="tab-graph"><GraphSection/></div>
       <div className="tab-content" style={{display: tab==='theory'?'block':'none'}} id="tab-theory"><LegalTheorySection/></div>
