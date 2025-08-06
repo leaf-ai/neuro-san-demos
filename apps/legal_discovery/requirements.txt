@@ -20,7 +20,7 @@ python-pptx
 flask-sqlalchemy
 psycopg2-binary
 langchain-google-genai
-openai
+google-generativeai
 pyvis
 networkx
 spacy

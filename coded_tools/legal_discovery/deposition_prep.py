@@ -6,7 +6,7 @@ import json
 from datetime import datetime
 from typing import List, Dict, Optional
 
-from openai import OpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from docx import Document as DocxDocument
 from weasyprint import HTML
 
@@ -43,27 +43,19 @@ class DepositionPrep:
         if not include_privileged:
             query = query.filter(Document.is_privileged.is_(False))
         facts = query.all()
-        facts_text = "\n".join(
-            f"- {f.text} (Doc: {f.document.name})" for f in facts
-        ) or "No facts available."
+        facts_text = "\n".join(f"- {f.text} (Doc: {f.document.name})" for f in facts) or "No facts available."
 
         # Detect contradictions among gathered facts and append to prompt context
         conflicts = DepositionPrep.detect_contradictions(facts, witness_id)
         if conflicts:
-            conflict_lines = "\n".join(
-                f"- {c['fact1']} <> {c['fact2']}" for c in conflicts
-            )
+            conflict_lines = "\n".join(f"- {c['fact1']} <> {c['fact2']}" for c in conflicts)
             facts_text += "\nPotential contradictions:\n" + conflict_lines
 
         prompt = PROMPT_TMPL.format(name=witness.name, facts=facts_text)
 
-        client = OpenAI()
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.2,
-        )
-        content = response.choices[0].message.content
+        llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.2)
+        response = llm.invoke(prompt)
+        content = response.content
 
         try:
             data = json.loads(content)
@@ -95,26 +87,20 @@ class DepositionPrep:
         ]
 
     @staticmethod
-    def detect_contradictions(
-        facts: List[Fact], witness_id: int, threshold: float = 0.8
-    ) -> List[Dict]:
+    def detect_contradictions(facts: List[Fact], witness_id: int, threshold: float = 0.8) -> List[Dict]:
         """Identify contradictions among witness facts using an LLM."""
 
         conflicts: List[Dict] = []
-        client = OpenAI()
+        llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0)
         for i in range(len(facts)):
             for j in range(i + 1, len(facts)):
                 prompt = (
                     "Do these statements contradict each other?\n"
                     f"1. {facts[i].text}\n2. {facts[j].text}\n"
-                    "Respond with JSON {\"contradiction\": bool, \"score\": float}."
+                    'Respond with JSON {"contradiction": bool, "score": float}.'
                 )
-                response = client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0,
-                )
-                content = response.choices[0].message.content
+                response = llm.invoke(prompt)
+                content = response.content
                 try:
                     result = json.loads(content)
                 except json.JSONDecodeError:
@@ -165,9 +151,7 @@ class DepositionPrep:
         }
 
     @staticmethod
-    def export_questions(
-        witness_id: int, file_path: str, reviewer_id: int
-    ) -> str:
+    def export_questions(witness_id: int, file_path: str, reviewer_id: int) -> str:
         """Export deposition questions to PDF or DOCX for an authorized reviewer."""
 
         reviewer = Agent.query.get(reviewer_id)
@@ -175,11 +159,7 @@ class DepositionPrep:
             raise PermissionError("Reviewer lacks permission")
 
         witness = Witness.query.get_or_404(witness_id)
-        questions = (
-            DepositionQuestion.query.filter_by(witness_id=witness_id)
-            .order_by(DepositionQuestion.id)
-            .all()
-        )
+        questions = DepositionQuestion.query.filter_by(witness_id=witness_id).order_by(DepositionQuestion.id).all()
         case_id = witness.associated_case
         timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
 
@@ -190,9 +170,7 @@ class DepositionPrep:
                 items_html += f"<li>{q.question}"
                 if q.source:
                     items_html += f"<sup><a href='#src{idx}'>{idx}</a></sup>"
-                    sources_html += (
-                        f"<li id='src{idx}'><a href='{q.source}'>{q.source}</a></li>"
-                    )
+                    sources_html += f"<li id='src{idx}'><a href='{q.source}'>{q.source}</a></li>"
                 items_html += "</li>"
             html = f"""
             <h1>Deposition Outline: {witness.name}</h1>

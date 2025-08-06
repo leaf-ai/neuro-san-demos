@@ -40,9 +40,6 @@ Flake8-pyproject==1.2.3  #  Needed when flake8 configured in pyproject.toml
 isort==5.13.2
 pylint==3.3.1
 
-# Testing API keys
-openai==1.91.0
-
 neuro-san
 flask
 flask-socketio
@@ -65,10 +62,9 @@ python-pptx
 flask-sqlalchemy
 psycopg2-binary
 langchain-google-genai
-openai
+google-generativeai
 pyvis
 gunicorn
-google-genai
 more-itertools
 pygraphviz
 en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl
