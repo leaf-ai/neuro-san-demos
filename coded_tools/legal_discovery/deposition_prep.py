@@ -153,17 +153,26 @@ class DepositionPrep:
     @staticmethod
     def export_questions(witness_id: int, file_path: str, reviewer_id: int) -> str:
         """Export deposition questions to PDF or DOCX for an authorized reviewer."""
+    def export_questions(
+        witness_id: int, file_path: str, reviewer_id: int
+    ) -> str:
+        """Export deposition questions to PDF or DOCX for an authorized reviewer.
+
+        Returns:
+            str: Path to the generated document.
+        """
 
         reviewer = Agent.query.get(reviewer_id)
         if not reviewer or reviewer.role not in {"attorney", "case_admin"}:
             raise PermissionError("Reviewer lacks permission")
 
+        final_path = str(file_path)
         witness = Witness.query.get_or_404(witness_id)
         questions = DepositionQuestion.query.filter_by(witness_id=witness_id).order_by(DepositionQuestion.id).all()
         case_id = witness.associated_case
         timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
 
-        if file_path.lower().endswith(".pdf"):
+        if final_path.lower().endswith(".pdf"):
             items_html = ""
             sources_html = ""
             for idx, q in enumerate(questions, 1):
@@ -180,7 +189,7 @@ class DepositionPrep:
             <h2>Sources</h2>
             <ol>{sources_html}</ol>
             """
-            HTML(string=html).write_pdf(file_path)
+            HTML(string=html).write_pdf(final_path)
         else:
             doc = DocxDocument()
             doc.add_heading(f"Deposition Outline: {witness.name}", level=1)
@@ -198,9 +207,9 @@ class DepositionPrep:
                 doc.add_heading("Sources", level=2)
                 for i, src in enumerate(sources, 1):
                     doc.add_paragraph(f"[{i}] {src}")
-            doc.save(file_path)
+            doc.save(final_path)
 
-        return file_path
+        return final_path
 
     @staticmethod
     def flag_question(question_id: int) -> None:
