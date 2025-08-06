@@ -169,11 +169,13 @@ class DepositionPrep:
 
     @staticmethod
     def export_questions(witness_id: int, file_path: str, reviewer_id: int) -> str:
-        """Export deposition questions to PDF or DOCX for an authorized reviewer."""
-    def export_questions(
-        witness_id: int, file_path: str, reviewer_id: int
-    ) -> str:
         """Export deposition questions to PDF or DOCX for an authorized reviewer.
+
+        Args:
+            witness_id: Identifier of the witness whose questions are exported.
+            file_path: Destination path ending with ``.pdf`` or ``.docx``.
+            reviewer_id: Agent requesting the export. Must be an attorney or
+                case administrator.
 
         Returns:
             str: Path to the generated document.

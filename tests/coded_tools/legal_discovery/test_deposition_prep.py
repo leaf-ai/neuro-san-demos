@@ -86,6 +86,9 @@ def test_generate_questions(monkeypatch):
                 @staticmethod
                 def GenerationConfig(**kwargs):
                     return None
+
+            return SimpleNamespace(GenerativeModel=MockModel, types=MockTypes)
+
         def mock_llm(model, temperature):
             class Client:
                 def invoke(self, prompt):
@@ -93,7 +96,7 @@ def test_generate_questions(monkeypatch):
                         '[{"category": "Background", "question": "State your name", "source": "Doc1"}]'
                     )
 
-            return SimpleNamespace(GenerativeModel=MockModel, types=MockTypes)
+            return Client()
 
         deposition_prep_module = sys.modules[DepositionPrep.__module__]
         monkeypatch.setattr(deposition_prep_module, "genai", mock_genai())
@@ -293,3 +296,35 @@ def test_export_questions_authorized_formats(tmp_path):
         assert docx_ret == str(docx_path)
         assert pdf_path.exists() and pdf_path.stat().st_size > 0
         assert docx_path.exists() and docx_path.stat().st_size > 0
+
+
+def test_export_questions_permission_denied(tmp_path):
+    app = setup_app()
+    with app.app_context():
+        case = Case(name="C4", description="")
+        db.session.add(case)
+        db.session.commit()
+        doc = Document(
+            case_id=case.id,
+            name="DocD",
+            bates_number="B400",
+            file_path="/tmp/docD",
+            sha256="hD",
+        )
+        witness = Witness(name="Sam", role="Witness", associated_case=case.id)
+        paralegal = Agent(name="Pat", role="paralegal")
+        db.session.add_all([doc, witness, paralegal])
+        db.session.commit()
+        question = DepositionQuestion(
+            witness_id=witness.id,
+            category="General",
+            question="Q?",
+            source="DocD",
+        )
+        db.session.add(question)
+        db.session.commit()
+
+        with pytest.raises(PermissionError):
+            DepositionPrep.export_questions(witness.id, str(tmp_path / "denied.pdf"), paralegal.id)
+        with pytest.raises(PermissionError):
+            DepositionPrep.export_questions(witness.id, str(tmp_path / "denied.docx"), paralegal.id)
