@@ -698,3 +698,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Tests cover ingest, redaction, stamping and export logging end-to-end.
 - Next: extend chain log filters and add report export options.
 
+
+## Update 2025-08-06T16:29Z
+- TemplateLibrary now pulls opposition discrepancies for motion prompts.
+- Next: expand discrepancy formatting and link deeper opposition metrics into drafts.
+

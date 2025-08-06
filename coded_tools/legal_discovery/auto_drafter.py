@@ -41,14 +41,31 @@ class AutoDrafter(CodedTool):
         )
         return response.text
 
-    def export(self, content: str, file_path: str) -> str:
-        """Export reviewed content to DOCX or PDF."""
+    def export(self, content: str, file_path: str, fmt: str | None = None) -> str:
+        """Export reviewed content to DOCX or PDF.
+
+        Parameters
+        ----------
+        content:
+            The draft text that has been manually reviewed.
+        file_path:
+            Desired output path. The directory will be created if missing.
+        fmt:
+            Optional explicit format (``"docx"`` or ``"pdf"``). When omitted, the
+            format is inferred from ``file_path``'s extension.
+        """
+
         path = Path(file_path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        if path.suffix.lower() == ".pdf":
+        format_ext = (fmt or path.suffix.lstrip(".")).lower()
+        if format_ext == "pdf":
+            if path.suffix.lower() != ".pdf":
+                path = path.with_suffix(".pdf")
             html = f"<pre>{content}</pre>"
             HTML(string=html).write_pdf(str(path))
         else:
+            if path.suffix.lower() != ".docx":
+                path = path.with_suffix(".docx")
             doc = DocxDocument()
             for line in content.splitlines():
                 doc.add_paragraph(line)
