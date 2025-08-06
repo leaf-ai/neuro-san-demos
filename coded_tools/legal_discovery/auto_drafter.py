@@ -17,16 +17,27 @@ from .template_library import TemplateLibrary
 class AutoDrafter(CodedTool):
     """Generate legal motion drafts and export them."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, model_name: str = "gemini-1.5-flash", temperature: float = 0.2, **kwargs):
         super().__init__(**kwargs)
         self.templates = TemplateLibrary()
+        self.model_name = model_name
+        self.temperature = temperature
 
-    def generate(self, motion_type: str) -> str:
-        """Generate a draft for the given motion type using Gemini."""
+    def generate(self, motion_type: str, *, temperature: float | None = None) -> str:
+        """Generate a draft for the given motion type using Gemini.
+
+        Parameters
+        ----------
+        motion_type:
+            The key of the motion template to use.
+        temperature:
+            Optional override for the sampling temperature.
+        """
         prompt = self.templates.build_prompt(motion_type)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel(self.model_name)
+        temp = self.temperature if temperature is None else temperature
         response = model.generate_content(
-            prompt, generation_config=genai.types.GenerationConfig(temperature=0.2)
+            prompt, generation_config=genai.types.GenerationConfig(temperature=temp)
         )
         return response.text
 
