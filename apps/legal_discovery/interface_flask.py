@@ -303,6 +303,7 @@ from coded_tools.legal_discovery.research_tools import ResearchTools
 from coded_tools.legal_discovery.subpoena_manager import SubpoenaManager
 from coded_tools.legal_discovery.task_tracker import TaskTracker
 from coded_tools.legal_discovery.timeline_manager import TimelineManager
+from coded_tools.legal_discovery.auto_drafter import AutoDrafter
 from coded_tools.legal_discovery.vector_database_manager import VectorDatabaseManager
 
 # Allow hosting the corpus on an attached volume via UPLOAD_ROOT
@@ -1014,6 +1015,46 @@ def draft_document():
     except Exception as exc:  # pragma: no cover - file system errors
         return jsonify({"error": str(exc)}), 500
     return jsonify({"status": "ok", "output": filepath})
+
+
+@app.route("/api/auto_draft/templates")
+def auto_draft_templates():
+    """Return available motion templates."""
+    drafter = AutoDrafter()
+    return jsonify({"data": drafter.templates.available()})
+
+
+@app.route("/api/auto_draft", methods=["POST"])
+def auto_draft_generate():
+    """Generate a motion draft using Gemini."""
+    data = request.get_json() or {}
+    motion_type = data.get("motion_type")
+    if not motion_type:
+        return jsonify({"error": "Missing motion_type"}), 400
+    drafter = AutoDrafter()
+    try:
+        draft = drafter.generate(motion_type)
+    except Exception as exc:  # pragma: no cover - LLM errors
+        return jsonify({"error": str(exc)}), 500
+    return jsonify({"data": draft})
+
+
+@app.route("/api/auto_draft/export", methods=["POST"])
+def auto_draft_export():
+    """Export reviewed draft to DOCX or PDF."""
+    data = request.get_json() or {}
+    content = data.get("content", "")
+    fmt = data.get("format", "docx").lower()
+    if not content:
+        return jsonify({"error": "Missing content"}), 400
+    filename = f"draft_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.{fmt}"
+    path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    drafter = AutoDrafter()
+    try:
+        drafter.export(content, path)
+    except Exception as exc:  # pragma: no cover - file errors
+        return jsonify({"error": str(exc)}), 500
+    return jsonify({"status": "ok", "output": filename})
 
 
 @app.route("/api/vector/add", methods=["POST"])

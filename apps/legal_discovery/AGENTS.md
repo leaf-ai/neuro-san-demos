@@ -623,3 +623,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added `exhibit_order` column with migration and default assignment.
 - Exposed reorder API and filtered exhibit listings by privilege and source team; UI highlights privileged entries.
 - Next: add drag-and-drop reordering in React dashboard.
+
+## Update 2025-08-06T17:30Z
+- Added Gemini auto-drafter with motion templates and DOCX/PDF export.
+- Added React Auto Draft panel with manual review before export.
+- Next: expand motion templates and integrate deeper opposition metrics.
