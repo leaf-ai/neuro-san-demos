@@ -17,7 +17,7 @@ from apps.legal_discovery.models import (
     FactConflict,
     Agent,
     DepositionQuestion,
-    DepositionReviewLog
+    DepositionReviewLog,
 )
 from coded_tools.legal_discovery.deposition_prep import DepositionPrep
 
@@ -25,6 +25,14 @@ from coded_tools.legal_discovery.deposition_prep import DepositionPrep
 class DummyGenAIResponse:
     def __init__(self, text: str):
         self.text = text
+class DummyResponse:
+    class Choice:
+        def __init__(self, content):
+            self.message = type("obj", (), {"content": content})
+
+    def __init__(self, content):
+        self.content = content
+        self.choices = [DummyResponse.Choice(content)]
 
 
 def setup_app():
@@ -78,11 +86,18 @@ def test_generate_questions(monkeypatch):
                 @staticmethod
                 def GenerationConfig(**kwargs):
                     return None
+        def mock_llm(model, temperature):
+            class Client:
+                def invoke(self, prompt):
+                    return DummyResponse(
+                        '[{"category": "Background", "question": "State your name", "source": "Doc1"}]'
+                    )
 
             return SimpleNamespace(GenerativeModel=MockModel, types=MockTypes)
 
         deposition_prep_module = sys.modules[DepositionPrep.__module__]
         monkeypatch.setattr(deposition_prep_module, "genai", mock_genai())
+        monkeypatch.setattr(deposition_prep_module, "ChatGoogleGenerativeAI", mock_llm)
 
         questions = DepositionPrep.generate_questions(witness.id)
         assert len(questions) == 1
@@ -148,6 +163,19 @@ def test_detect_contradictions_and_export(monkeypatch, tmp_path):
 
         deposition_prep_module = sys.modules[DepositionPrep.__module__]
         monkeypatch.setattr(deposition_prep_module, "genai", mock_genai())
+        def mock_llm(model, temperature):
+            class Client:
+                def invoke(self, prompt):
+                    if prompt.startswith("Do these statements contradict"):
+                        return DummyResponse('{"contradiction": true, "score": 0.95}')
+                    return DummyResponse(
+                        '[{"category": "Events", "question": "Where were you on Monday?", "source": "DocA"}]'
+                    )
+
+            return Client()
+
+        deposition_prep_module = sys.modules[DepositionPrep.__module__]
+        monkeypatch.setattr(deposition_prep_module, "ChatGoogleGenerativeAI", mock_llm)
 
         # detect contradictions and generate questions
         questions = DepositionPrep.generate_questions(witness.id)
@@ -160,14 +188,11 @@ def test_detect_contradictions_and_export(monkeypatch, tmp_path):
         assert conflict.score == pytest.approx(0.95)
         assert "present on Monday" in conflict.description
         assert "absent on Monday" in conflict.description
+        assert conflict.created_at is not None
         pdf_path = tmp_path / "out.pdf"
         docx_path = tmp_path / "out.docx"
-        returned_pdf = DepositionPrep.export_questions(
-            witness.id, str(pdf_path), reviewer.id
-        )
-        returned_docx = DepositionPrep.export_questions(
-            witness.id, str(docx_path), reviewer.id
-        )
+        returned_pdf = DepositionPrep.export_questions(witness.id, str(pdf_path), reviewer.id)
+        returned_docx = DepositionPrep.export_questions(witness.id, str(docx_path), reviewer.id)
         assert returned_pdf == str(pdf_path)
         assert returned_docx == str(docx_path)
         assert pdf_path.exists() and pdf_path.stat().st_size > 0
@@ -206,22 +231,65 @@ def test_review_logging_and_permissions(tmp_path):
         assert result["notes"] == "looks good"
         assert DepositionReviewLog.query.count() == 1
         log = DepositionReviewLog.query.first()
+        assert result["id"] == log.id
         assert log.reviewer_id == attorney.id
         assert log.witness_id == witness.id
         assert log.approved is True
         assert log.notes == "looks good"
+        assert log.timestamp is not None
         with pytest.raises(PermissionError):
             DepositionPrep.log_review(witness.id, paralegal.id, True)
         assert DepositionReviewLog.query.count() == 1
 
         with pytest.raises(PermissionError):
-            DepositionPrep.export_questions(
-                witness.id, str(tmp_path / "x.docx"), paralegal.id
-            )
+            DepositionPrep.export_questions(witness.id, str(tmp_path / "x.docx"), paralegal.id)
 
         docx_path = tmp_path / "y.docx"
         pdf_path = tmp_path / "y.pdf"
-        DepositionPrep.export_questions(witness.id, str(docx_path), attorney.id)
-        DepositionPrep.export_questions(witness.id, str(pdf_path), attorney.id)
+        returned_docx = DepositionPrep.export_questions(
+            witness.id, str(docx_path), attorney.id
+        )
+        returned_pdf = DepositionPrep.export_questions(
+            witness.id, str(pdf_path), attorney.id
+        )
+        assert returned_docx == str(docx_path)
+        assert returned_pdf == str(pdf_path)
         assert docx_path.exists() and docx_path.stat().st_size > 0
         assert pdf_path.exists() and pdf_path.stat().st_size > 0
+
+
+def test_export_questions_authorized_formats(tmp_path):
+    app = setup_app()
+    with app.app_context():
+        case = Case(name="C3", description="")
+        db.session.add(case)
+        db.session.commit()
+        doc = Document(
+            case_id=case.id,
+            name="DocC",
+            bates_number="B300",
+            file_path="/tmp/docC",
+            content_hash="hC",
+        )
+        witness = Witness(name="Rick", role="Witness", associated_case=case.id)
+        attorney = Agent(name="Rita", role="attorney")
+        db.session.add_all([doc, witness, attorney])
+        db.session.commit()
+        question = DepositionQuestion(
+            witness_id=witness.id,
+            category="General",
+            question="What is your role?",
+            source="DocC",
+        )
+        db.session.add(question)
+        db.session.commit()
+
+        pdf_path = tmp_path / "auth.pdf"
+        docx_path = tmp_path / "auth.docx"
+        pdf_ret = DepositionPrep.export_questions(witness.id, str(pdf_path), attorney.id)
+        docx_ret = DepositionPrep.export_questions(witness.id, str(docx_path), attorney.id)
+
+        assert pdf_ret == str(pdf_path)
+        assert docx_ret == str(docx_path)
+        assert pdf_path.exists() and pdf_path.stat().st_size > 0
+        assert docx_path.exists() and docx_path.stat().st_size > 0

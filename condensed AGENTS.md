@@ -90,3 +90,12 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 - Enhanced privilege detector with legal spaCy/textcat support and span logging
 - Added API and UI controls to override privilege flags
 - Next: expand review dashboard and tune classifier accuracy
+
+## Update 2025-08-06T03:56Z
+- Consolidated deposition question export into a single authorized method returning the generated file path
+- Added unit tests covering PDF and DOCX exports with reviewer authorization
+- Next: extend export tests to handle edge cases and additional formats
+
+## Update 2025-08-06T04:18Z
+- Added weasyprint stub for tests and expanded deposition prep assertions for contradiction detection and review logs
+- Next: cover additional deposition prep edge cases

@@ -567,7 +567,15 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Implemented retrieval chat agent querying vector/graph stores with audit logging
 - React chat panel now uses Socket.IO client for real-time updates
 - Next: expand chat tests and manage multi-conversation UI
+
 ## Update 2025-08-06T03:51Z
 - Swapped OpenAI dependencies for Google Generative AI in requirements
 - Updated tooling to reference `google-generativeai`
 - Next: verify Google API key configuration across services
+
+## Update 2025-08-06T02:30Z
+- Replaced OpenAI usage with Gemini equivalents and removed OpenAI dependency
+- Next: verify cross-tool compatibility across modules
+## Update 2025-08-06T02:40Z
+- Cleaned up RAG docstrings to reference Gemini embeddings
+- Next: confirm documentation aligns with new defaults

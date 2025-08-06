@@ -7,6 +7,8 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 import google.generativeai as genai
+
+from langchain_google_genai import ChatGoogleGenerativeAI
 from docx import Document as DocxDocument
 from weasyprint import HTML
 
@@ -43,16 +45,12 @@ class DepositionPrep:
         if not include_privileged:
             query = query.filter(Document.is_privileged.is_(False))
         facts = query.all()
-        facts_text = "\n".join(
-            f"- {f.text} (Doc: {f.document.name})" for f in facts
-        ) or "No facts available."
+        facts_text = "\n".join(f"- {f.text} (Doc: {f.document.name})" for f in facts) or "No facts available."
 
         # Detect contradictions among gathered facts and append to prompt context
         conflicts = DepositionPrep.detect_contradictions(facts, witness_id)
         if conflicts:
-            conflict_lines = "\n".join(
-                f"- {c['fact1']} <> {c['fact2']}" for c in conflicts
-            )
+            conflict_lines = "\n".join(f"- {c['fact1']} <> {c['fact2']}" for c in conflicts)
             facts_text += "\nPotential contradictions:\n" + conflict_lines
 
         prompt = PROMPT_TMPL.format(name=witness.name, facts=facts_text)
@@ -63,6 +61,9 @@ class DepositionPrep:
             generation_config=genai.types.GenerationConfig(temperature=0.2),
         )
         content = response.text
+        llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.2)
+        response = llm.invoke(prompt)
+        content = response.content
 
         try:
             data = json.loads(content)
@@ -94,25 +95,26 @@ class DepositionPrep:
         ]
 
     @staticmethod
-    def detect_contradictions(
-        facts: List[Fact], witness_id: int, threshold: float = 0.8
-    ) -> List[Dict]:
+    def detect_contradictions(facts: List[Fact], witness_id: int, threshold: float = 0.8) -> List[Dict]:
         """Identify contradictions among witness facts using an LLM."""
 
         conflicts: List[Dict] = []
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.5-pro")
+        llm = ChatGoogleGenerativeAI(model="gemini-2.5-pro", temperature=0)
         for i in range(len(facts)):
             for j in range(i + 1, len(facts)):
                 prompt = (
                     "Do these statements contradict each other?\n"
                     f"1. {facts[i].text}\n2. {facts[j].text}\n"
-                    "Respond with JSON {\"contradiction\": bool, \"score\": float}."
+                    'Respond with JSON {"contradiction": bool, "score": float}.'
                 )
                 response = model.generate_content(
                     prompt,
                     generation_config=genai.types.GenerationConfig(temperature=0),
                 )
                 content = response.text
+                response = llm.invoke(prompt)
+                content = response.content
                 try:
                     result = json.loads(content)
                 except json.JSONDecodeError:
@@ -163,34 +165,35 @@ class DepositionPrep:
         }
 
     @staticmethod
+    def export_questions(witness_id: int, file_path: str, reviewer_id: int) -> str:
+        """Export deposition questions to PDF or DOCX for an authorized reviewer."""
     def export_questions(
         witness_id: int, file_path: str, reviewer_id: int
     ) -> str:
-        """Export deposition questions to PDF or DOCX for an authorized reviewer."""
+        """Export deposition questions to PDF or DOCX for an authorized reviewer.
+
+        Returns:
+            str: Path to the generated document.
+        """
 
         reviewer = Agent.query.get(reviewer_id)
         if not reviewer or reviewer.role not in {"attorney", "case_admin"}:
             raise PermissionError("Reviewer lacks permission")
 
+        final_path = str(file_path)
         witness = Witness.query.get_or_404(witness_id)
-        questions = (
-            DepositionQuestion.query.filter_by(witness_id=witness_id)
-            .order_by(DepositionQuestion.id)
-            .all()
-        )
+        questions = DepositionQuestion.query.filter_by(witness_id=witness_id).order_by(DepositionQuestion.id).all()
         case_id = witness.associated_case
         timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
 
-        if file_path.lower().endswith(".pdf"):
+        if final_path.lower().endswith(".pdf"):
             items_html = ""
             sources_html = ""
             for idx, q in enumerate(questions, 1):
                 items_html += f"<li>{q.question}"
                 if q.source:
                     items_html += f"<sup><a href='#src{idx}'>{idx}</a></sup>"
-                    sources_html += (
-                        f"<li id='src{idx}'><a href='{q.source}'>{q.source}</a></li>"
-                    )
+                    sources_html += f"<li id='src{idx}'><a href='{q.source}'>{q.source}</a></li>"
                 items_html += "</li>"
             html = f"""
             <h1>Deposition Outline: {witness.name}</h1>
@@ -200,7 +203,7 @@ class DepositionPrep:
             <h2>Sources</h2>
             <ol>{sources_html}</ol>
             """
-            HTML(string=html).write_pdf(file_path)
+            HTML(string=html).write_pdf(final_path)
         else:
             doc = DocxDocument()
             doc.add_heading(f"Deposition Outline: {witness.name}", level=1)
@@ -218,9 +221,9 @@ class DepositionPrep:
                 doc.add_heading("Sources", level=2)
                 for i, src in enumerate(sources, 1):
                     doc.add_paragraph(f"[{i}] {src}")
-            doc.save(file_path)
+            doc.save(final_path)
 
-        return file_path
+        return final_path
 
     @staticmethod
     def flag_question(question_id: int) -> None:

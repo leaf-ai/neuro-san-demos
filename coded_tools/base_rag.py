@@ -80,6 +80,7 @@ class BaseRag(ABC):
         Asynchronously loads documents from a given data source, split them into
         chunks, and build an in-memory vector store using Google Generative AI
         embeddings or load vectorstore from memory if it is available.
+       
 
         :param loader_args: Arguments specific to the document loader (e.g., Confluence params or PDF file paths).
         :return: In-memory vector store containing the embedded document chunks
@@ -90,6 +91,7 @@ class BaseRag(ABC):
                 vectorstore = InMemoryVectorStore.load(
                     path=self.abs_vector_store_path,
                     embedding=GoogleGenerativeAIEmbeddings(),
+                    path=self.abs_vector_store_path, embedding=GoogleGenerativeAIEmbeddings()
                 )
                 logger.info("Loaded vector store from: %s", self.abs_vector_store_path)
                 return vectorstore
