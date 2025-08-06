@@ -15,7 +15,13 @@ class DummyKG:
     def run_query(self, query, params):  # pragma: no cover - simple stub
         element = params["element"]
         if element == "Existence of a contract":
-            return [{"text": "Contract between A and B", "weight": 0.9}]
+            return [
+                {
+                    "text": "Contract between A and B",
+                    "weight": 0.9,
+                    "dates": ["2024-01-01"],
+                }
+            ]
         return []
 
     def get_cause_subgraph(self, cause):  # pragma: no cover - simple stub
@@ -32,9 +38,21 @@ class ScoringKG:
     def run_query(self, query, params):
         element = params["element"]
         if element == "Existence of a contract":
-            return [{"text": "Contract exists", "weight": 0.9}]
+            return [
+                {
+                    "text": "Contract exists",
+                    "weight": 0.9,
+                    "dates": ["2024-01-01"],
+                }
+            ]
         if element == "Plaintiff's performance or excuse":
-            return [{"text": "Performance", "weight": 0.8}]
+            return [
+                {
+                    "text": "Performance",
+                    "weight": 0.8,
+                    "dates": ["2024-02-01"],
+                }
+            ]
         return []
 
     def get_cause_subgraph(self, cause):
@@ -55,12 +73,12 @@ class TestLegalTheoryEngine(unittest.TestCase):
 
         elements = {e["name"]: e for e in breach["elements"]}
         self.assertAlmostEqual(elements["Existence of a contract"]["weight"], 0.9)
-        self.assertEqual(
-            elements["Existence of a contract"]["facts"][0]["weight"], 0.9
-        )
+        self.assertEqual(elements["Existence of a contract"]["facts"][0]["weight"], 0.9)
         self.assertTrue(elements["Existence of a contract"]["facts"])
         self.assertIn("defenses", breach)
         self.assertIn("indicators", breach)
+        self.assertIn("missing_elements", breach)
+        self.assertTrue(breach["missing_elements"])
         engine.close()
 
     def test_suggestion_scoring(self):
@@ -70,9 +88,7 @@ class TestLegalTheoryEngine(unittest.TestCase):
         self.assertEqual(top["cause"], "Breach of Contract")
         self.assertAlmostEqual(top["score"], 0.4625)
         elements = {e["name"]: e for e in top["elements"]}
-        self.assertAlmostEqual(
-            elements["Plaintiff's performance or excuse"]["weight"], 0.8
-        )
+        self.assertAlmostEqual(elements["Plaintiff's performance or excuse"]["weight"], 0.8)
         engine.close()
 
     def test_get_theory_subgraph(self):
@@ -85,4 +101,3 @@ class TestLegalTheoryEngine(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
