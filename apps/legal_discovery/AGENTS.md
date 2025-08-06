@@ -594,3 +594,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added migration for conversation and message tables with visibility enum.
 - Verified retrieval chat agent wiring with privilege filtering and audit logging.
 - Next: expand chat tests and support multi-conversation management.
+## Update 2025-08-06T09:00Z
+- Added Redis-backed message bus and listener module.
+- Chain-of-custody logs now record `source_team` for provenance.
+- Next: persist research insights received via message bus.
