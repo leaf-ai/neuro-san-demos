@@ -228,6 +228,11 @@ WE STARTED ON #3, INSTEAD OF #1. DEAL WITH IT, FINISH IMPLEMENTING #3, AND THEN 
 - Documented usage examples in legal_discovery README
 - Next: expand endpoint coverage and refine theory docs
 
+## Update 2025-08-09T00:00Z
+- Introduced heuristic `DocumentScorer` with DB fields for probative value, admissibility risk, narrative alignment and confidence.
+- Document Review tab provides sortable/filtered score bars and refreshed neon styling.
+- Binder, auto-drafter and sanctions analyzer now consume scorecards.
+- Next: calibrate scoring model on larger corpora and expose weighting controls.
 ## Update 2025-08-08T16:00Z
 - Built Gemini-driven pretrial generator aggregating stipulations, contested issues and witnesses.
 - Export creates editable DOCX and triggers timeline and binder updates with unit tests.

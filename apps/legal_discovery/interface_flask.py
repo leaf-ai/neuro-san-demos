@@ -338,6 +338,8 @@ from coded_tools.legal_discovery.task_tracker import TaskTracker
 from coded_tools.legal_discovery.timeline_manager import TimelineManager
 from coded_tools.legal_discovery.auto_drafter import AutoDrafter
 from coded_tools.legal_discovery.vector_database_manager import VectorDatabaseManager
+from coded_tools.legal_discovery.document_scorer import DocumentScorer
+from coded_tools.legal_discovery.sanctions_risk_analyzer import SanctionsRiskAnalyzer
 
 # Allow hosting the corpus on an attached volume via UPLOAD_ROOT
 UPLOAD_FOLDER = os.environ.get("UPLOAD_ROOT", os.path.join(BASE_DIR, "uploads"))
@@ -435,6 +437,24 @@ def list_files():
         return jsonify({"status": "ok", "data": []})
     docs = {os.path.relpath(doc.file_path, root): doc for doc in Document.query.all()}
     data = build_file_tree(root, len(root), docs)
+    return jsonify({"status": "ok", "data": data})
+
+
+@app.route("/api/documents", methods=["GET"])
+def list_documents():
+    """Return scored document listings."""
+    docs = Document.query.all()
+    data = [
+        {
+            "id": d.id,
+            "name": d.name,
+            "probative_value": d.probative_value or 0,
+            "admissibility_risk": d.admissibility_risk or 0,
+            "narrative_alignment": d.narrative_alignment or 0,
+            "score_confidence": d.score_confidence or 0,
+        }
+        for d in docs
+    ]
     return jsonify({"status": "ok", "data": data})
 
 
@@ -709,6 +729,20 @@ def ingest_document(
         doc.is_redacted = False
         doc.needs_review = False
         db.session.commit()
+
+    scorer = DocumentScorer()
+    scores = scorer.score(redacted_text)
+    doc.probative_value = scores["probative_value"]
+    doc.admissibility_risk = scores["admissibility_risk"]
+    doc.narrative_alignment = scores["narrative_alignment"]
+    doc.score_confidence = scores["score_confidence"]
+    db.session.add(DocumentMetadata(document_id=doc_id, schema="evidence_scorecard", data=scores))
+    try:
+        sanctions = SanctionsRiskAnalyzer().assess(redacted_text, scorecard=scores)
+        db.session.add(DocumentMetadata(document_id=doc_id, schema="sanctions_risk", data=sanctions))
+    except Exception:
+        pass
+    db.session.commit()
 
     VectorDatabaseManager().add_documents([redacted_text], [chroma_metadata], [str(doc_id)])
     kg = KnowledgeGraphManager()

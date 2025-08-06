@@ -87,6 +87,19 @@ def create_cover_sheet(exhibit: Document) -> BytesIO:
     c.setFont("Helvetica", 14)
     if exhibit.exhibit_title:
         c.drawString(100, 720, exhibit.exhibit_title)
+    y = 700
+    c.setFont("Helvetica", 12)
+    if exhibit.probative_value is not None:
+        c.drawString(100, y, f"Probative: {exhibit.probative_value:.2f}")
+        y -= 18
+    if exhibit.admissibility_risk is not None:
+        c.drawString(100, y, f"Admissibility Risk: {exhibit.admissibility_risk:.2f}")
+        y -= 18
+    if exhibit.narrative_alignment is not None:
+        c.drawString(100, y, f"Narrative Align: {exhibit.narrative_alignment:.2f}")
+        y -= 18
+    if exhibit.score_confidence is not None:
+        c.drawString(100, y, f"Confidence: {exhibit.score_confidence:.2f}")
     c.showPage()
     c.save()
     buffer.seek(0)

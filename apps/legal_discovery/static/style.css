@@ -623,3 +623,14 @@ progress::-webkit-progress-value {
     height: 100%;
     box-shadow: 0 0 6px var(--color-accent-glow);
 }
+
+.score-bar {
+    background: rgba(255,255,255,0.1);
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+}
+.score-fill {
+    height: 100%;
+    box-shadow: 0 0 4px var(--color-accent-glow);
+}

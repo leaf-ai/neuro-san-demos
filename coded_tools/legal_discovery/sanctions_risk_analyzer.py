@@ -17,12 +17,15 @@ class SanctionsRiskAnalyzer(CodedTool):
             model=os.getenv("GOOGLE_MODEL_NAME", "gemini-2.5-flash-lite-preview-06-17")
         )
 
-    def assess(self, text: str) -> Dict[str, str]:
+    def assess(self, text: str, scorecard: Dict[str, float] | None = None) -> Dict[str, str]:
         """Return risk level and reasoning for the provided text."""
+        score_info = ""
+        if scorecard:
+            score_info = "Evidence scores:" + json.dumps(scorecard) + "\n"
         prompt = (
             "You are a legal ethics expert. Assess the sanctions risk of the"
-            " following text. Respond with JSON {\"risk\":\"low|medium|high\","
-            " \"analysis\":\"...\"}.\n\n" + text
+            " following text. Respond with JSON {\"risk\":\"low|medium|high\"," 
+            " \"analysis\":\"...\"}.\n\n" + score_info + text
         )
         try:
             raw = self._llm.invoke(prompt, timeout=60).content

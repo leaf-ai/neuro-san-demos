@@ -698,6 +698,12 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Tests cover ingest, redaction, stamping and export logging end-to-end.
 - Next: extend chain log filters and add report export options.
 
+## Update 2025-08-09T00:00Z
+- Implemented DocumentScorer heuristics and stored probative/admissibility/narrative/confidence scores.
+- Added Document Review tab with sortable score bars and refined neon styling.
+- Scores feed binder cover sheets, auto-drafter prompts, and sanctions analysis.
+- Next: calibrate scoring heuristics and expose UI weighting controls.
+
 ## Update 2025-08-08T16:00Z
 - Aggregated stipulations, contested issues and witness lists from approved theories.
 - Gemini-powered pretrial export saves editable DOCX and hooks timeline/binder modules.
