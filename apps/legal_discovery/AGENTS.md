@@ -628,3 +628,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added Gemini auto-drafter with motion templates and DOCX/PDF export.
 - Added React Auto Draft panel with manual review before export.
 - Next: expand motion templates and integrate deeper opposition metrics.
+
+## Update 2025-08-06T18:30Z
+- Embedded chat messages into Chroma with conversation vector IDs and graph links.
+- Applied privilege-aware filters to retrieval to exclude restricted content.
+- Next: broaden chat tests and surface similar message context in UI.

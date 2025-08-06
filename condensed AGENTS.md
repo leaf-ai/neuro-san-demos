@@ -115,3 +115,8 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 - Added `exhibit_order` field with migration and wired binder/zip exports to respect custom order.
 - Introduced exhibit reorder API with privilege and source-team aware listing; highlighted privileged rows in UI.
 - Next: surface drag-and-drop ordering in dashboard and extend source filters.
+
+## Update 2025-08-06T18:30Z
+- Stored chat message embeddings with privilege-aware filtering and graph links.
+- Added vector IDs for conversations and messages with database migration.
+- Next: expand conversation-level retrieval tests and refine graph relationships.

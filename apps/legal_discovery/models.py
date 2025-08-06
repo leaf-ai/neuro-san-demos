@@ -45,6 +45,7 @@ class Conversation(db.Model):
     title = db.Column(db.String(255), nullable=True)
     participants = db.Column(db.JSON, nullable=False, default=list)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
+    vector_id = db.Column(db.String(255), nullable=True)
     messages = db.relationship(
         "Message", backref="conversation", lazy=True, cascade="all, delete-orphan"
     )
