@@ -135,3 +135,8 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 - Consolidated deposition question export into a single permission-aware method.
 - Introduced a lightweight weasyprint stub and broadened tests for PDF/DOCX export, contradiction detection and review logging.
 - Next: broaden deposition preparation edge-case coverage.
+
+## Update 2025-08-09T00:00Z
+- Added chat-driven timeline node with cross-links and summary queries plus blur polish for chat box.
+- Next: enhance natural date parsing and surface linked events in UI.
+

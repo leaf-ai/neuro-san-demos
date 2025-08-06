@@ -720,3 +720,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added regression tests for known sanction scenarios.
 - Next: refine trigger keywords and integrate model-based scoring.
 
+## Update 2025-08-09T00:00Z
+- Enabled chat-driven timeline updates with cross-links to depositions, exhibits and theories, plus summary endpoint and blur styling.
+- Next: broaden natural language date parsing and display linked events in dashboard.
+
