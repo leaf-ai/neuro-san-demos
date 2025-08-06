@@ -579,3 +579,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-06T02:40Z
 - Cleaned up RAG docstrings to reference Gemini embeddings
 - Next: confirm documentation aligns with new defaults
+
+## Update 2025-08-06T04:45Z
+- Implemented ChainOfCustodyLog model with immutable append-only records
+- Wired logging utility into ingest, redaction, stamping, and export flows with retrieval API and dashboard panel
+- Next: extend chain log filters and add report export options
