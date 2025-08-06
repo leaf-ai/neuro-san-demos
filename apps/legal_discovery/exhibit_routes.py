@@ -8,7 +8,7 @@ from flask import Blueprint, jsonify, request, current_app
 from PyPDF2 import PdfReader
 
 from .database import db
-from .models import Document, ChainOfCustodyLog
+from .models import Document, ChainOfCustodyLog, DocumentSource
 from .exhibit_manager import assign_exhibit_number, generate_binder, export_zip
 
 exhibits_bp = Blueprint("exhibits", __name__, url_prefix="/api/exhibits")
@@ -22,10 +22,16 @@ def list_exhibits():
     if case_id is None:
         return jsonify({"error": "case_id required"}), 400
     include_priv = request.args.get("include_privileged", "false").lower() == "true"
+    source = request.args.get("source")
     source_team = request.args.get("source_team")
     query = Document.query.filter_by(case_id=case_id, is_exhibit=True)
     if not include_priv:
         query = query.filter_by(is_privileged=False)
+    if source:
+        try:
+            query = query.filter_by(source=DocumentSource(source))
+        except ValueError:
+            pass
     if source_team:
         query = (
             query.join(Document.chain_logs)
@@ -48,9 +54,22 @@ def list_exhibits():
                 "bates_number": ex.bates_number,
                 "page_count": pages,
                 "privileged": ex.is_privileged,
+                "source": ex.source.value if ex.source else None,
             }
         )
     return jsonify(data)
+
+
+@exhibits_bp.route("/<int:doc_id>/links", methods=["GET"])
+def exhibit_links(doc_id: int):
+    """Return legal theories and timeline nodes linked to an exhibit."""
+    doc = Document.query.get_or_404(doc_id)
+    theories = sorted({f.legal_theory.theory_name for f in doc.facts if f.legal_theory})
+    timeline = []
+    for fact in doc.facts:
+        for date in fact.dates or []:
+            timeline.append({"date": date, "text": fact.text})
+    return jsonify({"theories": theories, "timeline": timeline})
 
 
 @exhibits_bp.post("/assign")
