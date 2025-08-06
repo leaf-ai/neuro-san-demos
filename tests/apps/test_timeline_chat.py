@@ -22,7 +22,7 @@ def client():
 
 def test_chat_creates_timeline_event(client):
     resp = client.post(
-        "/api/query",
+        "/api/chat/query",
         json={"text": "case:1 2024-01-01 Filing made [dep:1] [ex:2] [theory:3]"},
     )
     assert resp.status_code == 200
@@ -36,7 +36,7 @@ def test_chat_creates_timeline_event(client):
 
 
 def test_timeline_summary(client):
-    client.post("/api/query", json={"text": "case:1 2024-02-02 Hearing"})
+    client.post("/api/chat/query", json={"text": "case:1 2024-02-02 Hearing"})
     resp = client.get("/api/timeline/summary", query_string={"case_id": 1})
     assert resp.status_code == 200
     assert "2024-02-02" in resp.json["summary"]

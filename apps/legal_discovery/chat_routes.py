@@ -1,0 +1,104 @@
+from flask import Blueprint, jsonify, request
+
+from coded_tools.legal_discovery.chat_agent import RetrievalChatAgent
+from coded_tools.legal_discovery.timeline_manager import TimelineManager
+
+from .database import db
+from .models import MessageAuditLog
+from .extensions import socketio
+from .chat_state import user_input_queue
+from .voice import synthesize_voice
+
+
+chat_bp = Blueprint("chat", __name__, url_prefix="/api/chat")
+
+
+@chat_bp.post("/query")
+def query_agent():
+    data = request.get_json() or {}
+    text = data.get("text")
+    if not text:
+        return jsonify({"status": "error", "error": "text required"}), 400
+    tm = TimelineManager()
+    case_id = data.get("case_id", 1)
+    if text.lower().startswith("timeline summary"):
+        return jsonify({"status": "ok", "summary": tm.summarize(case_id)})
+    event = tm.upsert_event_from_text(text, case_id)
+    if event:
+        socketio.emit(
+            "update_speech",
+            {"data": f"Recorded event on {event['date']}"},
+            namespace="/chat",
+        )
+    user_input_queue.put(text)
+    agent = RetrievalChatAgent()
+    result = agent.query(
+        question=text,
+        sender_id=data.get("sender_id", 0),
+        conversation_id=data.get("conversation_id"),
+    )
+    if result.get("facts"):
+        socketio.emit(
+            "update_speech",
+            {"data": "\n".join(result["facts"])},
+            namespace="/chat",
+        )
+        db.session.add(
+            MessageAuditLog(
+                message_id=result["message_id"],
+                sender="assistant",
+                transcript="\n".join(result["facts"]),
+                voice_model=data.get("voice_model"),
+            )
+        )
+    db.session.add(
+        MessageAuditLog(
+            message_id=result["message_id"],
+            sender="user",
+            transcript=text,
+            voice_model=data.get("voice_model"),
+        )
+    )
+    db.session.commit()
+    return jsonify({"status": "ok", "message_id": result["message_id"]})
+
+
+@chat_bp.post("/voice")
+def voice_query():
+    data = request.get_json() or {}
+    transcript = data.get("transcript")
+    if not transcript:
+        return jsonify({"status": "error", "error": "transcript required"}), 400
+    user_input_queue.put(transcript)
+    agent = RetrievalChatAgent()
+    result = agent.query(
+        question=transcript,
+        sender_id=data.get("sender_id", 0),
+        conversation_id=data.get("conversation_id"),
+    )
+    response_text = "\n".join(result.get("facts", []))
+    if response_text:
+        socketio.emit("update_speech", {"data": response_text}, namespace="/chat")
+        audio = synthesize_voice(response_text, data.get("voice_model", "en-US"))
+        socketio.emit("voice_output", {"audio": audio}, namespace="/chat")
+        db.session.add(
+            MessageAuditLog(
+                message_id=result["message_id"],
+                sender="assistant",
+                transcript=response_text,
+                voice_model=data.get("voice_model"),
+            )
+        )
+    db.session.add(
+        MessageAuditLog(
+            message_id=result["message_id"],
+            sender="user",
+            transcript=transcript,
+            voice_model=data.get("voice_model"),
+        )
+    )
+    db.session.commit()
+    return jsonify({"status": "ok", "message_id": result["message_id"]})
+
+
+__all__ = ["chat_bp"]
