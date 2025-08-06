@@ -750,7 +750,7 @@ def upload_files():
     if not files:
         return jsonify({"error": "No files provided"}), 400
 
-    source_str = request.form.get("source", "user")
+    source_str = request.form.get("source", "user").lower()
     try:
         source_enum = DocumentSource(source_str)
     except ValueError:

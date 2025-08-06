@@ -51,6 +51,7 @@ class VectorDatabaseManager(CodedTool):
             try:
                 existing = self.collection.get(ids=[doc_id])
                 if existing and existing.get("ids"):
+                    logging.info("skip existing vector %s", doc_id)
                     continue
             except Exception:  # pragma: no cover - best effort
                 pass
@@ -63,6 +64,7 @@ class VectorDatabaseManager(CodedTool):
                     res = self.collection.query(query_texts=[doc], n_results=1)
                 if res.get("ids") and res["ids"][0]:
                     if res.get("distances") and res["distances"][0][0] < 0.1:
+                        logging.info("skip similar vector %s", doc_id)
                         continue
             except Exception:  # pragma: no cover - best effort
                 pass

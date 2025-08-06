@@ -82,6 +82,8 @@ class MessageAuditLog(db.Model):
 
 
 class DocumentSource(enum.Enum):
+    """Origin of an uploaded document."""
+
     USER = "user"
     OPP_COUNSEL = "opp_counsel"
     COURT = "court"
