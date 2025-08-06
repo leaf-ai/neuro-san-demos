@@ -1252,7 +1252,7 @@ def auto_draft_export():
     path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     drafter = AutoDrafter()
     try:
-        drafter.export(content, path)
+        drafter.export(content, path, fmt)
     except Exception as exc:  # pragma: no cover - file errors
         return jsonify({"error": str(exc)}), 500
     return jsonify({"status": "ok", "output": filename})
