@@ -693,3 +693,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added lightweight weasyprint stub and comprehensive tests for exports, contradiction detection and review logging.
 - Next: expand deposition prep tests for edge cases.
 
+## Update 2025-08-08T15:00Z
+- Added signature hashing to ChainOfCustodyLog with retrieval API and dashboard panel.
+- Tests cover ingest, redaction, stamping and export logging end-to-end.
+- Next: extend chain log filters and add report export options.
+

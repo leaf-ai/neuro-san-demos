@@ -26,6 +26,10 @@ function ChainLogSection() {
         {events.map((e, i) => (
           <li key={i} className="mb-1">
             <span className="font-bold">{e.type}</span> {e.timestamp}
+            {e.user_id && <span className="ml-1">(user {e.user_id})</span>}
+            <div className="text-xs text-gray-400 break-all">
+              {e.signature_hash}
+            </div>
           </li>
         ))}
       </ul>

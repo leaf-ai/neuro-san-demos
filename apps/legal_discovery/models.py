@@ -175,6 +175,7 @@ class ChainOfCustodyLog(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("agent.id"), nullable=True)
     source_team = db.Column(db.String(100), nullable=False, default="unknown")
     event_metadata = db.Column(db.JSON, nullable=True)
+    signature_hash = db.Column(db.String(64), nullable=False)
 
     user = db.relationship("Agent", backref=db.backref("chain_logs", lazy=True))
 
