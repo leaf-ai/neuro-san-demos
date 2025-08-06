@@ -95,3 +95,7 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 - Consolidated deposition question export into a single authorized method returning the generated file path
 - Added unit tests covering PDF and DOCX exports with reviewer authorization
 - Next: extend export tests to handle edge cases and additional formats
+
+## Update 2025-08-06T04:18Z
+- Added weasyprint stub for tests and expanded deposition prep assertions for contradiction detection and review logs
+- Next: cover additional deposition prep edge cases

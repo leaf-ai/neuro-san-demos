@@ -19,11 +19,13 @@ if importlib.util.find_spec("weasyprint") is None:  # pragma: no cover - environ
     weasyprint = types.ModuleType("weasyprint")
 
     class HTML:  # type: ignore
+        """Minimal stand-in for :class:`weasyprint.HTML`."""
+
         def __init__(self, string: str | None = None, *_, **__):
             self.string = string
 
-        def write_pdf(self, target: str) -> None:
-            # Write a tiny PDF header so tests can confirm output file creation
+        def write_pdf(self, target: str, *_args, **_kwargs) -> None:
+            """Create a tiny PDF so tests can confirm file output."""
             with open(target, "wb") as fh:
                 fh.write(b"%PDF-1.4\n%stub")
 
