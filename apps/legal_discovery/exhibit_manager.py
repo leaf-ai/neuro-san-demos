@@ -158,6 +158,8 @@ def generate_binder(case_id: int, output_path: str | None = None) -> str:
             writer.append(PdfReader(_text_page("Deposition Excerpt", dep["text"])))
         if (theory := meta.get("theory_reference")) and theory.get("text"):
             writer.append(PdfReader(_text_page("Theory Reference", theory["text"])))
+        if (san := meta.get("sanctions_risk")) and san.get("warning"):
+            writer.append(PdfReader(_text_page("Sanctions Warning", san["warning"])))
     if output_path is None:
         output_path = Path(tempfile.gettempdir()) / f"case_{case_id}_binder.pdf"
     with open(output_path, "wb") as f:
@@ -200,6 +202,8 @@ def export_zip(case_id: int, output_path: str | None = None) -> str:
                 entry["evidence_scorecard"] = score
             if sanctions := meta.get("sanctions_risk"):
                 entry["sanctions_risk"] = sanctions
+                if sanctions.get("warning"):
+                    entry["sanctions_warning"] = sanctions["warning"]
             manifest.append(entry)
         z.writestr("manifest.json", json.dumps(manifest, indent=2))
     log_action(case_id, None, "EXPORT_ZIP", details={"path": str(output_path)})
