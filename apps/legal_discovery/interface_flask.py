@@ -14,6 +14,7 @@ from datetime import datetime
 from difflib import SequenceMatcher
 from io import BytesIO, StringIO
 import csv
+import difflib
 
 # pylint: disable=import-error
 import schedule
@@ -29,6 +30,7 @@ from flask_socketio import SocketIO
 import spacy
 from spacy.cli import download as spacy_download
 from weasyprint import HTML
+import fitz
 
 try:
     from apps.legal_discovery.legal_discovery import (
@@ -77,17 +79,24 @@ from apps.legal_discovery.models import (
     DocumentSource,
     MessageAuditLog,
     NarrativeDiscrepancy,
+    DocumentVersion,
 )
 from coded_tools.legal_discovery.deposition_prep import DepositionPrep
 from coded_tools.legal_discovery.legal_crawler import LegalCrawler
 from coded_tools.legal_discovery.narrative_discrepancy_detector import (
     NarrativeDiscrepancyDetector,
 )
+from coded_tools.legal_discovery.bates_numbering import (
+    BatesNumberingService,
+    stamp_pdf,
+)
 from .exhibit_routes import exhibits_bp
 from .chain_logger import ChainEventType, log_event
 
 # Configure logging before any other setup so early steps are captured
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
+
+bates_service = BatesNumberingService()
 
 # Resolve project root relative to this file so Docker and local runs share paths
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -1077,26 +1086,112 @@ def redact_document():
 
 @app.route("/api/document/stamp", methods=["POST"])
 def bates_stamp_document():
-    """Apply Bates numbering to a PDF."""
+    """Apply Bates numbering to a PDF and record a document version."""
     data = request.get_json() or {}
     file_path = data.get("file_path")
     prefix = data.get("prefix", "BATES")
-    if not file_path:
-        return jsonify({"error": "Missing file_path"}), 400
-    modifier = DocumentModifier()
+    document_id = data.get("document_id")
+    user_id = data.get("user_id")
+    if not file_path or document_id is None or user_id is None:
+        return (
+            jsonify({"error": "file_path, document_id and user_id required"}),
+            400,
+        )
+    start_bates = bates_service.get_next_bates_number(prefix)
+    start_number = int(start_bates.split("_")[-1])
+    output_path = f"{file_path}_stamped.pdf"
     try:
-        modifier.bates_stamp(file_path, prefix)
+        stamp_pdf(file_path, output_path, start_number, prefix=prefix)
     except Exception as exc:  # pragma: no cover - filesystem errors
         return jsonify({"error": str(exc)}), 500
-    doc = Document.query.filter_by(file_path=file_path).first()
+    last_version = (
+        DocumentVersion.query.filter_by(document_id=document_id)
+        .order_by(DocumentVersion.version_number.desc())
+        .first()
+    )
+    version_number = 1 if last_version is None else last_version.version_number + 1
+    version = DocumentVersion(
+        document_id=document_id,
+        version_number=version_number,
+        file_path=output_path,
+        bates_number=start_bates,
+        user_id=user_id,
+    )
+    db.session.add(version)
+    doc = Document.query.get(document_id)
     if doc:
         log_event(
             doc.id,
             ChainEventType.STAMPED,
-            metadata={"prefix": prefix},
+            user_id=user_id,
+            metadata={"prefix": prefix, "version": version_number},
             source_team="legal_discovery",
         )
-    return jsonify({"message": "File stamped", "output": f"{file_path}_stamped.pdf"})
+    db.session.commit()
+    return jsonify(
+        {
+            "message": "File stamped",
+            "output": output_path,
+            "bates": start_bates,
+            "version": version_number,
+        }
+    )
+
+
+@app.route("/api/document/<int:doc_id>/versions", methods=["GET"])
+def get_document_versions(doc_id: int):
+    """Return version history for a document."""
+    versions = (
+        DocumentVersion.query.filter_by(document_id=doc_id)
+        .order_by(DocumentVersion.version_number)
+        .all()
+    )
+    return jsonify(
+        {
+            "versions": [
+                {
+                    "version": v.version_number,
+                    "bates_number": v.bates_number,
+                    "user": v.user.name if getattr(v, "user", None) else v.user_id,
+                    "timestamp": v.created_at.isoformat(),
+                }
+                for v in versions
+            ]
+        }
+    )
+
+
+def _extract_text(path: str) -> str:
+    doc = fitz.open(path)
+    return "\n".join(page.get_text() for page in doc)
+
+
+@app.route("/api/document/<int:doc_id>/diff", methods=["GET"])
+def diff_document_versions(doc_id: int):
+    """Return unified diff between two document versions."""
+    try:
+        from_v = int(request.args.get("from"))
+        to_v = int(request.args.get("to"))
+    except (TypeError, ValueError):
+        return jsonify({"error": "from and to parameters required"}), 400
+    v1 = DocumentVersion.query.filter_by(
+        document_id=doc_id, version_number=from_v
+    ).first_or_404()
+    v2 = DocumentVersion.query.filter_by(
+        document_id=doc_id, version_number=to_v
+    ).first_or_404()
+    text1 = _extract_text(v1.file_path)
+    text2 = _extract_text(v2.file_path)
+    diff = "".join(
+        difflib.unified_diff(
+            text1.splitlines(),
+            text2.splitlines(),
+            fromfile=f"v{from_v}",
+            tofile=f"v{to_v}",
+            lineterm="",
+        )
+    )
+    return jsonify({"diff": diff})
 
 
 @app.route("/api/document/draft", methods=["POST"])

@@ -139,12 +139,32 @@ class Document(db.Model):
         secondary="document_witness_link",
         backref=db.backref("documents", lazy=True),
     )
+    versions = db.relationship(
+        "DocumentVersion",
+        backref="document",
+        lazy=True,
+        cascade="all, delete-orphan",
+    )
     chain_logs = db.relationship(
         "ChainOfCustodyLog",
         backref="document",
         lazy=True,
         cascade="all, delete-orphan",
     )
+
+
+class DocumentVersion(db.Model):
+    """Snapshot of a document when stamped or modified."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    document_id = db.Column(db.Integer, db.ForeignKey("document.id"), nullable=False)
+    version_number = db.Column(db.Integer, nullable=False)
+    file_path = db.Column(db.String(255), nullable=False)
+    bates_number = db.Column(db.String(100), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("agent.id"), nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+    user = db.relationship("Agent")
 
 
 class ChainOfCustodyLog(db.Model):
