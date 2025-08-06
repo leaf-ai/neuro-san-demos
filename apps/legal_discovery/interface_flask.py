@@ -1,4 +1,5 @@
 import atexit
+import base64
 import hashlib
 import json
 import logging
@@ -11,6 +12,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from datetime import datetime
 from difflib import SequenceMatcher
+from io import BytesIO
 
 # pylint: disable=import-error
 import schedule
@@ -26,11 +28,20 @@ from flask_socketio import SocketIO
 import spacy
 from spacy.cli import download as spacy_download
 
-from apps.legal_discovery.legal_discovery import legal_discovery_thinker
-from apps.legal_discovery.legal_discovery import (
-    set_up_legal_discovery_assistant,
-    tear_down_legal_discovery_assistant,
-)
+try:
+    from apps.legal_discovery.legal_discovery import (
+        legal_discovery_thinker,
+        set_up_legal_discovery_assistant,
+        tear_down_legal_discovery_assistant,
+    )
+except Exception:  # pragma: no cover - optional dependency
+    legal_discovery_thinker = None
+
+    def set_up_legal_discovery_assistant(*args, **kwargs):
+        return None, None
+
+    def tear_down_legal_discovery_assistant(*args, **kwargs):
+        return None
 
 
 from more_itertools import chunked
@@ -41,11 +52,6 @@ from apps.legal_discovery import settings
 from coded_tools.legal_discovery import RetrievalChatAgent
 from apps.legal_discovery.database import db
 from coded_tools.legal_discovery.deposition_prep import DepositionPrep
-from apps.legal_discovery.legal_discovery import (
-    legal_discovery_thinker,
-    set_up_legal_discovery_assistant,
-    tear_down_legal_discovery_assistant,
-)
 from apps.legal_discovery.models import (
     CalendarEvent,
     Case,
@@ -67,8 +73,10 @@ from apps.legal_discovery.models import (
     Witness,
     ChainOfCustodyLog,
     DocumentSource,
+    MessageAuditLog,
 )
 from coded_tools.legal_discovery.deposition_prep import DepositionPrep
+from coded_tools.legal_discovery.legal_crawler import LegalCrawler
 from .exhibit_routes import exhibits_bp
 from .chain_logger import ChainEventType, log_event
 
@@ -112,6 +120,20 @@ app.register_blueprint(exhibits_bp)
 executor = ThreadPoolExecutor(max_workers=int(os.environ.get("INGESTION_WORKERS", "4")))
 atexit.register(executor.shutdown)
 thread_started = False  # pylint: disable=invalid-name
+
+# Shared crawler instance for legal references
+def synthesize_voice(text: str, model: str) -> str:
+    """Generate base64-encoded audio from text."""
+    try:
+        from gtts import gTTS
+
+        audio_io = BytesIO()
+        gTTS(text=text, lang=model).write_to_fp(audio_io)
+        audio_io.seek(0)
+        return base64.b64encode(audio_io.read()).decode("utf-8")
+    except Exception:  # pragma: no cover - best effort
+        return ""
+legal_crawler = LegalCrawler()
 
 app.logger.setLevel(logging.getLevelName(os.environ.get("LOG_LEVEL", "INFO")))
 
@@ -293,11 +315,13 @@ from coded_tools.legal_discovery.knowledge_graph_manager import KnowledgeGraphMa
 from coded_tools.legal_discovery.legal_theory_engine import LegalTheoryEngine
 from coded_tools.legal_discovery.ontology_loader import OntologyLoader
 from coded_tools.legal_discovery.presentation_generator import PresentationGenerator
+from coded_tools.legal_discovery.pretrial_generator import PretrialGenerator
 from coded_tools.legal_discovery.privilege_detector import PrivilegeDetector
 from coded_tools.legal_discovery.research_tools import ResearchTools
 from coded_tools.legal_discovery.subpoena_manager import SubpoenaManager
 from coded_tools.legal_discovery.task_tracker import TaskTracker
 from coded_tools.legal_discovery.timeline_manager import TimelineManager
+from coded_tools.legal_discovery.auto_drafter import AutoDrafter
 from coded_tools.legal_discovery.vector_database_manager import VectorDatabaseManager
 
 # Allow hosting the corpus on an attached volume via UPLOAD_ROOT
@@ -381,6 +405,7 @@ def build_file_tree(directory: str, root_length: int, docs: dict[str, Document])
             node["privileged"] = doc.is_privileged
             node["id"] = doc.id
             node["source"] = doc.source.value
+            node["sha256"] = doc.sha256
         if entry.is_dir():
             node["children"] = build_file_tree(entry.path, root_length, docs)
         tree.append(node)
@@ -435,6 +460,7 @@ def override_privilege(doc_id: int):
         return jsonify({"error": "privileged required"}), 400
     doc = Document.query.get_or_404(doc_id)
     doc.is_privileged = bool(privileged)
+    doc.is_redacted = bool(privileged)
     doc.needs_review = False
     db.session.add(
         RedactionAudit(
@@ -443,6 +469,12 @@ def override_privilege(doc_id: int):
             action="override_privilege",
             reason=reason,
         )
+    )
+    log_event(
+        doc.id,
+        ChainEventType.REDACTED,
+        metadata={"override": True, "privileged": doc.is_privileged},
+        source_team="legal_discovery",
     )
     db.session.commit()
     return jsonify({"status": "ok", "privileged": doc.is_privileged})
@@ -547,9 +579,7 @@ def _paths_to_tree(entries: list[dict]) -> list:
         for name, val in sorted(d.items()):
             if name == "_files":
                 for fname, src in val:
-                    items.append(
-                        {"name": fname, "path": os.path.join(prefix, fname), "source": src}
-                    )
+                    items.append({"name": fname, "path": os.path.join(prefix, fname), "source": src})
             else:
                 items.append(
                     {
@@ -571,10 +601,7 @@ def organized_files():
         return jsonify({"status": "ok", "data": {}})
 
     files = _collect_paths(root)
-    docs = {
-        os.path.relpath(doc.file_path, root): doc.source.value
-        for doc in Document.query.all()
-    }
+    docs = {os.path.relpath(doc.file_path, root): doc.source.value for doc in Document.query.all()}
     categories: dict[str, list[dict]] = {}
     for path in files:
         cat = _categorize_name(os.path.basename(path))
@@ -601,6 +628,12 @@ def cleanup_upload_folder(max_age_hours: int = 24) -> None:
                     os.remove(path)
             except FileNotFoundError:
                 continue
+
+
+def update_legal_references() -> None:
+    """Crawl legal sources and update the graph."""
+    refs = legal_crawler.crawl_all()
+    legal_crawler.store(refs)
 
 
 def ingest_document(
@@ -636,7 +669,7 @@ def ingest_document(
                     start=s.start,
                     end=s.end,
                     label=s.label,
-                    reason=s.text,
+                    reason=(f"{s.text} (score={s.score:.2f})" if s.score is not None else s.text),
                 )
             )
         db.session.commit()
@@ -644,6 +677,7 @@ def ingest_document(
             doc_id,
             ChainEventType.REDACTED,
             metadata={"spans": [(s.start, s.end) for s in spans]},
+            source_team="legal_discovery",
         )
     else:
         shutil.copy(original_path, redacted_path)
@@ -663,7 +697,6 @@ def ingest_document(
 
     extractor = FactExtractor()
     ontology = OntologyLoader().load()
-    for fact in extractor.extract(text):
     for fact in extractor.extract(redacted_text):
         fact_row = Fact(
             case_id=case_id,
@@ -697,7 +730,12 @@ def ingest_document(
                 kg.link_fact_to_element(fact_id, cause, element, weight)
 
     kg.close()
-    log_event(doc_id, ChainEventType.INGESTED, metadata={"path": redacted_path})
+    log_event(
+        doc_id,
+        ChainEventType.INGESTED,
+        metadata={"path": redacted_path},
+        source_team="legal_discovery",
+    )
 
 
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
@@ -757,7 +795,7 @@ def upload_files():
                 continue
 
             file_hash = hasher.hexdigest()
-            if Document.query.filter_by(content_hash=file_hash).first():
+            if Document.query.filter_by(sha256=file_hash).first():
                 record_skip(raw_name, "duplicate hash")
                 continue
 
@@ -776,7 +814,7 @@ def upload_files():
                 case_id=case_id,
                 name=filename,
                 file_path=redacted_path,
-                content_hash=file_hash,
+                sha256=file_hash,
                 source=source_enum,
             )
             db.session.add(doc)
@@ -792,11 +830,7 @@ def upload_files():
                 "upload_time": str(time.time()),
                 "source": source_str,
             }
-            chroma_metadata = {
-                k: str(v)
-                for k, v in full_metadata.items()
-                if isinstance(v, (str, int, float, bool))
-            }
+            chroma_metadata = {k: str(v) for k, v in full_metadata.items() if isinstance(v, (str, int, float, bool))}
 
             with open(redacted_path + ".meta.json", "w") as f:
                 json.dump(full_metadata, f, indent=2)
@@ -867,7 +901,12 @@ def export_files():
     archive = "processed_files.zip"
     shutil.make_archive("processed_files", "zip", UPLOAD_FOLDER)
     for doc in Document.query.all():
-        log_event(doc.id, ChainEventType.EXPORTED, metadata={"archive": archive})
+        log_event(
+            doc.id,
+            ChainEventType.EXPORTED,
+            metadata={"archive": archive},
+            source_team="legal_discovery",
+        )
     return send_from_directory(".", archive, as_attachment=True)
 
 
@@ -876,11 +915,7 @@ def get_chain_log():
     doc_id = request.args.get("document_id", type=int)
     if not doc_id:
         return jsonify({"error": "Missing document_id"}), 400
-    entries = (
-        ChainOfCustodyLog.query.filter_by(document_id=doc_id)
-        .order_by(ChainOfCustodyLog.timestamp)
-        .all()
-    )
+    entries = ChainOfCustodyLog.query.filter_by(document_id=doc_id).order_by(ChainOfCustodyLog.timestamp).all()
     return jsonify(
         {
             "document_id": doc_id,
@@ -945,7 +980,12 @@ def redact_document():
         return jsonify({"error": str(exc)}), 500
     doc = Document.query.filter_by(file_path=file_path).first()
     if doc:
-        log_event(doc.id, ChainEventType.REDACTED, metadata={"text": text})
+        log_event(
+            doc.id,
+            ChainEventType.REDACTED,
+            metadata={"text": text},
+            source_team="legal_discovery",
+        )
     return jsonify({"message": "File redacted", "output": f"{file_path}_redacted.pdf"})
 
 
@@ -964,7 +1004,12 @@ def bates_stamp_document():
         return jsonify({"error": str(exc)}), 500
     doc = Document.query.filter_by(file_path=file_path).first()
     if doc:
-        log_event(doc.id, ChainEventType.STAMPED, metadata={"prefix": prefix})
+        log_event(
+            doc.id,
+            ChainEventType.STAMPED,
+            metadata={"prefix": prefix},
+            source_team="legal_discovery",
+        )
     return jsonify({"message": "File stamped", "output": f"{file_path}_stamped.pdf"})
 
 
@@ -989,6 +1034,46 @@ def draft_document():
     except Exception as exc:  # pragma: no cover - file system errors
         return jsonify({"error": str(exc)}), 500
     return jsonify({"status": "ok", "output": filepath})
+
+
+@app.route("/api/auto_draft/templates")
+def auto_draft_templates():
+    """Return available motion templates."""
+    drafter = AutoDrafter()
+    return jsonify({"data": drafter.templates.available()})
+
+
+@app.route("/api/auto_draft", methods=["POST"])
+def auto_draft_generate():
+    """Generate a motion draft using Gemini."""
+    data = request.get_json() or {}
+    motion_type = data.get("motion_type")
+    if not motion_type:
+        return jsonify({"error": "Missing motion_type"}), 400
+    drafter = AutoDrafter()
+    try:
+        draft = drafter.generate(motion_type)
+    except Exception as exc:  # pragma: no cover - LLM errors
+        return jsonify({"error": str(exc)}), 500
+    return jsonify({"data": draft})
+
+
+@app.route("/api/auto_draft/export", methods=["POST"])
+def auto_draft_export():
+    """Export reviewed draft to DOCX or PDF."""
+    data = request.get_json() or {}
+    content = data.get("content", "")
+    fmt = data.get("format", "docx").lower()
+    if not content:
+        return jsonify({"error": "Missing content"}), 400
+    filename = f"draft_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.{fmt}"
+    path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    drafter = AutoDrafter()
+    try:
+        drafter.export(content, path)
+    except Exception as exc:  # pragma: no cover - file errors
+        return jsonify({"error": str(exc)}), 500
+    return jsonify({"status": "ok", "output": filename})
 
 
 @app.route("/api/vector/add", methods=["POST"])
@@ -1025,6 +1110,22 @@ def vector_count():
     manager = VectorDatabaseManager()
     count = manager.get_document_count()
     return jsonify({"status": "ok", "data": count})
+
+
+@app.route("/api/cocounsel/search", methods=["GET"])
+def cocounsel_search():
+    """Search legal references for CoCounsel."""
+    query = request.args.get("q", "")
+    results = legal_crawler.kg.search_legal_references(query) if query else []
+    return jsonify(results)
+
+
+@app.route("/api/drafter/search", methods=["GET"])
+def drafter_search():
+    """Search legal references for the auto-drafter."""
+    query = request.args.get("q", "")
+    results = legal_crawler.kg.search_legal_references(query) if query else []
+    return jsonify(results)
 
 
 @app.route("/api/document/text", methods=["POST"])
@@ -1121,9 +1222,7 @@ def generate_deposition_questions():
     include_privileged = data.get("include_privileged", False)
     if not witness_id:
         return jsonify({"error": "Missing witness_id"}), 400
-    questions = DepositionPrep.generate_questions(
-        witness_id, include_privileged=include_privileged
-    )
+    questions = DepositionPrep.generate_questions(witness_id, include_privileged=include_privileged)
     questions = DepositionPrep.generate_questions(witness_id, include_privileged=include_privileged)
     return jsonify({"status": "ok", "data": questions})
 
@@ -1409,6 +1508,98 @@ def theory_graph():
     return jsonify({"status": "ok", "nodes": nodes, "edges": edges})
 
 
+@app.route("/api/theories/accept", methods=["POST"])
+def accept_theory():
+    """Pipe an accepted theory to drafting, pretrial and timeline tools."""
+
+    data = request.get_json() or {}
+    cause = data.get("cause")
+    if not cause:
+        return jsonify({"status": "error", "error": "cause required"}), 400
+
+    engine = LegalTheoryEngine()
+    try:
+        theories = engine.suggest_theories()
+        theory = next((t for t in theories if t["cause"] == cause), None)
+        if theory is None:
+            return (
+                jsonify({"status": "error", "error": "unknown cause"}),
+                404,
+            )
+
+        drafter = DocumentDrafter()
+        doc_path = os.path.join(app.config["UPLOAD_FOLDER"], f"{cause.replace(' ', '_')}_theory.docx")
+        drafter.create_document(doc_path, f"Accepted theory: {cause}")
+
+        pretrial = PretrialGenerator()
+        statement = pretrial.generate_statement(cause, [e["name"] for e in theory["elements"]])
+
+        timeline_items = []
+        for element in theory["elements"]:
+            for fact in element["facts"]:
+                for date in fact.get("dates", []):
+                    timeline_items.append({"date": date, "description": fact["text"]})
+
+        timeline_manager = TimelineManager()
+        if timeline_items:
+            timeline_manager.create_timeline(cause, timeline_items)
+
+        lt = LegalTheory.query.filter_by(theory_name=cause, case_id=1).first()
+        if lt is None:
+            lt = LegalTheory(case_id=1, theory_name=cause)
+            db.session.add(lt)
+        lt.status = "approved"
+        if data.get("comment"):
+            lt.review_comment = data.get("comment")
+        db.session.commit()
+
+        return jsonify(
+            {
+                "status": "ok",
+                "document": doc_path,
+                "pretrial": statement,
+                "timeline_items": timeline_items,
+            }
+        )
+    finally:
+        engine.close()
+
+
+@app.route("/api/theories/reject", methods=["POST"])
+def reject_theory():
+    data = request.get_json() or {}
+    cause = data.get("cause")
+    if not cause:
+        return jsonify({"status": "error", "error": "cause required"}), 400
+
+    lt = LegalTheory.query.filter_by(theory_name=cause, case_id=1).first()
+    if lt is None:
+        lt = LegalTheory(case_id=1, theory_name=cause)
+        db.session.add(lt)
+    lt.status = "rejected"
+    if data.get("comment"):
+        lt.review_comment = data.get("comment")
+    db.session.commit()
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/theories/comment", methods=["POST"])
+def comment_theory():
+    data = request.get_json() or {}
+    cause = data.get("cause")
+    comment = data.get("comment")
+    if not cause or comment is None:
+        return jsonify({"status": "error", "error": "cause and comment required"}), 400
+
+    lt = LegalTheory.query.filter_by(theory_name=cause, case_id=1).first()
+    if lt is None:
+        lt = LegalTheory(case_id=1, theory_name=cause)
+        db.session.add(lt)
+    lt.review_comment = comment
+    db.session.commit()
+    return jsonify({"status": "ok"})
+
+
 @app.route("/api/query", methods=["POST"])
 def query_agent():
     data = request.get_json() or {}
@@ -1428,6 +1619,61 @@ def query_agent():
             {"data": "\n".join(result["facts"])},
             namespace="/chat",
         )
+        db.session.add(
+            MessageAuditLog(
+                message_id=result["message_id"],
+                sender="assistant",
+                transcript="\n".join(result["facts"]),
+                voice_model=data.get("voice_model"),
+            )
+        )
+    db.session.add(
+        MessageAuditLog(
+            message_id=result["message_id"],
+            sender="user",
+            transcript=text,
+            voice_model=data.get("voice_model"),
+        )
+    )
+    db.session.commit()
+    return jsonify({"status": "ok", "message_id": result["message_id"]})
+
+
+@app.route("/api/voice_query", methods=["POST"])
+def voice_query():
+    data = request.get_json() or {}
+    transcript = data.get("transcript")
+    if not transcript:
+        return jsonify({"status": "error", "error": "transcript required"}), 400
+    user_input_queue.put(transcript)
+    agent = RetrievalChatAgent()
+    result = agent.query(
+        question=transcript,
+        sender_id=data.get("sender_id", 0),
+        conversation_id=data.get("conversation_id"),
+    )
+    response_text = "\n".join(result.get("facts", []))
+    if response_text:
+        socketio.emit("update_speech", {"data": response_text}, namespace="/chat")
+        audio = synthesize_voice(response_text, data.get("voice_model", "en-US"))
+        socketio.emit("voice_output", {"audio": audio}, namespace="/chat")
+        db.session.add(
+            MessageAuditLog(
+                message_id=result["message_id"],
+                sender="assistant",
+                transcript=response_text,
+                voice_model=data.get("voice_model"),
+            )
+        )
+    db.session.add(
+        MessageAuditLog(
+            message_id=result["message_id"],
+            sender="user",
+            transcript=transcript,
+            voice_model=data.get("voice_model"),
+        )
+    )
+    db.session.commit()
     return jsonify({"status": "ok", "message_id": result["message_id"]})
 
 
@@ -1502,6 +1748,7 @@ def run_scheduled_tasks():
 atexit.register(cleanup)
 
 # Setup and start scheduled maintenance tasks
+schedule.every().day.at("01:00").do(update_legal_references)
 schedule.every().day.at("00:00").do(cleanup_upload_folder)
 socketio.start_background_task(run_scheduled_tasks)
 

@@ -579,6 +579,86 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-06T02:40Z
 - Cleaned up RAG docstrings to reference Gemini embeddings
 - Next: confirm documentation aligns with new defaults
+
 ## Update 2025-08-06T04:48Z
 - Refined document source handling and vector dedup logging.
 - Next: validate end-to-end ingestion with new source filters.
+
+## Update 2025-08-06T04:45Z
+- Implemented ChainOfCustodyLog model with immutable append-only records
+- Wired logging utility into ingest, redaction, stamping, and export flows with retrieval API and dashboard panel
+- Next: extend chain log filters and add report export options
+
+## Update 2025-08-06T05:30Z
+- Enhanced privilege detector with legal-model fallback and optional classifier
+- Recorded span scores in `RedactionLog` and exposed manual privilege override API/UI
+- Next: refine reviewer workflow and monitor classifier accuracy
+
+## Update 2025-08-06T08:00Z
+- Added migration for conversation and message tables with visibility enum.
+- Verified retrieval chat agent wiring with privilege filtering and audit logging.
+- Next: expand chat tests and support multi-conversation management.
+## Update 2025-08-06T09:00Z
+- Added Redis-backed message bus and listener module.
+- Chain-of-custody logs now record `source_team` for provenance.
+- Next: persist research insights received via message bus.
+
+## Update 2025-08-06T10:30Z
+- Extended ontology with new causes, defenses and jurisdiction mapping.
+- Added `TheoryConfidence` model and migration linking facts to theories with source provenance.
+- Upgraded fact extractor for NER tagging, relationship extraction and confidence scoring.
+- Next: surface theory confidence metrics in API responses and dashboard graphs.
+
+## Update 2025-08-06T12:30Z
+- Added confidence-weighted SUPPORTS/CONTRADICTS edges and theory acceptance routing to drafter, pretrial and timeline APIs.
+- Next: surface accepted theory outputs in dashboard UI.
+
+## Update 2025-08-06T14:00Z
+- Implemented approval, rejection and comment endpoints with UI controls and confidence bar.
+- Graph and timeline auto-refresh on theory decisions and Cypress tests cover the workflow.
+- Next: capture reviewer identity and expose theory review history.
+
+## Update 2025-08-06T16:00Z
+- Added legal crawler for bench cards, jury instructions, statutes and case law with Neo4j storage.
+- Exposed CoCounsel and auto-drafter search APIs and scheduled daily crawler updates.
+- Next: expand source-specific parsing and connect search results to dashboard UI.
+
+## Update 2025-08-06T15:30Z
+- Added `exhibit_order` column with migration and default assignment.
+- Exposed reorder API and filtered exhibit listings by privilege and source team; UI highlights privileged entries.
+- Next: add drag-and-drop reordering in React dashboard.
+
+## Update 2025-08-06T17:30Z
+- Added Gemini auto-drafter with motion templates and DOCX/PDF export.
+- Added React Auto Draft panel with manual review before export.
+- Next: expand motion templates and integrate deeper opposition metrics.
+
+## Update 2025-08-06T18:30Z
+- Embedded chat messages into Chroma with conversation vector IDs and graph links.
+- Applied privilege-aware filters to retrieval to exclude restricted content.
+- Next: broaden chat tests and surface similar message context in UI.
+
+## Update 2025-08-06T19:00Z
+- Added React ExhibitTab with drag-and-drop ordering plus privilege and source filters; entries show linked theories and timeline dates.
+- Extended exhibit API with source filter and links endpoint; updated tests to cover ordering, filtering, and link retrieval.
+- Next: connect exhibit links to detailed timeline view and broaden source options.
+
+## Update 2025-08-06T20:30Z
+- Enhanced exhibit export to bundle deposition excerpts, theory references, scorecards, and sanctions notes into PDF/ZIP.
+- Added tests for exhibit numbering, cross-links, and privilege exclusions.
+- Next: enrich PDF export formatting for metadata pages.
+
+## Update 2025-08-07T10:00Z
+- Expanded motion template library with Motion in Limine and configurable Gemini temperature.
+- Added review gating to Auto Draft UI requiring explicit approval before export.
+- Next: incorporate opposition metrics into prompts and support additional export formats.
+
+## Update 2025-08-07T12:00Z
+- Added WebRTC-enabled ChatSection with selectable voice models and Socket.IO streaming.
+- Logged chat messages and voice transcripts to MessageAuditLog with migration and integration tests.
+- Next: enhance audio quality and broaden language model support.
+
+## Update 2025-08-07T13:30Z
+- Replaced `content_hash` with explicit `sha256` field on `Document` model and surfaced hashes in file listings and uploads.
+- Vector DB manager now checks similarity using precomputed embeddings when available to skip near-duplicate documents.
+- Next: tune duplicate threshold and extend source enum options.

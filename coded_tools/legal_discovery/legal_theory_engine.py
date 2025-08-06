@@ -61,7 +61,7 @@ class LegalTheoryEngine(CodedTool):
         query = (
             "MATCH (f:Fact)-[r:SUPPORTS]->(e:Element {name:$element})"
             "-[:BELONGS_TO]->(c:CauseOfAction {name:$cause}) "
-            "RETURN f.text AS text, r.weight AS weight"
+            "RETURN f.text AS text, f.dates AS dates, r.weight AS weight"
         )
 
         try:
@@ -70,6 +70,7 @@ class LegalTheoryEngine(CodedTool):
                 facts.append(
                     {
                         "text": r.get("text", ""),
+                        "dates": r.get("dates", []),
                         "weight": r.get("weight", 0),
                         "source": "graph",
                     }
@@ -90,6 +91,7 @@ class LegalTheoryEngine(CodedTool):
                 facts.append(
                     {
                         "text": getattr(f, "text", ""),
+                        "dates": getattr(f, "dates", []),
                         "weight": getattr(f, "weight", 0),
                         "source": "sql",
                     }
@@ -113,11 +115,14 @@ class LegalTheoryEngine(CodedTool):
             element_results: List[Dict[str, Any]] = []
             total_weight = 0.0
             supported = 0
+            missing: List[str] = []
 
             for element in elements:
                 facts = self._facts_for_element(cause, element)
                 if facts:
                     supported += 1
+                else:
+                    missing.append(element)
                 weight = max((f.get("weight", 0) for f in facts), default=0.0)
                 total_weight += weight
                 element_results.append({"name": element, "facts": facts, "weight": weight})
@@ -133,6 +138,7 @@ class LegalTheoryEngine(CodedTool):
                     "elements": element_results,
                     "defenses": defenses,
                     "indicators": indicators,
+                    "missing_elements": missing,
                 }
             )
 
@@ -151,4 +157,3 @@ class LegalTheoryEngine(CodedTool):
 
 
 __all__ = ["LegalTheoryEngine"]
-

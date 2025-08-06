@@ -99,3 +99,24 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 ## Update 2025-08-06T04:18Z
 - Added weasyprint stub for tests and expanded deposition prep assertions for contradiction detection and review logs
 - Next: cover additional deposition prep edge cases
+
+## Update 2025-08-06T10:30Z
+- Expanded legal theory ontology with additional causes, defenses and jurisdiction data.
+- Introduced `TheoryConfidence` model with migration linking facts to theories with scored confidence.
+- Enhanced fact extractor to tag relationships and compute confidence from similarity and source reliability.
+- Next: expose confidence metrics through API and UI visualisations.
+
+## Update 2025-08-06T14:00Z
+- Added theory review workflow with approval, rejection and comment endpoints plus confidence bar UI.
+- Dashboard now refreshes graph and timeline on theory state changes with Cypress end-to-end coverage.
+- Next: persist per-user review metadata and expand theory analytics.
+
+## Update 2025-08-06T15:30Z
+- Added `exhibit_order` field with migration and wired binder/zip exports to respect custom order.
+- Introduced exhibit reorder API with privilege and source-team aware listing; highlighted privileged rows in UI.
+- Next: surface drag-and-drop ordering in dashboard and extend source filters.
+
+## Update 2025-08-06T18:30Z
+- Stored chat message embeddings with privilege-aware filtering and graph links.
+- Added vector IDs for conversations and messages with database migration.
+- Next: expand conversation-level retrieval tests and refine graph relationships.

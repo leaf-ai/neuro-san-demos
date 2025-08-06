@@ -592,8 +592,13 @@ progress::-webkit-progress-value {
 
 .exhibit-table tr:hover {
     background: rgba(255,255,255,0.05);
+}
 
-  .element-bar {
+.exhibit-table tr.privileged {
+    background: rgba(255, 0, 0, 0.1);
+}
+
+.element-bar {
     background: rgba(255, 255, 255, 0.1);
     height: 4px;
     border-radius: 2px;
@@ -604,4 +609,17 @@ progress::-webkit-progress-value {
     background: var(--primary-color);
     height: 100%;
     box-shadow: 0 0 4px var(--color-accent-glow);
+}
+
+.theory-bar {
+    background: rgba(255, 255, 255, 0.1);
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.theory-bar-fill {
+    background: linear-gradient(90deg, var(--color-accent), #4b5563);
+    height: 100%;
+    box-shadow: 0 0 6px var(--color-accent-glow);
 }

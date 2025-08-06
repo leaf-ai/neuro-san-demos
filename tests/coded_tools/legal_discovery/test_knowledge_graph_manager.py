@@ -58,9 +58,7 @@ class TestKnowledgeGraphManager(unittest.TestCase):
         except RuntimeError as exc:
             self.skipTest(str(exc))
 
-        self.kg_manager.link_fact_to_element(
-            fact_id, "Fraud", "Misrepresentation", weight=0.7
-        )
+        self.kg_manager.link_fact_to_element(fact_id, "Fraud", "Misrepresentation", weight=0.7)
         self.kg_manager.link_document_dispute(fact_id, doc_id)
         self.kg_manager.link_fact_origin(fact_id, "Email", "Email1")
         nodes, edges = self.kg_manager.get_cause_subgraph("Fraud")
@@ -97,39 +95,20 @@ class TestKnowledgeGraphManager(unittest.TestCase):
         self.kg_manager.delete_node(element_id)
         self.kg_manager.delete_node(cause_id)
 
-
-import unittest
-
-class TestKnowledgeGraphManager(unittest.TestCase):
-    def setUp(self):
-        from your_module import KnowledgeGraphManager
-        self.kg_manager = KnowledgeGraphManager()
-
-    def test_link_fact_to_element_creates_relationships(self):
+    def test_fact_relationship_with_weight(self):
         try:
-            fact_id = self.kg_manager.create_node("Fact", {"text": "Link fact"})
+            a_id = self.kg_manager.create_node("Fact", {"text": "A"})
+            b_id = self.kg_manager.create_node("Fact", {"text": "B"})
         except RuntimeError as exc:
             self.skipTest(str(exc))
 
-        self.kg_manager.link_fact_to_element(fact_id, "Fraud", "Intent to induce reliance")
-
+        self.kg_manager.relate_facts(a_id, b_id, relation="CONTRADICTS", weight=0.4)
         rel = self.kg_manager.run_query(
-            (
-                "MATCH (f:Fact)-[:SUPPORTS]->(e:Element)-[:BELONGS_TO]->"
-                "(c:CauseOfAction {name:$cause}) WHERE id(f)=$f AND e.name=$element RETURN e"
-            ),
-            {"f": fact_id, "cause": "Fraud", "element": "Intent to induce reliance"},
+            "MATCH (a:Fact)-[r:CONTRADICTS]->(b:Fact) WHERE id(a)=$a AND id(b)=$b RETURN r.weight AS w",
+            {"a": a_id, "b": b_id},
         )
+        self.assertAlmostEqual(rel[0]["w"], 0.4)
+        self.kg_manager.delete_node(a_id)
+        self.kg_manager.delete_node(b_id)
 
-        self.assertTrue(rel)
 
-        self.kg_manager.delete_node(fact_id)
-        self.kg_manager.run_query(
-            "MATCH (n:Element {name:$e}) DETACH DELETE n", {"e": "Intent to induce reliance"}
-        )
-        self.kg_manager.run_query(
-            "MATCH (n:CauseOfAction {name:$c}) DETACH DELETE n", {"c": "Fraud"}
-        )
-
-if __name__ == "__main__":
-    unittest.main()

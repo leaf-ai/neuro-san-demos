@@ -9,7 +9,8 @@
       ],
       "defenses": [
         "Lack of Consideration",
-        "Statute of Frauds"
+        "Statute of Frauds",
+        "Statute of Limitations"
       ],
       "indicators": [
         "signed agreement",
@@ -44,7 +45,8 @@
       ],
       "defenses": [
         "Comparative negligence",
-        "Assumption of risk"
+        "Assumption of risk",
+        "Statute of Limitations"
       ],
       "indicators": [
         "accident report",
@@ -112,13 +114,73 @@
       ],
       "defenses": [
         "Product misuse",
-        "Assumption of risk"
+        "Assumption of risk",
+        "Contributory negligence"
       ],
       "indicators": [
         "product recall",
         "design schematics",
         "injury reports"
       ]
+    },
+    "Battery": {
+      "elements": [
+        "Intentional act",
+        "Harmful or offensive contact",
+        "Causation"
+      ],
+      "defenses": [
+        "Consent",
+        "Self-defense"
+      ],
+      "indicators": [
+        "medical report",
+        "witness statement",
+        "photographs of injury"
+      ]
+    },
+    "Conversion": {
+      "elements": [
+        "Plaintiff's ownership",
+        "Defendant's wrongful dominion",
+        "Damages"
+      ],
+      "defenses": [
+        "Consent",
+        "Authority of law"
+      ],
+      "indicators": [
+        "property records",
+        "demand letters",
+        "police reports"
+      ]
+    },
+    "Trespass to Land": {
+      "elements": [
+        "Ownership or possessory interest",
+        "Intentional entry",
+        "Without consent",
+        "Damages"
+      ],
+      "defenses": [
+        "Necessity",
+        "Consent"
+      ],
+      "indicators": [
+        "boundary surveys",
+        "photographs of entry",
+        "land records"
+      ]
+    }
+  },
+  "jurisdictions": {
+    "California": {
+      "Breach of Contract": "Cal. Civ. Proc. Code § 337",
+      "Fraud": "Cal. Civ. Code § 1572"
+    },
+    "New York": {
+      "Breach of Contract": "N.Y. C.P.L.R. 213(2)",
+      "Fraud": "N.Y. Gen. Bus. Law § 349"
     }
   }
 }

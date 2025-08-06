@@ -72,6 +72,7 @@ def assign_exhibit_number(
     doc.exhibit_number = f"EX_{next_num:04}"
     doc.exhibit_title = title or doc.name
     doc.is_exhibit = True
+    doc.exhibit_order = next_num
     db.session.commit()
     log_action(doc.case_id, doc.id, "ASSIGN", user, {"exhibit_number": doc.exhibit_number})
     return doc.exhibit_number
@@ -90,6 +91,23 @@ def create_cover_sheet(exhibit: Document) -> BytesIO:
     c.save()
     buffer.seek(0)
     return buffer
+
+
+def _text_page(title: str, text: str) -> BytesIO:
+    """Create a simple PDF page with a title and body text."""
+    buf = BytesIO()
+    c = canvas.Canvas(buf)
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(80, 760, title)
+    c.setFont("Helvetica", 12)
+    text_obj = c.beginText(80, 740)
+    for line in text.splitlines():
+        text_obj.textLine(line)
+    c.drawText(text_obj)
+    c.showPage()
+    c.save()
+    buf.seek(0)
+    return buf
 
 
 def merge_pdf(cover: BytesIO, exhibit_path: str, writer: PdfWriter) -> None:
@@ -114,14 +132,19 @@ def generate_binder(case_id: int, output_path: str | None = None) -> str:
     """Combine exhibits with cover sheets into a single PDF binder."""
     validate_exhibits(case_id)
     exhibits = (
-        Document.query.filter_by(case_id=case_id, is_exhibit=True)
-        .order_by(Document.exhibit_number)
+        Document.query.filter_by(case_id=case_id, is_exhibit=True, is_privileged=False)
+        .order_by(Document.exhibit_order, Document.exhibit_number)
         .all()
     )
     writer = PdfWriter()
     for exhibit in exhibits:
         cover = create_cover_sheet(exhibit)
         merge_pdf(cover, exhibit.file_path, writer)
+        meta = {m.schema: m.data for m in exhibit.metadata_entries}
+        if (dep := meta.get("deposition_excerpt")) and dep.get("text"):
+            writer.append(PdfReader(_text_page("Deposition Excerpt", dep["text"])))
+        if (theory := meta.get("theory_reference")) and theory.get("text"):
+            writer.append(PdfReader(_text_page("Theory Reference", theory["text"])))
     if output_path is None:
         output_path = Path(tempfile.gettempdir()) / f"case_{case_id}_binder.pdf"
     with open(output_path, "wb") as f:
@@ -134,8 +157,8 @@ def export_zip(case_id: int, output_path: str | None = None) -> str:
     """Package exhibits and a manifest into a zip archive."""
     validate_exhibits(case_id)
     exhibits = (
-        Document.query.filter_by(case_id=case_id, is_exhibit=True)
-        .order_by(Document.exhibit_number)
+        Document.query.filter_by(case_id=case_id, is_exhibit=True, is_privileged=False)
+        .order_by(Document.exhibit_order, Document.exhibit_number)
         .all()
     )
     if output_path is None:
@@ -145,14 +168,26 @@ def export_zip(case_id: int, output_path: str | None = None) -> str:
         for ex in exhibits:
             name = f"{ex.exhibit_number}_{(ex.exhibit_title or '').replace(' ', '_')}.pdf"
             z.write(ex.file_path, name)
-            manifest.append(
-                {
-                    "exhibit_number": ex.exhibit_number,
-                    "title": ex.exhibit_title,
-                    "path": name,
-                    "bates_number": ex.bates_number,
-                }
-            )
+            meta = {m.schema: m.data for m in ex.metadata_entries}
+            entry = {
+                "exhibit_number": ex.exhibit_number,
+                "title": ex.exhibit_title,
+                "path": name,
+                "bates_number": ex.bates_number,
+            }
+            if (dep := meta.get("deposition_excerpt")) and dep.get("text"):
+                dep_name = f"{ex.exhibit_number}_deposition.txt"
+                z.writestr(dep_name, dep["text"])
+                entry["deposition_excerpt"] = dep_name
+            if (theory := meta.get("theory_reference")) and theory.get("text"):
+                theory_name = f"{ex.exhibit_number}_theory.txt"
+                z.writestr(theory_name, theory["text"])
+                entry["theory_reference"] = theory_name
+            if score := meta.get("evidence_scorecard"):
+                entry["evidence_scorecard"] = score
+            if sanctions := meta.get("sanctions_risk"):
+                entry["sanctions_risk"] = sanctions
+            manifest.append(entry)
         z.writestr("manifest.json", json.dumps(manifest, indent=2))
     log_action(case_id, None, "EXPORT_ZIP", details={"path": str(output_path)})
     return str(output_path)

@@ -45,6 +45,7 @@ class Conversation(db.Model):
     title = db.Column(db.String(255), nullable=True)
     participants = db.Column(db.JSON, nullable=False, default=list)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
+    vector_id = db.Column(db.String(255), nullable=True)
     messages = db.relationship(
         "Message", backref="conversation", lazy=True, cascade="all, delete-orphan"
     )
@@ -69,6 +70,17 @@ class Message(db.Model):
     reply_to = db.relationship("Message", remote_side=[id])
 
 
+class MessageAuditLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    message_id = db.Column(db.String(36), db.ForeignKey("message.id"), nullable=False)
+    sender = db.Column(db.String(50), nullable=False)
+    transcript = db.Column(db.Text, nullable=False)
+    voice_model = db.Column(db.String(50), nullable=True)
+    timestamp = db.Column(db.DateTime, server_default=db.func.now())
+
+    message = db.relationship("Message", backref=db.backref("audit_logs", lazy=True))
+
+
 class DocumentSource(enum.Enum):
     """Origin of an uploaded document."""
 
@@ -77,13 +89,24 @@ class DocumentSource(enum.Enum):
     COURT = "court"
 
 
+class ChainEventType(enum.Enum):
+    INGESTED = "INGESTED"
+    HASHED = "HASHED"
+    REDACTED = "REDACTED"
+    STAMPED = "STAMPED"
+    VERSIONED = "VERSIONED"
+    DELETED = "DELETED"
+    EXPORTED = "EXPORTED"
+    ACCESSED = "ACCESSED"
+
+
 class Document(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     case_id = db.Column(db.Integer, db.ForeignKey("case.id"), nullable=False)
     name = db.Column(db.String(255), nullable=False)
     bates_number = db.Column(db.String(100), nullable=True)
     file_path = db.Column(db.String(255), nullable=False)
-    content_hash = db.Column(db.String(64), nullable=False, unique=True)
+    sha256 = db.Column(db.String(64), nullable=False, unique=True)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     source = db.Column(db.Enum(DocumentSource), nullable=False, default=DocumentSource.USER)
     is_privileged = db.Column(db.Boolean, nullable=False, default=False)
@@ -92,6 +115,7 @@ class Document(db.Model):
     is_exhibit = db.Column(db.Boolean, nullable=False, default=False)
     exhibit_number = db.Column(db.String(50), unique=True)
     exhibit_title = db.Column(db.String(255))
+    exhibit_order = db.Column(db.Integer, nullable=False, default=0)
     metadata_entries = db.relationship(
         "DocumentMetadata",
         backref="document",
@@ -115,6 +139,30 @@ class Document(db.Model):
         secondary="document_witness_link",
         backref=db.backref("documents", lazy=True),
     )
+    chain_logs = db.relationship(
+        "ChainOfCustodyLog",
+        backref="document",
+        lazy=True,
+        cascade="all, delete-orphan",
+    )
+
+
+class ChainOfCustodyLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    document_id = db.Column(db.Integer, db.ForeignKey("document.id"), nullable=False)
+    event_type = db.Column(db.Enum(ChainEventType), nullable=False)
+    timestamp = db.Column(db.DateTime, server_default=db.func.now())
+    user_id = db.Column(db.Integer, db.ForeignKey("agent.id"), nullable=True)
+    source_team = db.Column(db.String(100), nullable=False, default="unknown")
+    event_metadata = db.Column(db.JSON, nullable=True)
+
+    user = db.relationship("Agent", backref=db.backref("chain_logs", lazy=True))
+
+
+@event.listens_for(ChainOfCustodyLog, "before_update")
+@event.listens_for(ChainOfCustodyLog, "before_delete")
+def _prevent_chain_modification(*args, **kwargs):
+    raise ValueError("Chain of custody logs are immutable")
 
 
 class ExhibitCounter(db.Model):
@@ -156,39 +204,6 @@ class RedactionAudit(db.Model):
     action = db.Column(db.String(20), nullable=False)
     timestamp = db.Column(db.DateTime, server_default=db.func.now())
     reason = db.Column(db.Text, nullable=True)
-
-
-class ChainEventType(enum.Enum):
-    INGESTED = "INGESTED"
-    HASHED = "HASHED"
-    REDACTED = "REDACTED"
-    STAMPED = "STAMPED"
-    VERSIONED = "VERSIONED"
-    DELETED = "DELETED"
-    EXPORTED = "EXPORTED"
-    ACCESSED = "ACCESSED"
-
-
-class ChainOfCustodyLog(db.Model):
-    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    document_id = db.Column(db.Integer, db.ForeignKey("document.id"), nullable=False)
-    event_type = db.Column(db.Enum(ChainEventType), nullable=False)
-    timestamp = db.Column(db.DateTime, server_default=db.func.now())
-    user_id = db.Column(db.Integer, db.ForeignKey("agent.id"), nullable=True)
-    event_metadata = db.Column(db.JSON, nullable=True)
-
-    document = db.relationship("Document", backref=db.backref("chain_logs", lazy=True))
-    user = db.relationship("Agent", backref=db.backref("chain_logs", lazy=True))
-
-
-@event.listens_for(ChainOfCustodyLog, "before_update")
-def _prevent_update(mapper, connection, target):  # pragma: no cover - safety measure
-    raise ValueError("ChainOfCustodyLog entries are immutable")
-
-
-@event.listens_for(ChainOfCustodyLog, "before_delete")
-def _prevent_delete(mapper, connection, target):  # pragma: no cover - safety measure
-    raise ValueError("ChainOfCustodyLog entries cannot be deleted")
 
 
 class Witness(db.Model):
@@ -297,6 +312,8 @@ class LegalTheory(db.Model):
     case_id = db.Column(db.Integer, db.ForeignKey("case.id"), nullable=False)
     theory_name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=True)
+    status = db.Column(db.String(20), nullable=False, default="pending")
+    review_comment = db.Column(db.Text, nullable=True)
 
 
 class Deposition(db.Model):
@@ -354,6 +371,27 @@ class Fact(db.Model):
     legal_theory = db.relationship("LegalTheory", backref=db.backref("facts", lazy=True))
     element = db.relationship("Element", backref=db.backref("facts", lazy=True))
     witness = db.relationship("Witness", backref=db.backref("facts", lazy=True))
+
+
+class TheoryConfidence(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    legal_theory_id = db.Column(db.Integer, db.ForeignKey("legal_theory.id"), nullable=False)
+    fact_id = db.Column(db.Integer, db.ForeignKey("fact.id"), nullable=False)
+    confidence = db.Column(db.Float, nullable=False)
+    source_team = db.Column(db.String(100), nullable=False, default="unknown")
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    __table_args__ = (
+        db.CheckConstraint("confidence >= 0 AND confidence <= 1", name="ck_theory_confidence_range"),
+    )
+
+    legal_theory = db.relationship(
+        "LegalTheory",
+        backref=db.backref("confidence_links", lazy=True, cascade="all, delete-orphan"),
+    )
+    fact = db.relationship(
+        "Fact",
+        backref=db.backref("theory_links", lazy=True, cascade="all, delete-orphan"),
+    )
 
 
 class DepositionQuestion(db.Model):

@@ -14,8 +14,16 @@ class VectorDatabaseManager(CodedTool):
         # Chroma service backed by PostgreSQL for concurrent access.
         self.client = chromadb.HttpClient(host=host, port=port)
         self.collection = self.client.get_or_create_collection("legal_documents")
+        self.msg_collection = self.client.get_or_create_collection("chat_messages")
+        self.convo_collection = self.client.get_or_create_collection("conversations")
 
-    def add_documents(self, documents: list[str], metadatas: list[dict], ids: list[str]):
+    def add_documents(
+        self,
+        documents: list[str],
+        metadatas: list[dict],
+        ids: list[str],
+        embeddings: list[list[float]] | None = None,
+    ):
         """
         Adds documents to the vector database.
 
@@ -31,12 +39,14 @@ class VectorDatabaseManager(CodedTool):
         safe_docs: list[str] = []
         safe_metadatas: list[dict] = []
         safe_ids: list[str] = []
+        safe_embeddings: list[list[float]] = []
 
         # Pad the metadata list to match documents length if needed
         if len(metadatas) < len(documents):
             metadatas = metadatas + [{}] * (len(documents) - len(metadatas))
 
-        for doc, md, doc_id in zip(documents, metadatas, ids):
+        emb_iter = embeddings or [None] * len(documents)
+        for doc, md, doc_id, emb in zip(documents, metadatas, ids, emb_iter):
             # Skip if ID already exists
             try:
                 existing = self.collection.get(ids=[doc_id])
@@ -48,7 +58,10 @@ class VectorDatabaseManager(CodedTool):
 
             # Similarity check to avoid near-duplicates
             try:
-                res = self.collection.query(query_texts=[doc], n_results=1)
+                if emb is not None:
+                    res = self.collection.query(query_embeddings=[emb], n_results=1)
+                else:
+                    res = self.collection.query(query_texts=[doc], n_results=1)
                 if res.get("ids") and res["ids"][0]:
                     if res.get("distances") and res["distances"][0][0] < 0.1:
                         logging.info("skip similar vector %s", doc_id)
@@ -58,6 +71,8 @@ class VectorDatabaseManager(CodedTool):
 
             safe_docs.append(doc)
             safe_ids.append(doc_id)
+            if emb is not None:
+                safe_embeddings.append(emb)
             if not isinstance(md, dict) or not md:
                 safe_metadatas.append({"source": "unknown", "id": doc_id})
             else:
@@ -71,23 +86,46 @@ class VectorDatabaseManager(CodedTool):
             return
 
         try:
-            self.collection.add(documents=safe_docs, metadatas=safe_metadatas, ids=safe_ids)
+            if embeddings:
+                self.collection.add(
+                    documents=safe_docs,
+                    metadatas=safe_metadatas,
+                    ids=safe_ids,
+                    embeddings=safe_embeddings,
+                )
+            else:
+                self.collection.add(
+                    documents=safe_docs, metadatas=safe_metadatas, ids=safe_ids
+                )
         except ValueError as exc:
             logging.warning(
                 "Vector add failed (%s); retrying with placeholder metadata", exc
             )
             fallback = [{"source": "unknown", "id": i} for i in safe_ids]
-            self.collection.add(documents=safe_docs, metadatas=fallback, ids=safe_ids)
+            if embeddings:
+                self.collection.add(
+                    documents=safe_docs,
+                    metadatas=fallback,
+                    ids=safe_ids,
+                    embeddings=safe_embeddings,
+                )
+            else:
+                self.collection.add(
+                    documents=safe_docs, metadatas=fallback, ids=safe_ids
+                )
 
-    def query(self, query_texts: list[str], n_results: int = 10) -> dict:
+    def query(self, query_texts: list[str], n_results: int = 10, where: dict | None = None) -> dict:
         """
         Queries the vector database.
 
         :param query_texts: A list of query texts.
         :param n_results: The number of results to return.
+        :param where: Optional metadata filter.
         :return: A dictionary containing the query results.
         """
-        return self.collection.query(query_texts=query_texts, n_results=n_results)
+        return self.collection.query(
+            query_texts=query_texts, n_results=n_results, where=where
+        )
 
     def get_document_count(self) -> int:
         """
@@ -104,3 +142,70 @@ class VectorDatabaseManager(CodedTool):
         :param ids: A list of document IDs to delete.
         """
         self.collection.delete(ids=ids)
+
+    def add_messages(
+        self,
+        messages: list[str],
+        metadatas: list[dict],
+        ids: list[str],
+        embeddings: list[list[float]],
+    ) -> None:
+        """Add chat messages to the vector database."""
+        if len(metadatas) < len(messages):
+            metadatas = metadatas + [{}] * (len(messages) - len(metadatas))
+        safe_msgs: list[str] = []
+        safe_ids: list[str] = []
+        safe_md: list[dict] = []
+        safe_embeddings: list[list[float]] = []
+        for msg, md, mid, emb in zip(messages, metadatas, ids, embeddings):
+            safe_msgs.append(msg)
+            safe_ids.append(mid)
+            if not isinstance(md, dict) or not md:
+                safe_md.append({"message_id": mid, "visibility": "public"})
+            else:
+                if "visibility" not in md:
+                    md["visibility"] = "public"
+                safe_md.append(md)
+            safe_embeddings.append(emb)
+        self.msg_collection.add(
+            documents=safe_msgs,
+            metadatas=safe_md,
+            ids=safe_ids,
+            embeddings=safe_embeddings,
+        )
+
+    def add_conversations(
+        self,
+        texts: list[str],
+        metadatas: list[dict],
+        ids: list[str],
+        embeddings: list[list[float]],
+    ) -> None:
+        """Store conversation-level embeddings."""
+        if len(metadatas) < len(texts):
+            metadatas = metadatas + [{}] * (len(texts) - len(metadatas))
+        self.convo_collection.add(
+            documents=texts,
+            metadatas=metadatas,
+            ids=ids,
+            embeddings=embeddings,
+        )
+
+    def query_messages(
+        self,
+        query_texts: list[str],
+        n_results: int = 10,
+        where: dict | None = None,
+    ) -> dict:
+        """Query stored chat messages."""
+        return self.msg_collection.query(
+            query_texts=query_texts, n_results=n_results, where=where
+        )
+
+    def query_conversations(
+        self, query_texts: list[str], n_results: int = 10, where: dict | None = None
+    ) -> dict:
+        """Query stored conversation summaries."""
+        return self.convo_collection.query(
+            query_texts=query_texts, n_results=n_results, where=where
+        )

@@ -90,22 +90,98 @@ class KnowledgeGraphManager(CodedTool):
             return result[0]["id"]
         return self.create_node(label, {"name": name})
 
+    def add_legal_reference(
+        self,
+        category: str,
+        title: str,
+        text: str,
+        url: str,
+        retrieved_at: str,
+        theories: list[str] | None = None,
+    ) -> int:
+        """Create a ``LegalReference`` node and link to theories and timeline."""
+
+        ref_props = {
+            "category": category,
+            "title": title,
+            "text": text,
+            "url": url,
+            "retrieved_at": retrieved_at,
+        }
+        ref_id = self.create_node("LegalReference", ref_props)
+        # Link to timeline
+        timeline_id = self.create_node(
+            "TimelineEvent", {"date": retrieved_at, "description": title}
+        )
+        self.create_relationship(ref_id, timeline_id, "OCCURRED_ON")
+        # Link to legal theories
+        for theory in theories or []:
+            theory_id = self._get_or_create_by_name("LegalTheory", theory)
+            self.create_relationship(ref_id, theory_id, "RELATES_TO")
+        return ref_id
+
+    def search_legal_references(self, query: str) -> list[dict]:
+        """Simple full-text search over legal references."""
+        cypher = (
+            "MATCH (r:LegalReference) "
+            "WHERE toLower(r.text) CONTAINS toLower($q) "
+            "OR toLower(r.title) CONTAINS toLower($q) "
+            "RETURN r.category AS category, r.title AS title, r.url AS url, r.retrieved_at AS retrieved_at"
+        )
+        return [dict(record) for record in self.run_query(cypher, {"q": query})]
+
     def link_fact_to_element(
-        self, fact_id: int, cause: str, element: str, weight: float | None = None
+        self,
+        fact_id: int,
+        cause: str,
+        element: str,
+        weight: float | None = None,
+        relation: str = "SUPPORTS",
     ) -> None:
         """Link an existing fact to an element and cause of action.
 
-        A ``SUPPORTS`` edge is created from the ``Fact`` to the ``Element`` and
-        a ``BELONGS_TO`` edge from the ``Element`` to the ``CauseOfAction``.  If
-        ``weight`` is provided it is stored on the ``SUPPORTS`` relationship so
-        later scoring can take it into account.
+        Parameters
+        ----------
+        fact_id:
+            ID of the ``Fact`` node.
+        cause:
+            Name of the cause of action.
+        element:
+            Name of the element to link.
+        weight:
+            Optional confidence weight stored on the relationship.
+        relation:
+            Relationship type, either ``SUPPORTS`` or ``CONTRADICTS``.
+
+        The method ensures the ``Element`` is connected to the
+        ``CauseOfAction`` via ``BELONGS_TO`` and then creates the specified
+        relationship from the fact to the element with the provided weight.
         """
+
+        relation = relation.upper()
+        if relation not in {"SUPPORTS", "CONTRADICTS"}:
+            raise ValueError("relation must be SUPPORTS or CONTRADICTS")
 
         cause_id = self._get_or_create_by_name("CauseOfAction", cause)
         element_id = self._get_or_create_by_name("Element", element)
         self.create_relationship(element_id, cause_id, "BELONGS_TO")
         props = {"weight": weight} if weight is not None else None
-        self.create_relationship(fact_id, element_id, "SUPPORTS", props)
+        self.create_relationship(fact_id, element_id, relation, props)
+
+    def relate_facts(
+        self,
+        source_fact_id: int,
+        target_fact_id: int,
+        relation: str = "SUPPORTS",
+        weight: float | None = None,
+    ) -> None:
+        """Create a relationship between two existing ``Fact`` nodes."""
+
+        relation = relation.upper()
+        if relation not in {"SUPPORTS", "CONTRADICTS"}:
+            raise ValueError("relation must be SUPPORTS or CONTRADICTS")
+        props = {"weight": weight} if weight is not None else None
+        self.create_relationship(source_fact_id, target_fact_id, relation, props)
 
     def link_document_dispute(self, fact_id: int, document_node_id: int) -> None:
         """Link a fact to a document that disputes it."""
@@ -197,6 +273,9 @@ class KnowledgeGraphManager(CodedTool):
             "UNION "
             "MATCH (f:Fact)-[r:SUPPORTS]->(e:Element)-[:BELONGS_TO]->(c:CauseOfAction {name:$cause}) "
             "RETURN id(f) as source, id(e) as target, 'SUPPORTS' as type, properties(r) as properties "
+            "UNION "
+            "MATCH (f:Fact)-[r:CONTRADICTS]->(e:Element)-[:BELONGS_TO]->(c:CauseOfAction {name:$cause}) "
+            "RETURN id(f) as source, id(e) as target, 'CONTRADICTS' as type, properties(r) as properties "
             "UNION "
             "MATCH (f:Fact)-[s:SUPPORTS]->(e:Element)-[:BELONGS_TO]->(c:CauseOfAction {name:$cause}), "
             "(f)-[r:DISPUTED_BY]->(d:Document) "

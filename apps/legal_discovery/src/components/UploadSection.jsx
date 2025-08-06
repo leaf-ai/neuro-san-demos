@@ -10,10 +10,12 @@ function UploadSection() {
   const [source,setSource] = useState('user');
   const [filter,setFilter] = useState('all');
   const togglePrivilege = (id, privileged) => {
+    const reviewer = prompt('Reviewer (optional):') || '';
+    const reason = prompt('Reason (optional):') || '';
     fetch(`/api/privilege/${id}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ privileged })
+      body: JSON.stringify({ privileged, reviewer, reason })
     }).then(fetchFiles);
   };
   const upload = async () => {
@@ -73,9 +75,15 @@ function UploadSection() {
     }
     if (filter !== 'all' && n.source !== filter) return null;
     return (
-      <li key={i} className={`file ${n.privileged ? 'privileged' : ''} ${sourceClass(n.source)}`} onClick={() => window.open('/uploads/'+n.path,'_blank')}>
+      <li
+        key={i}
+        className={`file ${n.privileged ? 'privileged' : ''} ${sourceClass(n.source)}`}
+        onClick={() => window.open('/uploads/'+n.path,'_blank')}
+        title={n.sha256 ? `SHA256: ${n.sha256}` : ''}
+      >
         {n.name}
         {n.privileged && <i className="fa fa-user-secret ml-1" />}
+        {n.sha256 && <span className="ml-2 text-xs text-gray-400">{n.sha256.slice(0,8)}</span>}
         {n.id && (
           <button
             className="button-secondary ml-2 text-xs"
