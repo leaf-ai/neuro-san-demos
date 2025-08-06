@@ -948,6 +948,7 @@ def get_chain_log():
                     "timestamp": e.timestamp.isoformat(),
                     "user_id": e.user_id,
                     "metadata": e.event_metadata,
+                    "signature_hash": e.signature_hash,
                 }
                 for e in entries
             ],
