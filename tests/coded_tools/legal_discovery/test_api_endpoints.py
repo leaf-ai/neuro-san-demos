@@ -1,12 +1,23 @@
 import unittest
+import os
+import tempfile
 from flask import Flask, jsonify, request
 from coded_tools.legal_discovery.legal_theory_engine import LegalTheoryEngine
+from coded_tools.legal_discovery.document_drafter import DocumentDrafter
+from coded_tools.legal_discovery.pretrial_generator import PretrialGenerator
+from coded_tools.legal_discovery.timeline_manager import TimelineManager
 
 
 class DummyKG:
     def run_query(self, query, params):
         if params["element"] == "Existence of a contract":
-            return [{"text": "Contract between A and B", "weight": 1.0}]
+            return [
+                {
+                    "text": "Contract between A and B",
+                    "weight": 1.0,
+                    "dates": ["2024-01-01"],
+                }
+            ]
         return []
 
     def get_cause_subgraph(self, cause):
@@ -30,6 +41,21 @@ class TestAPIEndpoints(unittest.TestCase):
             nodes, edges = self.engine.get_theory_subgraph(request.args.get("cause", ""))
             return jsonify({"nodes": nodes, "edges": edges})
 
+        @app.route("/api/theories/accept", methods=["POST"])
+        def accept():
+            data = request.get_json() or {}
+            cause = data.get("cause")
+            theories = self.engine.suggest_theories()
+            theory = next((t for t in theories if t["cause"] == cause), None)
+            drafter = DocumentDrafter()
+            path = os.path.join(tempfile.gettempdir(), "test_theory.docx")
+            drafter.create_document(path, cause)
+            pretrial = PretrialGenerator()
+            statement = pretrial.generate_statement(cause, [e["name"] for e in theory["elements"]])
+            timeline = TimelineManager()
+            timeline.create_timeline(cause, [])
+            return jsonify({"document": path, "pretrial": statement, "timeline_items": []})
+
         self.client = app.test_client()
 
     def tearDown(self):
@@ -40,7 +66,8 @@ class TestAPIEndpoints(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         data = resp.get_json()
         self.assertIsInstance(data, list)
-        self.assertTrue(any(t["cause"] == "Breach of Contract" for t in data))
+        breach = next(t for t in data if t["cause"] == "Breach of Contract")
+        self.assertIn("missing_elements", breach)
 
     def test_theories_graph_endpoint(self):
         resp = self.client.get("/api/theories/graph?cause=Fraud")
@@ -48,6 +75,14 @@ class TestAPIEndpoints(unittest.TestCase):
         data = resp.get_json()
         self.assertIn("nodes", data)
         self.assertIn("edges", data)
+
+    def test_theories_accept_endpoint(self):
+        resp = self.client.post("/api/theories/accept", json={"cause": "Breach of Contract"})
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertIn("document", data)
+        self.assertIn("pretrial", data)
+        self.assertIn("timeline_items", data)
 
 
 if __name__ == "__main__":

@@ -293,6 +293,7 @@ from coded_tools.legal_discovery.knowledge_graph_manager import KnowledgeGraphMa
 from coded_tools.legal_discovery.legal_theory_engine import LegalTheoryEngine
 from coded_tools.legal_discovery.ontology_loader import OntologyLoader
 from coded_tools.legal_discovery.presentation_generator import PresentationGenerator
+from coded_tools.legal_discovery.pretrial_generator import PretrialGenerator
 from coded_tools.legal_discovery.privilege_detector import PrivilegeDetector
 from coded_tools.legal_discovery.research_tools import ResearchTools
 from coded_tools.legal_discovery.subpoena_manager import SubpoenaManager
@@ -554,9 +555,7 @@ def _paths_to_tree(entries: list[dict]) -> list:
         for name, val in sorted(d.items()):
             if name == "_files":
                 for fname, src in val:
-                    items.append(
-                        {"name": fname, "path": os.path.join(prefix, fname), "source": src}
-                    )
+                    items.append({"name": fname, "path": os.path.join(prefix, fname), "source": src})
             else:
                 items.append(
                     {
@@ -578,10 +577,7 @@ def organized_files():
         return jsonify({"status": "ok", "data": {}})
 
     files = _collect_paths(root)
-    docs = {
-        os.path.relpath(doc.file_path, root): doc.source.value
-        for doc in Document.query.all()
-    }
+    docs = {os.path.relpath(doc.file_path, root): doc.source.value for doc in Document.query.all()}
     categories: dict[str, list[dict]] = {}
     for path in files:
         cat = _categorize_name(os.path.basename(path))
@@ -643,9 +639,7 @@ def ingest_document(
                     start=s.start,
                     end=s.end,
                     label=s.label,
-                    reason=(
-                        f"{s.text} (score={s.score:.2f})" if s.score is not None else s.text
-                    ),
+                    reason=(f"{s.text} (score={s.score:.2f})" if s.score is not None else s.text),
                 )
             )
         db.session.commit()
@@ -673,7 +667,6 @@ def ingest_document(
 
     extractor = FactExtractor()
     ontology = OntologyLoader().load()
-    for fact in extractor.extract(text):
     for fact in extractor.extract(redacted_text):
         fact_row = Fact(
             case_id=case_id,
@@ -807,11 +800,7 @@ def upload_files():
                 "upload_time": str(time.time()),
                 "source": source_str,
             }
-            chroma_metadata = {
-                k: str(v)
-                for k, v in full_metadata.items()
-                if isinstance(v, (str, int, float, bool))
-            }
+            chroma_metadata = {k: str(v) for k, v in full_metadata.items() if isinstance(v, (str, int, float, bool))}
 
             with open(redacted_path + ".meta.json", "w") as f:
                 json.dump(full_metadata, f, indent=2)
@@ -896,11 +885,7 @@ def get_chain_log():
     doc_id = request.args.get("document_id", type=int)
     if not doc_id:
         return jsonify({"error": "Missing document_id"}), 400
-    entries = (
-        ChainOfCustodyLog.query.filter_by(document_id=doc_id)
-        .order_by(ChainOfCustodyLog.timestamp)
-        .all()
-    )
+    entries = ChainOfCustodyLog.query.filter_by(document_id=doc_id).order_by(ChainOfCustodyLog.timestamp).all()
     return jsonify(
         {
             "document_id": doc_id,
@@ -1151,9 +1136,7 @@ def generate_deposition_questions():
     include_privileged = data.get("include_privileged", False)
     if not witness_id:
         return jsonify({"error": "Missing witness_id"}), 400
-    questions = DepositionPrep.generate_questions(
-        witness_id, include_privileged=include_privileged
-    )
+    questions = DepositionPrep.generate_questions(witness_id, include_privileged=include_privileged)
     questions = DepositionPrep.generate_questions(witness_id, include_privileged=include_privileged)
     return jsonify({"status": "ok", "data": questions})
 
@@ -1437,6 +1420,54 @@ def theory_graph():
     nodes, edges = engine.get_theory_subgraph(cause)
     engine.close()
     return jsonify({"status": "ok", "nodes": nodes, "edges": edges})
+
+
+@app.route("/api/theories/accept", methods=["POST"])
+def accept_theory():
+    """Pipe an accepted theory to drafting, pretrial and timeline tools."""
+
+    data = request.get_json() or {}
+    cause = data.get("cause")
+    if not cause:
+        return jsonify({"status": "error", "error": "cause required"}), 400
+
+    engine = LegalTheoryEngine()
+    try:
+        theories = engine.suggest_theories()
+        theory = next((t for t in theories if t["cause"] == cause), None)
+        if theory is None:
+            return (
+                jsonify({"status": "error", "error": "unknown cause"}),
+                404,
+            )
+
+        drafter = DocumentDrafter()
+        doc_path = os.path.join(app.config["UPLOAD_FOLDER"], f"{cause.replace(' ', '_')}_theory.docx")
+        drafter.create_document(doc_path, f"Accepted theory: {cause}")
+
+        pretrial = PretrialGenerator()
+        statement = pretrial.generate_statement(cause, [e["name"] for e in theory["elements"]])
+
+        timeline_items = []
+        for element in theory["elements"]:
+            for fact in element["facts"]:
+                for date in fact.get("dates", []):
+                    timeline_items.append({"date": date, "description": fact["text"]})
+
+        timeline_manager = TimelineManager()
+        if timeline_items:
+            timeline_manager.create_timeline(cause, timeline_items)
+
+        return jsonify(
+            {
+                "status": "ok",
+                "document": doc_path,
+                "pretrial": statement,
+                "timeline_items": timeline_items,
+            }
+        )
+    finally:
+        engine.close()
 
 
 @app.route("/api/query", methods=["POST"])

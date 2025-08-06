@@ -10,6 +10,7 @@ from .file_manager import FileManager
 from .forensic_tools import ForensicTools
 from .knowledge_graph_manager import KnowledgeGraphManager
 from .presentation_generator import PresentationGenerator
+from .pretrial_generator import PretrialGenerator
 from .research_tools import ResearchTools
 from .subpoena_manager import SubpoenaManager
 from .task_tracker import TaskTracker
@@ -36,6 +37,7 @@ __all__ = [
     "ForensicTools",
     "KnowledgeGraphManager",
     "PresentationGenerator",
+    "PretrialGenerator",
     "ResearchTools",
     "SubpoenaManager",
     "TaskTracker",

@@ -604,3 +604,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added `TheoryConfidence` model and migration linking facts to theories with source provenance.
 - Upgraded fact extractor for NER tagging, relationship extraction and confidence scoring.
 - Next: surface theory confidence metrics in API responses and dashboard graphs.
+
+## Update 2025-08-06T12:30Z
+- Added confidence-weighted SUPPORTS/CONTRADICTS edges and theory acceptance routing to drafter, pretrial and timeline APIs.
+- Next: surface accepted theory outputs in dashboard UI.
