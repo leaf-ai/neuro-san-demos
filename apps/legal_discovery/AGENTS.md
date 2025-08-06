@@ -658,3 +658,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Replaced `content_hash` with explicit `sha256` field on `Document` model and surfaced hashes in file listings and uploads.
 - Vector DB manager now checks similarity using precomputed embeddings when available to skip near-duplicate documents.
 - Next: tune duplicate threshold and extend source enum options.
+
+## Update 2025-08-06T12:13Z
+- Added NarrativeDiscrepancy model, Gemini-powered analysis pipeline, and REST endpoints.
+- Introduced React OppositionTrackerSection with color-coded flags and export options.
+- Next: auto-link discrepancies to timeline and expand batch processing.
