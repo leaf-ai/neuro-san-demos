@@ -158,6 +158,20 @@ class Document(db.Model):
 
 
 class DocumentVersion(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    document_id = db.Column(db.Integer, db.ForeignKey("document.id"), nullable=False)
+    bates_number = db.Column(db.String(100), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("agent.id"), nullable=True)
+    timestamp = db.Column(db.DateTime, server_default=db.func.now())
+    file_path = db.Column(db.String(255), nullable=False)
+
+    document = db.relationship(
+        "Document",
+        backref=db.backref("versions", lazy=True, cascade="all, delete-orphan"),
+    )
+    user = db.relationship(
+        "Agent", backref=db.backref("document_versions", lazy=True)
+    )
     """Snapshot of a document when stamped or modified."""
 
     id = db.Column(db.Integer, primary_key=True)

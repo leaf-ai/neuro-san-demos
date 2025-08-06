@@ -682,6 +682,15 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Logged privilege detection spans and override actions.
 - Added tests for detector true/false positives and dashboard override flow.
 - Next: evaluate detector accuracy on larger corpora.
+
+## Update 2025-08-06T14:58Z
+- Introduced DocumentVersion model with stamping hook and diffable history UI.
+- Added API endpoints and React components to browse versions and compare changes.
+- Next: extend diffing to support binary comparisons and pagination.
+
+## Update 2025-08-06T15:02Z
+- Finalized migration and unit tests for sequential versioning.
+- Next: run full integration suite once remaining dependencies are installed.
 ## Update 2025-08-08T12:00Z
 - Added DocumentVersion model and migration for Bates-stamped versions.
 - Stamping API records versions and returns Bates number.

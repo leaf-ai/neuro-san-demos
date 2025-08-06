@@ -92,6 +92,12 @@ from coded_tools.legal_discovery.bates_numbering import (
 )
 from .exhibit_routes import exhibits_bp
 from .chain_logger import ChainEventType, log_event
+from coded_tools.legal_discovery.bates_numbering import (
+    BatesNumberingService,
+    stamp_pdf,
+)
+import difflib
+import fitz
 
 # Configure logging before any other setup so early steps are captured
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
@@ -135,6 +141,7 @@ app.register_blueprint(exhibits_bp)
 executor = ThreadPoolExecutor(max_workers=int(os.environ.get("INGESTION_WORKERS", "4")))
 atexit.register(executor.shutdown)
 thread_started = False  # pylint: disable=invalid-name
+bates_service = BatesNumberingService()
 
 # Shared crawler instance for legal references
 def synthesize_voice(text: str, model: str) -> str:
@@ -1121,6 +1128,100 @@ def redact_document():
 
 @app.route("/api/document/stamp", methods=["POST"])
 def bates_stamp_document():
+    """Apply Bates numbering to a PDF and record a new version."""
+    data = request.get_json() or {}
+    file_path = data.get("file_path")
+    prefix = data.get("prefix", "BATES")
+    user_id = data.get("user_id")
+    if not file_path:
+        return jsonify({"error": "Missing file_path"}), 400
+    doc = Document.query.filter_by(file_path=file_path).first()
+    if doc is None:
+        return jsonify({"error": "Document not found"}), 404
+    # Determine next Bates number and stamp the PDF
+    start = bates_service.get_next_bates_number(prefix)
+    start_num = int(start.split("_")[-1])
+    # Advance counter for remaining pages
+    page_total = fitz.open(file_path).page_count
+    for _ in range(page_total - 1):
+        bates_service.get_next_bates_number(prefix)
+    output_path = f"{file_path}_v{start}.pdf"
+    try:
+        stamp_pdf(file_path, output_path, start_num, prefix=prefix)
+    except Exception as exc:  # pragma: no cover - filesystem errors
+        return jsonify({"error": str(exc)}), 500
+    doc.bates_number = start
+    version = DocumentVersion(
+        document_id=doc.id,
+        bates_number=start,
+        user_id=user_id,
+        file_path=output_path,
+    )
+    db.session.add(version)
+    db.session.commit()
+    log_event(
+        doc.id,
+        ChainEventType.STAMPED,
+        metadata={"prefix": prefix},
+        source_team="legal_discovery",
+    )
+    log_event(
+        doc.id,
+        ChainEventType.VERSIONED,
+        metadata={"version_id": version.id, "bates_number": start},
+        source_team="legal_discovery",
+    )
+    return jsonify({"message": "File stamped", "output": output_path, "bates_number": start})
+
+
+@app.route("/api/document/versions")
+def document_versions():
+    """Return version history for a document."""
+    file_path = request.args.get("file_path")
+    if not file_path:
+        return jsonify({"error": "Missing file_path"}), 400
+    doc = Document.query.filter_by(file_path=file_path).first()
+    if doc is None:
+        return jsonify({"error": "Document not found"}), 404
+    versions = (
+        DocumentVersion.query.filter_by(document_id=doc.id)
+        .order_by(DocumentVersion.timestamp)
+        .all()
+    )
+    results = []
+    for v in versions:
+        user = Agent.query.get(v.user_id) if v.user_id else None
+        results.append(
+            {
+                "id": v.id,
+                "bates_number": v.bates_number,
+                "user": user.name if user else None,
+                "timestamp": v.timestamp.isoformat(),
+            }
+        )
+    return jsonify(results)
+
+
+@app.route("/api/document/versions/diff")
+def document_versions_diff():
+    """Compute a unified diff between two document versions."""
+    v1_id = request.args.get("v1")
+    v2_id = request.args.get("v2")
+    if not v1_id or not v2_id:
+        return jsonify({"error": "Missing version ids"}), 400
+    v1 = DocumentVersion.query.get(v1_id)
+    v2 = DocumentVersion.query.get(v2_id)
+    if not v1 or not v2:
+        return jsonify({"error": "Version not found"}), 404
+    processor = DocumentProcessor()
+    text1 = processor.extract_text(v1.file_path)
+    text2 = processor.extract_text(v2.file_path)
+    diff = "\n".join(
+        difflib.unified_diff(
+            text1.splitlines(),
+            text2.splitlines(),
+            fromfile=v1.bates_number,
+            tofile=v2.bates_number,
     """Apply Bates numbering to a PDF and record a document version."""
     data = request.get_json() or {}
     file_path = data.get("file_path")
