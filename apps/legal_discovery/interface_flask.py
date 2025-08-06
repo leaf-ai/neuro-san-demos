@@ -1654,10 +1654,18 @@ def get_timeline():
                 "description": event.description,
                 "citation": citation,
                 "excerpt": excerpt,
+                "links": event.links or {},
             }
         )
 
     return jsonify({"status": "ok", "data": data})
+
+
+@app.route("/api/timeline/summary", methods=["GET"])
+def timeline_summary():
+    case_id = request.args.get("case_id", type=int)
+    tm = TimelineManager()
+    return jsonify({"status": "ok", "summary": tm.summarize(case_id)})
 
 
 @app.route("/api/research", methods=["GET"])
@@ -1804,6 +1812,17 @@ def query_agent():
     text = data.get("text")
     if not text:
         return jsonify({"status": "error", "error": "text required"}), 400
+    tm = TimelineManager()
+    case_id = data.get("case_id", 1)
+    if text.lower().startswith("timeline summary"):
+        return jsonify({"status": "ok", "summary": tm.summarize(case_id)})
+    event = tm.upsert_event_from_text(text, case_id)
+    if event:
+        socketio.emit(
+            "update_speech",
+            {"data": f"Recorded event on {event['date']}"},
+            namespace="/chat",
+        )
     user_input_queue.put(text)
     agent = RetrievalChatAgent()
     result = agent.query(

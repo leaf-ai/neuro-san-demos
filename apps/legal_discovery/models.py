@@ -253,6 +253,7 @@ class TimelineEvent(db.Model):
     case_id = db.Column(db.Integer, db.ForeignKey("case.id"), nullable=False)
     event_date = db.Column(db.DateTime, nullable=False)
     description = db.Column(db.Text, nullable=False)
+    links = db.Column(db.JSON, nullable=True)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
 

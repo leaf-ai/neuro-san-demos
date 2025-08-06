@@ -708,3 +708,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - TemplateLibrary now pulls opposition discrepancies for motion prompts.
 - Next: expand discrepancy formatting and link deeper opposition metrics into drafts.
 
+
+## Update 2025-08-09T00:00Z
+- Enabled chat-driven timeline updates with cross-links to depositions, exhibits and theories, plus summary endpoint and blur styling.
+- Next: broaden natural language date parsing and display linked events in dashboard.
+

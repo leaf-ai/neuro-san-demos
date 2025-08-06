@@ -1,4 +1,6 @@
 import json
+import re
+from datetime import datetime
 
 from flask import render_template_string
 from neuro_san.interfaces.coded_tool import CodedTool
@@ -64,6 +66,71 @@ class TimelineManager(CodedTool):
                     "id": event.id,
                     "date": event.event_date.isoformat(),
                     "description": event.description,
+                    "links": event.links or {},
                 }
             )
         return result
+
+    def upsert_event_from_text(self, text: str, case_id: int = 1):
+        """Parse chat text and upsert a timeline event.
+
+        Expected format: "YYYY-MM-DD description [dep:ID] [ex:ID] [theory:ID]".
+        A prefix like "case:ID" may specify the case.
+        """
+        if m := re.match(r"case:(\d+)\s+(.*)", text.strip(), re.I):
+            case_id = int(m.group(1))
+            text = m.group(2)
+        m = re.match(r"(\d{4}-\d{2}-\d{2})\s+(.*)", text.strip())
+        if not m:
+            return None
+        date_str, rest = m.groups()
+        try:
+            date = datetime.fromisoformat(date_str)
+        except ValueError:
+            return None
+        links = {"depositions": [], "exhibits": [], "legal_theories": []}
+        for kind, val in re.findall(r"\[(dep|ex|theory):(\d+)\]", rest, re.I):
+            if kind.lower() == "dep":
+                links["depositions"].append(int(val))
+            elif kind.lower() == "ex":
+                links["exhibits"].append(int(val))
+            else:
+                links["legal_theories"].append(int(val))
+        description = re.sub(r"\[(dep|ex|theory):(\d+)\]", "", rest).strip()
+        try:
+            from apps.legal_discovery.models import TimelineEvent, db
+        except Exception:  # pragma: no cover
+            return None
+        event = (
+            TimelineEvent.query.filter_by(case_id=case_id, event_date=date).first()
+        )
+        if event:
+            event.description = description
+            event.links = links
+        else:
+            event = TimelineEvent(
+                case_id=case_id, event_date=date, description=description, links=links
+            )
+            db.session.add(event)
+        db.session.commit()
+        return {
+            "id": event.id,
+            "date": event.event_date.isoformat(),
+            "description": event.description,
+            "links": event.links or {},
+        }
+
+    def summarize(self, case_id: int) -> str:
+        """Return a simple string summary of timeline events."""
+        try:
+            from apps.legal_discovery.models import TimelineEvent
+        except Exception:  # pragma: no cover
+            return ""
+        events = (
+            TimelineEvent.query.filter_by(case_id=case_id)
+            .order_by(TimelineEvent.event_date)
+            .all()
+        )
+        return "; ".join(
+            f"{e.event_date.date()}: {e.description}" for e in events
+        )
