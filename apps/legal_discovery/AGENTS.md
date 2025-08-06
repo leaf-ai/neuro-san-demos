@@ -613,3 +613,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Implemented approval, rejection and comment endpoints with UI controls and confidence bar.
 - Graph and timeline auto-refresh on theory decisions and Cypress tests cover the workflow.
 - Next: capture reviewer identity and expose theory review history.
+## Update 2025-08-06T16:00Z
+- Added legal crawler for bench cards, jury instructions, statutes and case law with Neo4j storage.
+- Exposed CoCounsel and auto-drafter search APIs and scheduled daily crawler updates.
+- Next: expand source-specific parsing and connect search results to dashboard UI.
