@@ -435,6 +435,7 @@ def override_privilege(doc_id: int):
         return jsonify({"error": "privileged required"}), 400
     doc = Document.query.get_or_404(doc_id)
     doc.is_privileged = bool(privileged)
+    doc.is_redacted = bool(privileged)
     doc.needs_review = False
     db.session.add(
         RedactionAudit(
@@ -443,6 +444,11 @@ def override_privilege(doc_id: int):
             action="override_privilege",
             reason=reason,
         )
+    )
+    log_event(
+        doc.id,
+        ChainEventType.REDACTED,
+        metadata={"override": True, "privileged": doc.is_privileged},
     )
     db.session.commit()
     return jsonify({"status": "ok", "privileged": doc.is_privileged})
@@ -636,7 +642,9 @@ def ingest_document(
                     start=s.start,
                     end=s.end,
                     label=s.label,
-                    reason=s.text,
+                    reason=(
+                        f"{s.text} (score={s.score:.2f})" if s.score is not None else s.text
+                    ),
                 )
             )
         db.session.commit()

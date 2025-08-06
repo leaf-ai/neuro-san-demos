@@ -584,3 +584,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Implemented ChainOfCustodyLog model with immutable append-only records
 - Wired logging utility into ingest, redaction, stamping, and export flows with retrieval API and dashboard panel
 - Next: extend chain log filters and add report export options
+
+## Update 2025-08-06T05:30Z
+- Enhanced privilege detector with legal-model fallback and optional classifier
+- Recorded span scores in `RedactionLog` and exposed manual privilege override API/UI
+- Next: refine reviewer workflow and monitor classifier accuracy
