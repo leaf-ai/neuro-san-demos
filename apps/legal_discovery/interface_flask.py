@@ -1199,30 +1199,38 @@ def document_versions():
     return jsonify(results)
 
 
+from flask import request, jsonify
+import difflib
+
 @app.route("/api/document/versions/diff")
 def document_versions_diff():
     """Compute a unified diff between two document versions."""
     v1_id = request.args.get("v1")
     v2_id = request.args.get("v2")
+
     if not v1_id or not v2_id:
         return jsonify({"error": "Missing version ids"}), 400
+
     v1 = DocumentVersion.query.get(v1_id)
     v2 = DocumentVersion.query.get(v2_id)
+
     if not v1 or not v2:
         return jsonify({"error": "Version not found"}), 404
+
     processor = DocumentProcessor()
     text1 = processor.extract_text(v1.file_path)
     text2 = processor.extract_text(v2.file_path)
-    diff = "\n".join(
-        difflib.unified_diff(
-            text1.splitlines(),
-            text2.splitlines(),
-            fromfile=v1.bates_number,
-            tofile=v2.bates_number,
-            lineterm="",
-        )
+
+    diff_lines = difflib.unified_diff(
+        text1.splitlines(),
+        text2.splitlines(),
+        fromfile=v1.bates_number or "version_1",
+        tofile=v2.bates_number or "version_2",
+        lineterm=""
     )
-    return jsonify({"diff": diff})
+
+    return jsonify({"diff": "\n".join(diff_lines)})
+
 
 
 @app.route("/api/bates/stamp", methods=["POST"])
