@@ -69,6 +69,7 @@ from apps.legal_discovery.models import (
     DocumentSource,
 )
 from coded_tools.legal_discovery.deposition_prep import DepositionPrep
+from coded_tools.legal_discovery.legal_crawler import LegalCrawler
 from .exhibit_routes import exhibits_bp
 from .chain_logger import ChainEventType, log_event
 
@@ -112,6 +113,9 @@ app.register_blueprint(exhibits_bp)
 executor = ThreadPoolExecutor(max_workers=int(os.environ.get("INGESTION_WORKERS", "4")))
 atexit.register(executor.shutdown)
 thread_started = False  # pylint: disable=invalid-name
+
+# Shared crawler instance for legal references
+legal_crawler = LegalCrawler()
 
 app.logger.setLevel(logging.getLevelName(os.environ.get("LOG_LEVEL", "INFO")))
 
@@ -606,6 +610,12 @@ def cleanup_upload_folder(max_age_hours: int = 24) -> None:
                 continue
 
 
+def update_legal_references() -> None:
+    """Crawl legal sources and update the graph."""
+    refs = legal_crawler.crawl_all()
+    legal_crawler.store(refs)
+
+
 def ingest_document(
     original_path: str,
     redacted_path: str,
@@ -1040,6 +1050,22 @@ def vector_count():
     manager = VectorDatabaseManager()
     count = manager.get_document_count()
     return jsonify({"status": "ok", "data": count})
+
+
+@app.route("/api/cocounsel/search", methods=["GET"])
+def cocounsel_search():
+    """Search legal references for CoCounsel."""
+    query = request.args.get("q", "")
+    results = legal_crawler.kg.search_legal_references(query) if query else []
+    return jsonify(results)
+
+
+@app.route("/api/drafter/search", methods=["GET"])
+def drafter_search():
+    """Search legal references for the auto-drafter."""
+    query = request.args.get("q", "")
+    results = legal_crawler.kg.search_legal_references(query) if query else []
+    return jsonify(results)
 
 
 @app.route("/api/document/text", methods=["POST"])
@@ -1607,6 +1633,7 @@ def run_scheduled_tasks():
 atexit.register(cleanup)
 
 # Setup and start scheduled maintenance tasks
+schedule.every().day.at("01:00").do(update_legal_references)
 schedule.every().day.at("00:00").do(cleanup_upload_folder)
 socketio.start_background_task(run_scheduled_tasks)
 

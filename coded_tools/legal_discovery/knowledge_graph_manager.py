@@ -90,6 +90,46 @@ class KnowledgeGraphManager(CodedTool):
             return result[0]["id"]
         return self.create_node(label, {"name": name})
 
+    def add_legal_reference(
+        self,
+        category: str,
+        title: str,
+        text: str,
+        url: str,
+        retrieved_at: str,
+        theories: list[str] | None = None,
+    ) -> int:
+        """Create a ``LegalReference`` node and link to theories and timeline."""
+
+        ref_props = {
+            "category": category,
+            "title": title,
+            "text": text,
+            "url": url,
+            "retrieved_at": retrieved_at,
+        }
+        ref_id = self.create_node("LegalReference", ref_props)
+        # Link to timeline
+        timeline_id = self.create_node(
+            "TimelineEvent", {"date": retrieved_at, "description": title}
+        )
+        self.create_relationship(ref_id, timeline_id, "OCCURRED_ON")
+        # Link to legal theories
+        for theory in theories or []:
+            theory_id = self._get_or_create_by_name("LegalTheory", theory)
+            self.create_relationship(ref_id, theory_id, "RELATES_TO")
+        return ref_id
+
+    def search_legal_references(self, query: str) -> list[dict]:
+        """Simple full-text search over legal references."""
+        cypher = (
+            "MATCH (r:LegalReference) "
+            "WHERE toLower(r.text) CONTAINS toLower($q) "
+            "OR toLower(r.title) CONTAINS toLower($q) "
+            "RETURN r.category AS category, r.title AS title, r.url AS url, r.retrieved_at AS retrieved_at"
+        )
+        return [dict(record) for record in self.run_query(cypher, {"q": query})]
+
     def link_fact_to_element(
         self,
         fact_id: int,
