@@ -125,3 +125,8 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 - Added Gemini NLI-based narrative discrepancy pipeline with database model and API endpoints.
 - Built React opposition tracker with filters and PDF/CSV export.
 - Next: link discrepancies directly to timeline events and enhance bulk analysis.
+
+## Update 2025-08-06T12:32Z
+- Expanded motion template library with motions to compel and protective order pulling facts, accepted theories and conflicts.
+- Refined Auto Draft UI with clear review status, disabled actions until approval and accent borders for edit state.
+- Next: integrate opposition metrics into prompts and enhance export formatting.

@@ -26,6 +26,14 @@ class TemplateLibrary(CodedTool):
             "Draft a Motion in Limine considering these facts:\n{facts}\n"
             "Accepted theories:\n{theories}\nOpposition:\n{conflicts}"
         ),
+        "motion_to_compel": (
+            "Draft a Motion to Compel discovery using these facts:\n{facts}\n"
+            "Accepted theories:\n{theories}\nOpposition:\n{conflicts}"
+        ),
+        "motion_for_protective_order": (
+            "Prepare a Motion for Protective Order grounded on these facts:\n{facts}\n"
+            "Accepted theories:\n{theories}\nOpposition:\n{conflicts}"
+        ),
     }
 
     def available(self) -> list[str]:

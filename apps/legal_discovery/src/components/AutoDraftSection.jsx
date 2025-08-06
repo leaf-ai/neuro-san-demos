@@ -44,13 +44,20 @@ function AutoDraftSection() {
         {types.map(t => <option key={t} value={t}>{t.replace(/_/g, " ")}</option>)}
       </select>
       <div className="flex flex-wrap gap-2 mb-2">
-        <button className="button-secondary" onClick={generate}><i className="fa fa-magic mr-1"></i>Generate</button>
+        <button className="button-secondary" onClick={generate} disabled={!motion}><i className="fa fa-magic mr-1"></i>Generate</button>
         <button className="button-secondary" onClick={() => { setDraft(""); setReviewed(false); }}><i className="fa fa-eraser mr-1"></i>Clear</button>
-        <button className="button-secondary" onClick={() => setReviewed(true)}><i className="fa fa-check mr-1"></i>Mark Reviewed</button>
+        <button className="button-secondary" onClick={() => setReviewed(true)} disabled={!draft}><i className="fa fa-check mr-1"></i>Mark Reviewed</button>
         <button className="button-secondary" onClick={() => exportFile('docx')} disabled={!reviewed}><i className="fa fa-file-word mr-1"></i>Export DOCX</button>
         <button className="button-secondary" onClick={() => exportFile('pdf')} disabled={!reviewed}><i className="fa fa-file-pdf mr-1"></i>Export PDF</button>
       </div>
-      <textarea rows="10" value={draft} onChange={e=>{ setDraft(e.target.value); setReviewed(false); }} className="w-full p-2 rounded" placeholder="Draft output for review..." />
+      <p className="text-sm mb-1">{reviewed ? "Draft reviewed" : "Review required before export"}</p>
+      <textarea
+        rows="10"
+        value={draft}
+        onChange={e=>{ setDraft(e.target.value); setReviewed(false); }}
+        className={`w-full p-2 rounded border ${reviewed ? 'border-green-500' : 'border-red-500'}`}
+        placeholder="Draft output for review..."
+      />
       {output && <p className="text-sm">Output: <a href={'/uploads/'+output} target="_blank" rel="noopener noreferrer">{output}</a></p>}
     </section>
   );
