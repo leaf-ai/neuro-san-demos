@@ -714,6 +714,11 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - TemplateLibrary now pulls opposition discrepancies for motion prompts.
 - Next: expand discrepancy formatting and link deeper opposition metrics into drafts.
 
+## Update 2025-08-09T12:00Z
+- Added rules-based sanction trigger checks for filings and discovery actions.
+- Surfaced sanction warnings in CoCounsel chat and binder exports.
+- Added regression tests for known sanction scenarios.
+- Next: refine trigger keywords and integrate model-based scoring.
 
 ## Update 2025-08-09T00:00Z
 - Enabled chat-driven timeline updates with cross-links to depositions, exhibits and theories, plus summary endpoint and blur styling.

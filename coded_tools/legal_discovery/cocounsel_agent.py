@@ -117,6 +117,7 @@ class CocounselAgent(CodedTool):
             "facts": facts,
             "search_results": search_results,
             "sanctions_risk": risk,
+            "sanctions_warning": bool(risk.get("warning")),
         }
         self._emit("analysis_complete", result)
         return result
