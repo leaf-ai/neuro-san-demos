@@ -8,6 +8,7 @@ import TimelineSection from "./components/TimelineSection";
 import GraphSection from "./components/GraphSection";
 import DocToolsSection from "./components/DocToolsSection";
 import DocumentDraftSection from "./components/DocumentDraftSection";
+import AutoDraftSection from "./components/AutoDraftSection";
 import ForensicSection from "./components/ForensicSection";
 import VectorSection from "./components/VectorSection";
 import TasksSection from "./components/TasksSection";
@@ -76,6 +77,7 @@ function Dashboard() {
         <div className="card-grid">
           <DocToolsSection/>
           <DocumentDraftSection/>
+          <AutoDraftSection/>
         </div>
       </div>
       <div className="tab-content" style={{display: tab==='forensic'?'block':'none'}} id="tab-forensic"><ForensicSection/></div>
