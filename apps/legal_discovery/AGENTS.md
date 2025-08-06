@@ -628,3 +628,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added Gemini auto-drafter with motion templates and DOCX/PDF export.
 - Added React Auto Draft panel with manual review before export.
 - Next: expand motion templates and integrate deeper opposition metrics.
+
+## Update 2025-08-06T19:00Z
+- Added React ExhibitTab with drag-and-drop ordering plus privilege and source filters; entries show linked theories and timeline dates.
+- Extended exhibit API with source filter and links endpoint; updated tests to cover ordering, filtering, and link retrieval.
+- Next: connect exhibit links to detailed timeline view and broaden source options.
