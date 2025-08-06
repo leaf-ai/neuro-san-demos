@@ -1,5 +1,7 @@
 import os
+import os
 import sys
+from types import SimpleNamespace
 import pytest
 from flask import Flask
 
@@ -20,13 +22,9 @@ from apps.legal_discovery.models import (
 from coded_tools.legal_discovery.deposition_prep import DepositionPrep
 
 
-class DummyResponse:
-    class Choice:
-        def __init__(self, content):
-            self.message = type("obj", (), {"content": content})
-
-    def __init__(self, content):
-        self.choices = [DummyResponse.Choice(content)]
+class DummyGenAIResponse:
+    def __init__(self, text: str):
+        self.text = text
 
 
 def setup_app():
@@ -66,20 +64,25 @@ def test_generate_questions(monkeypatch):
         db.session.add(fact)
         db.session.commit()
 
-        def mock_openai():
-            class Client:
-                class chat:
-                    class completions:
-                        @staticmethod
-                        def create(model, messages, temperature):
-                            return DummyResponse(
-                                '[{"category": "Background", "question": "State your name", "source": "Doc1"}]'
-                            )
+        def mock_genai():
+            class MockModel:
+                def __init__(self, _name):
+                    pass
 
-            return Client()
+                def generate_content(self, prompt, generation_config=None):
+                    return DummyGenAIResponse(
+                        '[{"category": "Background", "question": "State your name", "source": "Doc1"}]'
+                    )
+
+            class MockTypes:
+                @staticmethod
+                def GenerationConfig(**kwargs):
+                    return None
+
+            return SimpleNamespace(GenerativeModel=MockModel, types=MockTypes)
 
         deposition_prep_module = sys.modules[DepositionPrep.__module__]
-        monkeypatch.setattr(deposition_prep_module, "OpenAI", mock_openai)
+        monkeypatch.setattr(deposition_prep_module, "genai", mock_genai())
 
         questions = DepositionPrep.generate_questions(witness.id)
         assert len(questions) == 1
@@ -122,25 +125,29 @@ def test_detect_contradictions_and_export(monkeypatch, tmp_path):
         db.session.add_all([fact1, fact2])
         db.session.commit()
 
-        def mock_openai():
-            class Client:
-                class chat:
-                    class completions:
-                        @staticmethod
-                        def create(model, messages, temperature):
-                            content = messages[0]["content"]
-                            if content.startswith("Do these statements contradict"):
-                                return DummyResponse(
-                                    '{"contradiction": true, "score": 0.95}'
-                                )
-                            return DummyResponse(
-                                '[{"category": "Events", "question": "Where were you on Monday?", "source": "DocA"}]'
-                            )
+        def mock_genai():
+            class MockModel:
+                def __init__(self, _name):
+                    pass
 
-            return Client()
+                def generate_content(self, prompt, generation_config=None):
+                    if prompt.startswith("Do these statements contradict"):
+                        return DummyGenAIResponse(
+                            '{"contradiction": true, "score": 0.95}'
+                        )
+                    return DummyGenAIResponse(
+                        '[{"category": "Events", "question": "Where were you on Monday?", "source": "DocA"}]'
+                    )
+
+            class MockTypes:
+                @staticmethod
+                def GenerationConfig(**kwargs):
+                    return None
+
+            return SimpleNamespace(GenerativeModel=MockModel, types=MockTypes)
 
         deposition_prep_module = sys.modules[DepositionPrep.__module__]
-        monkeypatch.setattr(deposition_prep_module, "OpenAI", mock_openai)
+        monkeypatch.setattr(deposition_prep_module, "genai", mock_genai())
 
         # detect contradictions and generate questions
         questions = DepositionPrep.generate_questions(witness.id)

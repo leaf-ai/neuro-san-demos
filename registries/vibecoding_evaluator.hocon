@@ -11,8 +11,8 @@
 # END COPYRIGHT
 {
     "llm_config": {
-        "class": "openai",
-        "use_model_name": "gpt-4.1-2025-04-14",
+        "class": "google_genai",
+        "use_model_name": "gemini-1.5-flash",
     },
     "max_iterations": 40000,
     "max_execution_seconds": 6000,

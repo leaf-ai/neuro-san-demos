@@ -11,16 +11,15 @@
 # END COPYRIGHT
 {
     "llm_config": {
-        # We can use these models with openai, azure, ollama, anthropic and nvidia as a provider
+        # We can use these models with google_genai, azure, ollama, anthropic and nvidia as a provider
         # Note that not all of these LLMs support function-calling, it is advisable to read the documentation before using any of the LLMs
-        # OpenAI: ['gpt-3.5-turbo', 'gpt-3.5-turbo-16k', 'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4-turbo-preview', 
-        #            'gpt-4-1106-preview', 'gpt-4-vision-preview', 'gpt-4', 'gpt-4-32k']
-        # AzureChatOpenAI: ['azure-gpt-3.5-turbo', 'azure-gpt-4']
+        # Google: ['gemini-1.5-flash', 'gemini-1.5-pro']
+        # Azure: ['azure-gpt-3.5-turbo', 'azure-gpt-4']
         # Anthropic: ['claude-3-haiku', 'claude-3-sonnet', 'claude-3-opus', 'claude-2.1', 'claude-2.0', 'claude-instant-1.2']
         # Ollama: ['llama2', 'llama3', 'llama3.1', 'llama3:70b', 'llava', 'mistral', 'mistral-nemo', 'mixtral', 'qwen2.5:14b', 'deepseek-r1:14b']
         # ChatNvidia: ['nvidia-llama-3.1-405b-instruct', 'nvidia-llama-3.3-70b-instruct', 'nvidia-deepseek-r1']
 
-        "model_name": "gpt-4o",
+        "model_name": "gemini-1.5-flash",
     },
     "commondefs":{
         "replacement_strings":{

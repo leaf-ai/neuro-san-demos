@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
 
-from openai import OpenAI
+import google.generativeai as genai
 from docx import Document as DocxDocument
 from weasyprint import HTML
 
@@ -57,13 +57,12 @@ class DepositionPrep:
 
         prompt = PROMPT_TMPL.format(name=witness.name, facts=facts_text)
 
-        client = OpenAI()
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.2,
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        response = model.generate_content(
+            prompt,
+            generation_config=genai.types.GenerationConfig(temperature=0.2),
         )
-        content = response.choices[0].message.content
+        content = response.text
 
         try:
             data = json.loads(content)
@@ -101,7 +100,7 @@ class DepositionPrep:
         """Identify contradictions among witness facts using an LLM."""
 
         conflicts: List[Dict] = []
-        client = OpenAI()
+        model = genai.GenerativeModel("gemini-1.5-flash")
         for i in range(len(facts)):
             for j in range(i + 1, len(facts)):
                 prompt = (
@@ -109,12 +108,11 @@ class DepositionPrep:
                     f"1. {facts[i].text}\n2. {facts[j].text}\n"
                     "Respond with JSON {\"contradiction\": bool, \"score\": float}."
                 )
-                response = client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0,
+                response = model.generate_content(
+                    prompt,
+                    generation_config=genai.types.GenerationConfig(temperature=0),
                 )
-                content = response.choices[0].message.content
+                content = response.text
                 try:
                     result = json.loads(content)
                 except json.JSONDecodeError:
