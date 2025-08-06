@@ -691,3 +691,45 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-06T15:02Z
 - Finalized migration and unit tests for sequential versioning.
 - Next: run full integration suite once remaining dependencies are installed.
+## Update 2025-08-08T12:00Z
+- Added DocumentVersion model and migration for Bates-stamped versions.
+- Stamping API records versions and returns Bates number.
+- React VersionHistorySection lists versions with diff view.
+- Next: extend diff comparison for non-PDF formats.
+
+## Update 2025-08-06T15:40Z
+- Merged dual deposition question export routines into a single permission-aware static method.
+- Added lightweight weasyprint stub and comprehensive tests for exports, contradiction detection and review logging.
+- Next: expand deposition prep tests for edge cases.
+
+## Update 2025-08-08T15:00Z
+- Added signature hashing to ChainOfCustodyLog with retrieval API and dashboard panel.
+- Tests cover ingest, redaction, stamping and export logging end-to-end.
+- Next: extend chain log filters and add report export options.
+
+## Update 2025-08-09T00:00Z
+- Implemented DocumentScorer heuristics and stored probative/admissibility/narrative/confidence scores.
+- Added Document Review tab with sortable score bars and refined neon styling.
+- Scores feed binder cover sheets, auto-drafter prompts, and sanctions analysis.
+- Next: calibrate scoring heuristics and expose UI weighting controls.
+
+## Update 2025-08-08T16:00Z
+- Aggregated stipulations, contested issues and witness lists from approved theories.
+- Gemini-powered pretrial export saves editable DOCX and hooks timeline/binder modules.
+- Added unit test for export to verify timeline and binder integration.
+- Next: expose pretrial export endpoint in dashboard UI.
+
+## Update 2025-08-06T16:29Z
+- TemplateLibrary now pulls opposition discrepancies for motion prompts.
+- Next: expand discrepancy formatting and link deeper opposition metrics into drafts.
+
+## Update 2025-08-09T12:00Z
+- Added rules-based sanction trigger checks for filings and discovery actions.
+- Surfaced sanction warnings in CoCounsel chat and binder exports.
+- Added regression tests for known sanction scenarios.
+- Next: refine trigger keywords and integrate model-based scoring.
+
+## Update 2025-08-09T00:00Z
+- Enabled chat-driven timeline updates with cross-links to depositions, exhibits and theories, plus summary endpoint and blur styling.
+- Next: broaden natural language date parsing and display linked events in dashboard.
+

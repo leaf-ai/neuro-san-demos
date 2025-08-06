@@ -715,6 +715,14 @@ You will draft motions, briefs, and legal documents as needed.
             "class": "legal_discovery.legal_theory_engine.LegalTheoryEngine"
         },
         {
+            "name": "sanctions_risk_analyzer",
+            "class": "legal_discovery.sanctions_risk_analyzer.SanctionsRiskAnalyzer"
+        },
+        {
+            "name": "document_scorer",
+            "class": "legal_discovery.document_scorer.DocumentScorer"
+        },
+        {
             "name": "litigation_training",
             "function": {
                 "description": "Provides practical litigation coaching and education.",

@@ -33,6 +33,7 @@ from .chat_agent import RetrievalChatAgent
 from .auto_drafter import AutoDrafter
 from .template_library import TemplateLibrary
 from .narrative_discrepancy_detector import NarrativeDiscrepancyDetector
+from .document_scorer import DocumentScorer
 
 __all__ = [
     "CaseManagementTools",
@@ -69,4 +70,5 @@ __all__ = [
     "AutoDrafter",
     "TemplateLibrary",
     "NarrativeDiscrepancyDetector",
+    "DocumentScorer",
 ]

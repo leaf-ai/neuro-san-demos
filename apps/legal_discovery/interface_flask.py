@@ -14,6 +14,7 @@ from datetime import datetime
 from difflib import SequenceMatcher
 from io import BytesIO, StringIO
 import csv
+import difflib
 
 # pylint: disable=import-error
 import schedule
@@ -29,6 +30,7 @@ from flask_socketio import SocketIO
 import spacy
 from spacy.cli import download as spacy_download
 from weasyprint import HTML
+import fitz
 
 try:
     from apps.legal_discovery.legal_discovery import (
@@ -84,6 +86,10 @@ from coded_tools.legal_discovery.legal_crawler import LegalCrawler
 from coded_tools.legal_discovery.narrative_discrepancy_detector import (
     NarrativeDiscrepancyDetector,
 )
+from coded_tools.legal_discovery.bates_numbering import (
+    BatesNumberingService,
+    stamp_pdf,
+)
 from .exhibit_routes import exhibits_bp
 from .chain_logger import ChainEventType, log_event
 from coded_tools.legal_discovery.bates_numbering import (
@@ -95,6 +101,8 @@ import fitz
 
 # Configure logging before any other setup so early steps are captured
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
+
+bates_service = BatesNumberingService()
 
 # Resolve project root relative to this file so Docker and local runs share paths
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -337,6 +345,8 @@ from coded_tools.legal_discovery.task_tracker import TaskTracker
 from coded_tools.legal_discovery.timeline_manager import TimelineManager
 from coded_tools.legal_discovery.auto_drafter import AutoDrafter
 from coded_tools.legal_discovery.vector_database_manager import VectorDatabaseManager
+from coded_tools.legal_discovery.document_scorer import DocumentScorer
+from coded_tools.legal_discovery.sanctions_risk_analyzer import SanctionsRiskAnalyzer
 
 # Allow hosting the corpus on an attached volume via UPLOAD_ROOT
 UPLOAD_FOLDER = os.environ.get("UPLOAD_ROOT", os.path.join(BASE_DIR, "uploads"))
@@ -434,6 +444,24 @@ def list_files():
         return jsonify({"status": "ok", "data": []})
     docs = {os.path.relpath(doc.file_path, root): doc for doc in Document.query.all()}
     data = build_file_tree(root, len(root), docs)
+    return jsonify({"status": "ok", "data": data})
+
+
+@app.route("/api/documents", methods=["GET"])
+def list_documents():
+    """Return scored document listings."""
+    docs = Document.query.all()
+    data = [
+        {
+            "id": d.id,
+            "name": d.name,
+            "probative_value": d.probative_value or 0,
+            "admissibility_risk": d.admissibility_risk or 0,
+            "narrative_alignment": d.narrative_alignment or 0,
+            "score_confidence": d.score_confidence or 0,
+        }
+        for d in docs
+    ]
     return jsonify({"status": "ok", "data": data})
 
 
@@ -709,6 +737,20 @@ def ingest_document(
         doc.needs_review = False
         db.session.commit()
 
+    scorer = DocumentScorer()
+    scores = scorer.score(redacted_text)
+    doc.probative_value = scores["probative_value"]
+    doc.admissibility_risk = scores["admissibility_risk"]
+    doc.narrative_alignment = scores["narrative_alignment"]
+    doc.score_confidence = scores["score_confidence"]
+    db.session.add(DocumentMetadata(document_id=doc_id, schema="evidence_scorecard", data=scores))
+    try:
+        sanctions = SanctionsRiskAnalyzer().assess(redacted_text, scorecard=scores)
+        db.session.add(DocumentMetadata(document_id=doc_id, schema="sanctions_risk", data=sanctions))
+    except Exception:
+        pass
+    db.session.commit()
+
     VectorDatabaseManager().add_documents([redacted_text], [chroma_metadata], [str(doc_id)])
     kg = KnowledgeGraphManager()
     result = kg.run_query("MERGE (c:Case {id: $id}) RETURN id(c) as cid", {"id": case_id})
@@ -947,6 +989,7 @@ def get_chain_log():
                     "timestamp": e.timestamp.isoformat(),
                     "user_id": e.user_id,
                     "metadata": e.event_metadata,
+                    "signature_hash": e.signature_hash,
                 }
                 for e in entries
             ],
@@ -1179,6 +1222,108 @@ def document_versions_diff():
             text2.splitlines(),
             fromfile=v1.bates_number,
             tofile=v2.bates_number,
+    """Apply Bates numbering to a PDF and record a document version."""
+    data = request.get_json() or {}
+    file_path = data.get("file_path")
+    prefix = data.get("prefix", "BATES")
+    document_id = data.get("document_id")
+    user_id = data.get("user_id")
+    if not file_path or document_id is None or user_id is None:
+        return (
+            jsonify({"error": "file_path, document_id and user_id required"}),
+            400,
+        )
+    start_bates = bates_service.get_next_bates_number(prefix)
+    start_number = int(start_bates.split("_")[-1])
+    output_path = f"{file_path}_stamped.pdf"
+    try:
+        stamp_pdf(file_path, output_path, start_number, prefix=prefix)
+    except Exception as exc:  # pragma: no cover - filesystem errors
+        return jsonify({"error": str(exc)}), 500
+    last_version = (
+        DocumentVersion.query.filter_by(document_id=document_id)
+        .order_by(DocumentVersion.version_number.desc())
+        .first()
+    )
+    version_number = 1 if last_version is None else last_version.version_number + 1
+    version = DocumentVersion(
+        document_id=document_id,
+        version_number=version_number,
+        file_path=output_path,
+        bates_number=start_bates,
+        user_id=user_id,
+    )
+    db.session.add(version)
+    doc = Document.query.get(document_id)
+    if doc:
+        log_event(
+            doc.id,
+            ChainEventType.STAMPED,
+            user_id=user_id,
+            metadata={"prefix": prefix, "version": version_number},
+            source_team="legal_discovery",
+        )
+    db.session.commit()
+    return jsonify(
+        {
+            "message": "File stamped",
+            "output": output_path,
+            "bates": start_bates,
+            "version": version_number,
+        }
+    )
+
+
+@app.route("/api/document/<int:doc_id>/versions", methods=["GET"])
+def get_document_versions(doc_id: int):
+    """Return version history for a document."""
+    versions = (
+        DocumentVersion.query.filter_by(document_id=doc_id)
+        .order_by(DocumentVersion.version_number)
+        .all()
+    )
+    return jsonify(
+        {
+            "versions": [
+                {
+                    "version": v.version_number,
+                    "bates_number": v.bates_number,
+                    "user": v.user.name if getattr(v, "user", None) else v.user_id,
+                    "timestamp": v.created_at.isoformat(),
+                }
+                for v in versions
+            ]
+        }
+    )
+
+
+def _extract_text(path: str) -> str:
+    doc = fitz.open(path)
+    return "\n".join(page.get_text() for page in doc)
+
+
+@app.route("/api/document/<int:doc_id>/diff", methods=["GET"])
+def diff_document_versions(doc_id: int):
+    """Return unified diff between two document versions."""
+    try:
+        from_v = int(request.args.get("from"))
+        to_v = int(request.args.get("to"))
+    except (TypeError, ValueError):
+        return jsonify({"error": "from and to parameters required"}), 400
+    v1 = DocumentVersion.query.filter_by(
+        document_id=doc_id, version_number=from_v
+    ).first_or_404()
+    v2 = DocumentVersion.query.filter_by(
+        document_id=doc_id, version_number=to_v
+    ).first_or_404()
+    text1 = _extract_text(v1.file_path)
+    text2 = _extract_text(v2.file_path)
+    diff = "".join(
+        difflib.unified_diff(
+            text1.splitlines(),
+            text2.splitlines(),
+            fromfile=f"v{from_v}",
+            tofile=f"v{to_v}",
             lineterm="",
         )
     )
@@ -1242,7 +1387,7 @@ def auto_draft_export():
     path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     drafter = AutoDrafter()
     try:
-        drafter.export(content, path)
+        drafter.export(content, path, fmt)
     except Exception as exc:  # pragma: no cover - file errors
         return jsonify({"error": str(exc)}), 500
     return jsonify({"status": "ok", "output": filename})
@@ -1644,10 +1789,18 @@ def get_timeline():
                 "description": event.description,
                 "citation": citation,
                 "excerpt": excerpt,
+                "links": event.links or {},
             }
         )
 
     return jsonify({"status": "ok", "data": data})
+
+
+@app.route("/api/timeline/summary", methods=["GET"])
+def timeline_summary():
+    case_id = request.args.get("case_id", type=int)
+    tm = TimelineManager()
+    return jsonify({"status": "ok", "summary": tm.summarize(case_id)})
 
 
 @app.route("/api/research", methods=["GET"])
@@ -1737,6 +1890,22 @@ def accept_theory():
         engine.close()
 
 
+@app.route("/api/pretrial/export", methods=["POST"])
+def export_pretrial_statement():
+    """Generate a pretrial statement document and update timeline/binder."""
+
+    data = request.get_json() or {}
+    case_id = data.get("case_id", type=int)
+    if not case_id:
+        return jsonify({"error": "Missing case_id"}), 400
+
+    os.makedirs("exports", exist_ok=True)
+    path = os.path.join("exports", f"pretrial_{case_id}.docx")
+    generator = PretrialGenerator()
+    generator.export(case_id, path)
+    return jsonify({"status": "ok", "path": path})
+
+
 @app.route("/api/theories/reject", methods=["POST"])
 def reject_theory():
     data = request.get_json() or {}
@@ -1778,6 +1947,17 @@ def query_agent():
     text = data.get("text")
     if not text:
         return jsonify({"status": "error", "error": "text required"}), 400
+    tm = TimelineManager()
+    case_id = data.get("case_id", 1)
+    if text.lower().startswith("timeline summary"):
+        return jsonify({"status": "ok", "summary": tm.summarize(case_id)})
+    event = tm.upsert_event_from_text(text, case_id)
+    if event:
+        socketio.emit(
+            "update_speech",
+            {"data": f"Recorded event on {event['date']}"},
+            namespace="/chat",
+        )
     user_input_queue.put(text)
     agent = RetrievalChatAgent()
     result = agent.query(

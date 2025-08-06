@@ -5,6 +5,8 @@ function DocToolsSection() {
   const [path,setPath] = useState('');
   const [redactText,setRedact] = useState('');
   const [prefix,setPrefix] = useState('');
+  const [docId,setDocId] = useState('');
+  const [userId,setUserId] = useState('');
   const [extracted,setExtracted] = useState('');
   const [output,setOutput] = useState('');
   const [versions,setVersions] = useState([]);
@@ -14,7 +16,7 @@ function DocToolsSection() {
   const call = (url,body) => fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
       .then(r=>r.json()).then(d=>{setOutput(d.output||'');alertResponse(d);});
   const redact = () => call('/api/document/redact',{file_path:path,text:redactText});
-  const stamp = () => call('/api/document/stamp',{file_path:path,prefix});
+  const stamp = () => call('/api/document/stamp',{file_path:path,prefix,document_id:parseInt(docId),user_id:parseInt(userId)});
   const extract = () => fetch('/api/document/text',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file_path:path})}).then(r=>r.json()).then(d=>setExtracted(d.data||''));
   const loadVersions = () => fetch(`/api/document/versions?file_path=${encodeURIComponent(path)}`)
         .then(r=>r.json()).then(setVersions);
@@ -29,6 +31,8 @@ function DocToolsSection() {
         <button className="button-secondary" onClick={redact}><i className="fa fa-eraser mr-1"></i>Redact PDF</button>
       </div>
       <input type="text" value={prefix} onChange={e=>setPrefix(e.target.value)} className="w-full mb-2 p-2 rounded" placeholder="Bates prefix" />
+      <input type="text" value={docId} onChange={e=>setDocId(e.target.value)} className="w-full mb-2 p-2 rounded" placeholder="Document ID" />
+      <input type="text" value={userId} onChange={e=>setUserId(e.target.value)} className="w-full mb-2 p-2 rounded" placeholder="User ID" />
       <button className="button-secondary" onClick={stamp}><i className="fa fa-stamp mr-1"></i>Bates Stamp</button>
       <button className="button-secondary mt-2" onClick={extract}><i className="fa fa-file-lines mr-1"></i>Extract Text</button>
       <button className="button-secondary mt-2" onClick={loadVersions}><i className="fa fa-clock-rotate-left mr-1"></i>Load Versions</button>

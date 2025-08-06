@@ -16,18 +16,14 @@ sys.modules.setdefault("coded_tools.legal_discovery", pkg)
 
 # Provide a lightweight stub for weasyprint if it's not installed
 if importlib.util.find_spec("weasyprint") is None:  # pragma: no cover - environment specific
-    weasyprint = types.ModuleType("weasyprint")
+    from tests.stubs import weasyprint as weasyprint_stub
 
-    class HTML:  # type: ignore
-        """Minimal stand-in for :class:`weasyprint.HTML`."""
+    sys.modules.setdefault("weasyprint", weasyprint_stub)
 
-        def __init__(self, string: str | None = None, *_, **__):
-            self.string = string
-
-        def write_pdf(self, target: str, *_args, **_kwargs) -> None:
-            """Create a tiny PDF so tests can confirm file output."""
-            with open(target, "wb") as fh:
-                fh.write(b"%PDF-1.4\n%stub")
-
-    weasyprint.HTML = HTML
-    sys.modules["weasyprint"] = weasyprint
+# Stub google generative AI SDK if unavailable
+try:  # pragma: no cover - environment specific
+    importlib.util.find_spec("google.generativeai")
+except ModuleNotFoundError:
+    google_pkg = types.ModuleType("google")
+    sys.modules.setdefault("google", google_pkg)
+    sys.modules.setdefault("google.generativeai", types.ModuleType("google.generativeai"))

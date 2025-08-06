@@ -5,6 +5,7 @@ import zipfile
 import pytest
 from flask import Flask
 from reportlab.pdfgen import canvas
+from PyPDF2 import PdfReader
 
 from apps.legal_discovery.database import db
 from apps.legal_discovery.models import Case, Document, DocumentMetadata
@@ -104,3 +105,22 @@ def test_export_skips_privileged(tmp_path):
         zip_path = tmp_path / "exhibits.zip"
         with pytest.raises(ExhibitExportError):
             export_zip(case_id, zip_path)
+
+
+def test_binder_adds_sanction_warning(tmp_path):
+    app, case_id = _setup_app(tmp_path)
+    with app.app_context():
+        doc_id = _create_doc(case_id, tmp_path, "Doc", "hash1", "BATES1")
+        assign_exhibit_number(doc_id, "Title")
+        db.session.add(
+            DocumentMetadata(
+                document_id=doc_id,
+                schema="sanctions_risk",
+                data={"risk": "high", "warning": "spoliation"},
+            )
+        )
+        db.session.commit()
+        binder_path = tmp_path / "binder.pdf"
+        generate_binder(case_id, binder_path)
+        reader = PdfReader(str(binder_path))
+        assert len(reader.pages) == 3

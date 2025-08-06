@@ -116,6 +116,10 @@ class Document(db.Model):
     exhibit_number = db.Column(db.String(50), unique=True)
     exhibit_title = db.Column(db.String(255))
     exhibit_order = db.Column(db.Integer, nullable=False, default=0)
+    probative_value = db.Column(db.Float, nullable=True)
+    admissibility_risk = db.Column(db.Float, nullable=True)
+    narrative_alignment = db.Column(db.Float, nullable=True)
+    score_confidence = db.Column(db.Float, nullable=True)
     metadata_entries = db.relationship(
         "DocumentMetadata",
         backref="document",
@@ -138,6 +142,12 @@ class Document(db.Model):
         "Witness",
         secondary="document_witness_link",
         backref=db.backref("documents", lazy=True),
+    )
+    versions = db.relationship(
+        "DocumentVersion",
+        backref="document",
+        lazy=True,
+        cascade="all, delete-orphan",
     )
     chain_logs = db.relationship(
         "ChainOfCustodyLog",
@@ -162,6 +172,17 @@ class DocumentVersion(db.Model):
     user = db.relationship(
         "Agent", backref=db.backref("document_versions", lazy=True)
     )
+    """Snapshot of a document when stamped or modified."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    document_id = db.Column(db.Integer, db.ForeignKey("document.id"), nullable=False)
+    version_number = db.Column(db.Integer, nullable=False)
+    file_path = db.Column(db.String(255), nullable=False)
+    bates_number = db.Column(db.String(100), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("agent.id"), nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+    user = db.relationship("Agent")
 
 
 class ChainOfCustodyLog(db.Model):
@@ -172,6 +193,7 @@ class ChainOfCustodyLog(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("agent.id"), nullable=True)
     source_team = db.Column(db.String(100), nullable=False, default="unknown")
     event_metadata = db.Column(db.JSON, nullable=True)
+    signature_hash = db.Column(db.String(64), nullable=False)
 
     user = db.relationship("Agent", backref=db.backref("chain_logs", lazy=True))
 
@@ -249,6 +271,7 @@ class TimelineEvent(db.Model):
     case_id = db.Column(db.Integer, db.ForeignKey("case.id"), nullable=False)
     event_date = db.Column(db.DateTime, nullable=False)
     description = db.Column(db.Text, nullable=False)
+    links = db.Column(db.JSON, nullable=True)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
 

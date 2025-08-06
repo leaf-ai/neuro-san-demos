@@ -5,9 +5,14 @@ from __future__ import annotations
 from neuro_san.interfaces.coded_tool import CodedTool
 
 try:  # optional imports for runtime
-    from apps.legal_discovery.models import Fact, LegalTheory, FactConflict
+    from apps.legal_discovery.models import (
+        Fact,
+        LegalTheory,
+        NarrativeDiscrepancy,
+        Document,
+    )
 except Exception:  # pragma: no cover - used when app context missing
-    Fact = LegalTheory = FactConflict = None  # type: ignore
+    Fact = LegalTheory = NarrativeDiscrepancy = Document = None  # type: ignore
 
 
 class TemplateLibrary(CodedTool):
@@ -48,7 +53,8 @@ class TemplateLibrary(CodedTool):
 
         facts_text = "No facts available."
         theories_text = "No accepted theories."
-        conflicts_text = "No conflicts recorded."
+        opposition_text = "No opposition recorded."
+        evidence_text = "No scored documents."
         try:
             if Fact is not None:
                 facts = Fact.query.order_by(Fact.id).all()
@@ -60,13 +66,29 @@ class TemplateLibrary(CodedTool):
                     theories_text = "\n".join(
                         f"- {t.theory_name}: {t.description or ''}" for t in theories
                     )
-            if FactConflict is not None:
-                conflicts = FactConflict.query.order_by(FactConflict.id).all()
-                if conflicts:
-                    conflicts_text = "\n".join(c.description for c in conflicts)
+            if NarrativeDiscrepancy is not None:
+                opp = NarrativeDiscrepancy.query.order_by(
+                    NarrativeDiscrepancy.id
+                ).all()
+                if opp:
+                    opposition_text = "\n".join(
+                        f"- {d.conflicting_claim} vs {d.evidence_excerpt}"
+                        for d in opp
+                    )
+            if Document is not None:
+                docs = (
+                    Document.query.order_by(Document.probative_value.desc())
+                    .limit(3)
+                    .all()
+                )
+                if docs:
+                    evidence_text = "\n".join(
+                        f"- {d.name}: p={d.probative_value:.2f}, a={d.admissibility_risk:.2f}, n={d.narrative_alignment:.2f}"
+                        for d in docs
+                    )
         except Exception:  # pragma: no cover - missing DB/app context
             pass
 
         return template.format(
-            facts=facts_text, theories=theories_text, conflicts=conflicts_text
-        )
+            facts=facts_text, theories=theories_text, conflicts=opposition_text
+        ) + f"\nTop Evidence:\n{evidence_text}"
