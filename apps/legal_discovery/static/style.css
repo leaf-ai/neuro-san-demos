@@ -592,8 +592,13 @@ progress::-webkit-progress-value {
 
 .exhibit-table tr:hover {
     background: rgba(255,255,255,0.05);
+}
 
-  .element-bar {
+.exhibit-table tr.privileged {
+    background: rgba(255, 0, 0, 0.1);
+}
+
+.element-bar {
     background: rgba(255, 255, 255, 0.1);
     height: 4px;
     border-radius: 2px;

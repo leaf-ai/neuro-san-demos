@@ -110,3 +110,8 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 - Added theory review workflow with approval, rejection and comment endpoints plus confidence bar UI.
 - Dashboard now refreshes graph and timeline on theory state changes with Cypress end-to-end coverage.
 - Next: persist per-user review metadata and expand theory analytics.
+
+## Update 2025-08-06T15:30Z
+- Added `exhibit_order` field with migration and wired binder/zip exports to respect custom order.
+- Introduced exhibit reorder API with privilege and source-team aware listing; highlighted privileged rows in UI.
+- Next: surface drag-and-drop ordering in dashboard and extend source filters.

@@ -82,6 +82,7 @@ function ExhibitSection() {
       <table className="w-full exhibit-table text-sm">
         <thead>
           <tr>
+            <th>Order</th>
             <th>No.</th>
             <th>Title</th>
             <th>Bates</th>
@@ -91,7 +92,8 @@ function ExhibitSection() {
         </thead>
         <tbody>
           {exhibits.map((ex) => (
-            <tr key={ex.id}>
+            <tr key={ex.id} className={ex.privileged ? "privileged" : ""}>
+              <td>{ex.order}</td>
               <td>{ex.exhibit_number}</td>
               <td>{ex.title}</td>
               <td>{ex.bates_number || ""}</td>
