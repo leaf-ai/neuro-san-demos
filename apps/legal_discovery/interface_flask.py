@@ -4,7 +4,6 @@ import hashlib
 import json
 import logging
 import os
-import queue
 import re
 import subprocess
 import threading
@@ -25,7 +24,6 @@ from flask import request
 from flask import send_file
 from werkzeug.utils import secure_filename
 from flask import Flask, jsonify, render_template, request, send_file
-from flask_socketio import SocketIO
 
 import spacy
 from spacy.cli import download as spacy_download
@@ -53,7 +51,6 @@ from pyhocon import ConfigFactory
 from werkzeug.utils import secure_filename
 
 from apps.legal_discovery import settings
-from coded_tools.legal_discovery import RetrievalChatAgent
 from apps.legal_discovery.database import db
 from coded_tools.legal_discovery.deposition_prep import DepositionPrep
 from apps.legal_discovery.models import (
@@ -98,6 +95,9 @@ from coded_tools.legal_discovery.bates_numbering import (
 )
 import difflib
 import fitz
+from .feature_flags import FEATURE_FLAGS
+from .extensions import socketio
+from .chat_state import user_input_queue
 
 # Configure logging before any other setup so early steps are captured
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
@@ -136,30 +136,29 @@ app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", os.urandom(24).hex
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///legal_discovery.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
-socketio = SocketIO(app)
+socketio.init_app(app)
 app.register_blueprint(exhibits_bp)
+if FEATURE_FLAGS.get("theories"):
+    from .theory_routes import theories_bp
+
+    app.register_blueprint(theories_bp)
+if FEATURE_FLAGS.get("binder"):
+    from .binder_routes import binder_bp
+
+    app.register_blueprint(binder_bp)
+if FEATURE_FLAGS.get("chat"):
+    from .chat_routes import chat_bp
+
+    app.register_blueprint(chat_bp)
 executor = ThreadPoolExecutor(max_workers=int(os.environ.get("INGESTION_WORKERS", "4")))
 atexit.register(executor.shutdown)
 thread_started = False  # pylint: disable=invalid-name
 bates_service = BatesNumberingService()
 
 # Shared crawler instance for legal references
-def synthesize_voice(text: str, model: str) -> str:
-    """Generate base64-encoded audio from text."""
-    try:
-        from gtts import gTTS
-
-        audio_io = BytesIO()
-        gTTS(text=text, lang=model).write_to_fp(audio_io)
-        audio_io.seek(0)
-        return base64.b64encode(audio_io.read()).decode("utf-8")
-    except Exception:  # pragma: no cover - best effort
-        return ""
 legal_crawler = LegalCrawler()
 
 app.logger.setLevel(logging.getLevelName(os.environ.get("LOG_LEVEL", "INFO")))
-
-user_input_queue = queue.Queue()
 
 # Shared agent session and worker thread are initialized asynchronously
 legal_discovery_session = None
@@ -334,10 +333,8 @@ from coded_tools.legal_discovery.fact_extractor import FactExtractor
 from coded_tools.legal_discovery.forensic_tools import ForensicTools
 from coded_tools.legal_discovery.graph_analyzer import GraphAnalyzer
 from coded_tools.legal_discovery.knowledge_graph_manager import KnowledgeGraphManager
-from coded_tools.legal_discovery.legal_theory_engine import LegalTheoryEngine
 from coded_tools.legal_discovery.ontology_loader import OntologyLoader
 from coded_tools.legal_discovery.presentation_generator import PresentationGenerator
-from coded_tools.legal_discovery.pretrial_generator import PretrialGenerator
 from coded_tools.legal_discovery.privilege_detector import PrivilegeDetector
 from coded_tools.legal_discovery.research_tools import ResearchTools
 from coded_tools.legal_discovery.subpoena_manager import SubpoenaManager
@@ -1222,6 +1219,14 @@ def document_versions_diff():
             text2.splitlines(),
             fromfile=v1.bates_number,
             tofile=v2.bates_number,
+            lineterm="",
+        )
+    )
+    return jsonify({"diff": diff})
+
+
+@app.route("/api/bates/stamp", methods=["POST"])
+def bates_stamp():
     """Apply Bates numbering to a PDF and record a document version."""
     data = request.get_json() or {}
     file_path = data.get("file_path")
@@ -1812,221 +1817,8 @@ def research():
     return jsonify({"status": "ok", "data": results})
 
 
-@app.route("/api/theories/suggest", methods=["GET"])
-def suggest_theories():
-    """Return ranked legal theory candidates."""
-    engine = LegalTheoryEngine()
-    theories = engine.suggest_theories()
-    engine.close()
-    return jsonify({"status": "ok", "theories": theories})
 
 
-@app.route("/api/theories/graph", methods=["GET"])
-def theory_graph():
-    """Return graph data for a specific cause of action."""
-    cause = request.args.get("cause")
-    if not cause:
-        return jsonify({"status": "error", "error": "cause required"}), 400
-    engine = LegalTheoryEngine()
-    nodes, edges = engine.get_theory_subgraph(cause)
-    engine.close()
-    return jsonify({"status": "ok", "nodes": nodes, "edges": edges})
-
-
-@app.route("/api/theories/accept", methods=["POST"])
-def accept_theory():
-    """Pipe an accepted theory to drafting, pretrial and timeline tools."""
-
-    data = request.get_json() or {}
-    cause = data.get("cause")
-    if not cause:
-        return jsonify({"status": "error", "error": "cause required"}), 400
-
-    engine = LegalTheoryEngine()
-    try:
-        theories = engine.suggest_theories()
-        theory = next((t for t in theories if t["cause"] == cause), None)
-        if theory is None:
-            return (
-                jsonify({"status": "error", "error": "unknown cause"}),
-                404,
-            )
-
-        drafter = DocumentDrafter()
-        doc_path = os.path.join(app.config["UPLOAD_FOLDER"], f"{cause.replace(' ', '_')}_theory.docx")
-        drafter.create_document(doc_path, f"Accepted theory: {cause}")
-
-        pretrial = PretrialGenerator()
-        statement = pretrial.generate_statement(cause, [e["name"] for e in theory["elements"]])
-
-        timeline_items = []
-        for element in theory["elements"]:
-            for fact in element["facts"]:
-                for date in fact.get("dates", []):
-                    timeline_items.append({"date": date, "description": fact["text"]})
-
-        timeline_manager = TimelineManager()
-        if timeline_items:
-            timeline_manager.create_timeline(cause, timeline_items)
-
-        lt = LegalTheory.query.filter_by(theory_name=cause, case_id=1).first()
-        if lt is None:
-            lt = LegalTheory(case_id=1, theory_name=cause)
-            db.session.add(lt)
-        lt.status = "approved"
-        if data.get("comment"):
-            lt.review_comment = data.get("comment")
-        db.session.commit()
-
-        return jsonify(
-            {
-                "status": "ok",
-                "document": doc_path,
-                "pretrial": statement,
-                "timeline_items": timeline_items,
-            }
-        )
-    finally:
-        engine.close()
-
-
-@app.route("/api/pretrial/export", methods=["POST"])
-def export_pretrial_statement():
-    """Generate a pretrial statement document and update timeline/binder."""
-
-    data = request.get_json() or {}
-    case_id = data.get("case_id", type=int)
-    if not case_id:
-        return jsonify({"error": "Missing case_id"}), 400
-
-    os.makedirs("exports", exist_ok=True)
-    path = os.path.join("exports", f"pretrial_{case_id}.docx")
-    generator = PretrialGenerator()
-    generator.export(case_id, path)
-    return jsonify({"status": "ok", "path": path})
-
-
-@app.route("/api/theories/reject", methods=["POST"])
-def reject_theory():
-    data = request.get_json() or {}
-    cause = data.get("cause")
-    if not cause:
-        return jsonify({"status": "error", "error": "cause required"}), 400
-
-    lt = LegalTheory.query.filter_by(theory_name=cause, case_id=1).first()
-    if lt is None:
-        lt = LegalTheory(case_id=1, theory_name=cause)
-        db.session.add(lt)
-    lt.status = "rejected"
-    if data.get("comment"):
-        lt.review_comment = data.get("comment")
-    db.session.commit()
-    return jsonify({"status": "ok"})
-
-
-@app.route("/api/theories/comment", methods=["POST"])
-def comment_theory():
-    data = request.get_json() or {}
-    cause = data.get("cause")
-    comment = data.get("comment")
-    if not cause or comment is None:
-        return jsonify({"status": "error", "error": "cause and comment required"}), 400
-
-    lt = LegalTheory.query.filter_by(theory_name=cause, case_id=1).first()
-    if lt is None:
-        lt = LegalTheory(case_id=1, theory_name=cause)
-        db.session.add(lt)
-    lt.review_comment = comment
-    db.session.commit()
-    return jsonify({"status": "ok"})
-
-
-@app.route("/api/query", methods=["POST"])
-def query_agent():
-    data = request.get_json() or {}
-    text = data.get("text")
-    if not text:
-        return jsonify({"status": "error", "error": "text required"}), 400
-    tm = TimelineManager()
-    case_id = data.get("case_id", 1)
-    if text.lower().startswith("timeline summary"):
-        return jsonify({"status": "ok", "summary": tm.summarize(case_id)})
-    event = tm.upsert_event_from_text(text, case_id)
-    if event:
-        socketio.emit(
-            "update_speech",
-            {"data": f"Recorded event on {event['date']}"},
-            namespace="/chat",
-        )
-    user_input_queue.put(text)
-    agent = RetrievalChatAgent()
-    result = agent.query(
-        question=text,
-        sender_id=data.get("sender_id", 0),
-        conversation_id=data.get("conversation_id"),
-    )
-    if result.get("facts"):
-        socketio.emit(
-            "update_speech",
-            {"data": "\n".join(result["facts"])},
-            namespace="/chat",
-        )
-        db.session.add(
-            MessageAuditLog(
-                message_id=result["message_id"],
-                sender="assistant",
-                transcript="\n".join(result["facts"]),
-                voice_model=data.get("voice_model"),
-            )
-        )
-    db.session.add(
-        MessageAuditLog(
-            message_id=result["message_id"],
-            sender="user",
-            transcript=text,
-            voice_model=data.get("voice_model"),
-        )
-    )
-    db.session.commit()
-    return jsonify({"status": "ok", "message_id": result["message_id"]})
-
-
-@app.route("/api/voice_query", methods=["POST"])
-def voice_query():
-    data = request.get_json() or {}
-    transcript = data.get("transcript")
-    if not transcript:
-        return jsonify({"status": "error", "error": "transcript required"}), 400
-    user_input_queue.put(transcript)
-    agent = RetrievalChatAgent()
-    result = agent.query(
-        question=transcript,
-        sender_id=data.get("sender_id", 0),
-        conversation_id=data.get("conversation_id"),
-    )
-    response_text = "\n".join(result.get("facts", []))
-    if response_text:
-        socketio.emit("update_speech", {"data": response_text}, namespace="/chat")
-        audio = synthesize_voice(response_text, data.get("voice_model", "en-US"))
-        socketio.emit("voice_output", {"audio": audio}, namespace="/chat")
-        db.session.add(
-            MessageAuditLog(
-                message_id=result["message_id"],
-                sender="assistant",
-                transcript=response_text,
-                voice_model=data.get("voice_model"),
-            )
-        )
-    db.session.add(
-        MessageAuditLog(
-            message_id=result["message_id"],
-            sender="user",
-            transcript=transcript,
-            voice_model=data.get("voice_model"),
-        )
-    )
-    db.session.commit()
-    return jsonify({"status": "ok", "message_id": result["message_id"]})
 
 
 @app.route("/api/export/report", methods=["POST"])

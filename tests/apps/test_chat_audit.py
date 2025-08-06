@@ -16,7 +16,7 @@ def client():
 
 
 def test_query_logs_message(client):
-    resp = client.post("/api/query", json={"text": "hello"})
+    resp = client.post("/api/chat/query", json={"text": "hello"})
     assert resp.status_code == 200
     with app.app_context():
         logs = MessageAuditLog.query.all()
@@ -25,11 +25,11 @@ def test_query_logs_message(client):
 
 def test_voice_query_logs_message(client, monkeypatch):
     monkeypatch.setattr(
-        "apps.legal_discovery.interface_flask.synthesize_voice", lambda text, model: ""
+        "apps.legal_discovery.voice.synthesize_voice", lambda text, model: ""
     )
     audio = base64.b64encode(b"test").decode()
     resp = client.post(
-        "/api/voice_query",
+        "/api/chat/voice",
         json={"audio": audio, "transcript": "hi", "voice_model": "en-US"},
     )
     assert resp.status_code == 200

@@ -35,7 +35,7 @@ function ChatSection() {
 
   const send = () => {
     if (!input.trim()) return;
-    fetch("/api/query", {
+    fetch("/api/chat/query", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: input, voice_model: voiceModel }),
@@ -85,7 +85,7 @@ function ChatSection() {
   };
 
   const sendVoice = (audio, transcript) => {
-    fetch("/api/voice_query", {
+    fetch("/api/chat/voice", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ audio, transcript, voice_model: voiceModel }),
