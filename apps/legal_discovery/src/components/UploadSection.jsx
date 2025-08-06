@@ -55,13 +55,11 @@ function UploadSection() {
     fetch('/api/organized-files').then(r=>r.json()).then(d=>setTree(d.data||[]));
   };
   useEffect(fetchFiles, []);
-  const sourceClass = s => {
-    switch (s) {
-      case 'opp_counsel': return 'text-red-400';
-      case 'court': return 'text-yellow-400';
-      default: return 'text-blue-400';
-    }
-  };
+  const sourceClass = s => ({
+    opp_counsel: 'text-red-400',
+    court: 'text-yellow-400',
+    user: 'text-blue-400'
+  }[s] || 'text-blue-400');
   const renderNodes = nodes => nodes.map((n,i)=> {
     if (n.children) {
       const kids = renderNodes(n.children).filter(Boolean);

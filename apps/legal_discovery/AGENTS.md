@@ -579,3 +579,6 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-06T02:40Z
 - Cleaned up RAG docstrings to reference Gemini embeddings
 - Next: confirm documentation aligns with new defaults
+## Update 2025-08-06T04:48Z
+- Refined document source handling and vector dedup logging.
+- Next: validate end-to-end ingestion with new source filters.
