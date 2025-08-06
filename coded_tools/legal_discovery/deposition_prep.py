@@ -8,7 +8,10 @@ from typing import Dict, List, Optional
 
 import google.generativeai as genai
 
-from langchain_google_genai import ChatGoogleGenerativeAI
+try:
+    from langchain_google_genai import ChatGoogleGenerativeAI
+except Exception:  # pragma: no cover - optional dependency
+    ChatGoogleGenerativeAI = None
 from docx import Document as DocxDocument
 from weasyprint import HTML
 

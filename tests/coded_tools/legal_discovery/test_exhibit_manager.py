@@ -42,7 +42,7 @@ def _create_doc(case_id, tmp_path, name, hash_, bates, privileged=False):
         case_id=case_id,
         name=name,
         file_path=str(pdf_path),
-        content_hash=hash_,
+        sha256=hash_,
         bates_number=bates,
         is_privileged=privileged,
     )

@@ -46,7 +46,7 @@ def _setup(tmp_path):
             case_id=case_id,
             name="Doc1",
             file_path=str(pdf1),
-            content_hash="hash1",
+            sha256="hash1",
             bates_number="B1",
             source=DocumentSource.USER,
         )
@@ -54,7 +54,7 @@ def _setup(tmp_path):
             case_id=case_id,
             name="Doc2",
             file_path=str(pdf2),
-            content_hash="hash2",
+            sha256="hash2",
             bates_number="B2",
             source=DocumentSource.OPP_COUNSEL,
         )
@@ -62,7 +62,7 @@ def _setup(tmp_path):
             case_id=case_id,
             name="Doc3",
             file_path=str(pdf3),
-            content_hash="hash3",
+            sha256="hash3",
             bates_number="B3",
             is_privileged=True,
             source=DocumentSource.COURT,

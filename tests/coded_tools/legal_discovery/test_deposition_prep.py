@@ -56,7 +56,7 @@ def test_generate_questions(monkeypatch):
             name="Doc1",
             bates_number="B1",
             file_path="/tmp/doc1",
-            content_hash="h1",
+            sha256="h1",
         )
         witness = Witness(name="Alice", role="Witness", associated_case=case.id)
         db.session.add_all([doc, witness])
@@ -116,7 +116,7 @@ def test_detect_contradictions_and_export(monkeypatch, tmp_path):
             name="DocA",
             bates_number="B100",
             file_path="/tmp/docA",
-            content_hash="hA",
+            sha256="hA",
         )
         witness = Witness(name="Bob", role="Witness", associated_case=case.id)
         reviewer = Agent(name="Ann", role="attorney")
@@ -210,7 +210,7 @@ def test_review_logging_and_permissions(tmp_path):
             name="DocB",
             bates_number="B200",
             file_path="/tmp/docB",
-            content_hash="hB",
+            sha256="hB",
         )
         witness = Witness(name="Eve", role="Witness", associated_case=case.id)
         attorney = Agent(name="Terry", role="attorney")
@@ -269,7 +269,7 @@ def test_export_questions_authorized_formats(tmp_path):
             name="DocC",
             bates_number="B300",
             file_path="/tmp/docC",
-            content_hash="hC",
+            sha256="hC",
         )
         witness = Witness(name="Rick", role="Witness", associated_case=case.id)
         attorney = Agent(name="Rita", role="attorney")

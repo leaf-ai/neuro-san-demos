@@ -28,7 +28,7 @@ def test_theory_confidence_model():
             case_id=case.id,
             name="Doc",
             file_path="/tmp/doc.txt",
-            content_hash="hash",
+            sha256="hash",
         )
         theory = LegalTheory(case_id=case.id, theory_name="Breach of Contract")
         fact = Fact(case_id=case.id, document=doc, legal_theory=theory, text="Alice signed", parties=[], dates=[], actions=[])

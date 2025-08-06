@@ -104,7 +104,7 @@ class Document(db.Model):
     name = db.Column(db.String(255), nullable=False)
     bates_number = db.Column(db.String(100), nullable=True)
     file_path = db.Column(db.String(255), nullable=False)
-    content_hash = db.Column(db.String(64), nullable=False, unique=True)
+    sha256 = db.Column(db.String(64), nullable=False, unique=True)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     source = db.Column(db.Enum(DocumentSource), nullable=False, default=DocumentSource.USER)
     is_privileged = db.Column(db.Boolean, nullable=False, default=False)
