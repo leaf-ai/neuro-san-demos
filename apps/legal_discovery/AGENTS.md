@@ -589,3 +589,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Enhanced privilege detector with legal-model fallback and optional classifier
 - Recorded span scores in `RedactionLog` and exposed manual privilege override API/UI
 - Next: refine reviewer workflow and monitor classifier accuracy
+
+## Update 2025-08-06T08:00Z
+- Added migration for conversation and message tables with visibility enum.
+- Verified retrieval chat agent wiring with privilege filtering and audit logging.
+- Next: expand chat tests and support multi-conversation management.
