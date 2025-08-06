@@ -9,6 +9,9 @@ from apps.legal_discovery.models import (
     Document,
     ChainOfCustodyLog,
     ChainEventType,
+    DocumentSource,
+    LegalTheory,
+    Fact,
 )
 from apps.legal_discovery.exhibit_routes import exhibits_bp
 
@@ -45,6 +48,7 @@ def _setup(tmp_path):
             file_path=str(pdf1),
             content_hash="hash1",
             bates_number="B1",
+            source=DocumentSource.USER,
         )
         doc2 = Document(
             case_id=case_id,
@@ -52,6 +56,7 @@ def _setup(tmp_path):
             file_path=str(pdf2),
             content_hash="hash2",
             bates_number="B2",
+            source=DocumentSource.OPP_COUNSEL,
         )
         doc3 = Document(
             case_id=case_id,
@@ -60,6 +65,7 @@ def _setup(tmp_path):
             content_hash="hash3",
             bates_number="B3",
             is_privileged=True,
+            source=DocumentSource.COURT,
         )
         db.session.add_all([doc1, doc2, doc3])
         db.session.commit()
@@ -120,3 +126,27 @@ def test_assign_list_and_exports(tmp_path):
         f"/api/exhibits?case_id={case_id}&include_privileged=true&source_team=team1"
     )
     assert [e["id"] for e in res.json] == [doc1, doc3]
+
+    res = client.get(f"/api/exhibits?case_id={case_id}&source=opp_counsel")
+    assert [e["id"] for e in res.json] == [doc2]
+
+    # links endpoint
+    with app.app_context():
+        theory = LegalTheory(case_id=case_id, theory_name="Breach")
+        db.session.add(theory)
+        db.session.commit()
+        db.session.add(
+            Fact(
+                case_id=case_id,
+                document_id=doc1,
+                legal_theory_id=theory.id,
+                text="Event",
+                dates=["2020-01-01"],
+            )
+        )
+        db.session.commit()
+    client.post("/api/exhibits/assign", json={"document_id": doc1, "title": "T1"})
+    res = client.get(f"/api/exhibits/{doc1}/links")
+    assert res.status_code == 200
+    assert res.json["theories"] == ["Breach"]
+    assert res.json["timeline"][0]["date"] == "2020-01-01"

@@ -19,7 +19,7 @@ import PresentationSection from "./components/PresentationSection";
 import AgentNetworkSection from "./components/AgentNetworkSection";
 import SettingsModal from "./components/SettingsModal";
 import LegalTheorySection from "./components/LegalTheorySection";
-import ExhibitSection from "./components/ExhibitSection";
+import ExhibitTab from "./components/ExhibitTab";
 import DepositionPrepSection from "./components/DepositionPrepSection";
 import ChainLogSection from "./components/ChainLogSection";
 const TABS = [
@@ -87,7 +87,7 @@ function Dashboard() {
       <div className="tab-content" style={{display: tab==='research'?'block':'none'}} id="tab-research"><ResearchSection/></div>
       <div className="tab-content" style={{display: tab==='subpoena'?'block':'none'}} id="tab-subpoena"><SubpoenaSection/></div>
       <div className="tab-content" style={{display: tab==='presentation'?'block':'none'}} id="tab-presentation"><PresentationSection/></div>
-      <div className="tab-content" style={{display: tab==='exhibits'?'block':'none'}} id="tab-exhibits"><ExhibitSection/></div>
+      <div className="tab-content" style={{display: tab==='exhibits'?'block':'none'}} id="tab-exhibits"><ExhibitTab/></div>
       <div className="tab-content" style={{display: tab==='deposition'?'block':'none'}} id="tab-deposition"><DepositionPrepSection/></div>
       <div className="tab-content" style={{display: tab==='chain'?'block':'none'}} id="tab-chain"><ChainLogSection/></div>
       <SettingsModal open={showSettings} onClose={()=>setShowSettings(false)}/>
