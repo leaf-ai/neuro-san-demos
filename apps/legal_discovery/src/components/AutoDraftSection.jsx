@@ -6,6 +6,7 @@ function AutoDraftSection() {
   const [motion, setMotion] = useState("");
   const [draft, setDraft] = useState("");
   const [output, setOutput] = useState("");
+  const [reviewed, setReviewed] = useState(false);
 
   useEffect(() => {
     fetch("/api/auto_draft/templates").then(r => r.json()).then(d => setTypes(d.data || []));
@@ -17,11 +18,11 @@ function AutoDraftSection() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ motion_type: motion })
-    }).then(r => r.json()).then(d => { setDraft(d.data || ""); alertResponse(d); });
+    }).then(r => r.json()).then(d => { setDraft(d.data || ""); setReviewed(false); alertResponse(d); });
   };
 
   const exportFile = fmt => {
-    if (!draft) return;
+    if (!draft || !reviewed) return;
     fetch("/api/auto_draft/export", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -44,11 +45,12 @@ function AutoDraftSection() {
       </select>
       <div className="flex flex-wrap gap-2 mb-2">
         <button className="button-secondary" onClick={generate}><i className="fa fa-magic mr-1"></i>Generate</button>
-        <button className="button-secondary" onClick={() => setDraft("")}><i className="fa fa-eraser mr-1"></i>Clear</button>
-        <button className="button-secondary" onClick={() => exportFile('docx')}><i className="fa fa-file-word mr-1"></i>Export DOCX</button>
-        <button className="button-secondary" onClick={() => exportFile('pdf')}><i className="fa fa-file-pdf mr-1"></i>Export PDF</button>
+        <button className="button-secondary" onClick={() => { setDraft(""); setReviewed(false); }}><i className="fa fa-eraser mr-1"></i>Clear</button>
+        <button className="button-secondary" onClick={() => setReviewed(true)}><i className="fa fa-check mr-1"></i>Mark Reviewed</button>
+        <button className="button-secondary" onClick={() => exportFile('docx')} disabled={!reviewed}><i className="fa fa-file-word mr-1"></i>Export DOCX</button>
+        <button className="button-secondary" onClick={() => exportFile('pdf')} disabled={!reviewed}><i className="fa fa-file-pdf mr-1"></i>Export PDF</button>
       </div>
-      <textarea rows="10" value={draft} onChange={e=>setDraft(e.target.value)} className="w-full p-2 rounded" placeholder="Draft output for review..." />
+      <textarea rows="10" value={draft} onChange={e=>{ setDraft(e.target.value); setReviewed(false); }} className="w-full p-2 rounded" placeholder="Draft output for review..." />
       {output && <p className="text-sm">Output: <a href={'/uploads/'+output} target="_blank" rel="noopener noreferrer">{output}</a></p>}
     </section>
   );

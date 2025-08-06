@@ -643,3 +643,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Enhanced exhibit export to bundle deposition excerpts, theory references, scorecards, and sanctions notes into PDF/ZIP.
 - Added tests for exhibit numbering, cross-links, and privilege exclusions.
 - Next: enrich PDF export formatting for metadata pages.
+
+## Update 2025-08-07T10:00Z
+- Expanded motion template library with Motion in Limine and configurable Gemini temperature.
+- Added review gating to Auto Draft UI requiring explicit approval before export.
+- Next: incorporate opposition metrics into prompts and support additional export formats.

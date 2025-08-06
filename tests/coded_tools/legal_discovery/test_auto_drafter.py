@@ -16,7 +16,9 @@ class DummyModel:
 
 def test_template_library_available():
     lib = TemplateLibrary()
-    assert "motion_to_dismiss" in lib.available()
+    available = lib.available()
+    assert "motion_to_dismiss" in available
+    assert "motion_in_limine" in available
 
 
 def test_auto_drafter_generate(monkeypatch):
