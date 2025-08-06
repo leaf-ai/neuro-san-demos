@@ -672,3 +672,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added motions to compel and protective order templates sourcing facts, theories and conflicts.
 - Enhanced Auto Draft panel with visual review status and disabled actions until approval.
 - Next: surface opposition metrics within prompts and polish export styles.
+
+## Update 2025-08-07T14:45Z
+- Subscribed opposition tracker to forensic hash and research insight topics with cross-checking.
+- Contradictions now publish alerts for auto-drafter and timeline builder.
+- Next: extend cross-checking beyond hash comparisons.
