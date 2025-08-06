@@ -12,6 +12,14 @@ def test_detect_and_redact_text():
     assert "confidential" not in redacted.lower()
 
 
+def test_detect_non_privileged_text():
+    detector = PrivilegeDetector()
+    text = "General business update with no legal advice."
+    privileged, spans = detector.detect(text)
+    assert not privileged
+    assert spans == []
+
+
 def test_redact_pdf(tmp_path):
     input_pdf = tmp_path / "in.pdf"
     output_pdf = tmp_path / "out.pdf"

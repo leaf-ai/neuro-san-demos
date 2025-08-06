@@ -468,6 +468,10 @@ def override_privilege(doc_id: int):
     doc.is_privileged = bool(privileged)
     doc.is_redacted = bool(privileged)
     doc.needs_review = False
+    app.logger.info(
+        "override privilege",
+        extra={"doc_id": doc.id, "privileged": doc.is_privileged, "reviewer": reviewer},
+    )
     db.session.add(
         RedactionAudit(
             document_id=doc.id,
@@ -655,6 +659,10 @@ def ingest_document(
     text = processor.extract_text(original_path) or ""
     detector = PrivilegeDetector()
     privileged, spans = detector.detect(text)
+    app.logger.info(
+        "privilege detection",
+        extra={"doc_id": doc_id, "privileged": privileged, "spans": [(s.start, s.end) for s in spans]},
+    )
     doc = Document.query.get(doc_id)
     if privileged:
         keywords = [text[s.start : s.end] for s in spans]

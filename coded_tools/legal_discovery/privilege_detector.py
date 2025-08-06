@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable, List, Optional, Tuple
 
+import logging
 import fitz
 import spacy
 from spacy.cli import download as spacy_download
@@ -100,6 +101,20 @@ class PrivilegeDetector:
             if any(k in sent_lower for k in lowered):
                 spans.append(Span(sent.start_char, sent.end_char, "PRIVILEGED", sent.text, score))
                 privileged = True
+        logger = logging.getLogger(__name__)
+        if spans:
+            for s in spans:
+                logger.info(
+                    "privileged span detected",
+                    extra={
+                        "start": s.start,
+                        "end": s.end,
+                        "label": s.label,
+                        "text": s.text,
+                        "score": s.score,
+                    },
+                )
+        logger.debug("privileged=%s score=%s", privileged, score)
         return privileged, spans
 
     @staticmethod
