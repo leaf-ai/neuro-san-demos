@@ -14,7 +14,6 @@ python-dotenv==1.0.1
 aiofiles>=24.1.0
 
 # For MCP servers and clients
-langchain-mcp-adapters>=0.1.7
 pyvis>=0.3.2
 schedule>=1.1.0
 Flask-SQLAlchemy>=2.5.1
@@ -68,4 +67,5 @@ pyvis
 gunicorn
 more-itertools
 pygraphviz
+langchain-mcp-adapters>=0.1.7
 en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl
