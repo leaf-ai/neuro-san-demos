@@ -8,7 +8,7 @@ from pyvis.network import Network
 class KnowledgeGraphManager(CodedTool):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        uri = os.environ.get("NEO4J_URI", "bolt://localhost:7687")
+        uri = os.environ.get("NEO4J_URI", "bolt://neo4j:7687")
         user = os.environ.get("NEO4J_USER", "neo4j")
         password = os.environ.get("NEO4J_PASSWORD", "neo4jPass123")
         try:
