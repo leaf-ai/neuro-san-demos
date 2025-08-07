@@ -1,13 +1,16 @@
 # Legal Discovery Application
 
 This directory contains a Flask application that provides a simple UI for running
-Neuro SAN's legal discovery agent network.
+Neuro SAN's legal discovery agent network. Core capabilities include legal theory
+mapping with confidence scoring, an exhibit and trial binder, CoCounsel chat with
+memory and voice support, and an opposition document tracker. Language tasks are
+powered by Google's Gemini models.
 
 ## Prerequisites
 
-- [Docker](https://docs.docker.com/get-docker/) and `docker-compose`
+- [Docker](https://docs.docker.com/get-docker/) and `docker compose`
 - A running PostgreSQL instance (the provided `docker-compose.yml` spins one up automatically)
-- API keys configured in `.env`
+- API keys configured in `.env` (set `GOOGLE_API_KEY` for Gemini)
 
 Make a copy of `.env.example` to `.env` and fill in the required values. In
 particular set a password for Neo4j:
@@ -22,8 +25,8 @@ cp .env.example .env  # if you haven't created one
 From the project root run:
 
 ```bash
-docker-compose build
-docker-compose up
+docker compose build
+docker compose up
 ```
 
 
@@ -35,7 +38,7 @@ Once the containers are running, open <http://localhost:8080> in a browser to
 
 use the UI.
 
-To stop the stack press `Ctrl+C` and run `docker-compose down`.
+To stop the stack press `Ctrl+C` and run `docker compose down`.
 
 ## Running Without Docker
 
