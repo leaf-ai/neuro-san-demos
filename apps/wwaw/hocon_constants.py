@@ -2,7 +2,7 @@ HOCON_HEADER_START = (
     "{\n"
     '    "llm_config": {\n'
     '"class": "google_genai",\n'
-    '"use_model_name": "gemini-1.5-flash",\n'
+    '"use_model_name": "gemini-2.5-flash",\n'
     "    },\n"
     '"max_iterations": 40000,\n'
     '"max_execution_seconds": 6000,\n'

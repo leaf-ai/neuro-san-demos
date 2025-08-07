@@ -1,5 +1,5 @@
 from __future__ import annotations
-"""Detect narrative discrepancies using Gemini NLI."""
+"""Detect narrative discrepancies using Gemini 2.5 NLI."""
 
 import json
 from dataclasses import dataclass
@@ -35,7 +35,7 @@ class DiscrepancyResult:
 class NarrativeDiscrepancyDetector(CodedTool):
     """Compare opposition documents to internal corpus and flag contradictions."""
 
-    def __init__(self, model_name: str = "gemini-1.5-flash", **kwargs) -> None:
+    def __init__(self, model_name: str = "gemini-2.5-flash", **kwargs) -> None:
         super().__init__(**kwargs)
         self.model_name = model_name
         self.vectors = VectorDatabaseManager()
@@ -87,7 +87,7 @@ class NarrativeDiscrepancyDetector(CodedTool):
         return results
 
     def _nli(self, claim: str, evidence: str) -> Tuple[str, float]:
-        """Use Gemini to perform natural language inference."""
+        """Use Gemini 2.5 to perform natural language inference."""
         prompt = (
             "Respond with JSON containing 'label' (CONTRADICTION, ENTAILMENT, NEUTRAL) "
             "and 'confidence' between 0 and 1 given the claim and evidence."\

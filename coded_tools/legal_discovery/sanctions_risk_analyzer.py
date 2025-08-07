@@ -9,12 +9,12 @@ from neuro_san.interfaces.coded_tool import CodedTool
 
 
 class SanctionsRiskAnalyzer(CodedTool):
-    """Assess text for potential court-sanctions risk using Gemini."""
+    """Assess text for potential court-sanctions risk using Gemini 2.5."""
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self._llm = ChatGoogleGenerativeAI(
-            model=os.getenv("GOOGLE_MODEL_NAME", "gemini-2.5-flash-lite-preview-06-17")
+            model=os.getenv("GOOGLE_MODEL_NAME", "gemini-2.5-flash")
         )
         self._rules: Dict[str, List[str]] = {
             "filing": ["rule 11", "frivolous", "improper purpose"],

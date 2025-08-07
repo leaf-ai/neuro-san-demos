@@ -1377,7 +1377,7 @@ def auto_draft_templates():
 
 @app.route("/api/auto_draft", methods=["POST"])
 def auto_draft_generate():
-    """Generate a motion draft using Gemini."""
+    """Generate a motion draft using Gemini 2.5."""
     data = request.get_json() or {}
     motion_type = data.get("motion_type")
     if not motion_type:

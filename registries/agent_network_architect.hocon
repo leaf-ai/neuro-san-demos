@@ -36,7 +36,7 @@
 
 {
     "llm_config": {
-        "model_name": "gemini-1.5-flash",
+        "model_name": "gemini-2.5-flash",
     },
     "max_execution_seconds": 6000,
     "tools": [

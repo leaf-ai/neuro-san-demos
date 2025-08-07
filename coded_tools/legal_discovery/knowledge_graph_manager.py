@@ -10,7 +10,7 @@ class KnowledgeGraphManager(CodedTool):
         super().__init__(**kwargs)
         uri = os.environ.get("NEO4J_URI", "bolt://localhost:7687")
         user = os.environ.get("NEO4J_USER", "neo4j")
-        password = os.environ.get("NEO4J_PASSWORD", "password")
+        password = os.environ.get("NEO4J_PASSWORD", "neo4jPass123")
         try:
             self.driver = GraphDatabase.driver(uri, auth=(user, password))
             # Verify connection

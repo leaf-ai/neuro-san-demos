@@ -24,7 +24,7 @@ except Exception:  # pragma: no cover - test environments may not load app modul
 class PretrialGenerator(CodedTool):
     """Generate pretrial statements from approved theories and evidence."""
 
-    def __init__(self, model_name: str = "gemini-1.5-flash", temperature: float = 0.2, **kwargs):
+    def __init__(self, model_name: str = "gemini-2.5-flash", temperature: float = 0.2, **kwargs):
         super().__init__(**kwargs)
         self.model_name = model_name
         self.temperature = temperature
@@ -80,7 +80,7 @@ class PretrialGenerator(CodedTool):
     # Drafting utilities
     # ------------------------------------------------------------------
     def draft(self, case_id: int) -> tuple[str, dict]:
-        """Use Gemini to draft a pretrial statement for the case."""
+        """Use Gemini 2.5 to draft a pretrial statement for the case."""
 
         data = self.aggregate(case_id)
         lines = ["Prepare a concise pretrial statement using the data below.", ""]
