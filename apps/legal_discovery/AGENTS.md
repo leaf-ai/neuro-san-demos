@@ -742,3 +742,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-09T16:30Z
 - Updated README to reference Gemini models and modern `docker compose` commands.
 - Next: review remaining docs for outdated OpenAI references.
+
+## Update 2025-08-10T00:00Z
+- Introduced Trial Prep Academy with resource ingestion, lesson APIs, and React curriculum tab.
+- Next: expand telemetry analysis and feed prioritisation.

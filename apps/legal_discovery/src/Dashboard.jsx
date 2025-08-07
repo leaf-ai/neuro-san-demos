@@ -25,6 +25,7 @@ import DepositionPrepSection from "./components/DepositionPrepSection";
 import ChainLogSection from "./components/ChainLogSection";
 import OppositionTrackerSection from "./components/OppositionTrackerSection";
 import DocumentReviewSection from "./components/DocumentReviewSection";
+import TrialPrepSchoolSection from "./components/TrialPrepSchoolSection";
 const TABS = [
   {id:'network', label:'Agent Network', icon:'fa-sitemap'},
   {id:'overview', label:'Overview', icon:'fa-home'},
@@ -44,6 +45,7 @@ const TABS = [
   {id:'research', label:'Legal Research', icon:'fa-book-open'},
   {id:'subpoena', label:'Subpoena', icon:'fa-gavel'},
   {id:'presentation', label:'Trial Prep', icon:'fa-slideshare'},
+  {id:'academy', label:'Trial Prep School', icon:'fa-university'},
   {id:'exhibits', label:'Exhibits', icon:'fa-book'},
   {id:'deposition', label:'Deposition Prep', icon:'fa-user-tie'},
   {id:'opposition', label:'Opposition Tracker', icon:'fa-flag'},
@@ -94,6 +96,7 @@ function Dashboard() {
       <div className="tab-content" style={{display: tab==='research'?'block':'none'}} id="tab-research"><ResearchSection/></div>
       <div className="tab-content" style={{display: tab==='subpoena'?'block':'none'}} id="tab-subpoena"><SubpoenaSection/></div>
       <div className="tab-content" style={{display: tab==='presentation'?'block':'none'}} id="tab-presentation"><PresentationSection/></div>
+      <div className="tab-content" style={{display: tab==='academy'?'block':'none'}} id="tab-academy"><TrialPrepSchoolSection/></div>
       <div className="tab-content" style={{display: tab==='exhibits'?'block':'none'}} id="tab-exhibits"><ExhibitTab/></div>
       <div className="tab-content" style={{display: tab==='deposition'?'block':'none'}} id="tab-deposition"><DepositionPrepSection/></div>
       <div className="tab-content" style={{display: tab==='opposition'?'block':'none'}} id="tab-opposition"><OppositionTrackerSection/></div>
