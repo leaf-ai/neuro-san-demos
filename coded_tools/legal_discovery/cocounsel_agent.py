@@ -22,7 +22,7 @@ EventHandler = Callable[[Dict[str, Any]], None]
 
 
 class CocounselAgent(CodedTool):
-    """Gemini powered co-counsel agent with rich tool integration."""
+    """Gemini 2.5 powered co-counsel agent with rich tool integration."""
 
     def __init__(
         self,
@@ -34,7 +34,7 @@ class CocounselAgent(CodedTool):
         self.vector_db = vector_db or VectorDatabaseManager(**kwargs)
         self.graph_db = graph_db or KnowledgeGraphManager(**kwargs)
         self.llm = ChatGoogleGenerativeAI(
-            model=os.getenv("GOOGLE_MODEL_NAME", "gemini-2.5-flash-lite-preview-06-17")
+            model=os.getenv("GOOGLE_MODEL_NAME", "gemini-2.5-flash")
         )
         self.embedder = GoogleGenerativeAIEmbeddings()
 
@@ -87,7 +87,7 @@ class CocounselAgent(CodedTool):
 
     # ------------------------------------------------------------------
     def ask(self, question: str, top_k: int = 5) -> Dict[str, Any]:
-        """Answer a question using vector and graph stores with Gemini."""
+        """Answer a question using vector and graph stores with Gemini 2.5."""
         vec = self.vector_db.query([question], n_results=top_k)
         documents = vec.get("documents", [[]])[0]
         metadatas = vec.get("metadatas", [[]])[0]

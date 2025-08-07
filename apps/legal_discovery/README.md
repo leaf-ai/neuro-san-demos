@@ -4,13 +4,13 @@ This directory contains a Flask application that provides a simple UI for runnin
 Neuro SAN's legal discovery agent network. Core capabilities include legal theory
 mapping with confidence scoring, an exhibit and trial binder, CoCounsel chat with
 memory and voice support, and an opposition document tracker. Language tasks are
-powered by Google's Gemini models.
+powered by Google's Gemini 2.5 models.
 
 ## Prerequisites
 
 - [Docker](https://docs.docker.com/get-docker/) and `docker compose`
 - A running PostgreSQL instance (the provided `docker-compose.yml` spins one up automatically)
-- API keys configured in `.env` (set `GOOGLE_API_KEY` for Gemini)
+- API keys configured in `.env` (set `GOOGLE_API_KEY` for Gemini 2.5)
 
 Make a copy of `.env.example` to `.env` and fill in the required values. In
 particular set a password for Neo4j:

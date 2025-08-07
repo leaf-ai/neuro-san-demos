@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-"""Automated motion drafting using Gemini models."""
+"""Automated motion drafting using Gemini 2.5 models."""
 
 from datetime import datetime
 from pathlib import Path
@@ -17,14 +17,14 @@ from .template_library import TemplateLibrary
 class AutoDrafter(CodedTool):
     """Generate legal motion drafts and export them."""
 
-    def __init__(self, model_name: str = "gemini-1.5-flash", temperature: float = 0.2, **kwargs):
+    def __init__(self, model_name: str = "gemini-2.5-flash", temperature: float = 0.2, **kwargs):
         super().__init__(**kwargs)
         self.templates = TemplateLibrary()
         self.model_name = model_name
         self.temperature = temperature
 
     def generate(self, motion_type: str, *, temperature: float | None = None) -> str:
-        """Generate a draft for the given motion type using Gemini.
+        """Generate a draft for the given motion type using Gemini 2.5.
 
         Parameters
         ----------

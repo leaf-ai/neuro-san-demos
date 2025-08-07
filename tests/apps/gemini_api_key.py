@@ -13,7 +13,7 @@ def test_gemini_api_key():
 
     # Set your Gemini details
     api_key = os.getenv("GOOGLE_API_KEY")  # or use a string directly
-    model_name = os.getenv("GOOGLE_MODEL_NAME")  # e.g., "gemini-pro"
+    model_name = os.getenv("GOOGLE_MODEL_NAME")  # e.g., "gemini-2.5-pro"
 
     try:
 

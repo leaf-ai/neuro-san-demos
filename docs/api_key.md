@@ -70,7 +70,7 @@ Setup a virtual environment, install the dependencies, and activate the virtual 
     export GOOGLE_API_KEY="XXX"
     ```
 
-- Set the `model` variable in the script (e.g., to `gemini-1.5-pro`) and run the script testing Gemini API key
+- Set the `model` variable in the script (e.g., to `gemini-2.5-pro`) and run the script testing Gemini API key
 
     ```bash
     python3 ./tests/apps/gemini_api_key.py

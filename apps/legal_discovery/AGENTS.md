@@ -746,3 +746,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-10T00:00Z
 - Introduced Trial Prep Academy with resource ingestion, lesson APIs, and React curriculum tab.
 - Next: expand telemetry analysis and feed prioritisation.
+
+## Update 2025-08-10T12:00Z
+- Unified Neo4j credentials and verified connection.
+- Replaced legacy Gemini model references with Gemini 2.5 Pro/Flash across code and docs.
+- Next: run full Docker stack to validate end-to-end flows.

@@ -13,13 +13,13 @@
     "llm_config": {
         # We can use these models with google_genai, azure, ollama, anthropic and nvidia as a provider
         # Note that not all of these LLMs support function-calling, it is advisable to read the documentation before using any of the LLMs
-        # Google: ['gemini-1.5-flash', 'gemini-1.5-pro']
+        # Google: ['gemini-2.5-flash', 'gemini-2.5-pro']
         # Azure: ['azure-gpt-3.5-turbo', 'azure-gpt-4']
         # Anthropic: ['claude-3-haiku', 'claude-3-sonnet', 'claude-3-opus', 'claude-2.1', 'claude-2.0', 'claude-instant-1.2']
         # Ollama: ['llama2', 'llama3', 'llama3.1', 'llama3:70b', 'llava', 'mistral', 'mistral-nemo', 'mixtral', 'qwen2.5:14b', 'deepseek-r1:14b']
         # ChatNvidia: ['nvidia-llama-3.1-405b-instruct', 'nvidia-llama-3.3-70b-instruct', 'nvidia-deepseek-r1']
 
-        "model_name": "gemini-1.5-flash",
+        "model_name": "gemini-2.5-flash",
     },
     "commondefs":{
         "replacement_strings":{

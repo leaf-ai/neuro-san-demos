@@ -58,13 +58,13 @@ class DepositionPrep:
 
         prompt = PROMPT_TMPL.format(name=witness.name, facts=facts_text)
 
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
         response = model.generate_content(
             prompt,
             generation_config=genai.types.GenerationConfig(temperature=0.2),
         )
         content = response.text
-        llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.2)
+        llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.2)
         response = llm.invoke(prompt)
         content = response.content
 

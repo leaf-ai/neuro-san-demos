@@ -3,7 +3,7 @@
     "llm_providers": {
         "google_gemini": {
             "api_key": "${GOOGLE_GEMINI_API_KEY}",
-            "model_name": "gemini-2.5-flash-lite-preview-06-17"
+            "model_name": "gemini-2.5-flash"
         }
     }
 }

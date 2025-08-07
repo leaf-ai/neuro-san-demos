@@ -162,7 +162,7 @@ class GraphManager:
     def __init__(self, uri: str | None = None, user: str | None = None, password: str | None = None) -> None:
         uri = uri or os.environ.get("NEO4J_URL", "bolt://localhost:7687")
         user = user or os.environ.get("NEO4J_USER", "neo4j")
-        password = password or os.environ.get("NEO4J_PASSWORD", "test")
+        password = password or os.environ.get("NEO4J_PASSWORD", "neo4jPass123")
         try:
             self.driver = GraphDatabase.driver(uri, auth=(user, password))
             self.session = self.driver.session()

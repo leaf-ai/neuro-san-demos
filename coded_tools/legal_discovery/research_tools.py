@@ -14,7 +14,7 @@ class ResearchTools(CodedTool):
     """Perform legal research using CourtListener and California Codes."""
 
     def search(self, query: str, source: str = "all"):
-        """Return combined research results and a Gemini summary."""
+        """Return combined research results and a Gemini 2.5 summary."""
         results: dict[str, object] = {}
 
         if source in ("all", "cases") and CourtListenerClient:
@@ -33,7 +33,7 @@ class ResearchTools(CodedTool):
 
         try:
             llm = ChatGoogleGenerativeAI(
-                model=os.getenv("GOOGLE_MODEL_NAME", "gemini-2.5-flash-lite-preview-06-17")
+                model=os.getenv("GOOGLE_MODEL_NAME", "gemini-2.5-flash")
             )
             prompt = (
                 "Summarize the following legal research results in concise bullet points:\n"
