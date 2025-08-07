@@ -241,3 +241,7 @@ WE STARTED ON #3, INSTEAD OF #1. DEAL WITH IT, FINISH IMPLEMENTING #3, AND THEN 
 ## Update 2025-08-10T12:30Z
 - Added spec doc for Real-Time Court Presentation & Timeline Sync (feature #10).
 - Next: implement document viewer and websocket command bus.
+## Update 2025-08-07T14:48Z
+- Added test configuration to ensure `apps` package imports during pytest.
+- Installed missing dependencies to progress test run; remaining failures stem from absent optional packages like `weasyprint`.
+- Next: resolve outstanding dependency gaps and continue debugging failing test modules.
