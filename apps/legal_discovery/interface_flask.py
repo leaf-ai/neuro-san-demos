@@ -88,6 +88,7 @@ from coded_tools.legal_discovery.bates_numbering import (
     stamp_pdf,
 )
 from .exhibit_routes import exhibits_bp
+from .trial_prep_routes import trial_prep_bp
 from .chain_logger import ChainEventType, log_event
 from coded_tools.legal_discovery.bates_numbering import (
     BatesNumberingService,
@@ -138,6 +139,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 socketio.init_app(app)
 app.register_blueprint(exhibits_bp)
+app.register_blueprint(trial_prep_bp)
 if FEATURE_FLAGS.get("theories"):
     from .theory_routes import theories_bp
 

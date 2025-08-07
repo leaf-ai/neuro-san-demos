@@ -158,20 +158,6 @@ class Document(db.Model):
 
 
 class DocumentVersion(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    document_id = db.Column(db.Integer, db.ForeignKey("document.id"), nullable=False)
-    bates_number = db.Column(db.String(100), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey("agent.id"), nullable=True)
-    timestamp = db.Column(db.DateTime, server_default=db.func.now())
-    file_path = db.Column(db.String(255), nullable=False)
-
-    document = db.relationship(
-        "Document",
-        backref=db.backref("versions", lazy=True, cascade="all, delete-orphan"),
-    )
-    user = db.relationship(
-        "Agent", backref=db.backref("document_versions", lazy=True)
-    )
     """Snapshot of a document when stamped or modified."""
 
     id = db.Column(db.Integer, primary_key=True)
@@ -182,7 +168,9 @@ class DocumentVersion(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("agent.id"), nullable=False)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
-    user = db.relationship("Agent")
+    user = db.relationship(
+        "Agent", backref=db.backref("document_versions", lazy=True)
+    )
 
 
 class ChainOfCustodyLog(db.Model):
@@ -495,3 +483,97 @@ class NarrativeDiscrepancy(db.Model):
     calendar_event = db.relationship(
         "CalendarEvent", backref=db.backref("discrepancies", lazy=True)
     )
+
+
+class LegalResource(db.Model):
+    """Primary legal materials gathered by the Trial Prep Academy."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=False)
+    url = db.Column(db.String(1024), nullable=True)
+    jurisdiction = db.Column(db.String(100), nullable=True)
+    content = db.Column(db.Text, nullable=False)
+    metadata_json = db.Column(db.JSON, nullable=True)
+    sha256 = db.Column(db.String(64), nullable=False, unique=True)
+    version = db.Column(db.Integer, nullable=False, default=1)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+    lessons = db.relationship(
+        "Lesson", backref="resource", lazy=True, cascade="all, delete-orphan"
+    )
+
+    def to_dict(self, include_content: bool = False) -> dict:
+        data = {
+            "id": self.id,
+            "title": self.title,
+            "url": self.url,
+            "jurisdiction": self.jurisdiction,
+            "metadata": self.metadata_json,
+            "version": self.version,
+        }
+        if include_content:
+            data["content"] = self.content
+        return data
+
+
+class Lesson(db.Model):
+    """Structured educational content derived from legal resources."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    topic = db.Column(db.String(100), nullable=False)
+    title = db.Column(db.String(255), nullable=False)
+    resource_id = db.Column(
+        db.Integer, db.ForeignKey("legal_resource.id"), nullable=False
+    )
+    summary = db.Column(db.Text, nullable=False)
+    quiz = db.Column(db.JSON, nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    updated_at = db.Column(
+        db.DateTime, server_default=db.func.now(), onupdate=db.func.now()
+    )
+
+    progresses = db.relationship(
+        "LessonProgress", backref="lesson", lazy=True, cascade="all, delete-orphan"
+    )
+
+    def to_dict(self, with_progress: bool = False) -> dict:
+        data = {
+            "id": self.id,
+            "topic": self.topic,
+            "title": self.title,
+            "resource_id": self.resource_id,
+            "summary": self.summary,
+            "quiz": self.quiz,
+        }
+        if with_progress:
+            data["progress"] = [p.to_dict() for p in self.progresses]
+        return data
+
+
+class LessonProgress(db.Model):
+    """Tracks learner progress and feedback for a lesson."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    lesson_id = db.Column(db.Integer, db.ForeignKey("lesson.id"), nullable=False)
+    user_id = db.Column(db.String(50), nullable=False, default="default")
+    completed = db.Column(db.Boolean, nullable=False, default=False)
+    quiz_score = db.Column(db.Float, nullable=True)
+    thumbs_up = db.Column(db.Boolean, nullable=True)
+    updated_at = db.Column(
+        db.DateTime, server_default=db.func.now(), onupdate=db.func.now()
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint("lesson_id", "user_id", name="lesson_user_unique"),
+    )
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "lesson_id": self.lesson_id,
+            "user_id": self.user_id,
+            "completed": self.completed,
+            "quiz_score": self.quiz_score,
+            "thumbs_up": self.thumbs_up,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
