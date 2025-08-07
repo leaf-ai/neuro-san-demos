@@ -76,10 +76,3 @@ services:
     ports:
       - "5000:5000"
     restart: unless-stopped
-
-volumes:
-  # You already mounted host paths. This just documents them for completeness.
-  legal_discovery_data:l_d: - /mnt/e/docker_volumes/legal_discovery/uploads:/usr/src/app/uploads
-  postgres_data: - /mnt/e/docker_volumes/postgres/data:/var/lib/postgresql/data
-  neo4j_data: - /mnt/e/docker_volumes/neo4j/data:/data
-  chroma_data: - /mnt/e/docker_volumes/postgres/data:/var/lib/postgresql/data
