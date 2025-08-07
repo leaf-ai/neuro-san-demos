@@ -738,3 +738,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Refactored Flask app into feature blueprints for theories, binder and chat with feature toggles.
 - Updated chat UI and routing tests to use blueprint paths.
 - Next: expand binder capabilities and modularise remaining routes.
+
+## Update 2025-08-09T16:30Z
+- Updated README to reference Gemini models and modern `docker compose` commands.
+- Next: review remaining docs for outdated OpenAI references.
