@@ -1,5 +1,5 @@
 # Neuro SAN
-neuro-san==0.5.42
+neuro-san==0.5.50
 neuro-san-web-client==0.1.12
 nsflow==0.5.15
 
@@ -66,6 +66,6 @@ gunicorn
 more-itertools
 pygraphviz
 langchain-google-genai
-google-generativeai
+google-genai
 langchain-mcp-adapters>=0.1.7
 en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl

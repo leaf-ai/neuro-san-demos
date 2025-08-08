@@ -20,6 +20,9 @@ cp .env.example .env  # if you haven't created one
 # then edit .env and set NEO4J_PASSWORD=your_password
 ```
 
+Docker Compose reads `NEO4J_PASSWORD` for both the app and database services so
+they always share the same credentials.
+
 ## Running with Docker Compose
 
 From the project root run:

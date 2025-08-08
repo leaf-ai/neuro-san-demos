@@ -11,11 +11,19 @@ services:
       - DATABASE_URL=postgresql+psycopg2://postgres:postgres@postgres:5432/legal_discovery
       - CHROMA_HOST=chromadb
       - CHROMA_PORT=8000
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD:-neo4jPass123}
     depends_on:
-      - postgres
-      - chromadb
+      postgres:
+        condition: service_started
+      chromadb:
+        condition: service_started
+      neo4j:
+        condition: service_healthy
     volumes:
       - /mnt/e/docker_volumes/legal_discovery/uploads:/usr/src/app/uploads
+    restart: unless-stopped
 
   postgres:
     image: postgres:16-alpine
@@ -27,6 +35,7 @@ services:
       - "5432:5432"
     volumes:
       - /mnt/e/docker_volumes/postgres/data:/var/lib/postgresql/data
+    restart: unless-stopped
 
   neo4j:
     image: neo4j:4.4
@@ -34,9 +43,15 @@ services:
       - "7474:7474"
       - "7687:7687"
     environment:
-      - NEO4J_AUTH=neo4j/neo4jPass123
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD:-neo4jPass123}
     volumes:
       - /mnt/e/docker_volumes/neo4j/data:/data
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:7474"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
 
   chromadb:
     image: chromadb/chroma
@@ -50,11 +65,14 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DATABASE=chroma
     depends_on:
-      - postgres
+      postgres:
+        condition: service_started
     volumes:
       - /mnt/e/docker_volumes/chroma:/chroma_data
+    restart: unless-stopped
 
   tesseract:
     image: tesseractshadow/tesseract4re
     ports:
       - "5000:5000"
+    restart: unless-stopped
