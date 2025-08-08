@@ -8,7 +8,7 @@ pypdf>=5.4.0
 pymupdf>=1.25.5
 
 # To use a .env file for environment variables
-python-dotenv==1.0.1
+python-dotenv==1.1.1
 
 # For asynchronous file operations
 aiofiles>=24.1.0
@@ -51,6 +51,7 @@ Pillow
 PyMuPDF
 pytesseract
 PyPDF2
+weasyprint
 chromadb
 rfc3987
 neo4j
@@ -67,5 +68,6 @@ more_itertools
 pygraphviz
 langchain-google-genai
 google-genai
+google-generativeai
 langchain-mcp-adapters>=0.1.7
 en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl
