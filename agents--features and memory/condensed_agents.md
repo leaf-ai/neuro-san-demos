@@ -237,3 +237,11 @@ WE STARTED ON #3, INSTEAD OF #1. DEAL WITH IT, FINISH IMPLEMENTING #3, AND THEN 
 - Built Gemini-driven pretrial generator aggregating stipulations, contested issues and witnesses.
 - Export creates editable DOCX and triggers timeline and binder updates with unit tests.
 - Next: surface pretrial export controls in dashboard and expand coverage.
+
+## Update 2025-08-10T12:30Z
+- Added spec doc for Real-Time Court Presentation & Timeline Sync (feature #10).
+- Next: implement document viewer and websocket command bus.
+
+## Update 2025-08-10T13:30Z
+- Implemented PDF document viewer and Socket.IO command bus for real-time presentations.
+- Next: add bookmark persistence and offline export packages.

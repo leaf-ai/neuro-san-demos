@@ -140,3 +140,7 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 - Added chat-driven timeline node with cross-links and summary queries plus blur polish for chat box.
 - Next: enhance natural date parsing and surface linked events in UI.
 
+## Update 2025-08-10T13:30Z
+- Implemented Socket.IO presentation sync with PDF viewer and timeline hooks.
+- Next: package offline presentation bundles.
+

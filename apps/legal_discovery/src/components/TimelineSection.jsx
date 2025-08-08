@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
+import { io } from "socket.io-client";
 function TimelineSection() {
   const [query,setQuery] = useState('');
   const [events,setEvents] = useState([]);
   const containerRef = useRef();
+  const socketRef = useRef();
   const [exporting,setExporting] = useState(false);
   const [startDate,setStartDate] = useState('');
   const [endDate,setEndDate] = useState('');
@@ -16,6 +18,10 @@ function TimelineSection() {
       .then(r=>r.text()).then(html=>{const w=window.open('about:blank'); w.document.write(html);})
       .finally(()=>setExporting(false));
   };
+  useEffect(() => {
+    socketRef.current = io('/present');
+    return () => socketRef.current && socketRef.current.disconnect();
+  }, []);
   useEffect(() => {
     if(!containerRef.current) return;
     let filtered = events;
@@ -44,6 +50,9 @@ function TimelineSection() {
         return;
       }
       modal.style.display='flex';
+      if(item.doc_id && typeof item.page === 'number' && socketRef.current){
+        socketRef.current.emit('command',{doc_id:item.doc_id,command:'goto_page',page:item.page});
+      }
     });
   }, [events]);
 
