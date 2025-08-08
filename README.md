@@ -379,3 +379,79 @@ and how it enables secure, extensible agent collaboration without hardcoded logi
 ## More details
 
 For more information, check out the [Cognizant AI Lab Neuro SAN landing page](https://decisionai.ml/neuro-san).
+
+
+
+
+🪟 Windows Setup Notes — Graphviz & PyGraphviz
+This project uses pygraphviz, which depends on the Graphviz C SDK.
+On Windows, you must install Graphviz from a reliable source before installing pygraphviz.
+
+1. Environment Creation
+If you’re starting fresh:
+
+powershell
+Copy code
+conda create --prefix "G:\anaconda\anaconda3\envs\neuro-san-studio-2" python=3.12 -y
+conda activate "G:\anaconda\anaconda3\envs\neuro-san-studio-2"
+If the environment folder already exists but Conda doesn’t recognize it:
+
+powershell
+Copy code
+ren "G:\anaconda\anaconda3\envs\neuro-san-studio-2" "neuro-san-studio-2.bak"
+conda create --prefix "G:\anaconda\anaconda3\envs\neuro-san-studio-2" python=3.12 -y
+conda activate "G:\anaconda\anaconda3\envs\neuro-san-studio-2"
+2. Install Graphviz (System-Level)
+Download from: https://graphviz.org/download/
+Use the 64-bit EXE installer.
+
+During install:
+
+✅ Check "Add Graphviz to the system PATH"
+
+Default install path: C:\Program Files\Graphviz
+
+Test:
+
+powershell
+Copy code
+dot -V
+# Example output: dot - graphviz version 9.x (yyyy-mm-dd)
+3. Install pygraphviz via Conda
+powershell
+Copy code
+conda install -c conda-forge graphviz pygraphviz -y
+(This avoids compiling and works out of the box on Windows.)
+
+4. Install Project Dependencies
+After Graphviz + pygraphviz are in place:
+
+powershell
+Copy code
+pip install -r requirements.txt
+Or:
+
+powershell
+Copy code
+uv pip install -r requirements.txt
+(Make sure pygraphviz is not reinstalled via pip — Conda’s build is already working.)
+
+5. Test pygraphviz
+powershell
+Copy code
+python - << 'PY'
+import pygraphviz as pgv
+G = pgv.AGraph()
+G.add_edge("A","B")
+G.layout(prog="dot")
+G.draw("test.png")
+print("OK — test.png created")
+PY
+6. Common Pitfalls
+Mixing pip/uv & conda installs for pygraphviz → causes build failures.
+
+Missing Graphviz headers → fatal error C1083 (graphviz/cgraph.h not found).
+
+Environment not recognized by Conda → recreate with conda create --prefix ....
+
+Forgot to restart PowerShell after adding Graphviz to PATH.
