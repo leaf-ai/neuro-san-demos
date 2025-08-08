@@ -752,6 +752,10 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Replaced legacy Gemini model references with Gemini 2.5 Pro/Flash across code and docs.
 - Next: run full Docker stack to validate end-to-end flows.
 
+## Update 2025-08-10T13:30Z
+- Added real-time presentation viewer with Socket.IO command bus and timeline sync.
+- Next: expand commands for highlights and media playback.
+
 ## Update 2025-08-10T15:30Z
 - Parameterised Neo4j password in docker-compose so services stay in sync
 - Switched trial prep helper to use `NEO4J_URI` for consistency

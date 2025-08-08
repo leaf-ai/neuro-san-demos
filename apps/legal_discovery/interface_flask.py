@@ -99,6 +99,7 @@ import fitz
 from .feature_flags import FEATURE_FLAGS
 from .extensions import socketio
 from .chat_state import user_input_queue
+from . import presentation_ws  # noqa: F401
 
 # Configure logging before any other setup so early steps are captured
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
@@ -1843,6 +1844,12 @@ def export_report():
         return export_graph()
     else:
         return jsonify({"error": "Invalid type"}), 400
+
+
+@app.route("/present/<mode>/<doc_id>")
+def present(mode: str, doc_id: str):
+    """Render the document viewer for live presentations."""
+    return render_template("dashboard.html")
 
 
 @app.route("/")
