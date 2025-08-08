@@ -245,3 +245,8 @@ WE STARTED ON #3, INSTEAD OF #1. DEAL WITH IT, FINISH IMPLEMENTING #3, AND THEN 
 - Added test configuration to ensure `apps` package imports during pytest.
 - Installed missing dependencies to progress test run; remaining failures stem from absent optional packages like `weasyprint`.
 - Next: resolve outstanding dependency gaps and continue debugging failing test modules.
+
+## Update 2025-08-10T15:30Z
+- Parameterised Neo4j password in Docker Compose so app and database share credentials
+- Updated trial prep module to honour `NEO4J_URI` environment variable
+- Next: run full Docker stack to verify password overrides
