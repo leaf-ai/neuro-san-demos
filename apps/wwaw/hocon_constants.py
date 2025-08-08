@@ -1,8 +1,8 @@
 HOCON_HEADER_START = (
     "{\n"
     '    "llm_config": {\n'
-            '"class": "openai",\n'
-            '"use_model_name": "gpt-4.1-2025-04-14",\n'
+    '        "class": "openai",\n'
+    '        "use_model_name": "gpt-4.1-2025-04-14",\n'
     "    },\n"
     '"max_iterations": 40000,\n'
     '"max_execution_seconds": 6000,\n'

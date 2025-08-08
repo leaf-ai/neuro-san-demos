@@ -1,17 +1,13 @@
 from unittest.mock import Mock
+
 from build_wwaw import WebAgentNetworkBuilder
+
 
 def test_create_intermediate_agents_single_pass():
     builder = WebAgentNetworkBuilder()
     parent = "parent_agent"
     chunks = [["child1", "child2"], ["child3", "child4"]]
-    new_agents = {
-        parent: {
-            "instructions": "Parent instructions",
-            "down_chains": [],
-            "top_agent": "true"
-        }
-    }
+    new_agents = {parent: {"instructions": "Parent instructions", "down_chains": [], "top_agent": "true"}}
 
     intermediate_names = builder.create_intermediate_agents(parent, chunks, new_agents)
 
@@ -57,8 +53,7 @@ def test_process_page_single_pass():
     builder.AGENT_INSTRUCTION_PREFACE = "Agent Instructions:"
 
     new_count = builder._process_page(
-        url, parent_name, resp, visited, existing_names,
-        agents, count, to_visit, base_domain
+        url, parent_name, resp, visited, existing_names, agents, count, to_visit, base_domain
     )
 
     assert new_count == count + 1
