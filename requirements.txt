@@ -63,7 +63,7 @@ flask-sqlalchemy
 psycopg2-binary
 pyvis
 gunicorn
-more-itertools
+more_itertools
 pygraphviz
 langchain-google-genai
 google-genai
