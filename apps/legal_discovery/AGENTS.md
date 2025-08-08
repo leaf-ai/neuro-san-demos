@@ -760,3 +760,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Parameterised Neo4j password in docker-compose so services stay in sync
 - Switched trial prep helper to use `NEO4J_URI` for consistency
 - Next: spin up Docker stack and confirm password overrides apply
+
+## Update 2025-08-08T20:47Z
+- Added pause/resume control to Upload tab so large batches can be temporarily halted.
+- Next: surface upload error details and add optional cancel action.

@@ -255,3 +255,7 @@ WE STARTED ON #3, INSTEAD OF #1. DEAL WITH IT, FINISH IMPLEMENTING #3, AND THEN 
 - Parameterised Neo4j password in Docker Compose so app and database share credentials
 - Updated trial prep module to honour `NEO4J_URI` environment variable
 - Next: run full Docker stack to verify password overrides
+
+## Update 2025-08-08T20:47Z
+- Added pause/resume button to ingestion upload UI, allowing temporary halts during large batches.
+- Next: add cancel option and surface backend upload errors.

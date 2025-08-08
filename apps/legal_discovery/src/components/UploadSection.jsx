@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 function UploadSection() {
   const inputRef = React.useRef();
+  const pausedRef = React.useRef(false);
   const [tree, setTree] = useState([]);
   const [prog,setProg] = useState(0);
   const [vecProg,setVecProg] = useState(0);
@@ -9,6 +10,7 @@ function UploadSection() {
   const [current,setCurrent] = useState('');
   const [source,setSource] = useState('user');
   const [filter,setFilter] = useState('all');
+  const [paused,setPaused] = useState(false);
   const togglePrivilege = (id, privileged) => {
     const reviewer = prompt('Reviewer (optional):') || '';
     const reason = prompt('Reason (optional):') || '';
@@ -22,7 +24,12 @@ function UploadSection() {
     const files = Array.from(inputRef.current.files);
     if (!files.length) return;
     let uploaded = 0;
+    pausedRef.current = false;
+    setPaused(false);
     for (let i = 0; i < files.length; i += 10) {
+      while (pausedRef.current) {
+        await new Promise(r=>setTimeout(r,200));
+      }
       const batch = files.slice(i, i + 10);
       setCurrent(batch[0]?.name || '');
       const fd = new FormData();
@@ -46,6 +53,8 @@ function UploadSection() {
     setVecProg(0);
     setKgProg(0);
     setNeoProg(0);
+    pausedRef.current = false;
+    setPaused(false);
     fetchFiles();
     window.dispatchEvent(new Event('graphRefresh'));
   };
@@ -55,6 +64,10 @@ function UploadSection() {
   const exportAll = () => { window.open('/api/export', '_blank'); };
   const organize = () => {
     fetch('/api/organized-files').then(r=>r.json()).then(d=>setTree(d.data||[]));
+  };
+  const togglePause = () => {
+    pausedRef.current = !pausedRef.current;
+    setPaused(pausedRef.current);
   };
   useEffect(fetchFiles, []);
   const sourceClass = s => ({
@@ -114,6 +127,12 @@ function UploadSection() {
         <button className="button-primary" onClick={upload}><i className="fa fa-upload mr-1"></i>Upload</button>
         <button className="button-secondary" onClick={exportAll}><i className="fa fa-file-export mr-1"></i>Export All</button>
         <button className="button-secondary" onClick={organize}><i className="fa fa-folder-tree mr-1"></i>Organize</button>
+        {prog>0 && (
+          <button className="button-secondary" onClick={togglePause}>
+            <i className={`fa fa-${paused?'play':'pause'} mr-1`}></i>
+            {paused ? 'Resume' : 'Pause'}
+          </button>
+        )}
       </div>
       {prog>0 && (
         <>
