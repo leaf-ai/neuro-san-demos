@@ -9,8 +9,8 @@
 #
 from typing import Any
 from typing import Dict
-from typing import Union
 from typing import List
+from typing import Union
 
 from neuro_san.interfaces.coded_tool import CodedTool
 
@@ -98,7 +98,7 @@ class ManageEval(CodedTool):
         print(f"{tool_name} response: ", tool_response)
         print(f"========== Done with {tool_name} ==========")
         return tool_response
-    
+
     @staticmethod
     def is_valid_number(value: Union[str, int, float, None]) -> bool:
         """Checks if a given entity in the lsit is a valid number
@@ -127,10 +127,10 @@ class ManageEval(CodedTool):
             list_of_scores = [list_of_scores]
 
         numeric_values = [float(v) for v in list_of_scores if ManageEval.is_valid_number(v)]
-        
+
         if not numeric_values:
             return 0.0
-        
+
         return sum(numeric_values) / len(numeric_values)
 
     async def async_invoke(self, args: Dict[str, Any], sly_data: Dict[str, Any]) -> Union[Dict[str, Any], str]:

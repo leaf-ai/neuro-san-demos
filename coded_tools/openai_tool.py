@@ -1,4 +1,3 @@
-
 # Copyright (C) 2023-2025 Cognizant Digital Business, Evolutionary AI.
 # All Rights Reserved.
 # Issued under the Academic Public License.
@@ -44,7 +43,7 @@ class OpenAITool:
         query: str,
         builtin_tool: str,
         openai_model: str | None = DEFAULT_OPENAI_MODEL,
-        **additional_kwargs: dict[str, Any]
+        **additional_kwargs: dict[str, Any],
     ) -> list[dict[str, Any]] | str:
         """
         :param query: Request from the user prompt.

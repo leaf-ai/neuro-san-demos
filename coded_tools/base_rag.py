@@ -9,6 +9,7 @@
 #
 # END COPYRIGHT
 
+import logging
 import os
 import re
 from abc import ABC
@@ -16,7 +17,6 @@ from abc import abstractmethod
 from typing import Any
 from typing import List
 from typing import Optional
-import logging
 
 from langchain_community.vectorstores import InMemoryVectorStore
 from langchain_core.documents import Document
@@ -88,7 +88,9 @@ class BaseRag(ABC):
         # If vector store file path is provided (abs_vector_store_path is not None), try to load vector store first.
         if self.abs_vector_store_path:
             try:
-                vectorstore: VectorStore = InMemoryVectorStore.load(path=self.abs_vector_store_path, embedding=OpenAIEmbeddings())
+                vectorstore: VectorStore = InMemoryVectorStore.load(
+                    path=self.abs_vector_store_path, embedding=OpenAIEmbeddings()
+                )
                 logger.info("Loaded vector store from: %s", self.abs_vector_store_path)
                 return vectorstore
             except FileNotFoundError:

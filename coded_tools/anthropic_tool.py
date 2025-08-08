@@ -1,4 +1,3 @@
-
 # Copyright (C) 2023-2025 Cognizant Digital Business, Evolutionary AI.
 # All Rights Reserved.
 # Issued under the Academic Public License.
@@ -13,9 +12,9 @@
 import logging
 from typing import Any
 
-from langchain_core.messages import AIMessage
-from langchain_anthropic import ChatAnthropic
 from anthropic import AnthropicError
+from langchain_anthropic import ChatAnthropic
+from langchain_core.messages import AIMessage
 
 DEFAULT_ANTHROPIC_MODEL = "claude-3-7-sonnet-20250219"
 
@@ -43,7 +42,7 @@ class AnthropicTool:
         tool_name: str,
         anthropic_model: str | None = DEFAULT_ANTHROPIC_MODEL,
         betas: list[str] | None = None,
-        **additional_kwargs: dict[str, Any]
+        **additional_kwargs: dict[str, Any],
     ) -> list[dict[str, Any]] | str:
         """
         :param query: Request from the user prompt.
@@ -81,10 +80,7 @@ class AnthropicTool:
             # Invoke with the provided query and tool,
             # "tool_choice" is set to {"type": "any"} to force the model to use tool.
             result: AIMessage = await anthropic_llm.ainvoke(
-                query,
-                betas=betas,
-                tools=[tool],
-                tool_choice={"type": "any"}
+                query, betas=betas, tools=[tool], tool_choice={"type": "any"}
             )
             content: list[dict[str, Any]] = result.content
             AnthropicTool.logger.info("Result from Anthropic Tool: %s", content)

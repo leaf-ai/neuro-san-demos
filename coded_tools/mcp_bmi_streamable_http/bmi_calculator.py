@@ -20,7 +20,7 @@ from neuro_san.interfaces.coded_tool import CodedTool
 
 class BmiCalculator(CodedTool):
     """
-    CodedTool implementation which calculate BMI using a tool from mcp server
+    CodedTool implementation which calculates BMI using a tool from mcp server
     """
 
     async def async_invoke(self, args: Dict[str, Any], sly_data: Dict[str, Any]) -> float:
@@ -64,7 +64,7 @@ class BmiCalculator(CodedTool):
                 # This key only used as a reference here and may be different
                 # from the actual name in mcp server.
                 "bmi": {
-                    # streamable_http is prefered over stdio as transport method.
+                    # streamable_http is preferred over stdio as transport method.
                     # make sure the port here matches the one in your server.
                     "url": "http://localhost:8000/mcp/",
                     "transport": "streamable_http",

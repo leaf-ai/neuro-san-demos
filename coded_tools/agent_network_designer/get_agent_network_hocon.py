@@ -20,18 +20,18 @@ OUTPUT_PATH = "registries/"
 AGENT_NETWORK_NAME = "AutomaticallyDesignedAgentNetwork"
 HOCON_HEADER_START = (
     "{\n"
-    '# Importing content from other HOCON files\n'
-    '# The include keyword must be unquoted and followed by a quoted URL or file path.\n'
+    "# Importing content from other HOCON files\n"
+    "# The include keyword must be unquoted and followed by a quoted URL or file path.\n"
     "# File paths should be absolute or relative to the script's working directory, not the HOCON file location.\n"
     '# This "aaosa.hocon" file contains key-value pairs used for substitution.\n'
-    '# Specifically, it provides values for the following keys:\n'
-    '#   - aaosa_call\n'
-    '#   - aaosa_command\n'
-    '#   - aaosa_instructions\n'
-    '# IMPORTANT:\n'
-    '# Ensure that you run `python -m run` from the top level of the repository.\n'
-    '# The path to this substitution file is **relative to the top-level directory**,\n'
-    '# so running the script from elsewhere may result in file not found errors.\n'
+    "# Specifically, it provides values for the following keys:\n"
+    "#   - aaosa_call\n"
+    "#   - aaosa_command\n"
+    "#   - aaosa_instructions\n"
+    "# IMPORTANT:\n"
+    "# Ensure that you run `python -m run` from the top level of the repository.\n"
+    "# The path to this substitution file is **relative to the top-level directory**,\n"
+    "# so running the script from elsewhere may result in file not found errors.\n"
     'include "registries/aaosa.hocon"\n'
     '    "llm_config": {\n'
     '        "model_name": "gpt-4o",\n'

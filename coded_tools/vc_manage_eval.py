@@ -9,8 +9,8 @@
 #
 from typing import Any
 from typing import Dict
-from typing import Union
 from typing import List
+from typing import Union
 
 from neuro_san.interfaces.coded_tool import CodedTool
 
@@ -22,10 +22,7 @@ class ManageEval(CodedTool):
     """
 
     def __init__(self):
-        self.eval_data: Dict[str, Any] = {
-            "score": None,
-            "brief_description": None
-        }
+        self.eval_data: Dict[str, Any] = {"score": None, "brief_description": None}
 
     def invoke(self, args: Dict[str, Any], sly_data: Dict[str, Any]) -> Union[Dict[str, Any], str]:
         """
@@ -65,7 +62,7 @@ class ManageEval(CodedTool):
         # Update the evaluation scores from the supplied scores
         if args is not None:
             score = ManageEval.compute_average(args.get("score"))
-            score = None if score>100 else score
+            score = None if score > 100 else score
             updated_evaluation["score"] = score
             updated_evaluation["brief_description"] = args.get("brief_description")
 
@@ -77,7 +74,7 @@ class ManageEval(CodedTool):
         print(f"{tool_name} response: ", tool_response)
         print(f"========== Done with {tool_name} ==========")
         return tool_response
-    
+
     @staticmethod
     def is_valid_number(value: Union[str, int, float, None]) -> bool:
         """Checks if a given entity in the lsit is a valid number
@@ -106,10 +103,10 @@ class ManageEval(CodedTool):
             list_of_scores = [list_of_scores]
 
         numeric_values = [float(v) for v in list_of_scores if ManageEval.is_valid_number(v)]
-        
+
         if not numeric_values:
             return 0.0
-        
+
         return sum(numeric_values) / len(numeric_values)
 
     async def async_invoke(self, args: Dict[str, Any], sly_data: Dict[str, Any]) -> Union[Dict[str, Any], str]:

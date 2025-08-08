@@ -83,21 +83,13 @@ class SendGmailHoconHtml(CodedTool):
                 return "Error: No valid attachments file path found and no agent_name provided in the sly data."
             hocon_file = f"registries/{agent_name}.hocon"
             html_file = f"{agent_name}.html"
-            attachment_paths = [
-                path for path in [hocon_file, html_file] if os.path.isfile(path)
-            ]
+            attachment_paths = [path for path in [hocon_file, html_file] if os.path.isfile(path)]
 
         # Send the email
         email = GmailAttachment()
 
         return email.gmail_send_message_with_attachment(
-            to=to,
-            attachment_paths=attachment_paths,
-            cc=cc,
-            bcc=bcc,
-            subject=subject,
-            message=message,
-            html=html
+            to=to, attachment_paths=attachment_paths, cc=cc, bcc=bcc, subject=subject, message=message, html=html
         )
 
     async def async_invoke(self, args: Dict[str, Any], sly_data: Dict[str, Any]) -> str:

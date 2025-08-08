@@ -1,4 +1,3 @@
-
 # Copyright (C) 2023-2025 Cognizant Digital Business, Evolutionary AI.
 # All Rights Reserved.
 # Issued under the Academic Public License.
@@ -11,6 +10,7 @@
 # END COPYRIGHT
 
 from typing import Any
+
 from neuro_san.interfaces.coded_tool import CodedTool
 
 from coded_tools.openai_tool import OpenAITool

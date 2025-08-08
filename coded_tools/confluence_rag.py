@@ -12,19 +12,18 @@
 # END COPYRIGHT
 
 import inspect
+import logging
 import os
 from typing import Any
 from typing import Dict
 from typing import List
-import logging
 
 # pylint: disable=import-error
 from atlassian.errors import ApiPermissionError
 from langchain_community.document_loaders.confluence import ConfluenceLoader
 from langchain_core.documents import Document
-from requests.exceptions import HTTPError
-
 from neuro_san.interfaces.coded_tool import CodedTool
+from requests.exceptions import HTTPError
 
 from .base_rag import BaseRag
 
@@ -85,8 +84,7 @@ class ConfluenceRag(CodedTool, BaseRag):
         if not loader_args.get("url"):
             logger.error("Missing required input: 'url'")
             return (
-                "❌ Missing required input: 'url'.\n"
-                "This should look like: https://your-domain.atlassian.net/wiki/"
+                "❌ Missing required input: 'url'.\n" "This should look like: https://your-domain.atlassian.net/wiki/"
             )
         if not loader_args.get("space_key") and not loader_args.get("page_ids"):
             logger.error("Missing both 'space_key' and 'page_ids'")
@@ -106,9 +104,7 @@ class ConfluenceRag(CodedTool, BaseRag):
         self.configure_vector_store_path(args.get("vector_store_path"))
 
         # Prepare the vector store
-        vectorstore = await self.generate_vector_store(
-            loader_args=loader_args
-        )
+        vectorstore = await self.generate_vector_store(loader_args=loader_args)
 
         # Run the query against the vector store
         return await self.query_vectorstore(vectorstore, query)
@@ -133,4 +129,3 @@ class ConfluenceRag(CodedTool, BaseRag):
             logger.error("API Permission error while loading from %s: %s", url, api_error)
 
         return docs
-    
