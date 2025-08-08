@@ -6,14 +6,14 @@ services:
       context: .
       dockerfile: apps/legal_discovery/Dockerfile
     ports:
-      - "8080:5001"
+      - "8080:5001"   # keep using http://localhost:8080
     environment:
       - DATABASE_URL=postgresql+psycopg2://postgres:postgres@postgres:5432/legal_discovery
       - CHROMA_HOST=chromadb
       - CHROMA_PORT=8000
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_USER=neo4j
-      - NEO4J_PASSWORD=neo4jPass123
+      - NEO4J_PASSWORD=dAUypMUkdIYM8ikq72iHqXqCgvb7WojrLtszvDQa4Uo
     depends_on:
       postgres:
         condition: service_started
@@ -43,14 +43,16 @@ services:
       - "7474:7474"
       - "7687:7687"
     environment:
-      - NEO4J_AUTH=neo4j/neo4jPass123
+      - NEO4J_AUTH=neo4j/dAUypMUkdIYM8ikq72iHqXqCgvb7WojrLtszvDQa4Uo
     volumes:
       - /mnt/e/docker_volumes/neo4j/data:/data
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:7474"]
+      # Ensure Bolt is up AND auth works
+      test: ["CMD-SHELL", "cypher-shell -a bolt://localhost:7687 -u neo4j -p dAUypMUkdIYM8ikq72iHqXqCgvb7WojrLtszvDQa4Uo \"RETURN 1\" | grep -q 1"]
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 20
+      start_period: 25s
     restart: unless-stopped
 
   chromadb:
@@ -69,10 +71,4 @@ services:
         condition: service_started
     volumes:
       - /mnt/e/docker_volumes/chroma:/chroma_data
-    restart: unless-stopped
-
-  tesseract:
-    image: tesseractshadow/tesseract4re
-    ports:
-      - "5000:5000"
     restart: unless-stopped
