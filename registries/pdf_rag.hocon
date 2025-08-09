@@ -61,11 +61,31 @@
 
                 # --- Optional Arguments ---
 
-                # Set to true to save the generated vector store as a JSON file
+                # Vector store type to use for RAG. Options are "in_memory" and "postgres". Default to "in_memory".
+                #
+                # To run PostgreSQL:
+                #   docker run --name pgvector-container -e POSTGRES_USER=<user> -e POSTGRES_PASSWORD=<password> -e POSTGRES_DB=<db_name> -p 6024:5432 -d pgvector/pgvector:pg16
+                #
+                # This command:
+                #   - Starts a PostgreSQL 16 server with the pgvector extension preinstalled.
+                #   - Creates a database named <db_name> and a user with the given credentials.
+                #   - Maps port 6024 on your machine to port 5432 in the container.
+                #   - Runs in detached mode (-d) so it continues running in the background.
+                #
+                # Prerequisites:
+                #   - Install Docker: https://www.docker.com/get-started/
+                #   - Install Python package: pip install langchain-postgres
+                #   - Set environment variables: POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DB
+                "vector_store_type": "in-memory",
+
+                # Table name for postgres. If the table exists, create a vector store from the table instead of documents. Default to "vectorstore"
+                "table_name": "vectorstore",
+
+                # Set to true to save the generated vector store as a JSON file. Only valid for in-memory vector store.
                 "save_vector_store": true,
 
                 # Directory to save and load the vector store (use absolute path or path relative to "neuro-san-studio/coded_tools/pdf_rag/")
-                # Must be ".json"
+                # Must be ".json". Only valid for in-memory vector store.
                 "vector_store_path": "vector_store.json"
             }
         },

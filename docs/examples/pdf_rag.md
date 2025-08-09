@@ -10,6 +10,25 @@ The **PDF RAG Assistant** answers user queries using Retrieval-Augmented Generat
 
 ---
 
+## Prerequisites for PostgreSQL Vector Store
+
+* Install Docker: https://www.docker.com/get-started/
+* Install Python package:
+
+    ```bash
+    pip install langchain-postgres
+    ```
+
+* Set environment variables: `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`
+* Run docker container:
+
+    ```bash
+    docker run --name pgvector-container -e POSTGRES_USER=<user> -e POSTGRES_PASSWORD=<password> -e POSTGRES_DB=<db_name> -p 6024:5432 -d pgvector/pgvector:pg16
+    ```
+    
+    This starts and run a PostgreSQL container in the backgroud and maps port 6024 on your machine to port 5432 in the container.
+
+---
 ## Example Conversation
 
 ### Human
@@ -23,8 +42,8 @@ what is the Evaluation Criteria in the rfp?
 ```text
 The evaluation criteria in the RFP are as follows:
 
-    1. Any award made pursuant to this RFP will be based upon the proposal with appropriate information contained in the
-    RFP.
+    1. Any award made pursuant to this RFP will be based upon the proposal with appropriate information contained in
+    the RFP.
     2. Vendors must address all matters raised in the RFP.
     3. Statements made about the performance and specifications of the proposed solution will be considered.
     4. Consideration is given to operational, technical, cost, and management requirements.
@@ -46,7 +65,7 @@ in the RFP.
 
 ### Tool: `rag_retriever`
 
-* Loads PDFs, builds an in-memory vector store, and answers questions based on content.
+* Loads PDFs, builds an in-memory or postgres vector store, and answers questions based on content.
 * Useful when information is embedded in static documents.
 
 #### User-Defined Arguments
@@ -57,8 +76,12 @@ in the RFP.
 
 ##### Optional
 
-* `save_vector_store` (bool): Save the vector store to a JSON file.
-* `vector_store_path`(str): Path to save/load the vector store (absolute or relative to `neuro-san-studio/coded_tools/pdf_rag/`).
+* `vector_store_type (str)`: `in-memory` or `postgres`. Default to `in_memory`.
+* `table_name (str)`: Table name for postgres. If the table exists, create a vector store from
+the table instead of documents. Default to `vectorstore`
+* `save_vector_store` (bool): Save the vector store to a JSON file. For in-memory vector store only.
+* `vector_store_path`(str): Path to save/load the vector store
+(absolute or relative to `neuro-san-studio/coded_tools/pdf_rag/`). For in-memory vector store only
 
 ---
 

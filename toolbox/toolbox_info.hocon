@@ -191,6 +191,15 @@
     },
         
     # ---------- RAG Tools ----------
+    #
+    # Supported Vector Store: In-Memory and PostgreSQL vector stores
+    #
+    # Prerequisites for PostgreSQL:
+    #   - Install Docker: https://www.docker.com/get-started/
+    #   - Install Python package: pip install langchain-postgres
+    #   - Set environment variables: POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DB
+    #   - Run: docker run --name pgvector-container -e POSTGRES_USER=<user> -e POSTGRES_PASSWORD=<password> -e POSTGRES_DB=<db_name> -p 6024:5432 -d pgvector/pgvector:pg16
+
 
     # To use this tool, start by installing the required package:
     #     pip install atlassian-python-api
