@@ -693,115 +693,116 @@ def ingest_document(
     chroma_metadata: dict,
 ) -> None:
     """Extract, vectorize, and relate a document in the background."""
-    processor = DocumentProcessor()
-    text = processor.extract_text(original_path) or ""
-    detector = PrivilegeDetector()
-    privileged, spans = detector.detect(text)
-    app.logger.info(
-        "privilege detection",
-        extra={"doc_id": doc_id, "privileged": privileged, "spans": [(s.start, s.end) for s in spans]},
-    )
-    doc = Document.query.get(doc_id)
-    if privileged:
-        keywords = [text[s.start : s.end] for s in spans]
-        if original_path.lower().endswith(".pdf"):
-            detector.redact_pdf(original_path, redacted_path, keywords)
-            redacted_text = processor.extract_text(redacted_path) or ""
-        else:
-            redacted_text = detector.redact_text(text, spans)
-            with open(redacted_path, "w", encoding="utf-8") as f:
-                f.write(redacted_text)
-        doc.is_privileged = True
-        doc.is_redacted = True
-        doc.needs_review = True
-        for s in spans:
-            db.session.add(
-                RedactionLog(
-                    document_id=doc_id,
-                    start=s.start,
-                    end=s.end,
-                    label=s.label,
-                    reason=(f"{s.text} (score={s.score:.2f})" if s.score is not None else s.text),
+    with app.app_context():
+        processor = DocumentProcessor()
+        text = processor.extract_text(original_path) or ""
+        detector = PrivilegeDetector()
+        privileged, spans = detector.detect(text)
+        app.logger.info(
+            "privilege detection",
+            extra={"doc_id": doc_id, "privileged": privileged, "spans": [(s.start, s.end) for s in spans]},
+        )
+        doc = Document.query.get(doc_id)
+        if privileged:
+            keywords = [text[s.start : s.end] for s in spans]
+            if original_path.lower().endswith(".pdf"):
+                detector.redact_pdf(original_path, redacted_path, keywords)
+                redacted_text = processor.extract_text(redacted_path) or ""
+            else:
+                redacted_text = detector.redact_text(text, spans)
+                with open(redacted_path, "w", encoding="utf-8") as f:
+                    f.write(redacted_text)
+            doc.is_privileged = True
+            doc.is_redacted = True
+            doc.needs_review = True
+            for s in spans:
+                db.session.add(
+                    RedactionLog(
+                        document_id=doc_id,
+                        start=s.start,
+                        end=s.end,
+                        label=s.label,
+                        reason=(f"{s.text} (score={s.score:.2f})" if s.score is not None else s.text),
+                    )
                 )
+            db.session.commit()
+            log_event(
+                doc_id,
+                ChainEventType.REDACTED,
+                metadata={"spans": [(s.start, s.end) for s in spans]},
+                source_team="legal_discovery",
             )
+        else:
+            shutil.copy(original_path, redacted_path)
+            redacted_text = text
+            doc.is_privileged = False
+            doc.is_redacted = False
+            doc.needs_review = False
+            db.session.commit()
+
+        scorer = DocumentScorer()
+        scores = scorer.score(redacted_text)
+        doc.probative_value = scores["probative_value"]
+        doc.admissibility_risk = scores["admissibility_risk"]
+        doc.narrative_alignment = scores["narrative_alignment"]
+        doc.score_confidence = scores["score_confidence"]
+        db.session.add(DocumentMetadata(document_id=doc_id, schema="evidence_scorecard", data=scores))
+        try:
+            sanctions = SanctionsRiskAnalyzer().assess(redacted_text, scorecard=scores)
+            db.session.add(DocumentMetadata(document_id=doc_id, schema="sanctions_risk", data=sanctions))
+        except Exception:
+            pass
         db.session.commit()
+
+        VectorDatabaseManager().add_documents([redacted_text], [chroma_metadata], [str(doc_id)])
+        kg = KnowledgeGraphManager()
+        result = kg.run_query("MERGE (c:Case {id: $id}) RETURN id(c) as cid", {"id": case_id})
+        case_node = result[0]["cid"] if result else None
+        doc_node = kg.create_node("Document", full_metadata)
+        if case_node:
+            kg.create_relationship(case_node, doc_node, "HAS_DOCUMENT")
+
+        extractor = FactExtractor()
+        ontology = OntologyLoader().load()
+        for fact in extractor.extract(redacted_text):
+            fact_row = Fact(
+                case_id=case_id,
+                document_id=doc_id,
+                text=fact["text"],
+                parties=fact["parties"],
+                dates=fact["dates"],
+                actions=fact["actions"],
+            )
+            db.session.add(fact_row)
+            matches = match_elements(fact["text"], ontology)
+            if matches:
+                cause_name, element_name = matches[0]
+                element_row = (
+                    Element.query.join(CauseOfAction)
+                    .filter(
+                        CauseOfAction.name == cause_name,
+                        Element.name == element_name,
+                    )
+                    .first()
+                )
+                if element_row:
+                    fact_row.element_id = element_row.id
+            fact_id = None
+            if case_node or doc_node:
+                fact_id = kg.add_fact(case_node, doc_node, fact)
+            if fact_id is not None:
+                for cause, element in matches:
+                    kg.link_fact_to_element(fact_id, cause, element)
+                for cause, element, weight in match_elements(fact["text"], ontology):
+                    kg.link_fact_to_element(fact_id, cause, element, weight)
+
+        kg.close()
         log_event(
             doc_id,
-            ChainEventType.REDACTED,
-            metadata={"spans": [(s.start, s.end) for s in spans]},
+            ChainEventType.INGESTED,
+            metadata={"path": redacted_path},
             source_team="legal_discovery",
         )
-    else:
-        shutil.copy(original_path, redacted_path)
-        redacted_text = text
-        doc.is_privileged = False
-        doc.is_redacted = False
-        doc.needs_review = False
-        db.session.commit()
-
-    scorer = DocumentScorer()
-    scores = scorer.score(redacted_text)
-    doc.probative_value = scores["probative_value"]
-    doc.admissibility_risk = scores["admissibility_risk"]
-    doc.narrative_alignment = scores["narrative_alignment"]
-    doc.score_confidence = scores["score_confidence"]
-    db.session.add(DocumentMetadata(document_id=doc_id, schema="evidence_scorecard", data=scores))
-    try:
-        sanctions = SanctionsRiskAnalyzer().assess(redacted_text, scorecard=scores)
-        db.session.add(DocumentMetadata(document_id=doc_id, schema="sanctions_risk", data=sanctions))
-    except Exception:
-        pass
-    db.session.commit()
-
-    VectorDatabaseManager().add_documents([redacted_text], [chroma_metadata], [str(doc_id)])
-    kg = KnowledgeGraphManager()
-    result = kg.run_query("MERGE (c:Case {id: $id}) RETURN id(c) as cid", {"id": case_id})
-    case_node = result[0]["cid"] if result else None
-    doc_node = kg.create_node("Document", full_metadata)
-    if case_node:
-        kg.create_relationship(case_node, doc_node, "HAS_DOCUMENT")
-
-    extractor = FactExtractor()
-    ontology = OntologyLoader().load()
-    for fact in extractor.extract(redacted_text):
-        fact_row = Fact(
-            case_id=case_id,
-            document_id=doc_id,
-            text=fact["text"],
-            parties=fact["parties"],
-            dates=fact["dates"],
-            actions=fact["actions"],
-        )
-        db.session.add(fact_row)
-        matches = match_elements(fact["text"], ontology)
-        if matches:
-            cause_name, element_name = matches[0]
-            element_row = (
-                Element.query.join(CauseOfAction)
-                .filter(
-                    CauseOfAction.name == cause_name,
-                    Element.name == element_name,
-                )
-                .first()
-            )
-            if element_row:
-                fact_row.element_id = element_row.id
-        fact_id = None
-        if case_node or doc_node:
-            fact_id = kg.add_fact(case_node, doc_node, fact)
-        if fact_id is not None:
-            for cause, element in matches:
-                kg.link_fact_to_element(fact_id, cause, element)
-            for cause, element, weight in match_elements(fact["text"], ontology):
-                kg.link_fact_to_element(fact_id, cause, element, weight)
-
-    kg.close()
-    log_event(
-        doc_id,
-        ChainEventType.INGESTED,
-        metadata={"path": redacted_path},
-        source_team="legal_discovery",
-    )
 
 
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
@@ -948,10 +949,7 @@ def upload_files():
             db.session.rollback()
             app.logger.error("Batch commit failed: %s", exc)
 
-        try:
-            VectorDatabaseManager().client.persist()
-        except Exception:  # pragma: no cover - best effort
-            app.logger.warning("Vector DB persist failed")
+        VectorDatabaseManager().persist()
 
         if batch_processed:
             reinitialize_legal_discovery_session()
@@ -1046,11 +1044,7 @@ def export_narrative_discrepancies():
             f"<tr><td>{r.conflicting_claim}</td><td>{r.evidence_excerpt}</td><td>{r.confidence:.2f}</td></tr>"
             for r in records
         ]
-        html = (
-            "<table><tr><th>Claim</th><th>Evidence</th><th>Confidence</th></tr>"
-            + "".join(rows)
-            + "</table>"
-        )
+        html = "<table><tr><th>Claim</th><th>Evidence</th><th>Confidence</th></tr>" + "".join(rows) + "</table>"
         pdf = HTML(string=html).write_pdf()
         return send_file(
             BytesIO(pdf),
@@ -1185,11 +1179,7 @@ def document_versions():
     doc = Document.query.filter_by(file_path=file_path).first()
     if doc is None:
         return jsonify({"error": "Document not found"}), 404
-    versions = (
-        DocumentVersion.query.filter_by(document_id=doc.id)
-        .order_by(DocumentVersion.timestamp)
-        .all()
-    )
+    versions = DocumentVersion.query.filter_by(document_id=doc.id).order_by(DocumentVersion.timestamp).all()
     results = []
     for v in versions:
         user = Agent.query.get(v.user_id) if v.user_id else None
@@ -1206,6 +1196,7 @@ def document_versions():
 
 from flask import request, jsonify
 import difflib
+
 
 @app.route("/api/document/versions/diff")
 def document_versions_diff():
@@ -1231,11 +1222,10 @@ def document_versions_diff():
         text2.splitlines(),
         fromfile=v1.bates_number or "version_1",
         tofile=v2.bates_number or "version_2",
-        lineterm=""
+        lineterm="",
     )
 
     return jsonify({"diff": "\n".join(diff_lines)})
-
 
 
 @app.route("/api/bates/stamp", methods=["POST"])
@@ -1295,11 +1285,7 @@ def bates_stamp():
 @app.route("/api/document/<int:doc_id>/versions", methods=["GET"])
 def get_document_versions(doc_id: int):
     """Return version history for a document."""
-    versions = (
-        DocumentVersion.query.filter_by(document_id=doc_id)
-        .order_by(DocumentVersion.version_number)
-        .all()
-    )
+    versions = DocumentVersion.query.filter_by(document_id=doc_id).order_by(DocumentVersion.version_number).all()
     return jsonify(
         {
             "versions": [
@@ -1328,12 +1314,8 @@ def diff_document_versions(doc_id: int):
         to_v = int(request.args.get("to"))
     except (TypeError, ValueError):
         return jsonify({"error": "from and to parameters required"}), 400
-    v1 = DocumentVersion.query.filter_by(
-        document_id=doc_id, version_number=from_v
-    ).first_or_404()
-    v2 = DocumentVersion.query.filter_by(
-        document_id=doc_id, version_number=to_v
-    ).first_or_404()
+    v1 = DocumentVersion.query.filter_by(document_id=doc_id, version_number=from_v).first_or_404()
+    v2 = DocumentVersion.query.filter_by(document_id=doc_id, version_number=to_v).first_or_404()
     text1 = _extract_text(v1.file_path)
     text2 = _extract_text(v2.file_path)
     diff = "".join(
@@ -1828,10 +1810,6 @@ def research():
     tool = ResearchTools()
     results = tool.search(query, source) if query else []
     return jsonify({"status": "ok", "data": results})
-
-
-
-
 
 
 @app.route("/api/export/report", methods=["POST"])

@@ -775,3 +775,11 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added unit test for counter objection detection.
 - Next: refine recognition accuracy and extend rule coverage.
 
+## Update 2025-08-10T16:00Z
+- Wrapped `ingest_document` in Flask app context so background ingestion can access the database safely.
+- Next: monitor vector DB persistence and ensure batch uploads commit without warnings.
+
+## Update 2025-08-10T17:00Z
+- Added `persist` helper on `VectorDatabaseManager` and call it after batch commits to log detailed errors.
+- Next: verify Chroma service accepts persistence calls without warnings.
+

@@ -17,6 +17,16 @@ class VectorDatabaseManager(CodedTool):
         self.msg_collection = self.client.get_or_create_collection("chat_messages")
         self.convo_collection = self.client.get_or_create_collection("conversations")
 
+    def persist(self) -> None:
+        """Persist pending changes to the backing store."""
+        try:
+            self.client.persist()
+            logging.info("Vector DB persisted")
+        except AttributeError:
+            logging.info("Vector client does not support explicit persistence")
+        except Exception as exc:  # pragma: no cover - best effort
+            logging.warning("Vector DB persist failed: %s", exc)
+
     def add_documents(
         self,
         documents: list[str],
@@ -94,13 +104,9 @@ class VectorDatabaseManager(CodedTool):
                     embeddings=safe_embeddings,
                 )
             else:
-                self.collection.add(
-                    documents=safe_docs, metadatas=safe_metadatas, ids=safe_ids
-                )
+                self.collection.add(documents=safe_docs, metadatas=safe_metadatas, ids=safe_ids)
         except ValueError as exc:
-            logging.warning(
-                "Vector add failed (%s); retrying with placeholder metadata", exc
-            )
+            logging.warning("Vector add failed (%s); retrying with placeholder metadata", exc)
             fallback = [{"source": "unknown", "id": i} for i in safe_ids]
             if embeddings:
                 self.collection.add(
@@ -110,9 +116,7 @@ class VectorDatabaseManager(CodedTool):
                     embeddings=safe_embeddings,
                 )
             else:
-                self.collection.add(
-                    documents=safe_docs, metadatas=fallback, ids=safe_ids
-                )
+                self.collection.add(documents=safe_docs, metadatas=fallback, ids=safe_ids)
 
     def query(self, query_texts: list[str], n_results: int = 10, where: dict | None = None) -> dict:
         """
@@ -123,9 +127,7 @@ class VectorDatabaseManager(CodedTool):
         :param where: Optional metadata filter.
         :return: A dictionary containing the query results.
         """
-        return self.collection.query(
-            query_texts=query_texts, n_results=n_results, where=where
-        )
+        return self.collection.query(query_texts=query_texts, n_results=n_results, where=where)
 
     def get_document_count(self) -> int:
         """
@@ -198,14 +200,8 @@ class VectorDatabaseManager(CodedTool):
         where: dict | None = None,
     ) -> dict:
         """Query stored chat messages."""
-        return self.msg_collection.query(
-            query_texts=query_texts, n_results=n_results, where=where
-        )
+        return self.msg_collection.query(query_texts=query_texts, n_results=n_results, where=where)
 
-    def query_conversations(
-        self, query_texts: list[str], n_results: int = 10, where: dict | None = None
-    ) -> dict:
+    def query_conversations(self, query_texts: list[str], n_results: int = 10, where: dict | None = None) -> dict:
         """Query stored conversation summaries."""
-        return self.convo_collection.query(
-            query_texts=query_texts, n_results=n_results, where=where
-        )
+        return self.convo_collection.query(query_texts=query_texts, n_results=n_results, where=where)
