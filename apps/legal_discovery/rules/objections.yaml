@@ -1,0 +1,58 @@
+versions: ["FRE-2024", "CA-Evid-2024"]
+objections:
+  hearsay:
+    patterns:
+      transcript_regex:
+        - "\\b(objection)\\b.*\\bhearsay\\b"
+        - "\\bhearsay\\b"
+    cures:
+      - key: exception_present_sense
+        label: "Exception: Present Sense Impression"
+        steps:
+          - "Establish timing: 'You heard this as it happened?'"
+          - "Confirm perception: 'You personally perceived it?'"
+        auto_links:
+          rules: ["FRE 803(1)"]
+      - key: admission_party_opponent
+        label: "Opposing Party Admission"
+        steps:
+          - "Identify speaker as adverse party or agent"
+          - "Establish relationship and scope"
+        auto_links:
+          rules: ["FRE 801(d)(2)"]
+  foundation:
+    patterns:
+      transcript_regex:
+        - "\\b(lack of foundation|no foundation)\\b"
+    cures:
+      - key: lay_witness_foundation
+        label: "Lay Witness Foundation"
+        steps:
+          - "Role and position"
+          - "Opportunity to observe"
+          - "Method of knowledge"
+      - key: authenticate_document
+        label: "Authenticate Document"
+        steps:
+          - "Identify document and custodian"
+          - "Explain creation method"
+        auto_links:
+          rules: ["FRE 901"]
+  relevance:
+    patterns:
+      transcript_regex:
+        - "\\b(objection)\\b.*\\brelevance\\b"
+        - "\\birrelevant\\b"
+    cures:
+      - key: narrow_scope
+        label: "Narrow the Scope"
+        steps:
+          - "Clarify time or subject"
+          - "Connect to material fact"
+      - key: probative_vs_prejudice
+        label: "Explain Probative Value"
+        steps:
+          - "State why evidence matters"
+          - "Address prejudice explicitly"
+        auto_links:
+          rules: ["FRE 403"]

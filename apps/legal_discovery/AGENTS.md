@@ -764,3 +764,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-08T20:47Z
 - Added pause/resume control to Upload tab so large batches can be temporarily halted.
 - Next: surface upload error details and add optional cancel action.
+
+## Update 2025-08-09T07:34Z
+- Added trial assistant scaffold with objection detection engine and frontend components.
+- Next: integrate audio streaming and broaden objection rule set.
+

@@ -90,6 +90,7 @@ from coded_tools.legal_discovery.bates_numbering import (
 from .exhibit_routes import exhibits_bp
 from .trial_prep_routes import trial_prep_bp
 from .chain_logger import ChainEventType, log_event
+from .trial_assistant import bp as trial_assistant_bp  # noqa: E402
 from coded_tools.legal_discovery.bates_numbering import (
     BatesNumberingService,
     stamp_pdf,
@@ -141,6 +142,7 @@ db.init_app(app)
 socketio.init_app(app)
 app.register_blueprint(exhibits_bp)
 app.register_blueprint(trial_prep_bp)
+app.register_blueprint(trial_assistant_bp)
 if FEATURE_FLAGS.get("theories"):
     from .theory_routes import theories_bp
 
