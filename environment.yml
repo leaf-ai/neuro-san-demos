@@ -1,0 +1,10 @@
+name: neuro-san-studio-2  # name is cosmetic when using -p
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - graphviz
+  - pygraphviz
+  - pip
+  - pip:
+      - -r requirements.txt
