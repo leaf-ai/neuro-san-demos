@@ -949,10 +949,7 @@ def upload_files():
             db.session.rollback()
             app.logger.error("Batch commit failed: %s", exc)
 
-        try:
-            VectorDatabaseManager().client.persist()
-        except Exception:  # pragma: no cover - best effort
-            app.logger.warning("Vector DB persist failed")
+        VectorDatabaseManager().persist()
 
         if batch_processed:
             reinitialize_legal_discovery_session()
@@ -1047,11 +1044,7 @@ def export_narrative_discrepancies():
             f"<tr><td>{r.conflicting_claim}</td><td>{r.evidence_excerpt}</td><td>{r.confidence:.2f}</td></tr>"
             for r in records
         ]
-        html = (
-            "<table><tr><th>Claim</th><th>Evidence</th><th>Confidence</th></tr>"
-            + "".join(rows)
-            + "</table>"
-        )
+        html = "<table><tr><th>Claim</th><th>Evidence</th><th>Confidence</th></tr>" + "".join(rows) + "</table>"
         pdf = HTML(string=html).write_pdf()
         return send_file(
             BytesIO(pdf),
@@ -1186,11 +1179,7 @@ def document_versions():
     doc = Document.query.filter_by(file_path=file_path).first()
     if doc is None:
         return jsonify({"error": "Document not found"}), 404
-    versions = (
-        DocumentVersion.query.filter_by(document_id=doc.id)
-        .order_by(DocumentVersion.timestamp)
-        .all()
-    )
+    versions = DocumentVersion.query.filter_by(document_id=doc.id).order_by(DocumentVersion.timestamp).all()
     results = []
     for v in versions:
         user = Agent.query.get(v.user_id) if v.user_id else None
@@ -1207,6 +1196,7 @@ def document_versions():
 
 from flask import request, jsonify
 import difflib
+
 
 @app.route("/api/document/versions/diff")
 def document_versions_diff():
@@ -1232,11 +1222,10 @@ def document_versions_diff():
         text2.splitlines(),
         fromfile=v1.bates_number or "version_1",
         tofile=v2.bates_number or "version_2",
-        lineterm=""
+        lineterm="",
     )
 
     return jsonify({"diff": "\n".join(diff_lines)})
-
 
 
 @app.route("/api/bates/stamp", methods=["POST"])
@@ -1296,11 +1285,7 @@ def bates_stamp():
 @app.route("/api/document/<int:doc_id>/versions", methods=["GET"])
 def get_document_versions(doc_id: int):
     """Return version history for a document."""
-    versions = (
-        DocumentVersion.query.filter_by(document_id=doc_id)
-        .order_by(DocumentVersion.version_number)
-        .all()
-    )
+    versions = DocumentVersion.query.filter_by(document_id=doc_id).order_by(DocumentVersion.version_number).all()
     return jsonify(
         {
             "versions": [
@@ -1329,12 +1314,8 @@ def diff_document_versions(doc_id: int):
         to_v = int(request.args.get("to"))
     except (TypeError, ValueError):
         return jsonify({"error": "from and to parameters required"}), 400
-    v1 = DocumentVersion.query.filter_by(
-        document_id=doc_id, version_number=from_v
-    ).first_or_404()
-    v2 = DocumentVersion.query.filter_by(
-        document_id=doc_id, version_number=to_v
-    ).first_or_404()
+    v1 = DocumentVersion.query.filter_by(document_id=doc_id, version_number=from_v).first_or_404()
+    v2 = DocumentVersion.query.filter_by(document_id=doc_id, version_number=to_v).first_or_404()
     text1 = _extract_text(v1.file_path)
     text2 = _extract_text(v2.file_path)
     diff = "".join(
@@ -1829,10 +1810,6 @@ def research():
     tool = ResearchTools()
     results = tool.search(query, source) if query else []
     return jsonify({"status": "ok", "data": results})
-
-
-
-
 
 
 @app.route("/api/export/report", methods=["POST"])
