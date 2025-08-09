@@ -20,24 +20,32 @@ objections:
           - "Establish relationship and scope"
         auto_links:
           rules: ["FRE 801(d)(2)"]
-  foundation:
-    patterns:
-      transcript_regex:
-        - "\\b(lack of foundation|no foundation)\\b"
-    cures:
-      - key: lay_witness_foundation
-        label: "Lay Witness Foundation"
+      - key: excited_utterance
+        label: "Exception: Excited Utterance"
         steps:
-          - "Role and position"
-          - "Opportunity to observe"
-          - "Method of knowledge"
-      - key: authenticate_document
-        label: "Authenticate Document"
-        steps:
-          - "Identify document and custodian"
-          - "Explain creation method"
+          - "Show startling event"
+          - "Confirm statement under stress"
         auto_links:
-          rules: ["FRE 901"]
+          rules: ["FRE 803(2)"]
+      - key: business_records
+        label: "Business Records"
+        steps:
+          - "Identify custodian"
+          - "Establish regular practice"
+        auto_links:
+          rules: ["FRE 803(6)"]
+    counter_objections:
+      - patterns:
+          transcript_regex:
+            - "\\bexcited utterance\\b"
+            - "\\bpresent sense impression\\b"
+            - "\\bbusiness record\\b"
+        cures:
+          - key: challenge_exception_foundation
+            label: "Challenge Exception Foundation"
+            steps:
+              - "Probe timing and personal knowledge"
+              - "Question recordkeeping reliability"
   relevance:
     patterns:
       transcript_regex:
@@ -56,3 +64,190 @@ objections:
           - "Address prejudice explicitly"
         auto_links:
           rules: ["FRE 403"]
+    counter_objections:
+      - patterns:
+          transcript_regex:
+            - "\\bgoes to weight\\b"
+            - "\\bcontext\\b"
+        cures:
+          - key: insist_relevance
+            label: "Reassert Relevance"
+            steps:
+              - "Tie fact to claim or defense"
+              - "Differentiate weight from admissibility"
+  foundation:
+    patterns:
+      transcript_regex:
+        - "\\b(lack of foundation|no foundation)\\b"
+    cures:
+      - key: lay_witness_foundation
+        label: "Lay Witness Foundation"
+        steps:
+          - "Role and position"
+          - "Opportunity to observe"
+          - "Method of knowledge"
+      - key: authenticate_document
+        label: "Authenticate Document"
+        steps:
+          - "Identify document and custodian"
+          - "Explain creation method"
+        auto_links:
+          rules: ["FRE 901"]
+    counter_objections:
+      - patterns:
+          transcript_regex:
+            - "\\bI'll lay the foundation\\b"
+            - "\\bgoes to weight\\b"
+        cures:
+          - key: demand_foundation_now
+            label: "Foundation Required First"
+            steps:
+              - "Request foundation before testimony"
+              - "Note prejudice from speculation"
+  leading:
+    patterns:
+      transcript_regex:
+        - "\\b(objection)\\b.*\\bleading\\b"
+        - "^leading question"
+    cures:
+      - key: rephrase_open
+        label: "Rephrase Open-Ended"
+        steps:
+          - "Use 'who, what, when, where, why'"
+    counter_objections:
+      - patterns:
+          transcript_regex:
+            - "\\bcross[- ]examination\\b"
+            - "\\bhostile witness\\b"
+        cures:
+          - key: limit_leading
+            label: "Leading Not Permitted"
+            steps:
+              - "Argue witness not hostile"
+              - "Stress need for narrative testimony"
+  speculation:
+    patterns:
+      transcript_regex:
+        - "\\b(objection)\\b.*\\bspeculation\\b"
+        - "\\bspeculate\\b"
+    cures:
+      - key: confine_to_personal_knowledge
+        label: "Confine to Personal Knowledge"
+        steps:
+          - "Ask about direct perception"
+          - "Clarify basis for inference"
+        auto_links:
+          rules: ["FRE 602"]
+    counter_objections:
+      - patterns:
+          transcript_regex:
+            - "\\bexpert opinion\\b"
+        cures:
+          - key: challenge_expert_basis
+            label: "Question Expert Basis"
+            steps:
+              - "Probe qualifications"
+              - "Demand factual foundation"
+  opinion:
+    patterns:
+      transcript_regex:
+        - "\\b(objection)\\b.*\\b(opinion|conclusion)\\b"
+    cures:
+      - key: lay_opinion_rational
+        label: "Lay Opinion Based on Perception"
+        steps:
+          - "Show rationally based on perception"
+          - "Helpful to understanding"
+        auto_links:
+          rules: ["FRE 701"]
+    counter_objections:
+      - patterns:
+          transcript_regex:
+            - "\\bexpert\\b"
+            - "\\b701\\b"
+        cures:
+          - key: require_expert_foundation
+            label: "Require Expert Foundation"
+            steps:
+              - "Establish qualifications"
+              - "Tie opinion to specialized knowledge"
+  character:
+    patterns:
+      transcript_regex:
+        - "\\b(objection)\\b.*\\bcharacter\\b"
+        - "\\bpropensity\\b"
+    cures:
+      - key: permissible_purpose
+        label: "Offer for Non-Propensity Purpose"
+        steps:
+          - "Identify motive, intent, or identity"
+        auto_links:
+          rules: ["FRE 404(b)"]
+    counter_objections:
+      - patterns:
+          transcript_regex:
+            - "\\bopened the door\\b"
+        cures:
+          - key: limit_scope
+            label: "Limit to Rebuttal"
+            steps:
+              - "Restrict evidence to narrow issue"
+  privilege:
+    patterns:
+      transcript_regex:
+        - "\\b(objection)\\b.*\\bprivilege\\b"
+        - "\\battorney[- ]client\\b"
+    cures:
+      - key: establish_exception
+        label: "Establish Exception"
+        steps:
+          - "Show waiver or crime-fraud"
+        auto_links:
+          rules: ["FRE 502", "FRE 501"]
+    counter_objections:
+      - patterns:
+          transcript_regex:
+            - "\\bno waiver\\b"
+        cures:
+          - key: prove_waiver
+            label: "Demonstrate Waiver"
+            steps:
+              - "Identify disclosure"
+              - "Argue fairness requires waiver"
+  cumulative:
+    patterns:
+      transcript_regex:
+        - "\\b(objection)\\b.*\\bcumulative\\b"
+    cures:
+      - key: show_new_point
+        label: "Show New Point"
+        steps:
+          - "Differentiate from prior evidence"
+    counter_objections:
+      - patterns:
+          transcript_regex:
+            - "\\bwithin discretion\\b"
+        cures:
+          - key: stress_efficiency
+            label: "Stress Need for Efficiency"
+            steps:
+              - "Argue burden on jury/time"
+  asked_and_answered:
+    patterns:
+      transcript_regex:
+        - "\\basked and answered\\b"
+    cures:
+      - key: explain_new_context
+        label: "Explain New Context"
+        steps:
+          - "Clarify different time or subject"
+    counter_objections:
+      - patterns:
+          transcript_regex:
+            - "\\bclarification\\b"
+        cures:
+          - key: limit_repetition
+            label: "Limit Repetitive Questioning"
+            steps:
+              - "Ask court to move witness along"
+

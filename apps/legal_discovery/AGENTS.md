@@ -769,3 +769,9 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added trial assistant scaffold with objection detection engine and frontend components.
 - Next: integrate audio streaming and broaden objection rule set.
 
+## Update 2025-08-09T11:05Z
+- Enabled voice-activated listening with transcript streaming and indicator.
+- Expanded objection engine with counter-objection rules and comprehensive evidence exceptions.
+- Added unit test for counter objection detection.
+- Next: refine recognition accuracy and extend rule coverage.
+
