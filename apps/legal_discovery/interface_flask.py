@@ -693,115 +693,116 @@ def ingest_document(
     chroma_metadata: dict,
 ) -> None:
     """Extract, vectorize, and relate a document in the background."""
-    processor = DocumentProcessor()
-    text = processor.extract_text(original_path) or ""
-    detector = PrivilegeDetector()
-    privileged, spans = detector.detect(text)
-    app.logger.info(
-        "privilege detection",
-        extra={"doc_id": doc_id, "privileged": privileged, "spans": [(s.start, s.end) for s in spans]},
-    )
-    doc = Document.query.get(doc_id)
-    if privileged:
-        keywords = [text[s.start : s.end] for s in spans]
-        if original_path.lower().endswith(".pdf"):
-            detector.redact_pdf(original_path, redacted_path, keywords)
-            redacted_text = processor.extract_text(redacted_path) or ""
-        else:
-            redacted_text = detector.redact_text(text, spans)
-            with open(redacted_path, "w", encoding="utf-8") as f:
-                f.write(redacted_text)
-        doc.is_privileged = True
-        doc.is_redacted = True
-        doc.needs_review = True
-        for s in spans:
-            db.session.add(
-                RedactionLog(
-                    document_id=doc_id,
-                    start=s.start,
-                    end=s.end,
-                    label=s.label,
-                    reason=(f"{s.text} (score={s.score:.2f})" if s.score is not None else s.text),
+    with app.app_context():
+        processor = DocumentProcessor()
+        text = processor.extract_text(original_path) or ""
+        detector = PrivilegeDetector()
+        privileged, spans = detector.detect(text)
+        app.logger.info(
+            "privilege detection",
+            extra={"doc_id": doc_id, "privileged": privileged, "spans": [(s.start, s.end) for s in spans]},
+        )
+        doc = Document.query.get(doc_id)
+        if privileged:
+            keywords = [text[s.start : s.end] for s in spans]
+            if original_path.lower().endswith(".pdf"):
+                detector.redact_pdf(original_path, redacted_path, keywords)
+                redacted_text = processor.extract_text(redacted_path) or ""
+            else:
+                redacted_text = detector.redact_text(text, spans)
+                with open(redacted_path, "w", encoding="utf-8") as f:
+                    f.write(redacted_text)
+            doc.is_privileged = True
+            doc.is_redacted = True
+            doc.needs_review = True
+            for s in spans:
+                db.session.add(
+                    RedactionLog(
+                        document_id=doc_id,
+                        start=s.start,
+                        end=s.end,
+                        label=s.label,
+                        reason=(f"{s.text} (score={s.score:.2f})" if s.score is not None else s.text),
+                    )
                 )
+            db.session.commit()
+            log_event(
+                doc_id,
+                ChainEventType.REDACTED,
+                metadata={"spans": [(s.start, s.end) for s in spans]},
+                source_team="legal_discovery",
             )
+        else:
+            shutil.copy(original_path, redacted_path)
+            redacted_text = text
+            doc.is_privileged = False
+            doc.is_redacted = False
+            doc.needs_review = False
+            db.session.commit()
+
+        scorer = DocumentScorer()
+        scores = scorer.score(redacted_text)
+        doc.probative_value = scores["probative_value"]
+        doc.admissibility_risk = scores["admissibility_risk"]
+        doc.narrative_alignment = scores["narrative_alignment"]
+        doc.score_confidence = scores["score_confidence"]
+        db.session.add(DocumentMetadata(document_id=doc_id, schema="evidence_scorecard", data=scores))
+        try:
+            sanctions = SanctionsRiskAnalyzer().assess(redacted_text, scorecard=scores)
+            db.session.add(DocumentMetadata(document_id=doc_id, schema="sanctions_risk", data=sanctions))
+        except Exception:
+            pass
         db.session.commit()
+
+        VectorDatabaseManager().add_documents([redacted_text], [chroma_metadata], [str(doc_id)])
+        kg = KnowledgeGraphManager()
+        result = kg.run_query("MERGE (c:Case {id: $id}) RETURN id(c) as cid", {"id": case_id})
+        case_node = result[0]["cid"] if result else None
+        doc_node = kg.create_node("Document", full_metadata)
+        if case_node:
+            kg.create_relationship(case_node, doc_node, "HAS_DOCUMENT")
+
+        extractor = FactExtractor()
+        ontology = OntologyLoader().load()
+        for fact in extractor.extract(redacted_text):
+            fact_row = Fact(
+                case_id=case_id,
+                document_id=doc_id,
+                text=fact["text"],
+                parties=fact["parties"],
+                dates=fact["dates"],
+                actions=fact["actions"],
+            )
+            db.session.add(fact_row)
+            matches = match_elements(fact["text"], ontology)
+            if matches:
+                cause_name, element_name = matches[0]
+                element_row = (
+                    Element.query.join(CauseOfAction)
+                    .filter(
+                        CauseOfAction.name == cause_name,
+                        Element.name == element_name,
+                    )
+                    .first()
+                )
+                if element_row:
+                    fact_row.element_id = element_row.id
+            fact_id = None
+            if case_node or doc_node:
+                fact_id = kg.add_fact(case_node, doc_node, fact)
+            if fact_id is not None:
+                for cause, element in matches:
+                    kg.link_fact_to_element(fact_id, cause, element)
+                for cause, element, weight in match_elements(fact["text"], ontology):
+                    kg.link_fact_to_element(fact_id, cause, element, weight)
+
+        kg.close()
         log_event(
             doc_id,
-            ChainEventType.REDACTED,
-            metadata={"spans": [(s.start, s.end) for s in spans]},
+            ChainEventType.INGESTED,
+            metadata={"path": redacted_path},
             source_team="legal_discovery",
         )
-    else:
-        shutil.copy(original_path, redacted_path)
-        redacted_text = text
-        doc.is_privileged = False
-        doc.is_redacted = False
-        doc.needs_review = False
-        db.session.commit()
-
-    scorer = DocumentScorer()
-    scores = scorer.score(redacted_text)
-    doc.probative_value = scores["probative_value"]
-    doc.admissibility_risk = scores["admissibility_risk"]
-    doc.narrative_alignment = scores["narrative_alignment"]
-    doc.score_confidence = scores["score_confidence"]
-    db.session.add(DocumentMetadata(document_id=doc_id, schema="evidence_scorecard", data=scores))
-    try:
-        sanctions = SanctionsRiskAnalyzer().assess(redacted_text, scorecard=scores)
-        db.session.add(DocumentMetadata(document_id=doc_id, schema="sanctions_risk", data=sanctions))
-    except Exception:
-        pass
-    db.session.commit()
-
-    VectorDatabaseManager().add_documents([redacted_text], [chroma_metadata], [str(doc_id)])
-    kg = KnowledgeGraphManager()
-    result = kg.run_query("MERGE (c:Case {id: $id}) RETURN id(c) as cid", {"id": case_id})
-    case_node = result[0]["cid"] if result else None
-    doc_node = kg.create_node("Document", full_metadata)
-    if case_node:
-        kg.create_relationship(case_node, doc_node, "HAS_DOCUMENT")
-
-    extractor = FactExtractor()
-    ontology = OntologyLoader().load()
-    for fact in extractor.extract(redacted_text):
-        fact_row = Fact(
-            case_id=case_id,
-            document_id=doc_id,
-            text=fact["text"],
-            parties=fact["parties"],
-            dates=fact["dates"],
-            actions=fact["actions"],
-        )
-        db.session.add(fact_row)
-        matches = match_elements(fact["text"], ontology)
-        if matches:
-            cause_name, element_name = matches[0]
-            element_row = (
-                Element.query.join(CauseOfAction)
-                .filter(
-                    CauseOfAction.name == cause_name,
-                    Element.name == element_name,
-                )
-                .first()
-            )
-            if element_row:
-                fact_row.element_id = element_row.id
-        fact_id = None
-        if case_node or doc_node:
-            fact_id = kg.add_fact(case_node, doc_node, fact)
-        if fact_id is not None:
-            for cause, element in matches:
-                kg.link_fact_to_element(fact_id, cause, element)
-            for cause, element, weight in match_elements(fact["text"], ontology):
-                kg.link_fact_to_element(fact_id, cause, element, weight)
-
-    kg.close()
-    log_event(
-        doc_id,
-        ChainEventType.INGESTED,
-        metadata={"path": redacted_path},
-        source_team="legal_discovery",
-    )
 
 
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
