@@ -65,6 +65,12 @@ db.sqlite3-journal
 instance/
 .webassets-cache
 
+#Conda shi....ps.
+.conda/
+.venv/
+.env
+
+
 # Scrapy stuff:
 .scrapy
 
