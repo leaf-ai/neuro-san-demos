@@ -8,7 +8,7 @@ pypdf>=5.4.0
 pymupdf>=1.25.5
 
 # To use a .env file for environment variables
-python-dotenv==1.1.1
+python-dotenv==1.0.1
 
 # For asynchronous file operations
 aiofiles>=24.1.0
