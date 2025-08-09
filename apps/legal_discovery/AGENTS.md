@@ -783,3 +783,4 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added `persist` helper on `VectorDatabaseManager` and call it after batch commits to log detailed errors.
 - Next: verify Chroma service accepts persistence calls without warnings.
 
+
