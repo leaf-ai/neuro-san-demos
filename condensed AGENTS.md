@@ -144,3 +144,8 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 - Implemented Socket.IO presentation sync with PDF viewer and timeline hooks.
 - Next: package offline presentation bundles.
 
+## Update 2025-08-09T11:05Z
+- Enabled voice-activated trial assistant with live transcription and objection guidance.
+- Broadened objection rules with exceptions and counter-objection strategies; added unit test.
+- Next: expand rule corpus and improve speech recognition fidelity.
+

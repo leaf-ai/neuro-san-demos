@@ -21,6 +21,55 @@ export default function TrialConsole({ sessionId }: { sessionId: string }) {
   const sock = useRef<any>(null);
   const [segments, setSegments] = useState<Segment[]>([]);
   const [objection, setObjection] = useState<ObjectionEvent | null>(null);
+  const [listening, setListening] = useState(false);
+
+  // Voice recognition powered by the Web Speech API. Use the wake phrase
+  // "assistant start listening" to begin transcription and
+  // "assistant stop listening" to halt it.
+  useEffect(() => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+    const rec = new SpeechRecognition();
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.lang = "en-US";
+
+    rec.onresult = (e: any) => {
+      let final = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) {
+          final += e.results[i][0].transcript;
+        }
+      }
+      const norm = final.trim().toLowerCase();
+      if (!norm) return;
+      if (!listening) {
+        if (norm.includes("assistant start listening")) {
+          setListening(true);
+        }
+        return;
+      }
+      if (norm.includes("assistant stop listening")) {
+        setListening(false);
+        return;
+      }
+      if (sock.current) {
+        const now = Date.now();
+        sock.current.emit("segment", {
+          session_id: sessionId,
+          text: final.trim(),
+          t0_ms: now,
+          t1_ms: now,
+          speaker: "local",
+          confidence: 100,
+        });
+      }
+    };
+
+    rec.start();
+    return () => rec.stop();
+  }, [listening, sessionId]);
 
   useEffect(() => {
     const s = io("/ws/trial", { transports: ["websocket"] });
@@ -44,6 +93,12 @@ export default function TrialConsole({ sessionId }: { sessionId: string }) {
 
   return (
     <div className="relative h-full w-full text-white">
+      <div className="absolute top-2 left-2">
+        <div
+          className={`h-3 w-3 rounded-full ${listening ? "bg-red-500 animate-pulse" : "bg-gray-500"}`}
+          title={listening ? "Listening" : "Idle"}
+        ></div>
+      </div>
       <div className="space-y-1 overflow-y-auto pr-2" style={{ maxHeight: "60vh" }}>
         {segments.map((s) => (
           <div key={s.segment_id} className="text-sm">
