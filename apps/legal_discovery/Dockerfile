@@ -1,30 +1,79 @@
-# Use an official Python runtime as a parent image
+# ---------- Frontend build (Node) ----------
 FROM node:18-slim AS frontend
 WORKDIR /app
+
+# Install only deps first for better caching
 COPY apps/legal_discovery/package*.json apps/legal_discovery/
-RUN npm --prefix apps/legal_discovery install
+RUN npm --prefix apps/legal_discovery ci
+
+# Build
 COPY apps/legal_discovery apps/legal_discovery
 RUN npm --prefix apps/legal_discovery run build --silent
 
-FROM python:3.12-slim
-WORKDIR /usr/src/app
-RUN apt-get update && apt-get install -y --no-install-recommends build-essential graphviz libgraphviz-dev && rm -rf /var/lib/apt/lists/*
-COPY apps/legal_discovery/requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt && python -m spacy download en_core_web_sm
-RUN pip install more_itertools 
-RUN pip install flask-sqlalchemy
 
+# ---------- Backend (Python) ----------
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /usr/src/app
+
+# System deps:
+# - build-essential + pkg-config for building wheels
+# - graphviz + libgraphviz-dev for pygraphviz (headers & libs)
+# - WeasyPrint runtime libs (cairo/pango/gdk-pixbuf/fontconfig)
+# - tesseract-ocr (since pytesseract is in requirements)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      build-essential pkg-config \
+      graphviz libgraphviz-dev \
+      libcairo2 libpango-1.0-0 libpangoft2-1.0-0 libpangocairo-1.0-0 \
+      libgdk-pixbuf-2.0-0 libffi8 libffi-dev \
+      libxml2 libxslt1.1 fonts-liberation \
+      tesseract-ocr tesseract-ocr-eng \
+    && rm -rf /var/lib/apt/lists/*
+
+# Upgrade pip/setuptools first
+RUN python -m pip install --upgrade pip setuptools wheel
+
+# Install Python deps early to leverage Docker layer cache
+COPY apps/legal_discovery/requirements.txt ./requirements.txt
+
+# IMPORTANT: your requirements currently include BOTH `langchain-google-genai`
+# and `google-generativeai` which conflict on `google-ai-generativelanguage`.
+# If you haven't removed `google-generativeai` yet, do it now; otherwise build will fail.
+# (Keep `google-genai` + `langchain-google-genai`; drop `google-generativeai`.)
+RUN python -m pip install -r requirements.txt
+
+# Optional: If you rely on spaCy model via `spacy download`, you can skip this
+# because your requirements already install the model wheel from GitHub.
+# Keeping it is harmless, but adds time:
+# RUN python -m spacy download en_core_web_sm
+
+# Quick sanity check for pygraphviz so build fails early if headers weren't found
+RUN python - << 'PY'
+import pygraphviz as pgv
+G = pgv.AGraph()
+G.add_edge("a","b")
+print("pygraphviz OK; nodes:", G.number_of_nodes())
+PY
+
+# Copy the rest of the app AFTER deps for better caching
 COPY . .
+
+# Bring in built static assets from the frontend stage
 COPY --from=frontend /app/apps/legal_discovery/static apps/legal_discovery/static
+
+# Clean up any leftover frontend dev folders (defensive)
 RUN rm -rf apps/legal_discovery/node_modules
 
-# Make port 5001 available to the world outside this container
+# Expose app port
 EXPOSE 5001
 
-# Set default registry paths for the agent network
-ENV AGENT_MANIFEST_FILE=/usr/src/app/registries/manifest.hocon
-ENV AGENT_LLM_INFO_FILE=/usr/src/app/registries/llm_config.hocon
+# Environment defaults (can be overridden at runtime)
+ENV AGENT_MANIFEST_FILE=/usr/src/app/registries/manifest.hocon \
+    AGENT_LLM_INFO_FILE=/usr/src/app/registries/llm_config.hocon
 
-# Run the Flask application via gunicorn with eventlet for SocketIO support
-# Using "python -m" avoids PATH issues on Windows hosts
+# Run the Flask app via gunicorn+eventlet
 CMD ["python", "-m", "gunicorn", "-k", "eventlet", "-w", "1", "-b", "0.0.0.0:5001", "apps.legal_discovery.interface_flask:app"]
