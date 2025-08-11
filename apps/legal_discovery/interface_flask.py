@@ -703,6 +703,9 @@ def ingest_document(
             extra={"doc_id": doc_id, "privileged": privileged, "spans": [(s.start, s.end) for s in spans]},
         )
         doc = Document.query.get(doc_id)
+        if doc is None:
+            app.logger.error("Document %s not found during ingestion", doc_id)
+            return
         if privileged:
             keywords = [text[s.start : s.end] for s in spans]
             if original_path.lower().endswith(".pdf"):
@@ -905,6 +908,9 @@ def upload_files():
             raw_meta = DocumentMetadata(document_id=doc.id, schema="raw", data=full_metadata)
             chroma_meta = DocumentMetadata(document_id=doc.id, schema="chroma", data=chroma_metadata)
             db.session.add_all([raw_meta, chroma_meta])
+            # Ensure the document and metadata are committed so the background
+            # ingestion thread can retrieve them using a separate session.
+            db.session.commit()
             future = executor.submit(
                 ingest_document,
                 original_path,
