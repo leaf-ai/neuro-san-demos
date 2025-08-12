@@ -705,6 +705,7 @@ def ingest_document(
         doc = Document.query.get(doc_id)
         if doc is None:
             app.logger.error("Document %s not found during ingestion", doc_id)
+            raise LookupError(f"Document {doc_id} not found")
             return
         if privileged:
             keywords = [text[s.start : s.end] for s in spans]

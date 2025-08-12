@@ -789,4 +789,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added safety check when a document lookup fails during ingestion.
 - Next: monitor upload batches for timeouts and optimise memory usage.
 
+## Update 2025-08-12T00:00Z
+- Raise lookup errors when document records are missing during ingestion so callers clean up skipped files.
+- Next: run tests after installing missing dependencies.
+
 
