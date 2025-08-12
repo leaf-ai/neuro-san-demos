@@ -794,3 +794,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Next: run tests after installing missing dependencies.
 
 
+## Update 2025-08-12T06:51Z
+- Added Neo4j health endpoint and hardened KnowledgeGraphManager connections.
+- Next: validate graph operations under load and monitor connection stability.
+
+
