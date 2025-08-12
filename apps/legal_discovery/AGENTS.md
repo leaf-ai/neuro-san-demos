@@ -784,3 +784,13 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Next: verify Chroma service accepts persistence calls without warnings.
 
 
+## Update 2025-08-11T19:04Z
+- Commit document records and metadata before starting background ingestion to ensure worker sessions can load them.
+- Added safety check when a document lookup fails during ingestion.
+- Next: monitor upload batches for timeouts and optimise memory usage.
+
+## Update 2025-08-12T00:00Z
+- Raise lookup errors when document records are missing during ingestion so callers clean up skipped files.
+- Next: run tests after installing missing dependencies.
+
+
