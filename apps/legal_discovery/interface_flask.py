@@ -1679,6 +1679,17 @@ def aggregated_metrics():
     return jsonify({"status": "ok", "data": data})
 
 
+@app.route("/api/neo4j/health", methods=["GET"])
+def neo4j_health():
+    try:
+        kg = KnowledgeGraphManager()
+        ok = kg.run_query("RETURN 1 AS ok")
+        kg.close()
+        return jsonify({"status": "ok", "driver": ok[0]["ok"]}), 200
+    except Exception as exc:  # pragma: no cover - connection may fail
+        return jsonify({"status": "error", "error": str(exc)}), 500
+
+
 @app.route("/api/graph/export", methods=["GET"])
 def export_graph():
     kg_manager = KnowledgeGraphManager()

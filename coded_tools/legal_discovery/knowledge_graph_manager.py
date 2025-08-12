@@ -1,6 +1,8 @@
 import os
+import time
 
-from neo4j import GraphDatabase
+from neo4j import GraphDatabase, basic_auth
+from neo4j.exceptions import AuthError, ServiceUnavailable
 from neuro_san.interfaces.coded_tool import CodedTool
 from pyvis.network import Network
 
@@ -10,31 +12,42 @@ class KnowledgeGraphManager(CodedTool):
         super().__init__(**kwargs)
         uri = os.environ.get("NEO4J_URI", "bolt://neo4j:7687")
         user = os.environ.get("NEO4J_USER", "neo4j")
-        password = os.environ.get("NEO4J_PASSWORD", "neo4jPass123")
-        try:
-            self.driver = GraphDatabase.driver(uri, auth=(user, password))
-            # Verify connection
-            with self.driver.session() as session:
-                session.run("RETURN 1")
-        except Exception as exc:  # pragma: no cover - connection may fail in tests
-            raise RuntimeError(f"Failed to connect to Neo4j at {uri}. Is the server running?") from exc
+        pwd = os.environ.get("NEO4J_PASSWORD", "neo4jPass123")
+        db = os.environ.get("NEO4J_DATABASE", "neo4j")
+
+        self.database = db
+        self.driver = GraphDatabase.driver(
+            uri,
+            auth=basic_auth(user, pwd),
+            max_connection_lifetime=60,
+            connection_timeout=10,
+            max_connection_pool_size=50,
+            keep_alive=True,
+        )
+
+        self._verify_with_backoff()
+
+    def _verify_with_backoff(self, attempts: int = 5, base_sleep: float = 0.5) -> None:
+        for i in range(attempts):
+            try:
+                with self.driver.session(database=self.database) as s:
+                    s.run("RETURN 1").consume()
+                return
+            except (ServiceUnavailable, AuthError) as exc:
+                if i == attempts - 1:
+                    raise RuntimeError(f"Neo4j connectivity/auth failed: {exc}") from exc
+                time.sleep(base_sleep * (2**i))
 
     def close(self):
         self.driver.close()
 
-    def run_query(self, query: str, parameters: dict = None) -> list:
-        """
-        Runs a Cypher query against the Neo4j database.
-
-        :param query: The Cypher query to run.
-        :param parameters: A dictionary of parameters for the query.
-        :return: A list of records returned by the query.
-        """
+    def run_query(self, query: str, params: dict | None = None) -> list[dict]:
+        """Run a Cypher query and return all records as dictionaries."""
         try:
-            with self.driver.session() as session:
-                result = session.run(query, parameters)
-                return [record for record in result]
-        except Exception as exc:
+            with self.driver.session(database=self.database) as session:
+                result = session.run(query, params or {})
+                return [r.data() for r in result]
+        except Exception as exc:  # pragma: no cover - driver errors can vary
             raise RuntimeError("Neo4j query failed") from exc
 
     def create_node(self, label: str, properties: dict) -> int:
@@ -45,9 +58,8 @@ class KnowledgeGraphManager(CodedTool):
         :param properties: A dictionary of properties for the new node.
         :return: The ID of the newly created node.
         """
-        query = f"CREATE (n:{label} $props) RETURN id(n)"
-        result = self.run_query(query, {"props": properties})
-        return result[0][0]
+        query = f"CREATE (n:{label} $props) RETURN id(n) AS id"
+        return self.run_query(query, {"props": properties})[0]["id"]
 
     def create_relationship(
         self, start_node_id: int, end_node_id: int, relationship_type: str, properties: dict = None
@@ -61,11 +73,14 @@ class KnowledgeGraphManager(CodedTool):
         :param properties: A dictionary of properties for the new relationship.
         """
         query = (
-            f"MATCH (a), (b) "
-            f"WHERE id(a) = $start_node_id AND id(b) = $end_node_id "
-            f"CREATE (a)-[r:{relationship_type} $props]->(b)"
+            f"MATCH (a) WHERE id(a)=$a "
+            f"MATCH (b) WHERE id(b)=$b "
+            f"CREATE (a)-[r:{relationship_type} $props]->(b) RETURN id(r) AS id"
         )
-        self.run_query(query, {"start_node_id": start_node_id, "end_node_id": end_node_id, "props": properties or {}})
+        return self.run_query(
+            query,
+            {"a": start_node_id, "b": end_node_id, "props": properties or {}},
+        )[0]["id"]
 
     def add_fact(self, case_node_id: int, document_node_id: int, fact: dict) -> int:
         """Create a Fact node and link it to case and document nodes."""
