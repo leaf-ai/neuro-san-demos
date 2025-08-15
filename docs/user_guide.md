@@ -746,7 +746,6 @@ integration of **LangChain** and **custom-coded tools** in a agent network confi
 
 | Name               | Description                                           |
 | ------------------ | ----------------------------------------------------- |
-| `bing_search`      | Web search via Bing. Requires `BingSearchAPIWrapper`. |
 | `tavily_search`    | Web search via Tavily. |
 | `requests_get`     | HTTP GET requests.                                    |
 | `requests_post`    | HTTP POST requests.                                   |
@@ -882,10 +881,10 @@ Example:
 ```hocon
 {
     "name": "web_searcher",
-    "toolbox": "bing_search",
+    "toolbox": "tavily_search",
     "args": {
                 # This will override the number of search results to 3
-                "num_results": 3
+                "max_results": 3
             }
 }
 ```
