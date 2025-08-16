@@ -26,6 +26,7 @@ Here are a few examples ordered by level of complexity.
     * [PDF RAG Assistant](#pdf-rag-assistant)
     * [Confluence RAG Assistant](#confluence-rag-assistant)
     * [Agentic RAG Assistant](#agentic-rag-assistant)
+    * [Wikipedia RAG Assistant](#wikipedia-rag-assistant)
   * [🏢 Industry-Specific Examples](#-industry-specific-examples)
     * [Intranet Agents](#intranet-agents)
     * [Intranet Agents With Tools](#intranet-agents-with-tools)
@@ -200,6 +201,14 @@ retrieving information from the web, PDF documents, and Slack channels. It mimic
 to specialized tools and compiles responses into clear, helpful answers.
 
 **Tags:** `tool`, `API`, `RAG`
+
+### Wikipedia RAG Assistant
+
+[Wikipedia RAG Assistant](./examples/wikipedia_rag.md) answers user queries by retrieving and synthesizing information
+from Wikipedia articles. It fetches relevant article content, builds a vector store for semantic search, and retrieves
+context to generate accurate, well-cited responses.
+
+**Tags:** `tool`, `RAG`
 
 ## 🏢 Industry-Specific Examples
 

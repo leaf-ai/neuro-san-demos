@@ -1,0 +1,71 @@
+
+# Copyright (C) 2023-2025 Cognizant Digital Business, Evolutionary AI.
+# All Rights Reserved.
+# Issued under the Academic Public License.
+#
+# You can be released from the terms, and requirements of the Academic Public
+# License by purchasing a commercial license.
+# Purchase of a commercial license is mandatory for any use of the
+# neuro-san SDK Software in commercial settings.
+#
+# END COPYRIGHT
+
+{
+  "llm_config": {
+    "model_name": "gpt-4o",
+  },
+  "tools": [
+    {
+      "name": "Wikipedia RAG Assistant",
+      "function": {
+        "description": "Answer caller's query with answers from tools.",
+      },
+      "instructions": """Always use your tool to respond to the inquiry.
+      If the tool failed or unavailable, just notify the user.
+      Do not attempt to answer the question by yourself. The user will
+      provide a question, which must always be included as "query" in
+      tool call. From the user’s query, identify the relevant Wikipedia
+      topics to retrieve and provide them as an array in "wiki_queries".
+      Extract topics by identifying key entities, concepts, or subjects
+      mentioned, and split them when multiple topics are clearly present.
+      If any optional parameters need to be changed, instruct the user
+      to update them in the HOCON file. Output a JSON tool call in the
+      following format to call the rag_retriever tool:
+      {{
+        "query": "Compare ResNet, DenseNet, and EfficientNet for image classification",
+        "wiki_queries": ["ResNet", "DenseNet", "EfficientNet"],
+      }} """,
+      "tools": ["rag_retriever"]
+    },
+    # RAG tool that loads data from Wikipedia into an in-memory vectorstore and answers queries.
+    {
+      "name": "rag_retriever",
+      "toolbox": "wikipedia_rag",
+      "args": {
+        # User-defined arguments for the tool
+
+        # --- Optional Arguments ---
+
+        # Wikipedia language edition to use
+        # e.g., "en" for English, "es" for Spanish, "fr" for French
+        "lang": "en",
+
+        # Maximum number of Wikipedia pages to load per query term
+        # Larger numbers may retrieve more content but increase processing time
+        "load_max_docs": "5",
+
+        # Maximum number of characters to keep per Wikipedia page summary
+        # This truncates overly long pages for efficiency while retaining key content
+        "doc_content_chars_max": "4000",
+
+        # Set to true to save the generated vector store as a JSON file (to discuss one topic - somewhat faster)
+        # Set to false to discuss multiple topics (somewhat slower).  
+        "save_vector_store": false,
+
+        # Directory to save and load the vector store (use absolute path or path relative to "neuro-san-studio/coded_tools/pdf_rag/")
+        # Must be ".json"
+        "vector_store_path": "vector_store.json"
+      }
+    }
+  ]
+}

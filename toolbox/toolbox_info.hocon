@@ -240,6 +240,29 @@
         }
     },
 
+    "wikipedia_rag": {
+        # This is a coded tool for RAG on Wikipedia pages.
+        "class": "wikipedia_rag.WikipediaRag",
+        "description": "Retrieve information from Wikipedia and answer a query using RAG.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Query for retrieval"
+                }
+                "wiki_queries": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "A list of Wikipedia topics to load"
+                },
+            },
+            "required": ["query", "wiki_queries"]
+        }
+    },
+
     # ---------- Search Tools ----------
 
     # To use this search tool, obtain an API key from: https://brave.com/search/api/
