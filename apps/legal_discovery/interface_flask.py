@@ -54,6 +54,7 @@ from apps.legal_discovery import settings
 from apps.legal_discovery.database import db
 from coded_tools.legal_discovery.deposition_prep import DepositionPrep
 from apps.legal_discovery.models import (
+    Agent,
     CalendarEvent,
     Case,
     CauseOfAction,
@@ -66,9 +67,6 @@ from apps.legal_discovery.models import (
     LegalReference,
     LegalTheory,
     RedactionAudit,
-    Witness,
-    DepositionQuestion,
-    DepositionReviewLog,
     RedactionLog,
     TimelineEvent,
     Witness,
@@ -1156,6 +1154,7 @@ def bates_stamp_document():
     doc.bates_number = start
     version = DocumentVersion(
         document_id=doc.id,
+        version_number=DocumentVersion.query.filter_by(document_id=doc.id).count() + 1,
         bates_number=start,
         user_id=user_id,
         file_path=output_path,
