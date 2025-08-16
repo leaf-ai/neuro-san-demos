@@ -17,11 +17,12 @@ particular set a password for Neo4j:
 
 ```bash
 cp .env.example .env  # if you haven't created one
-# then edit .env and set NEO4J_PASSWORD=your_password
+# then edit .env and set NEO4J_PASSWORD=your_password (leave blank to disable auth)
 ```
 
 Docker Compose reads `NEO4J_PASSWORD` for both the app and database services so
-they always share the same credentials.
+they always share the same credentials. If the variable is empty, the database
+starts without authentication which is convenient for local testing.
 
 ## Running with Docker Compose
 

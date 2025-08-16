@@ -158,3 +158,8 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 - Replaced google-generativeai with google-genai and removed conflicting packages.
 - Dropped pygraphviz to avoid build-time failures.
 - Next: stub external services so tests run without Neo4j.
+
+## Update 2025-08-13T00:00Z
+- Made Neo4j authentication optional and handled unreachable graph instances gracefully.
+- Verified chat agent tests pass without a running Neo4j service.
+- Next: run full application suite once Neo4j and related services are available.
