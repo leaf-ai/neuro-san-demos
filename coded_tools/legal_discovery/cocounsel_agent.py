@@ -43,12 +43,27 @@ class CocounselAgent(CodedTool):
             )
             self.embedder = GoogleGenerativeAIEmbeddings()
         except Exception:  # pragma: no cover - offline fallback
-            self.llm = type("NoopLLM", (), {"invoke": lambda *a, **k: type("R", (), {"content": ""})()})()
-            from langchain_huggingface import HuggingFaceEmbeddings
+            self.llm = type(
+                "NoopLLM", (), {"invoke": lambda *a, **k: type("R", (), {"content": ""})()}
+            )()
+            try:
+                from langchain_huggingface import HuggingFaceEmbeddings
 
-            self.embedder = HuggingFaceEmbeddings(
-                model_name="sentence-transformers/all-MiniLM-L6-v2"
-            )
+                self.embedder = HuggingFaceEmbeddings(
+                    model_name="sentence-transformers/all-MiniLM-L6-v2"
+                )
+            except Exception as exc:
+                logging.warning("huggingface embeddings unavailable: %s", exc)
+
+                class HashedEmbedding:
+                    def embed_query(self, text: str) -> List[float]:
+                        import hashlib
+
+                        digest = hashlib.sha256(text.encode()).digest()
+                        return [b / 255 for b in digest[:16]]
+
+                self.embedder = HashedEmbedding()
+
 
         # Tools
         self.internet_search = InternetSearch()

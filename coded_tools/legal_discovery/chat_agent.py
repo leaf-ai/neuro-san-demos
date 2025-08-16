@@ -38,7 +38,20 @@ class RetrievalChatAgent(CodedTool):
             self._embedder = GoogleGenerativeAIEmbeddings()
         except Exception as exc:  # pragma: no cover - offline fallback
             logging.warning("using local embeddings due to error: %s", exc)
-            self._embedder = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+            try:
+                self._embedder = HuggingFaceEmbeddings(
+                    model_name="sentence-transformers/all-MiniLM-L6-v2"
+                )
+            except Exception as inner_exc:  # pragma: no cover - last resort
+                logging.warning("huggingface embeddings unavailable: %s", inner_exc)
+                class HashedEmbedding:
+                    def embed_query(self, text: str) -> List[float]:
+                        import hashlib
+
+                        digest = hashlib.sha256(text.encode()).digest()
+                        return [b / 255 for b in digest[:16]]
+
+                self._embedder = HashedEmbedding()
 
     def _ensure_conversation(self, conversation_id: Optional[str], sender_id: int) -> Conversation:
         if conversation_id:
@@ -125,6 +138,7 @@ class RetrievalChatAgent(CodedTool):
         top_k: int = 5,
     ) -> Dict[str, Any]:
         message = self.store_message(conversation_id, sender_id, question)
+        query_emb = self._embedder.embed_query(question)
         vec = self.vector_db.query([question], n_results=top_k)
         documents: List[Dict[str, Any]] = []
         for doc_id, meta in zip(vec.get("ids", [[]])[0], vec.get("metadatas", [[]])[0]):
@@ -134,7 +148,9 @@ class RetrievalChatAgent(CodedTool):
             log_event(doc.id, ChainEventType.ACCESSED, metadata={"message_id": message.id})
             documents.append({"id": doc.id, "name": doc.name})
         msg_res = self.vector_db.query_messages(
-            [question], n_results=top_k, where={"visibility": "public"}
+            query_embeddings=[query_emb],
+            n_results=top_k,
+            where={"visibility": "public"},
         )
         messages: List[Dict[str, Any]] = []
         for text, meta in zip(

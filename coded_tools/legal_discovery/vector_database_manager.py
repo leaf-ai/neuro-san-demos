@@ -203,12 +203,18 @@ class VectorDatabaseManager(CodedTool):
 
     def query_messages(
         self,
-        query_texts: list[str],
+        query_texts: list[str] | None = None,
         n_results: int = 10,
         where: dict | None = None,
+        query_embeddings: list[list[float]] | None = None,
     ) -> dict:
         """Query stored chat messages."""
-        return self.msg_collection.query(query_texts=query_texts, n_results=n_results, where=where)
+        return self.msg_collection.query(
+            query_texts=query_texts if query_embeddings is None else None,
+            query_embeddings=query_embeddings,
+            n_results=n_results,
+            where=where,
+        )
 
     def query_conversations(self, query_texts: list[str], n_results: int = 10, where: dict | None = None) -> dict:
         """Query stored conversation summaries."""
