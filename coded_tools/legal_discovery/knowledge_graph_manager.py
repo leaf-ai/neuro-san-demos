@@ -1,8 +1,13 @@
 import os
 import time
 
-from neo4j import GraphDatabase, basic_auth
-from neo4j.exceptions import AuthError, ServiceUnavailable
+import logging
+
+from neo4j import GraphDatabase
+try:  # pragma: no cover - allows tests without neo4j package
+    from neo4j.exceptions import AuthError, ServiceUnavailable
+except Exception:  # pragma: no cover - fallback when exceptions module missing
+    AuthError = ServiceUnavailable = Exception
 from neuro_san.interfaces.coded_tool import CodedTool
 from pyvis.network import Network
 
@@ -12,20 +17,24 @@ class KnowledgeGraphManager(CodedTool):
         super().__init__(**kwargs)
         uri = os.environ.get("NEO4J_URI", "bolt://neo4j:7687")
         user = os.environ.get("NEO4J_USER", "neo4j")
-        pwd = os.environ.get("NEO4J_PASSWORD", "neo4jPass123")
+        pwd = os.environ.get("NEO4J_PASSWORD")
         db = os.environ.get("NEO4J_DATABASE", "neo4j")
 
         self.database = db
-        self.driver = GraphDatabase.driver(
-            uri,
-            auth=basic_auth(user, pwd),
-            max_connection_lifetime=60,
-            connection_timeout=10,
-            max_connection_pool_size=50,
-            keep_alive=True,
-        )
-
-        self._verify_with_backoff()
+        auth = (user, pwd) if pwd else None
+        try:
+            self.driver = GraphDatabase.driver(
+                uri,
+                auth=auth,
+                max_connection_lifetime=60,
+                connection_timeout=10,
+                max_connection_pool_size=50,
+                keep_alive=True,
+            )
+            self._verify_with_backoff()
+        except Exception as exc:  # pragma: no cover - network path
+            logging.warning("Neo4j unavailable: %s", exc)
+            self.driver = None
 
     def _verify_with_backoff(self, attempts: int = 5, base_sleep: float = 0.5) -> None:
         for i in range(attempts):
@@ -43,6 +52,8 @@ class KnowledgeGraphManager(CodedTool):
 
     def run_query(self, query: str, params: dict | None = None) -> list[dict]:
         """Run a Cypher query and return all records as dictionaries."""
+        if not self.driver:
+            raise RuntimeError("Neo4j driver unavailable")
         try:
             with self.driver.session(database=self.database) as session:
                 result = session.run(query, params or {})

@@ -162,9 +162,10 @@ class GraphManager:
     def __init__(self, uri: str | None = None, user: str | None = None, password: str | None = None) -> None:
         uri = uri or os.environ.get("NEO4J_URI", "bolt://localhost:7687")
         user = user or os.environ.get("NEO4J_USER", "neo4j")
-        password = password or os.environ.get("NEO4J_PASSWORD", "neo4jPass123")
+        password = password or os.environ.get("NEO4J_PASSWORD")
         try:
-            self.driver = GraphDatabase.driver(uri, auth=(user, password))
+            auth = (user, password) if password else None
+            self.driver = GraphDatabase.driver(uri, auth=auth)
             self.session = self.driver.session()
         except Exception:  # pragma: no cover - external service
             self.driver = None

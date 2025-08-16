@@ -804,3 +804,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Switched to google-genai and dropped pygraphviz from build.
 - Cleaned Dockerfile and requirements to avoid Graphviz dependency.
 - Next: mock Neo4j for offline tests.
+
+## Update 2025-08-13T00:00Z
+- Allowed passwordless Neo4j connections and suppressed errors when the graph service is offline.
+- Confirmed chat agent unit tests run without requiring a Neo4j instance.
+- Next: exercise graph features against a live database.
