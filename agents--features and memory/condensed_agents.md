@@ -264,3 +264,8 @@ WE STARTED ON #3, INSTEAD OF #1. DEAL WITH IT, FINISH IMPLEMENTING #3, AND THEN 
 - Fixed pretrial export case ID parsing and ensured chain-of-custody logs auto-hash signatures.
 - All tests now pass after installing required dependencies.
 - Next: monitor Chroma persistence and refine offline vector query performance.
+
+## Update 2025-08-16T13:20Z
+- Unified Neo4j credentials across Docker Compose and switched host paths to cross-platform relative volumes.
+- Removed deprecated version header and aligned healthcheck with container password.
+- Next: verify fresh stack start on Windows and document volume setup.

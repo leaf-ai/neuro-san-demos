@@ -820,6 +820,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Corrected binder pretrial route and added automatic signature hashing for chain logs.
 - All tests pass in offline environment.
 - Next: optimise local vector store performance and verify Neo4j integration.
+
 ## Update 2025-08-16T12:00Z
 - Added Makefile target to build React dashboard with npm ci and verified `npm run build` succeeds.
 - Next: trim pdf.js bundle size and track build warnings.

@@ -64,6 +64,7 @@ class CocounselAgent(CodedTool):
 
                 self.embedder = HashedEmbedding()
 
+
         # Tools
         self.internet_search = InternetSearch()
         self.code_editor = CodeEditor()
