@@ -809,3 +809,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Allowed passwordless Neo4j connections and suppressed errors when the graph service is offline.
 - Confirmed chat agent unit tests run without requiring a Neo4j instance.
 - Next: exercise graph features against a live database.
+
+## Update 2025-08-16T03:12Z
+- Imported `Agent` into Flask routes and fixed document versioning test setup.
+- Enhanced nav bar styling with border and glow to reinforce dark theme.
+- Next: run stamping tests end-to-end with live PostgreSQL and Neo4j services.

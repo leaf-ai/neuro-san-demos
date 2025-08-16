@@ -1,5 +1,5 @@
-import hashlib
 import os
+import hashlib
 import fitz
 import pytest
 

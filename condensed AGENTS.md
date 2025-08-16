@@ -163,3 +163,8 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 - Made Neo4j authentication optional and handled unreachable graph instances gracefully.
 - Verified chat agent tests pass without a running Neo4j service.
 - Next: run full application suite once Neo4j and related services are available.
+
+## Update 2025-08-16T03:12Z
+- Exposed `Agent` model in Flask import list and added missing `hashlib` import so document versioning tests collect properly.
+- Polished navigation bar with border and neon glow for clearer separation.
+- Next: exercise document stamping workflow against live databases.
