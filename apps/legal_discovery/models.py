@@ -1,6 +1,9 @@
 from .database import db
 import enum
 import uuid
+import json
+import hashlib
+from datetime import datetime
 from sqlalchemy import event
 
 
@@ -184,6 +187,26 @@ class ChainOfCustodyLog(db.Model):
     signature_hash = db.Column(db.String(64), nullable=False)
 
     user = db.relationship("Agent", backref=db.backref("chain_logs", lazy=True))
+
+
+@event.listens_for(ChainOfCustodyLog, "before_insert")
+def _set_chain_signature(mapper, connection, target):
+    if target.signature_hash:
+        return
+    doc = Document.query.get(target.document_id)
+    doc_hash = doc.sha256 if doc else ""
+    payload = {
+        "document_id": target.document_id,
+        "event_type": getattr(target.event_type, "value", str(target.event_type)),
+        "timestamp": (target.timestamp or datetime.utcnow()).isoformat(),
+        "user_id": target.user_id,
+        "metadata": target.event_metadata or {},
+        "doc_hash": doc_hash,
+        "source_team": target.source_team,
+    }
+    target.signature_hash = hashlib.sha256(
+        json.dumps(payload, sort_keys=True).encode("utf-8")
+    ).hexdigest()
 
 
 @event.listens_for(ChainOfCustodyLog, "before_update")

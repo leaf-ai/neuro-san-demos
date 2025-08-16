@@ -12,7 +12,7 @@ def client(monkeypatch):
     with app.app_context():
         db.drop_all()
         db.create_all()
-    def fake_export(case_id, path):
+    def fake_export(self, case_id, path):
         Path(path).write_text("test")
         return path
     monkeypatch.setattr("apps.legal_discovery.binder_routes.PretrialGenerator.export", fake_export)
