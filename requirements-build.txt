@@ -17,3 +17,6 @@ Flake8-pyproject==1.2.3  #  Needed when flake8 configured in pyproject.toml
 isort==5.13.2
 pylint==3.3.1
 
+# Packaging
+pyinstaller==6.4.0
+

@@ -22,12 +22,10 @@ WORKDIR /usr/src/app
 
 # System deps:
 # - build-essential + pkg-config for building wheels
-# - graphviz + libgraphviz-dev for pygraphviz (headers & libs)
 # - WeasyPrint runtime libs (cairo/pango/gdk-pixbuf/fontconfig)
 # - tesseract-ocr (since pytesseract is in requirements)
 RUN apt-get update && apt-get install -y --no-install-recommends \
       build-essential pkg-config \
-      graphviz libgraphviz-dev \
       libcairo2 libpango-1.0-0 libpangoft2-1.0-0 libpangocairo-1.0-0 \
       libgdk-pixbuf-2.0-0 libffi8 libffi-dev \
       libxml2 libxslt1.1 fonts-liberation \
@@ -40,10 +38,6 @@ RUN python -m pip install --upgrade pip setuptools wheel
 # Install Python deps early to leverage Docker layer cache
 COPY apps/legal_discovery/requirements.txt ./requirements.txt
 
-# IMPORTANT: your requirements currently include BOTH `langchain-google-genai`
-# and `google-generativeai` which conflict on `google-ai-generativelanguage`.
-# If you haven't removed `google-generativeai` yet, do it now; otherwise build will fail.
-# (Keep `google-genai` + `langchain-google-genai`; drop `google-generativeai`.)
 RUN python -m pip install -r requirements.txt
 
 # Optional: If you rely on spaCy model via `spacy download`, you can skip this
@@ -51,15 +45,6 @@ RUN python -m pip install -r requirements.txt
 # Keeping it is harmless, but adds time:
 # RUN python -m spacy download en_core_web_sm
 
-# Quick sanity check for pygraphviz so build fails early if headers weren't found
-RUN python - << 'PY'
-import pygraphviz as pgv
-G = pgv.AGraph()
-G.add_edge("a","b")
-print("pygraphviz OK; nodes:", G.number_of_nodes())
-PY
-
-# Copy the rest of the app AFTER deps for better caching
 COPY . .
 
 # Bring in built static assets from the frontend stage

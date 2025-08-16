@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import google.generativeai as genai
+from google import genai
+import os
 from neuro_san.interfaces.coded_tool import CodedTool
 
 from .document_drafter import DocumentDrafter
@@ -92,10 +93,9 @@ class PretrialGenerator(CodedTool):
         lines.extend(f"- {w}" for w in data["witnesses"] or ["None"])
 
         prompt = "\n".join(lines)
-        model = genai.GenerativeModel(self.model_name)
-        response = model.generate_content(
-            prompt,
-            generation_config=genai.types.GenerationConfig(temperature=self.temperature),
+        client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY", ""))
+        response = client.models.generate_content(
+            model=self.model_name, contents=prompt, config=genai.types.GenerateContentConfig(temperature=self.temperature),
         )
         return response.text, data
 

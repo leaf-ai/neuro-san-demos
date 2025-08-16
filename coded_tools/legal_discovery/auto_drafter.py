@@ -5,7 +5,8 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 
-import google.generativeai as genai
+from google import genai
+import os
 from docx import Document as DocxDocument
 from weasyprint import HTML
 
@@ -34,10 +35,10 @@ class AutoDrafter(CodedTool):
             Optional override for the sampling temperature.
         """
         prompt = self.templates.build_prompt(motion_type)
-        model = genai.GenerativeModel(self.model_name)
         temp = self.temperature if temperature is None else temperature
-        response = model.generate_content(
-            prompt, generation_config=genai.types.GenerationConfig(temperature=temp)
+        client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY", ""))
+        response = client.models.generate_content(
+            model=self.model_name, contents=prompt, config=genai.types.GenerateContentConfig(temperature=temp)
         )
         return response.text
 
