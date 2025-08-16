@@ -95,15 +95,6 @@
     # python server.py
     "a2a_research_report.hocon": false,
 
-    # To use this agent network, you will need to
-    # - pip install -U langchain-google-community\[gmail\]
-    # - set up your credentials explained in
-    # https://developers.google.com/workspace/gmail/api/quickstart/python#authorize_credentials_for_a_desktop_application.
-    # Once you've downloaded the credentials.json file and put it in the top level of this repo,
-    # you can start using the agent network.
-    "gmail.hocon": false,
-
-
     # Use cases
     "airline_policy.hocon": true,
     "banking_ops.hocon": true,
@@ -138,29 +129,5 @@
 
     # Demos
 
-    # This agent network performs the following actions:
-    # 1. Calls "agent_network_designer" as an external agent to generate a .hocon configuration file.
-    # 2. Uses the "agent_network_html_generator" tool (from the toolbox) to create an HTML visualization of the network.
-    # 3. Demonstrates how the generated network works by calling the coded tool "NsflowSelenium".
-    # 4. Sends an email with the .hocon and HTML files attached using the "gmail_with_attachment" tool (also from the toolbox).
-    #
-    # Requirements:
-    # - neuro-san>=0.5.38
-    # - Install Gmail support:
-    #     pip install -U langchain-google-community\[gmail\]
-    # - Set up Gmail API credentials:
-    #     Follow the instructions at
-    #     https://developers.google.com/workspace/gmail/api/quickstart/python#authorize_credentials_for_a_desktop_application
-    #     Then download the `credentials.json` file and place it at the top level of this repo.
-    # - Install Selenium and WebDriver Manager:
-    #     pip install selenium webdriver-manager
-    #
-    # Additional setup for running the "NsflowSelenium" coded tool:
-    # - Start the nsflow service in a separate terminal.
-    # - Use non-default ports for the neuro-san gRPC, HTTP, and nsflow servers.
-    #   The default ports are 30011 for gRPC, 8080 for HTTP, and 4173 for nsflow.
-    #   For example, you can run:
-    #     python -m run --server-grpc-port 30012 --server-http-port 8081 --nsflow-port 4174
-    "agent_network_architect.hocon": false,
     "news_sentiment_analysis.hocon": false,
 }
