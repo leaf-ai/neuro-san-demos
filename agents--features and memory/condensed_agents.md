@@ -259,3 +259,8 @@ WE STARTED ON #3, INSTEAD OF #1. DEAL WITH IT, FINISH IMPLEMENTING #3, AND THEN 
 ## Update 2025-08-08T20:47Z
 - Added pause/resume button to ingestion upload UI, allowing temporary halts during large batches.
 - Next: add cancel option and surface backend upload errors.
+## Update 2025-08-16T10:30Z
+- Added local fallbacks for Chroma vector search and Gemini embeddings to remove external service requirements.
+- Fixed pretrial export case ID parsing and ensured chain-of-custody logs auto-hash signatures.
+- All tests now pass after installing required dependencies.
+- Next: monitor Chroma persistence and refine offline vector query performance.

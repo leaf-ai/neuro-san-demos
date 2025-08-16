@@ -814,3 +814,9 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Imported `Agent` into Flask routes and fixed document versioning test setup.
 - Enhanced nav bar styling with border and glow to reinforce dark theme.
 - Next: run stamping tests end-to-end with live PostgreSQL and Neo4j services.
+
+## Update 2025-08-16T10:30Z
+- Introduced fallback embeddings and persistent Chroma client to remove external dependencies.
+- Corrected binder pretrial route and added automatic signature hashing for chain logs.
+- All tests pass in offline environment.
+- Next: optimise local vector store performance and verify Neo4j integration.

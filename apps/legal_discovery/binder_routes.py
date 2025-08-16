@@ -11,8 +11,10 @@ def export_pretrial_statement():
     """Generate a pretrial statement document and update timeline/binder."""
 
     data = request.get_json() or {}
-    case_id = data.get("case_id", type=int)
-    if not case_id:
+    case_id = data.get("case_id")
+    try:
+        case_id = int(case_id)
+    except (TypeError, ValueError):
         return jsonify({"error": "Missing case_id"}), 400
 
     os.makedirs("exports", exist_ok=True)

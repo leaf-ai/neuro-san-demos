@@ -30,19 +30,19 @@ def setup_app():
 
 
 def mock_genai():
-    class MockModel:
-        def __init__(self, _name):
-            pass
+    class MockClient:
+        def __init__(self, api_key=""):
+            self.models = self
 
-        def generate_content(self, prompt, generation_config=None):
+        def generate_content(self, model, contents, config=None):
             return SimpleNamespace(text="mock statement")
 
     class MockTypes:
         @staticmethod
-        def GenerationConfig(**kwargs):
+        def GenerateContentConfig(**kwargs):
             return None
 
-    return SimpleNamespace(GenerativeModel=MockModel, types=MockTypes)
+    return SimpleNamespace(Client=MockClient, types=MockTypes)
 
 
 def test_export_generates_doc_and_integrates(monkeypatch, tmp_path):
