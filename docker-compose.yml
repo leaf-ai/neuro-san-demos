@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   legal_discovery:
     build:
@@ -13,7 +11,7 @@ services:
       - CHROMA_PORT=8000
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_USER=neo4j
-      - NEO4J_PASSWORD=
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD:-changeme}
     depends_on:
       postgres:
         condition: service_started
@@ -22,7 +20,7 @@ services:
       neo4j:
         condition: service_healthy
     volumes:
-      - /mnt/e/docker_volumes/legal_discovery/uploads:/usr/src/app/uploads
+      - ./docker_volumes/legal_discovery/uploads:/usr/src/app/uploads
     restart: unless-stopped
 
   postgres:
@@ -34,7 +32,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - /mnt/e/docker_volumes/postgres/data:/var/lib/postgresql/data
+      - ./docker_volumes/postgres/data:/var/lib/postgresql/data
     restart: unless-stopped
 
   neo4j:
@@ -43,12 +41,12 @@ services:
       - "7474:7474"
       - "7687:7687"
     environment:
-      - NEO4J_AUTH=neo4j/
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD:-changeme}
     volumes:
-      - /mnt/e/docker_volumes/neo4j/data:/data
+      - ./docker_volumes/neo4j/data:/data
     healthcheck:
       # Ensure Bolt is up AND auth works
-      test: ["CMD-SHELL", "cypher-shell -a bolt://localhost:7687 -u neo4j -p dAUypMUkdIYM8ikq72iHqXqCgvb7WojrLtszvDQa4Uo \"RETURN 1\" | grep -q 1"]
+      test: ["CMD-SHELL", "cypher-shell -a bolt://localhost:7687 -u neo4j -p \"$${NEO4J_PASSWORD:-changeme}\" \"RETURN 1\" | grep -q 1"]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -70,5 +68,5 @@ services:
       postgres:
         condition: service_started
     volumes:
-      - /mnt/e/docker_volumes/chroma:/chroma_data
+      - ./docker_volumes/chroma:/chroma_data
     restart: unless-stopped
