@@ -47,7 +47,7 @@ To stop the stack press `Ctrl+C` and run `docker compose down`.
 ## Running Without Docker
 
 1. Execute `bash setup.sh` from the project root to create a virtual environment and install Python dependencies.
-2. Run `npm install` and `npm run build` inside `apps/legal_discovery` to compile the React dashboard.
+2. Run `npm install` and `npm run build` inside `apps/legal_discovery` to compile the React dashboard, or simply run `make frontend-build` from the project root.
 3. Export required variables so NeuroSAN loads the correct manifest and LLM config:
    ```bash
    export AGENT_MANIFEST_FILE=registries/manifest.hocon
@@ -64,6 +64,8 @@ folder:
 ```bash
 npm install
 npm run build
+# or run the combined step from project root
+make frontend-build
 ```
 
 The resulting `static/bundle.js` file is not committed to version control, so run

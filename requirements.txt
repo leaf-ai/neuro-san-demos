@@ -67,4 +67,6 @@ gunicorn
 more_itertools
 google-genai>=1.0.0
 langchain-mcp-adapters>=0.1.7
+langchain-huggingface
+sentence-transformers
 en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl

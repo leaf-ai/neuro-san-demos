@@ -54,8 +54,12 @@ lint-tests: ## Run code formatting and linting tools on tests
 	flake8 tests/
 	pylint tests/
 
+frontend-build: ## Install deps and build the legal discovery React dashboard
+	npm --prefix apps/legal_discovery ci
+	npm --prefix apps/legal_discovery run build
+
 test: lint lint-tests ## Run tests with coverage
-       PYTHONPATH=$(CURDIR) python -m pytest tests/ -v --cov=coded_tools,run.py
+	PYTHONPATH=$(CURDIR) python -m pytest tests/ -v --cov=coded_tools,run.py
 
 .PHONY: help venv install activate lint lint-tests test
 .DEFAULT_GOAL := help

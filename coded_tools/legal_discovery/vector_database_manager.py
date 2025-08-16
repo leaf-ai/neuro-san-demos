@@ -2,6 +2,9 @@ import logging
 import os
 
 import chromadb
+from chromadb.config import Settings
+
+_GLOBAL_CLIENT = None
 from neuro_san.interfaces.coded_tool import CodedTool
 
 
@@ -10,9 +13,14 @@ class VectorDatabaseManager(CodedTool):
         super().__init__(**kwargs)
         host = os.getenv("CHROMA_HOST", "localhost")
         port = int(os.getenv("CHROMA_PORT", "8000"))
-        # Use the HTTP client so vector storage can reside on an external
-        # Chroma service backed by PostgreSQL for concurrent access.
-        self.client = chromadb.HttpClient(host=host, port=port)
+        global _GLOBAL_CLIENT
+        if _GLOBAL_CLIENT is None:
+            try:
+                _GLOBAL_CLIENT = chromadb.HttpClient(host=host, port=port)
+            except Exception as exc:  # pragma: no cover - offline fallback
+                logging.warning("Chroma HTTP client unavailable (%s); using local client", exc)
+                _GLOBAL_CLIENT = chromadb.PersistentClient(path="/tmp/chroma")
+        self.client = _GLOBAL_CLIENT
         self.collection = self.client.get_or_create_collection("legal_documents")
         self.msg_collection = self.client.get_or_create_collection("chat_messages")
         self.convo_collection = self.client.get_or_create_collection("conversations")
@@ -195,12 +203,18 @@ class VectorDatabaseManager(CodedTool):
 
     def query_messages(
         self,
-        query_texts: list[str],
+        query_texts: list[str] | None = None,
         n_results: int = 10,
         where: dict | None = None,
+        query_embeddings: list[list[float]] | None = None,
     ) -> dict:
         """Query stored chat messages."""
-        return self.msg_collection.query(query_texts=query_texts, n_results=n_results, where=where)
+        return self.msg_collection.query(
+            query_texts=query_texts if query_embeddings is None else None,
+            query_embeddings=query_embeddings,
+            n_results=n_results,
+            where=where,
+        )
 
     def query_conversations(self, query_texts: list[str], n_results: int = 10, where: dict | None = None) -> dict:
         """Query stored conversation summaries."""

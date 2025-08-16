@@ -7,10 +7,9 @@ from coded_tools.legal_discovery.knowledge_graph_manager import KnowledgeGraphMa
 
 class TestKnowledgeGraphManager(unittest.TestCase):
     def setUp(self):
-        try:
-            self.kg_manager = KnowledgeGraphManager()
-        except RuntimeError as exc:  # Neo4j not running
-            self.skipTest(str(exc))
+        self.kg_manager = KnowledgeGraphManager()
+        if self.kg_manager.driver is None:
+            self.skipTest("Neo4j driver unavailable")
 
     def tearDown(self):
         self.kg_manager.close()

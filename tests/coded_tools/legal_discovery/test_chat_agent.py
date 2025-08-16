@@ -73,6 +73,13 @@ sys.modules.setdefault("coded_tools.legal_discovery.privilege_detector", priv_mo
 
 # Stub chromadb client
 chromadb = types.ModuleType("chromadb")
+chromadb_config = types.ModuleType("chromadb.config")
+
+class Settings:  # type: ignore
+    pass
+
+chromadb_config.Settings = Settings
+chromadb.config = chromadb_config
 
 class HttpClient:  # type: ignore
     def __init__(self, *_, **__):
@@ -99,6 +106,7 @@ class HttpClient:  # type: ignore
 
 chromadb.HttpClient = HttpClient
 sys.modules.setdefault("chromadb", chromadb)
+sys.modules.setdefault("chromadb.config", chromadb_config)
 
 import coded_tools.legal_discovery.chat_agent as ca
 
@@ -118,7 +126,7 @@ class DummyVectorDB:
     def add_conversations(self, texts, metadatas, ids, embeddings):
         pass
 
-    def query_messages(self, query_texts, n_results=10, where=None):
+    def query_messages(self, query_texts=None, n_results=10, where=None, query_embeddings=None):
         docs = []
         metas = []
         for mid, data in self.store.items():
