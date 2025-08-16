@@ -1,7 +1,7 @@
 import os
 
 from neuro_san.internals.run_context.langchain.util.api_key_error_check import ApiKeyErrorCheck
-import google.generativeai as genai
+from google import genai
 
 
 # Method for Testing Gemini API key
@@ -17,14 +17,11 @@ def test_gemini_api_key():
 
     try:
 
-        # Load your Gemini API key
-        genai.configure(api_key=api_key, transport='rest')  # Or just use: "your-key-here"
+        client = genai.Client(api_key=api_key)
 
-        # Create a Gemini model client
-        model = genai.GenerativeModel(model_name)
-
-        # Send a simple prompt
-        response = model.generate_content("What's the capital of France?")
+        response = client.models.generate_content(
+            model=model_name, contents="What's the capital of France?"
+        )
 
         print("Successful call to Gemini")
         print(response.text)

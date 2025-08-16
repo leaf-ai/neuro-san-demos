@@ -799,3 +799,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Next: validate graph operations under load and monitor connection stability.
 
 
+
+## Update 2025-08-12T18:00Z
+- Switched to google-genai and dropped pygraphviz from build.
+- Cleaned Dockerfile and requirements to avoid Graphviz dependency.
+- Next: mock Neo4j for offline tests.

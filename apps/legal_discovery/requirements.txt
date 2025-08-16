@@ -19,14 +19,13 @@ python-docx
 python-pptx
 flask-sqlalchemy
 psycopg2-binary
+google-genai>=1.0.0
 langchain-google-genai
-google-generativeai
 pyvis
 networkx
 spacy
 weasyprint
 reportlab
-pygraphviz
 gTTS
 
 en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl

@@ -149,3 +149,12 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 - Broadened objection rules with exceptions and counter-objection strategies; added unit test.
 - Next: expand rule corpus and improve speech recognition fidelity.
 
+## Update 2025-08-12T12:00Z
+- Added PyInstaller packaging script and Windows documentation for building a standalone executable.
+- Next: validate the generated `.exe` on a Windows machine.
+
+
+## Update 2025-08-12T18:00Z
+- Replaced google-generativeai with google-genai and removed conflicting packages.
+- Dropped pygraphviz to avoid build-time failures.
+- Next: stub external services so tests run without Neo4j.

@@ -6,12 +6,9 @@ import json
 from datetime import datetime
 from typing import Dict, List, Optional
 
-import google.generativeai as genai
+from google import genai
+import os
 
-try:
-    from langchain_google_genai import ChatGoogleGenerativeAI
-except Exception:  # pragma: no cover - optional dependency
-    ChatGoogleGenerativeAI = None
 from docx import Document as DocxDocument
 from weasyprint import HTML
 
@@ -58,15 +55,9 @@ class DepositionPrep:
 
         prompt = PROMPT_TMPL.format(name=witness.name, facts=facts_text)
 
-        model = genai.GenerativeModel("gemini-2.5-flash")
-        response = model.generate_content(
-            prompt,
-            generation_config=genai.types.GenerationConfig(temperature=0.2),
-        )
+        client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY", ""))
+        response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt, config=genai.types.GenerateContentConfig(temperature=0.2))
         content = response.text
-        llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.2)
-        response = llm.invoke(prompt)
-        content = response.content
 
         try:
             data = json.loads(content)
@@ -102,8 +93,7 @@ class DepositionPrep:
         """Identify contradictions among witness facts using an LLM."""
 
         conflicts: List[Dict] = []
-        model = genai.GenerativeModel("gemini-2.5-pro")
-        llm = ChatGoogleGenerativeAI(model="gemini-2.5-pro", temperature=0)
+        client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY", ""))
         for i in range(len(facts)):
             for j in range(i + 1, len(facts)):
                 prompt = (
@@ -111,13 +101,8 @@ class DepositionPrep:
                     f"1. {facts[i].text}\n2. {facts[j].text}\n"
                     'Respond with JSON {"contradiction": bool, "score": float}.'
                 )
-                response = model.generate_content(
-                    prompt,
-                    generation_config=genai.types.GenerationConfig(temperature=0),
-                )
+                response = client.models.generate_content(model="gemini-2.5-pro", contents=prompt, config=genai.types.GenerateContentConfig(temperature=0))
                 content = response.text
-                response = llm.invoke(prompt)
-                content = response.content
                 try:
                     result = json.loads(content)
                 except json.JSONDecodeError:

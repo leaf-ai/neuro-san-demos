@@ -20,10 +20,10 @@ if importlib.util.find_spec("weasyprint") is None:  # pragma: no cover - environ
 
     sys.modules.setdefault("weasyprint", weasyprint_stub)
 
-# Stub google generative AI SDK if unavailable
+# Stub Google genai SDK if unavailable
 try:  # pragma: no cover - environment specific
-    importlib.util.find_spec("google.generativeai")
+    importlib.util.find_spec("google.genai")
 except ModuleNotFoundError:
     google_pkg = types.ModuleType("google")
     sys.modules.setdefault("google", google_pkg)
-    sys.modules.setdefault("google.generativeai", types.ModuleType("google.generativeai"))
+    sys.modules.setdefault("google.genai", types.ModuleType("google.genai"))

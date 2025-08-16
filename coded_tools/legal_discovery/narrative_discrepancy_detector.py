@@ -5,7 +5,8 @@ import json
 from dataclasses import dataclass
 from typing import List, Tuple
 
-import google.generativeai as genai
+from google import genai
+import os
 
 from neuro_san.interfaces.coded_tool import CodedTool
 
@@ -93,8 +94,8 @@ class NarrativeDiscrepancyDetector(CodedTool):
             "and 'confidence' between 0 and 1 given the claim and evidence."\
             f"\nClaim: {claim}\nEvidence: {evidence}"
         )
-        model = genai.GenerativeModel(self.model_name)
-        response = model.generate_content(prompt)
+        client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY", ""))
+        response = client.models.generate_content(model=self.model_name, contents=prompt)
         try:
             data = json.loads(response.text.strip())
             label = str(data.get("label", "NEUTRAL")).upper()
