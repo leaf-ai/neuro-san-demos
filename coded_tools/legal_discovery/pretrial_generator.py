@@ -3,6 +3,7 @@ from __future__ import annotations
 """Pretrial statement generation and export utilities."""
 
 from pathlib import Path
+import logging
 
 from google import genai
 import os
@@ -29,6 +30,27 @@ class PretrialGenerator(CodedTool):
         super().__init__(**kwargs)
         self.model_name = model_name
         self.temperature = temperature
+
+    def generate_statement(self, cause: str, elements: list[str]) -> str:
+        prompt = (
+            f"Prepare a pretrial statement for {cause} covering: "
+            + ", ".join(elements)
+        )
+        api_key = os.getenv("GOOGLE_API_KEY", "")
+        if api_key:
+            try:
+                client = genai.Client(api_key=api_key)
+                resp = client.models.generate_content(
+                    model=self.model_name,
+                    contents=prompt,
+                    config=genai.types.GenerateContentConfig(
+                        temperature=self.temperature
+                    ),
+                )
+                return resp.text
+            except Exception as exc:  # pragma: no cover - best effort
+                logging.warning("pretrial statement generation failed: %s", exc)
+        return prompt
 
     # ------------------------------------------------------------------
     # Data aggregation
@@ -93,11 +115,22 @@ class PretrialGenerator(CodedTool):
         lines.extend(f"- {w}" for w in data["witnesses"] or ["None"])
 
         prompt = "\n".join(lines)
-        client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY", ""))
-        response = client.models.generate_content(
-            model=self.model_name, contents=prompt, config=genai.types.GenerateContentConfig(temperature=self.temperature),
-        )
-        return response.text, data
+        api_key = os.getenv("GOOGLE_API_KEY", "")
+        if api_key:
+            try:
+                client = genai.Client(api_key=api_key)
+                response = client.models.generate_content(
+                    model=self.model_name,
+                    contents=prompt,
+                    config=genai.types.GenerateContentConfig(temperature=self.temperature),
+                )
+                text = response.text
+            except Exception as exc:  # pragma: no cover - best effort
+                logging.warning("pretrial draft failed: %s", exc)
+                text = prompt
+        else:
+            text = prompt
+        return text, data
 
     # ------------------------------------------------------------------
     # Export

@@ -5,10 +5,9 @@ from coded_tools.legal_discovery.knowledge_graph_manager import KnowledgeGraphMa
 
 class TestLegalCrawlerIntegration(unittest.TestCase):
     def setUp(self):
-        try:
-            self.kg = KnowledgeGraphManager()
-        except RuntimeError as exc:  # Neo4j not running
-            self.skipTest(str(exc))
+        self.kg = KnowledgeGraphManager()
+        if self.kg.driver is None:
+            self.skipTest("Neo4j driver unavailable")
 
     def tearDown(self):
         self.kg.close()

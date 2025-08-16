@@ -48,7 +48,8 @@ class KnowledgeGraphManager(CodedTool):
                 time.sleep(base_sleep * (2**i))
 
     def close(self):
-        self.driver.close()
+        if self.driver:
+            self.driver.close()
 
     def run_query(self, query: str, params: dict | None = None) -> list[dict]:
         """Run a Cypher query and return all records as dictionaries."""

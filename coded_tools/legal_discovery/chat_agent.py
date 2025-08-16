@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 
 from neuro_san.interfaces.coded_tool import CodedTool
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 
 from apps.legal_discovery.chain_logger import ChainEventType, log_event
 from apps.legal_discovery.database import db
@@ -33,7 +34,11 @@ class RetrievalChatAgent(CodedTool):
         self.vector_db = vector_db or VectorDatabaseManager(**kwargs)
         self.graph_db = graph_db or KnowledgeGraphManager(**kwargs)
         self.detector = PrivilegeDetector()
-        self._embedder = GoogleGenerativeAIEmbeddings()
+        try:
+            self._embedder = GoogleGenerativeAIEmbeddings()
+        except Exception as exc:  # pragma: no cover - offline fallback
+            logging.warning("using local embeddings due to error: %s", exc)
+            self._embedder = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
     def _ensure_conversation(self, conversation_id: Optional[str], sender_id: int) -> Conversation:
         if conversation_id:

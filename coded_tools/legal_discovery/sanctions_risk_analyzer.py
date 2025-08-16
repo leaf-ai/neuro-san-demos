@@ -13,9 +13,12 @@ class SanctionsRiskAnalyzer(CodedTool):
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
-        self._llm = ChatGoogleGenerativeAI(
-            model=os.getenv("GOOGLE_MODEL_NAME", "gemini-2.5-flash")
-        )
+        try:
+            self._llm = ChatGoogleGenerativeAI(
+                model=os.getenv("GOOGLE_MODEL_NAME", "gemini-2.5-flash")
+            )
+        except Exception:  # pragma: no cover - allow offline usage
+            self._llm = type("NoopLLM", (), {"invoke": lambda *a, **k: type("R", (), {"content": ""})()})()
         self._rules: Dict[str, List[str]] = {
             "filing": ["rule 11", "frivolous", "improper purpose"],
             "discovery": ["spoliation", "withheld", "failed to preserve", "discovery abuse"],
@@ -42,11 +45,12 @@ class SanctionsRiskAnalyzer(CodedTool):
             " \"analysis\":\"...\"}.\n\n" + score_info + text
         )
         triggers = self._check_triggers(text)
+        raw = ""
         try:
             raw = self._llm.invoke(prompt, timeout=60).content
-            data = json.loads(raw)
+            data = json.loads(raw) if raw else {"risk": "unknown", "analysis": ""}
         except Exception:  # pragma: no cover - best effort
-            data = {"risk": "unknown", "analysis": raw if 'raw' in locals() else ""}
+            data = {"risk": "unknown", "analysis": raw}
         data["triggers"] = triggers
         if triggers:
             data["warning"] = ", ".join(
