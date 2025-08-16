@@ -193,3 +193,6 @@ apps/legal_discovery/node_modules/
 apps/legal_discovery/static/bundle.js
 apps/legal_discovery/static/main.css
 apps/legal_discovery/dist/
+
+# Docker data volumes
+docker_volumes/
