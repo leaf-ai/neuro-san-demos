@@ -30,6 +30,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       libgdk-pixbuf-2.0-0 libffi8 libffi-dev \
       libxml2 libxslt1.1 fonts-liberation \
       tesseract-ocr tesseract-ocr-eng \
+      ffmpeg libsndfile1 espeak \
     && rm -rf /var/lib/apt/lists/*
 
 # Upgrade pip/setuptools first
@@ -38,7 +39,8 @@ RUN python -m pip install --upgrade pip setuptools wheel
 # Install Python deps early to leverage Docker layer cache
 COPY apps/legal_discovery/requirements.txt ./requirements.txt
 
-RUN python -m pip install -r requirements.txt
+RUN python -m pip install -r requirements.txt \
+    && python -m pip install openai-whisper
 
 # Optional: If you rely on spaCy model via `spacy download`, you can skip this
 # because your requirements already install the model wheel from GitHub.

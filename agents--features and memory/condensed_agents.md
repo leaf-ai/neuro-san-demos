@@ -294,3 +294,8 @@ WE STARTED ON #3, INSTEAD OF #1. DEAL WITH IT, FINISH IMPLEMENTING #3, AND THEN 
 - Added configurable voice synthesis pipeline with Redis/DB caching.
 - React chat now lists available voices from backend.
 - Next: allow users to switch engines in the settings panel.
+
+## Update 2025-09-17T00:00Z
+- Added ffmpeg and espeak packages to Dockerfile for STT/TTS libraries.
+- Extended docker-compose with Redis service and audio cache volume; documented build/run commands.
+- Next: verify audio cache persistence and message bus behaviour in the full stack.

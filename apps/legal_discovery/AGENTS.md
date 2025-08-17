@@ -861,3 +861,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-09-16T00:00Z
 - Mocked STT/TTS layers and added tests for voice command routing, auth failures, message bus alerts, WebSocket transcripts and objection detection.
 - Next: broaden command coverage and expand streaming edge-case tests.
+
+## Update 2025-09-17T00:00Z
+- Installed ffmpeg and espeak in Dockerfile for Whisper and TTS support.
+- Added Redis service and audio cache volume to docker-compose; documented build/run steps.
+- Next: test voice flows end-to-end and optimise cache storage.
