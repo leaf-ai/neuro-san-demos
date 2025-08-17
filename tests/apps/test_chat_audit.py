@@ -13,7 +13,10 @@ def client():
     with app.app_context():
         db.drop_all()
         db.create_all()
-    return app.test_client()
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess["user"] = "tester"
+    return client
 
 
 def test_query_logs_message(client):
@@ -144,3 +147,12 @@ def test_list_voices(client, monkeypatch):
     assert resp.status_code == 200
     data = resp.get_json()
     assert data["voices"][0]["id"] == "v1"
+
+
+def test_voice_requires_auth():
+    unauth = app.test_client()
+    resp = unauth.post("/api/chat/voice", json={"transcript": "hi"})
+    assert resp.status_code == 401
+    with app.app_context():
+        log = MessageAuditLog.query.filter_by(transcript="missing_token").first()
+        assert log is not None

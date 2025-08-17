@@ -75,7 +75,7 @@ class Message(db.Model):
 
 class MessageAuditLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    message_id = db.Column(db.String(36), db.ForeignKey("message.id"), nullable=False)
+    message_id = db.Column(db.String(36), db.ForeignKey("message.id"), nullable=True)
     sender = db.Column(db.String(50), nullable=False)
     transcript = db.Column(db.Text, nullable=False)
     voice_model = db.Column(db.String(50), nullable=True)

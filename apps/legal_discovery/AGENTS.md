@@ -850,3 +850,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-09-01T00:00Z
 - Created `voice-widget.jsx` with microphone controls, transcript stream and objection bar.
 - Next: integrate widget into trial console and refine audio fallback handling.
+
+## Update 2025-09-14T00:00Z
+- Secured voice endpoints with JWT/session auth, rate limiting and audit logging.
+- Next: extend authentication across remaining routes.
