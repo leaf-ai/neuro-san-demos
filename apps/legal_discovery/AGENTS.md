@@ -828,3 +828,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-16T18:00Z
 - Introduced Whisper-based streaming STT with WebSocket voice query and offline fallback.
 - Next: tune interim transcription latency and expand client integration.
+
+## Update 2025-08-16T19:00Z
+- Added voice command registry with logging in voice queries.
+- Next: expand command coverage and refine confirmation responses.
