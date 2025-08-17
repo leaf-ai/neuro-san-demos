@@ -134,3 +134,13 @@ def test_voice_query_emits_document_message(client, monkeypatch):
     )
     assert resp.status_code == 200
     assert any(t == AUTO_DRAFTER_ALERT_TOPIC for t, _ in published)
+
+
+def test_list_voices(client, monkeypatch):
+    monkeypatch.setattr(
+        "apps.legal_discovery.chat_routes.get_available_voices", lambda: [{"id": "v1", "name": "Voice"}]
+    )
+    resp = client.get("/api/chat/voices")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["voices"][0]["id"] == "v1"

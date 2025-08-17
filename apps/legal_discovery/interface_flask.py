@@ -75,6 +75,7 @@ from apps.legal_discovery.models import (
     MessageAuditLog,
     NarrativeDiscrepancy,
     DocumentVersion,
+    VoiceCache,
 )
 from coded_tools.legal_discovery.deposition_prep import DepositionPrep
 from coded_tools.legal_discovery.legal_crawler import LegalCrawler

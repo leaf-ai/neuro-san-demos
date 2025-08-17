@@ -5,7 +5,8 @@ function ChatSection() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [recording, setRecording] = useState(false);
-  const [voiceModel, setVoiceModel] = useState("en-US");
+  const [voiceModel, setVoiceModel] = useState("");
+  const [voices, setVoices] = useState([]);
   const [conversationId, setConversationId] = useState(null);
   const boxRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -26,6 +27,15 @@ function ChatSection() {
       }
     });
     return () => socket.disconnect();
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/chat/voices")
+      .then((r) => r.json())
+      .then((d) => {
+        setVoices(d.voices || []);
+        if (d.voices && d.voices.length) setVoiceModel(d.voices[0].id);
+      });
   }, []);
 
   useEffect(() => {
@@ -123,8 +133,11 @@ function ChatSection() {
           onChange={(e) => setVoiceModel(e.target.value)}
           className="mr-2 bg-gray-800 text-gray-100 p-1 rounded"
         >
-          <option value="en-US">English US</option>
-          <option value="en-GB">English UK</option>
+          {voices.map((v) => (
+            <option key={v.id} value={v.id}>
+              {v.name}
+            </option>
+          ))}
         </select>
         {recording ? (
           <button className="button-secondary" onClick={stopRecording}>

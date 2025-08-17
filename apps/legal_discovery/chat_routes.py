@@ -7,7 +7,7 @@ from .database import db
 from .models import MessageAuditLog
 from .extensions import socketio
 from .chat_state import user_input_queue
-from .voice import synthesize_voice
+from .voice import synthesize_voice, get_available_voices
 from .stt import stream_transcribe
 from .voice_commands import execute_command
 
@@ -205,6 +205,11 @@ def voice_query():
 
     result = _handle_transcript(transcript, data)
     return jsonify(result)
+
+
+@chat_bp.get("/voices")
+def list_voices():
+    return jsonify({"voices": get_available_voices()})
 
 
 @socketio.on("voice_query", namespace="/chat")
