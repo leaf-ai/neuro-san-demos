@@ -880,3 +880,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Implemented minimal HippoRAG-style indexing and query endpoints with deterministic segment IDs.
 - Added unit tests for chunking determinism and query path structure.
 - Next: connect endpoints to real Neo4j and Chroma services and enrich objection events with retrieval refs.
+
+## Update 2025-09-18T12:00Z
+- Added deterministic ``segment_hash`` plus pluggable entity extractor and bulk Neo4j/Chroma upserts in ``hippo.py``.
+- Created ``ingestion_logs`` table and helper to record document ingestions with idempotent hashing.
+- Next: validate graph/vector batch operations against live services and expand ingestion telemetry.
