@@ -84,6 +84,18 @@ class MessageAuditLog(db.Model):
     message = db.relationship("Message", backref=db.backref("audit_logs", lazy=True))
 
 
+class VoiceCache(db.Model):
+    """Cached audio snippets keyed by text and model."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.Text, nullable=False)
+    model = db.Column(db.String(100), nullable=False)
+    audio = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+    __table_args__ = (db.UniqueConstraint("text", "model", name="uix_voice_cache_text_model"),)
+
+
 class DocumentSource(enum.Enum):
     """Origin of an uploaded document."""
 

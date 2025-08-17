@@ -289,3 +289,8 @@ WE STARTED ON #3, INSTEAD OF #1. DEAL WITH IT, FINISH IMPLEMENTING #3, AND THEN 
 - Retrieval agent now injects prior conversation snippets into LLM prompts.
 - React chat panel tracks conversation IDs and sports a bordered dark chat box.
 - Next: persist conversation history across sessions and refine prompt weighting.
+
+## Update 2025-08-31T00:00Z
+- Added configurable voice synthesis pipeline with Redis/DB caching.
+- React chat now lists available voices from backend.
+- Next: allow users to switch engines in the settings panel.
