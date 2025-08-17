@@ -176,3 +176,6 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 ## Update 2025-09-15T00:00Z
 - Instrumented STT/TTS with Prometheus metrics and `/metrics` endpoint; added alerting rules.
 - Next: monitor latency and failure alerts in staging.
+## Update 2025-09-16T00:00Z
+- Mocked speech engines and added tests for command routing, auth errors, message bus alerts, streaming transcripts and objection detection.
+- Next: expand coverage for additional voice workflows.
