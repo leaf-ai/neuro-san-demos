@@ -854,3 +854,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-09-14T00:00Z
 - Secured voice endpoints with JWT/session auth, rate limiting and audit logging.
 - Next: extend authentication across remaining routes.
+
+## Update 2025-09-15T00:00Z
+- Instrumented STT/TTS with Prometheus metrics and logging; exposed `/metrics` endpoint and added alert rules.
+- Next: monitor metrics in staging and tune alert thresholds.

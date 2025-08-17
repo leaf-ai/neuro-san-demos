@@ -20,6 +20,7 @@ Flask-SQLAlchemy>=2.5.1
 pandas>=1.3.5
 reportlab
 redis>=5.0.0
+prometheus-client>=0.20.0
 
 # We separate out requirements that are specific to the build, but not
 # necessary for operation to minimize the size of containers

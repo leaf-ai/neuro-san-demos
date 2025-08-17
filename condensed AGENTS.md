@@ -172,3 +172,7 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 ## Update 2025-09-01T00:00Z
 - Added React voice widget with microphone toggle, streaming transcript feed and objection alerts.
 - Next: embed widget in dashboard and broaden cross-browser audio support.
+
+## Update 2025-09-15T00:00Z
+- Instrumented STT/TTS with Prometheus metrics and `/metrics` endpoint; added alerting rules.
+- Next: monitor latency and failure alerts in staging.
