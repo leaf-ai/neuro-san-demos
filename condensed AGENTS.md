@@ -168,3 +168,7 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 - Exposed `Agent` model in Flask import list and added missing `hashlib` import so document versioning tests collect properly.
 - Polished navigation bar with border and neon glow for clearer separation.
 - Next: exercise document stamping workflow against live databases.
+
+## Update 2025-09-01T00:00Z
+- Added React voice widget with microphone toggle, streaming transcript feed and objection alerts.
+- Next: embed widget in dashboard and broaden cross-browser audio support.
