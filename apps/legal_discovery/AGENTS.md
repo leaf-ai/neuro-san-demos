@@ -846,3 +846,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Abstracted text-to-speech to support gTTS, Coqui-TTS or system engines with Redis/DB caching.
 - Added `/api/chat/voices` endpoint and React selector for available voices.
 - Next: surface engine choice in settings and broaden voice options.
+
+## Update 2025-09-01T00:00Z
+- Created `voice-widget.jsx` with microphone controls, transcript stream and objection bar.
+- Next: integrate widget into trial console and refine audio fallback handling.
