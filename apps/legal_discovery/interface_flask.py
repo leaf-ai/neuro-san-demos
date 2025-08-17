@@ -74,6 +74,7 @@ from apps.legal_discovery.models import (
     DocumentVersion,
     VoiceCache,
 )
+from .feature_flags import FEATURE_FLAGS
 from coded_tools.legal_discovery.deposition_prep import DepositionPrep
 from coded_tools.legal_discovery.legal_crawler import LegalCrawler
 from coded_tools.legal_discovery.narrative_discrepancy_detector import (
@@ -297,33 +298,47 @@ def manage_settings():
     if request.method == "POST":
         data = request.get_json()
         settings.save_user_settings(data)
+        for flag, env_var in [
+            ("voice_stt", "ENABLE_VOICE_STT"),
+            ("voice_tts", "ENABLE_VOICE_TTS"),
+            ("voice_commands", "ENABLE_VOICE_COMMANDS"),
+        ]:
+            if flag in data:
+                FEATURE_FLAGS[flag] = bool(data[flag])
+                os.environ[env_var] = "1" if data[flag] else "0"
         return jsonify({"message": "Settings saved successfully"})
     else:
         user_settings = settings.get_user_settings()
+        resp = {}
         if user_settings:
-            return jsonify(
-                {
-                    "courtlistener_api_key": user_settings.courtlistener_api_key,
-                    "courtlistener_com_api_endpoint": user_settings.courtlistener_com_api_endpoint,
-                    "california_codes_url": user_settings.california_codes_url,
-                    "gemini_api_key": user_settings.gemini_api_key,
-                    "google_api_endpoint": user_settings.google_api_endpoint,
-                    "verifypdf_api_key": user_settings.verifypdf_api_key,
-                    "verify_pdf_endpoint": user_settings.verify_pdf_endpoint,
-                    "riza_key": user_settings.riza_key,
-                    "neo4j_uri": user_settings.neo4j_uri,
-                    "neo4j_username": user_settings.neo4j_username,
-                    "neo4j_password": user_settings.neo4j_password,
-                    "neo4j_database": user_settings.neo4j_database,
-                    "aura_instance_id": user_settings.aura_instance_id,
-                    "aura_instance_name": user_settings.aura_instance_name,
-                    "gcp_project_id": user_settings.gcp_project_id,
-                    "gcp_vertex_ai_data_store_id": user_settings.gcp_vertex_ai_data_store_id,
-                    "gcp_vertex_ai_search_app": user_settings.gcp_vertex_ai_search_app,
-                    "gcp_service_account_key": user_settings.gcp_service_account_key,
-                }
-            )
-        return jsonify({})
+            resp = {
+                "courtlistener_api_key": user_settings.courtlistener_api_key,
+                "courtlistener_com_api_endpoint": user_settings.courtlistener_com_api_endpoint,
+                "california_codes_url": user_settings.california_codes_url,
+                "gemini_api_key": user_settings.gemini_api_key,
+                "google_api_endpoint": user_settings.google_api_endpoint,
+                "verifypdf_api_key": user_settings.verifypdf_api_key,
+                "verify_pdf_endpoint": user_settings.verify_pdf_endpoint,
+                "riza_key": user_settings.riza_key,
+                "neo4j_uri": user_settings.neo4j_uri,
+                "neo4j_username": user_settings.neo4j_username,
+                "neo4j_password": user_settings.neo4j_password,
+                "neo4j_database": user_settings.neo4j_database,
+                "aura_instance_id": user_settings.aura_instance_id,
+                "aura_instance_name": user_settings.aura_instance_name,
+                "gcp_project_id": user_settings.gcp_project_id,
+                "gcp_vertex_ai_data_store_id": user_settings.gcp_vertex_ai_data_store_id,
+                "gcp_vertex_ai_search_app": user_settings.gcp_vertex_ai_search_app,
+                "gcp_service_account_key": user_settings.gcp_service_account_key,
+            }
+        resp.update(
+            {
+                "voice_stt": FEATURE_FLAGS["voice_stt"],
+                "voice_tts": FEATURE_FLAGS["voice_tts"],
+                "voice_commands": FEATURE_FLAGS["voice_commands"],
+            }
+        )
+        return jsonify(resp)
 
 
 @app.route("/api/settings/api-keys", methods=["GET", "POST"])

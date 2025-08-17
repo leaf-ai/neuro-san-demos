@@ -8,6 +8,7 @@ from .models import MessageAuditLog
 from .extensions import socketio, limiter
 from .chat_state import user_input_queue
 from .voice import synthesize_voice, get_available_voices
+from .feature_flags import FEATURE_FLAGS
 from .stt import stream_transcribe
 from .voice_commands import execute_command
 
@@ -110,8 +111,9 @@ def _handle_transcript(transcript: str, data: dict) -> dict:
     response_text = result.get("answer") or "\n".join(result.get("facts", []))
     if response_text:
         socketio.emit("update_speech", {"data": response_text}, namespace="/chat")
-        audio = synthesize_voice(response_text, data.get("voice_model", "en-US"))
-        socketio.emit("voice_output", {"audio": audio}, namespace="/chat")
+        if FEATURE_FLAGS["voice_tts"]:
+            audio = synthesize_voice(response_text, data.get("voice_model", "en-US"))
+            socketio.emit("voice_output", {"audio": audio}, namespace="/chat")
         db.session.add(
             MessageAuditLog(
                 message_id=result["message_id"],
@@ -211,7 +213,7 @@ def voice_query():
     if "document" in transcript.lower():
         _publish_alert(AUTO_DRAFTER_ALERT_TOPIC, {"transcript": transcript})
 
-    command = execute_command(transcript, data)
+    command = execute_command(transcript, data) if FEATURE_FLAGS["voice_commands"] else None
     if command:
         keyword, output = command
         if keyword.startswith("timeline"):
@@ -249,6 +251,8 @@ def voice_query():
 @limiter.limit("10/minute")
 @auth_required
 def list_voices():
+    if not FEATURE_FLAGS["voice_tts"]:
+        return jsonify({"voices": []})
     return jsonify({"voices": get_available_voices()})
 
 
@@ -257,6 +261,9 @@ def voice_query_ws(data):
     """Handle streaming audio frames over WebSocket."""
     if not _require_auth():
         socketio.emit("voice_error", {"error": "unauthorized"}, namespace="/chat")
+        return
+    if not FEATURE_FLAGS["voice_stt"]:
+        socketio.emit("voice_error", {"error": "stt_disabled"}, namespace="/chat")
         return
     frames = data.get("frames") or []
     if not frames:
