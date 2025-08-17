@@ -12,6 +12,7 @@ interface Segment {
 
 interface ObjectionEvent {
   event_id: string;
+  segment_id: string;
   ground: string;
   confidence: number;
   suggested_cures: any[];
@@ -21,6 +22,7 @@ export default function TrialConsole({ sessionId }: { sessionId: string }) {
   const sock = useRef<any>(null);
   const [segments, setSegments] = useState<Segment[]>([]);
   const [objection, setObjection] = useState<ObjectionEvent | null>(null);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
   const [listening, setListening] = useState(false);
 
   // Voice recognition powered by the Web Speech API. Use the wake phrase
@@ -77,7 +79,10 @@ export default function TrialConsole({ sessionId }: { sessionId: string }) {
     s.on("transcript_update", (msg: Segment) => {
       setSegments((prev) => [...prev, msg]);
     });
-    s.on("objection_event", (evt: ObjectionEvent) => setObjection(evt));
+    s.on("objection_event", (evt: ObjectionEvent) => {
+      setObjection(evt);
+      setHighlightId(evt.segment_id);
+    });
     sock.current = s;
     return () => s.disconnect();
   }, [sessionId]);
@@ -89,6 +94,7 @@ export default function TrialConsole({ sessionId }: { sessionId: string }) {
       body: JSON.stringify({ event_id: eventId, action: cureKey }),
     });
     setObjection(null);
+    setHighlightId(null);
   };
 
   return (
@@ -101,7 +107,12 @@ export default function TrialConsole({ sessionId }: { sessionId: string }) {
       </div>
       <div className="space-y-1 overflow-y-auto pr-2" style={{ maxHeight: "60vh" }}>
         {segments.map((s) => (
-          <div key={s.segment_id} className="text-sm">
+          <div
+            key={s.segment_id}
+            className={`text-sm ${
+              s.segment_id === highlightId ? "bg-yellow-500/20" : ""
+            }`}
+          >
             <span className="font-semibold mr-2">{s.speaker}:</span>
             <span>{s.text}</span>
           </div>

@@ -34,14 +34,37 @@ def join(data):
 def handle_segment(data):
     session_id = data.get("session_id")
     text = data.get("text", "")
-    seg = TranscriptSegment(session_id=session_id, text=text, t0_ms=data.get("t0_ms"), t1_ms=data.get("t1_ms"), speaker=data.get("speaker"), confidence=data.get("confidence"))
+    seg = TranscriptSegment(
+        session_id=session_id,
+        text=text,
+        t0_ms=data.get("t0_ms"),
+        t1_ms=data.get("t1_ms"),
+        speaker=data.get("speaker"),
+        confidence=data.get("confidence"),
+    )
     db.session.add(seg)
     db.session.commit()
+    emit(
+        "transcript_update",
+        {
+            "segment_id": seg.id,
+            "speaker": seg.speaker,
+            "text": seg.text,
+            "t0_ms": seg.t0_ms,
+            "t1_ms": seg.t1_ms,
+        },
+        room=session_id,
+    )
     events = engine.analyze_segment(session_id, seg)
     for e in events:
-        emit("objection_event", {
-            "event_id": e.id,
-            "ground": e.ground,
-            "confidence": e.confidence,
-            "suggested_cures": e.suggested_cures,
-        }, room=session_id)
+        emit(
+            "objection_event",
+            {
+                "event_id": e.id,
+                "segment_id": e.segment_id,
+                "ground": e.ground,
+                "confidence": e.confidence,
+                "suggested_cures": e.suggested_cures,
+            },
+            room=session_id,
+        )

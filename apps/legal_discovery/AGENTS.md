@@ -836,3 +836,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-30T00:00Z
 - Emitted TeamMessage alerts for timeline and document actions triggered by voice queries and started cross-team listeners.
 - Next: broaden document workflows and bus topics for additional commands.
+
+## Update 2025-08-30T12:00Z
+- Highlighted transcript segments when objection events are detected and broadcast over Socket.IO.
+- Added WebSocket test ensuring objection events persist to the database with segment references.
+- Next: expand visual cues for multiple simultaneous objections and refine client-side dismissal flows.
