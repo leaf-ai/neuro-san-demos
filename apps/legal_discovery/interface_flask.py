@@ -97,7 +97,7 @@ from coded_tools.legal_discovery.bates_numbering import (
 import difflib
 import fitz
 from .feature_flags import FEATURE_FLAGS
-from .extensions import socketio
+from .extensions import socketio, limiter
 from .chat_state import user_input_queue
 from . import presentation_ws  # noqa: F401
 
@@ -131,6 +131,7 @@ if not os.path.exists(BUNDLE_PATH):
     )
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", os.urandom(24).hex())
+app.config["JWT_SECRET"] = os.environ.get("JWT_SECRET", os.urandom(24).hex())
 # Allow the primary relational store to be configured at runtime. Default to
 # SQLite for local development but override with an environment-provided
 # PostgreSQL connection string when available so the application scales under
@@ -139,6 +140,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:/
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 socketio.init_app(app)
+limiter.init_app(app)
 app.register_blueprint(exhibits_bp)
 app.register_blueprint(trial_prep_bp)
 app.register_blueprint(trial_assistant_bp)

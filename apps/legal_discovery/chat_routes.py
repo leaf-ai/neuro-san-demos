@@ -1,11 +1,11 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, session, current_app
 
 from coded_tools.legal_discovery.chat_agent import RetrievalChatAgent
 from coded_tools.legal_discovery.timeline_manager import TimelineManager
 
 from .database import db
 from .models import MessageAuditLog
-from .extensions import socketio
+from .extensions import socketio, limiter
 from .chat_state import user_input_queue
 from .voice import synthesize_voice, get_available_voices
 from .stt import stream_transcribe
@@ -13,6 +13,8 @@ from .voice_commands import execute_command
 
 import base64
 import logging
+import jwt
+from functools import wraps
 
 from apps.message_bus import (
     AUTO_DRAFTER_ALERT_TOPIC,
@@ -26,6 +28,40 @@ chat_bp = Blueprint("chat", __name__, url_prefix="/api/chat")
 
 bus = MessageBus()
 _listeners_started = False
+
+
+def _log_auth_failure(reason: str) -> None:
+    db.session.add(MessageAuditLog(message_id=None, sender="system", transcript=reason))
+    db.session.commit()
+
+
+def _require_auth() -> bool:
+    """Validate JWT or session token presence."""
+    auth_header = request.headers.get("Authorization", "")
+    token = None
+    if auth_header.startswith("Bearer "):
+        token = auth_header.split(" ", 1)[1]
+    if token:
+        try:
+            jwt.decode(token, current_app.config["JWT_SECRET"], algorithms=["HS256"])
+            return True
+        except jwt.PyJWTError:
+            _log_auth_failure("invalid_token")
+            return False
+    if session.get("user"):
+        return True
+    _log_auth_failure("missing_token")
+    return False
+
+
+def auth_required(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if not _require_auth():
+            return jsonify({"status": "error", "error": "unauthorized"}), 401
+        return func(*args, **kwargs)
+
+    return wrapper
 
 
 def _ensure_listeners_started() -> None:
@@ -159,6 +195,8 @@ def query_agent():
 
 
 @chat_bp.post("/voice")
+@limiter.limit("10/minute")
+@auth_required
 def voice_query():
     data = request.get_json() or {}
     transcript = data.get("transcript")
@@ -208,6 +246,8 @@ def voice_query():
 
 
 @chat_bp.get("/voices")
+@limiter.limit("10/minute")
+@auth_required
 def list_voices():
     return jsonify({"voices": get_available_voices()})
 
@@ -215,6 +255,9 @@ def list_voices():
 @socketio.on("voice_query", namespace="/chat")
 def voice_query_ws(data):
     """Handle streaming audio frames over WebSocket."""
+    if not _require_auth():
+        socketio.emit("voice_error", {"error": "unauthorized"}, namespace="/chat")
+        return
     frames = data.get("frames") or []
     if not frames:
         socketio.emit("voice_error", {"error": "no audio"}, namespace="/chat")
