@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 
@@ -89,6 +90,14 @@ class VectorDatabaseManager(CodedTool):
         self.collection = self.client.get_or_create_collection("legal_documents")
         self.msg_collection = self.client.get_or_create_collection("chat_messages")
         self.convo_collection = self.client.get_or_create_collection("conversations")
+        self._query_cache: dict[tuple, dict] = {}
+        self._msg_cache: dict[tuple, dict] = {}
+        self._convo_cache: dict[tuple, dict] = {}
+
+    def _invalidate_cache(self) -> None:
+        self._query_cache.clear()
+        self._msg_cache.clear()
+        self._convo_cache.clear()
 
     def persist(self) -> None:
         """Persist pending changes to the backing store."""
@@ -190,6 +199,16 @@ class VectorDatabaseManager(CodedTool):
                 )
             else:
                 self.collection.add(documents=safe_docs, metadatas=fallback, ids=safe_ids)
+        self._invalidate_cache()
+
+    async def aadd_documents(
+        self,
+        documents: list[str],
+        metadatas: list[dict],
+        ids: list[str],
+        embeddings: list[list[float]] | None = None,
+    ) -> None:
+        await asyncio.to_thread(self.add_documents, documents, metadatas, ids, embeddings)
 
     def query(self, query_texts: list[str], n_results: int = 10, where: dict | None = None) -> dict:
         """
@@ -200,7 +219,12 @@ class VectorDatabaseManager(CodedTool):
         :param where: Optional metadata filter.
         :return: A dictionary containing the query results.
         """
-        return self.collection.query(query_texts=query_texts, n_results=n_results, where=where)
+        key = (tuple(query_texts), n_results, frozenset(where.items()) if where else None)
+        if key in self._query_cache:
+            return self._query_cache[key]
+        result = self.collection.query(query_texts=query_texts, n_results=n_results, where=where)
+        self._query_cache[key] = result
+        return result
 
     def get_document_count(self) -> int:
         """
@@ -217,6 +241,7 @@ class VectorDatabaseManager(CodedTool):
         :param ids: A list of document IDs to delete.
         """
         self.collection.delete(ids=ids)
+        self._invalidate_cache()
 
     def add_messages(
         self,
@@ -248,6 +273,16 @@ class VectorDatabaseManager(CodedTool):
             ids=safe_ids,
             embeddings=safe_embeddings,
         )
+        self._invalidate_cache()
+
+    async def aadd_messages(
+        self,
+        messages: list[str],
+        metadatas: list[dict],
+        ids: list[str],
+        embeddings: list[list[float]],
+    ) -> None:
+        await asyncio.to_thread(self.add_messages, messages, metadatas, ids, embeddings)
 
     def add_conversations(
         self,
@@ -265,6 +300,16 @@ class VectorDatabaseManager(CodedTool):
             ids=ids,
             embeddings=embeddings,
         )
+        self._invalidate_cache()
+
+    async def aadd_conversations(
+        self,
+        texts: list[str],
+        metadatas: list[dict],
+        ids: list[str],
+        embeddings: list[list[float]],
+    ) -> None:
+        await asyncio.to_thread(self.add_conversations, texts, metadatas, ids, embeddings)
 
     def query_messages(
         self,
@@ -274,13 +319,49 @@ class VectorDatabaseManager(CodedTool):
         query_embeddings: list[list[float]] | None = None,
     ) -> dict:
         """Query stored chat messages."""
-        return self.msg_collection.query(
+        key = (
+            tuple(query_texts) if query_texts else None,
+            n_results,
+            frozenset(where.items()) if where else None,
+            tuple(map(tuple, query_embeddings)) if query_embeddings else None,
+        )
+        if key in self._msg_cache:
+            return self._msg_cache[key]
+        result = self.msg_collection.query(
             query_texts=query_texts if query_embeddings is None else None,
             query_embeddings=query_embeddings,
             n_results=n_results,
             where=where,
         )
+        self._msg_cache[key] = result
+        return result
 
     def query_conversations(self, query_texts: list[str], n_results: int = 10, where: dict | None = None) -> dict:
         """Query stored conversation summaries."""
-        return self.convo_collection.query(query_texts=query_texts, n_results=n_results, where=where)
+        key = (tuple(query_texts), n_results, frozenset(where.items()) if where else None)
+        if key in self._convo_cache:
+            return self._convo_cache[key]
+        result = self.convo_collection.query(query_texts=query_texts, n_results=n_results, where=where)
+        self._convo_cache[key] = result
+        return result
+
+    async def aquery(
+        self, query_texts: list[str], n_results: int = 10, where: dict | None = None
+    ) -> dict:
+        return await asyncio.to_thread(self.query, query_texts, n_results, where)
+
+    async def aquery_messages(
+        self,
+        query_texts: list[str] | None = None,
+        n_results: int = 10,
+        where: dict | None = None,
+        query_embeddings: list[list[float]] | None = None,
+    ) -> dict:
+        return await asyncio.to_thread(
+            self.query_messages, query_texts, n_results, where, query_embeddings
+        )
+
+    async def aquery_conversations(
+        self, query_texts: list[str], n_results: int = 10, where: dict | None = None
+    ) -> dict:
+        return await asyncio.to_thread(self.query_conversations, query_texts, n_results, where)
