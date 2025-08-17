@@ -18,12 +18,9 @@ import difflib
 # pylint: disable=import-error
 import schedule
 from flask import Flask
-from flask import jsonify
-from flask import render_template
-from flask import request
-from flask import send_file
+from flask import Response, jsonify, render_template, request, send_file
 from werkzeug.utils import secure_filename
-from flask import Flask, jsonify, render_template, request, send_file
+from flask import Flask, Response, jsonify, render_template, request, send_file
 
 import spacy
 from spacy.cli import download as spacy_download
@@ -100,6 +97,7 @@ from .feature_flags import FEATURE_FLAGS
 from .extensions import socketio, limiter
 from .chat_state import user_input_queue
 from . import presentation_ws  # noqa: F401
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 # Configure logging before any other setup so early steps are captured
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
@@ -160,6 +158,12 @@ executor = ThreadPoolExecutor(max_workers=int(os.environ.get("INGESTION_WORKERS"
 atexit.register(executor.shutdown)
 thread_started = False  # pylint: disable=invalid-name
 bates_service = BatesNumberingService()
+
+
+@app.route("/metrics")
+def metrics() -> Response:
+    """Expose Prometheus metrics."""
+    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
 
 # Shared crawler instance for legal references
 legal_crawler = LegalCrawler()

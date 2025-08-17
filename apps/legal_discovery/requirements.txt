@@ -36,3 +36,4 @@ en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_
 
 Flask-Limiter
 PyJWT
+prometheus-client>=0.20.0

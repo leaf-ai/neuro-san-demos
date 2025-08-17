@@ -1,9 +1,13 @@
 """Text to speech utilities with caching support."""
 
 import base64
+import logging
 import os
+import time
 from io import BytesIO
 from typing import List, Dict
+
+from prometheus_client import Counter, Histogram
 
 from .database import db
 from .models import VoiceCache
@@ -20,6 +24,15 @@ if redis is not None:
         _redis_client = redis.Redis.from_url(url)
     except Exception:
         _redis_client = None
+
+
+logger = logging.getLogger(__name__)
+
+# Prometheus metrics
+tts_latency = Histogram(
+    "tts_latency_seconds", "Time spent generating speech audio"
+)
+tts_errors = Counter("tts_errors_total", "Count of TTS synthesis failures")
 
 
 def _cache_get(key: str, text: str, model: str) -> str:
@@ -90,10 +103,17 @@ def synthesize_voice(text: str, model: str) -> str:
 
     engine = os.getenv("VOICE_ENGINE", "gtts").lower()
     synth = _ENGINE_MAP.get(engine, _synthesize_gtts)
+    start = time.perf_counter()
     try:
         audio = synth(text, model)
-    except Exception:  # pragma: no cover
+    except Exception as exc:  # pragma: no cover
+        tts_errors.inc()
+        logger.exception("TTS synthesis failed: %s", exc)
         audio = ""
+    tts_latency.observe(time.perf_counter() - start)
+    logger.info(
+        "TTS synthesis via %s completed in %.3fs", engine, time.perf_counter() - start
+    )
     if audio:
         _cache_set(key, audio, text, model)
     return audio

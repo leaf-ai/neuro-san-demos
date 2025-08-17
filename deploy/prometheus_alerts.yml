@@ -1,0 +1,31 @@
+groups:
+  - name: stt_tts_alerts
+    rules:
+      - alert: HighSTTErrorRate
+        expr: increase(stt_errors_total[5m]) > 5
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: High STT error rate detected
+      - alert: HighTTSErrorRate
+        expr: increase(tts_errors_total[5m]) > 5
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: High TTS error rate detected
+      - alert: HighSTTLatency
+        expr: histogram_quantile(0.95, rate(stt_latency_seconds_bucket[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: STT latency p95 exceeds 5s
+      - alert: HighTTSLatency
+        expr: histogram_quantile(0.95, rate(tts_latency_seconds_bucket[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: TTS latency p95 exceeds 5s
