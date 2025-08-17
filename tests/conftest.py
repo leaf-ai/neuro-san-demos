@@ -1,11 +1,26 @@
-"""Test configuration and helpers."""
-
-from __future__ import annotations
-
+import importlib
 import sys
-from pathlib import Path
+import pytest
 
-# Ensure repository root is on sys.path so `apps` package imports succeed
-ROOT = Path(__file__).resolve().parent.parent
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+for name in (
+    "langchain_google_genai",
+    "coded_tools.legal_discovery.privilege_detector",
+):
+    if name in sys.modules:
+        del sys.modules[name]
+    try:
+        importlib.import_module(name)
+    except Exception:
+        pass
+
+
+@pytest.fixture(autouse=True)
+def restore_stubs():
+    for name in (
+        "langchain_google_genai",
+        "coded_tools.legal_discovery.privilege_detector",
+    ):
+        if name in sys.modules:
+            del sys.modules[name]
+        importlib.import_module(name)
+    yield

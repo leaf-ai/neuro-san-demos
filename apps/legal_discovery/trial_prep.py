@@ -309,5 +309,10 @@ class ResourceManager:
     def search(self, query: str) -> List[LegalResource]:
         ids = self.kb.search(query)
         if not ids:
-            return []
+            # fall back to simple title lookup if vector search has no hits
+            return list(
+                LegalResource.query.filter(
+                    LegalResource.title.ilike(f"%{query}%")
+                )
+            )
         return LegalResource.query.filter(LegalResource.id.in_(ids)).all()

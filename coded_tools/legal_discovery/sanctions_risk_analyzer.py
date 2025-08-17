@@ -4,8 +4,12 @@ import json
 import os
 from typing import Any, Dict, List
 
-from langchain_google_genai import ChatGoogleGenerativeAI
 from neuro_san.interfaces.coded_tool import CodedTool
+
+try:  # pragma: no cover - optional dependency
+    from langchain_google_genai import ChatGoogleGenerativeAI
+except Exception:  # pragma: no cover - allow offline usage
+    ChatGoogleGenerativeAI = None
 
 
 class SanctionsRiskAnalyzer(CodedTool):
@@ -14,11 +18,18 @@ class SanctionsRiskAnalyzer(CodedTool):
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         try:
-            self._llm = ChatGoogleGenerativeAI(
-                model=os.getenv("GOOGLE_MODEL_NAME", "gemini-2.5-flash")
-            )
+            if ChatGoogleGenerativeAI:
+                self._llm = ChatGoogleGenerativeAI(
+                    model=os.getenv("GOOGLE_MODEL_NAME", "gemini-2.5-flash")
+                )
+            else:
+                raise RuntimeError("genai unavailable")
         except Exception:  # pragma: no cover - allow offline usage
-            self._llm = type("NoopLLM", (), {"invoke": lambda *a, **k: type("R", (), {"content": ""})()})()
+            self._llm = type(
+                "NoopLLM",
+                (),
+                {"invoke": lambda *a, **k: type("R", (), {"content": ""})()},
+            )()
         self._rules: Dict[str, List[str]] = {
             "filing": ["rule 11", "frivolous", "improper purpose"],
             "discovery": ["spoliation", "withheld", "failed to preserve", "discovery abuse"],
