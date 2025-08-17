@@ -875,3 +875,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-09-17T18:30Z
 - Added in-memory vector DB and optional embedding imports to keep tests passing without heavy services
 - Next: verify full test suite after restoring chromadb integration
+
+## Update 2025-09-18T00:00Z
+- Implemented minimal HippoRAG-style indexing and query endpoints with deterministic segment IDs.
+- Added unit tests for chunking determinism and query path structure.
+- Next: connect endpoints to real Neo4j and Chroma services and enrich objection events with retrieval refs.
