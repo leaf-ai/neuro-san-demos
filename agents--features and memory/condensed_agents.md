@@ -283,3 +283,9 @@ WE STARTED ON #3, INSTEAD OF #1. DEAL WITH IT, FINISH IMPLEMENTING #3, AND THEN 
 - Unified Neo4j credentials across Docker Compose and switched host paths to cross-platform relative volumes.
 - Removed deprecated version header and aligned healthcheck with container password.
 - Next: verify fresh stack start on Windows and document volume setup.
+
+## Update 2025-08-16T14:30Z
+- Enabled conversation-aware chat by passing `conversation_id` through voice and text routes.
+- Retrieval agent now injects prior conversation snippets into LLM prompts.
+- React chat panel tracks conversation IDs and sports a bordered dark chat box.
+- Next: persist conversation history across sessions and refine prompt weighting.

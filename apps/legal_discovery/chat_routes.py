@@ -26,7 +26,13 @@ def _handle_transcript(transcript: str, data: dict) -> dict:
         sender_id=data.get("sender_id", 0),
         conversation_id=data.get("conversation_id"),
     )
-    response_text = "\n".join(result.get("facts", []))
+    if not result.get("conversation_id"):
+        from .models import Message
+
+        msg = Message.query.get(result.get("message_id"))
+        if msg:
+            result["conversation_id"] = msg.conversation_id
+    response_text = result.get("answer") or "\n".join(result.get("facts", []))
     if response_text:
         socketio.emit("update_speech", {"data": response_text}, namespace="/chat")
         audio = synthesize_voice(response_text, data.get("voice_model", "en-US"))
@@ -48,7 +54,11 @@ def _handle_transcript(transcript: str, data: dict) -> dict:
         )
     )
     db.session.commit()
-    return {"status": "ok", "message_id": result["message_id"]}
+    return {
+        "status": "ok",
+        "message_id": result["message_id"],
+        "conversation_id": result.get("conversation_id"),
+    }
 
 @chat_bp.post("/query")
 def query_agent():
@@ -74,17 +84,20 @@ def query_agent():
         sender_id=data.get("sender_id", 0),
         conversation_id=data.get("conversation_id"),
     )
-    if result.get("facts"):
-        socketio.emit(
-            "update_speech",
-            {"data": "\n".join(result["facts"])},
-            namespace="/chat",
-        )
+    if not result.get("conversation_id"):
+        from .models import Message
+
+        msg = Message.query.get(result.get("message_id"))
+        if msg:
+            result["conversation_id"] = msg.conversation_id
+    response_text = result.get("answer") or "\n".join(result.get("facts", []))
+    if response_text:
+        socketio.emit("update_speech", {"data": response_text}, namespace="/chat")
         db.session.add(
             MessageAuditLog(
                 message_id=result["message_id"],
                 sender="assistant",
-                transcript="\n".join(result["facts"]),
+                transcript=response_text,
                 voice_model=data.get("voice_model"),
             )
         )
@@ -97,7 +110,13 @@ def query_agent():
         )
     )
     db.session.commit()
-    return jsonify({"status": "ok", "message_id": result["message_id"]})
+    return jsonify(
+        {
+            "status": "ok",
+            "message_id": result["message_id"],
+            "conversation_id": result.get("conversation_id"),
+        }
+    )
 
 
 @chat_bp.post("/voice")
@@ -158,8 +177,8 @@ def voice_query_ws(data):
     socketio.emit(
         "voice_transcript", {"text": final_text, "final": True}, namespace="/chat"
     )
-    _handle_transcript(final_text, data)
-    return {"text": final_text}
+    result = _handle_transcript(final_text, data)
+    return {"text": final_text, "conversation_id": result.get("conversation_id")}
 
 
 __all__ = ["chat_bp"]
