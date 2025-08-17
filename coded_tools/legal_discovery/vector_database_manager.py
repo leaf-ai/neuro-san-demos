@@ -1,8 +1,68 @@
 import logging
 import os
 
-import chromadb
-from chromadb.config import Settings
+try:  # pragma: no cover - optional dependency
+    import chromadb
+    from chromadb.config import Settings
+except Exception:  # pragma: no cover - fallback to in-memory store
+    chromadb = None
+    Settings = None
+
+
+class _InMemoryCollection:
+    """Minimal stand-in for a Chroma collection."""
+
+    def __init__(self) -> None:
+        self._docs: dict[str, dict] = {}
+
+    # Chroma compatibility -------------------------------------------------
+    def add(
+        self,
+        documents: list[str],
+        metadatas: list[dict],
+        ids: list[str],
+        embeddings: list[list[float]] | None = None,
+    ) -> None:
+        for doc, md, _id in zip(documents, metadatas, ids):
+            self._docs[_id] = {"document": doc, "metadata": md}
+
+    def query(
+        self,
+        query_texts: list[str] | None = None,
+        query_embeddings: list[list[float]] | None = None,
+        n_results: int = 10,
+        where: dict | None = None,
+    ) -> dict:
+        docs = []
+        metas = []
+        for _id, data in self._docs.items():
+            md = data["metadata"]
+            if where and md.get("visibility") != where.get("visibility"):
+                continue
+            docs.append(data["document"])
+            metas.append(md | {"id": _id})
+            if len(docs) >= n_results:
+                break
+        return {"documents": [docs], "metadatas": [metas], "ids": [[_id for _id in self._docs]]}
+
+    def get(self, ids: list[str]) -> dict:
+        found = [_id for _id in ids if _id in self._docs]
+        return {"ids": found}
+
+    def delete(self, ids: list[str]) -> None:
+        for _id in ids:
+            self._docs.pop(_id, None)
+
+    def count(self) -> int:  # pragma: no cover - trivial
+        return len(self._docs)
+
+    def persist(self) -> None:  # pragma: no cover - no-op
+        return None
+
+
+class _InMemoryClient:
+    def get_or_create_collection(self, _name: str) -> _InMemoryCollection:  # pragma: no cover - simple
+        return _InMemoryCollection()
 
 _GLOBAL_CLIENT = None
 from neuro_san.interfaces.coded_tool import CodedTool
@@ -15,11 +75,16 @@ class VectorDatabaseManager(CodedTool):
         port = int(os.getenv("CHROMA_PORT", "8000"))
         global _GLOBAL_CLIENT
         if _GLOBAL_CLIENT is None:
-            try:
-                _GLOBAL_CLIENT = chromadb.HttpClient(host=host, port=port)
-            except Exception as exc:  # pragma: no cover - offline fallback
-                logging.warning("Chroma HTTP client unavailable (%s); using local client", exc)
-                _GLOBAL_CLIENT = chromadb.PersistentClient(path="/tmp/chroma")
+            if chromadb is None:
+                _GLOBAL_CLIENT = _InMemoryClient()
+            else:
+                try:
+                    _GLOBAL_CLIENT = chromadb.HttpClient(host=host, port=port)
+                except Exception as exc:  # pragma: no cover - offline fallback
+                    logging.warning(
+                        "Chroma HTTP client unavailable (%s); using local client", exc
+                    )
+                    _GLOBAL_CLIENT = chromadb.PersistentClient(path="/tmp/chroma")
         self.client = _GLOBAL_CLIENT
         self.collection = self.client.get_or_create_collection("legal_documents")
         self.msg_collection = self.client.get_or_create_collection("chat_messages")
