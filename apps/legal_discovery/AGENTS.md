@@ -841,3 +841,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Highlighted transcript segments when objection events are detected and broadcast over Socket.IO.
 - Added WebSocket test ensuring objection events persist to the database with segment references.
 - Next: expand visual cues for multiple simultaneous objections and refine client-side dismissal flows.
+
+## Update 2025-08-31T00:00Z
+- Abstracted text-to-speech to support gTTS, Coqui-TTS or system engines with Redis/DB caching.
+- Added `/api/chat/voices` endpoint and React selector for available voices.
+- Next: surface engine choice in settings and broaden voice options.
