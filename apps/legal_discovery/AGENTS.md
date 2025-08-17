@@ -832,3 +832,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-16T19:00Z
 - Added voice command registry with logging in voice queries.
 - Next: expand command coverage and refine confirmation responses.
+
+## Update 2025-08-30T00:00Z
+- Emitted TeamMessage alerts for timeline and document actions triggered by voice queries and started cross-team listeners.
+- Next: broaden document workflows and bus topics for additional commands.
