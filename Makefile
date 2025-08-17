@@ -23,7 +23,13 @@ activate: ## Activate the venv
 		echo "To activate the environment in your current shell, run:"; \
 		echo "    source venv/bin/activate"; \
 		echo ""; \
-	fi
+        fi
+
+stt-service: ## Launch Flask app with speech-to-text enabled
+	ENABLE_VOICE_STT=1 ENABLE_VOICE_TTS=0 python apps/legal_discovery/interface_flask.py
+
+tts-service: ## Launch Flask app with text-to-speech enabled
+	ENABLE_VOICE_STT=0 ENABLE_VOICE_TTS=1 python apps/legal_discovery/interface_flask.py
 
 lint: ## Run code formatting and linting tools on source
 	@if [ -z "$$VIRTUAL_ENV" ]; then \
@@ -59,9 +65,9 @@ frontend-build: ## Install deps and build the legal discovery React dashboard
 	npm --prefix apps/legal_discovery run build
 
 test: lint lint-tests ## Run tests with coverage
-	PYTHONPATH=$(CURDIR) python -m pytest tests/ -v --cov=coded_tools,run.py
+        PYTHONPATH=$(CURDIR) python -m pytest tests/ -v --cov=coded_tools,run.py
 
-.PHONY: help venv install activate lint lint-tests test
+.PHONY: help venv install activate stt-service tts-service lint lint-tests test
 .DEFAULT_GOAL := help
 
 help: ## Show this help message and exit
