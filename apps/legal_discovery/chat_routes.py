@@ -9,6 +9,7 @@ from .extensions import socketio
 from .chat_state import user_input_queue
 from .voice import synthesize_voice
 from .stt import stream_transcribe
+from .voice_commands import execute_command
 
 import base64
 
@@ -105,6 +106,22 @@ def voice_query():
     transcript = data.get("transcript")
     if not transcript:
         return jsonify({"status": "error", "error": "transcript required"}), 400
+
+    command = execute_command(transcript, data)
+    if command:
+        keyword, output = command
+        result = _handle_transcript(transcript, data)
+        db.session.add(
+            MessageAuditLog(
+                message_id=result["message_id"],
+                sender="command",
+                transcript=keyword,
+                voice_model=data.get("voice_model"),
+            )
+        )
+        db.session.commit()
+        return jsonify({"status": "ok", "command": keyword, "result": output, "message_id": result["message_id"]})
+
     result = _handle_transcript(transcript, data)
     return jsonify(result)
 
