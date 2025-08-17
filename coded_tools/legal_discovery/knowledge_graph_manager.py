@@ -1,3 +1,4 @@
+import asyncio
 import os
 import time
 
@@ -35,6 +36,10 @@ class KnowledgeGraphManager(CodedTool):
         except Exception as exc:  # pragma: no cover - network path
             logging.warning("Neo4j unavailable: %s", exc)
             self.driver = None
+        self._cache: dict[tuple, list[dict]] = {}
+
+    def _invalidate_cache(self) -> None:
+        self._cache.clear()
 
     def _verify_with_backoff(self, attempts: int = 5, base_sleep: float = 0.5) -> None:
         for i in range(attempts):
@@ -51,16 +56,29 @@ class KnowledgeGraphManager(CodedTool):
         if self.driver:
             self.driver.close()
 
-    def run_query(self, query: str, params: dict | None = None) -> list[dict]:
+    def run_query(self, query: str, params: dict | None = None, cache: bool = True) -> list[dict]:
         """Run a Cypher query and return all records as dictionaries."""
         if not self.driver:
             raise RuntimeError("Neo4j driver unavailable")
+        key = (query, tuple(sorted(params.items())) if params else None)
+        if cache and key in self._cache:
+            return self._cache[key]
         try:
             with self.driver.session(database=self.database) as session:
                 result = session.run(query, params or {})
-                return [r.data() for r in result]
+                data = [r.data() for r in result]
         except Exception as exc:  # pragma: no cover - driver errors can vary
             raise RuntimeError("Neo4j query failed") from exc
+        if cache:
+            self._cache[key] = data
+        else:
+            self._invalidate_cache()
+        return data
+
+    async def arun_query(
+        self, query: str, params: dict | None = None, cache: bool = True
+    ) -> list[dict]:
+        return await asyncio.to_thread(self.run_query, query, params, cache)
 
     def create_node(self, label: str, properties: dict) -> int:
         """
@@ -71,7 +89,7 @@ class KnowledgeGraphManager(CodedTool):
         :return: The ID of the newly created node.
         """
         query = f"CREATE (n:{label} $props) RETURN id(n) AS id"
-        return self.run_query(query, {"props": properties})[0]["id"]
+        return self.run_query(query, {"props": properties}, cache=False)[0]["id"]
 
     def create_relationship(
         self, start_node_id: int, end_node_id: int, relationship_type: str, properties: dict = None
@@ -92,6 +110,7 @@ class KnowledgeGraphManager(CodedTool):
         return self.run_query(
             query,
             {"a": start_node_id, "b": end_node_id, "props": properties or {}},
+            cache=False,
         )[0]["id"]
 
     def add_fact(self, case_node_id: int, document_node_id: int, fact: dict) -> int:
@@ -222,7 +241,7 @@ class KnowledgeGraphManager(CodedTool):
     def relate_fact_to_element(self, fact_node_id: int, element_node_id: int) -> None:
         """Create a SUPPORTS relationship between an existing Fact and Element."""
         query = "MATCH (f:Fact), (e:Element) " "WHERE id(f) = $fid AND id(e) = $eid " "MERGE (f)-[:SUPPORTS]->(e)"
-        self.run_query(query, {"fid": fact_node_id, "eid": element_node_id})
+        self.run_query(query, {"fid": fact_node_id, "eid": element_node_id}, cache=False)
 
     def get_node(self, node_id: int) -> dict:
         """
@@ -377,11 +396,11 @@ class KnowledgeGraphManager(CodedTool):
     def delete_node(self, node_id: int) -> None:
         """Delete a node and any attached relationships."""
         query = "MATCH (n) WHERE id(n) = $node_id DETACH DELETE n"
-        self.run_query(query, {"node_id": node_id})
+        self.run_query(query, {"node_id": node_id}, cache=False)
 
     def delete_relationship(self, start_node_id: int, end_node_id: int, relationship_type: str) -> None:
         """Delete a specific relationship between two nodes."""
         query = ("MATCH (a)-[r:{rtype}]->(b) " "WHERE id(a) = $start AND id(b) = $end DELETE r").format(
             rtype=relationship_type
         )
-        self.run_query(query, {"start": start_node_id, "end": end_node_id})
+        self.run_query(query, {"start": start_node_id, "end": end_node_id}, cache=False)
