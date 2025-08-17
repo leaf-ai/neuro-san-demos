@@ -367,6 +367,11 @@ For examples of agent networks, check out [docs/examples.md](docs/examples.md).
 
 For the development guide, check out [docs/dev_guide.md](docs/dev_guide.md).
 
+## Voice Assistant
+
+Learn how speech features are wired into the studio in
+[docs/voice_assistant.md](docs/voice_assistant.md).
+
 ## Blog posts
 
 * [Code versus Model in Multi-Agentic Systems](https://medium.com/@evolutionmlmail/code-versus-model-in-multi-agentic-systems-e33cf581e32b):
