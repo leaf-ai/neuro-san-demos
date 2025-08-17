@@ -4,11 +4,13 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from neuro_san.interfaces.coded_tool import CodedTool
-from langchain_google_genai import (
-    GoogleGenerativeAIEmbeddings,
-    ChatGoogleGenerativeAI,
-)
-from langchain_huggingface import HuggingFaceEmbeddings
+try:  # pragma: no cover - optional cloud embeddings
+    from langchain_google_genai import (
+        GoogleGenerativeAIEmbeddings,
+        ChatGoogleGenerativeAI,
+    )
+except Exception:  # pragma: no cover - offline fallback
+    GoogleGenerativeAIEmbeddings = ChatGoogleGenerativeAI = None
 
 from apps.legal_discovery.chain_logger import ChainEventType, log_event
 from apps.legal_discovery.database import db
@@ -38,11 +40,16 @@ class RetrievalChatAgent(CodedTool):
         self.graph_db = graph_db or KnowledgeGraphManager(**kwargs)
         self.detector = PrivilegeDetector()
         try:
-            self._embedder = GoogleGenerativeAIEmbeddings()
-            self._llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash")
+            if GoogleGenerativeAIEmbeddings and ChatGoogleGenerativeAI:
+                self._embedder = GoogleGenerativeAIEmbeddings()
+                self._llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash")
+            else:
+                raise RuntimeError("genai unavailable")
         except Exception as exc:  # pragma: no cover - offline fallback
             logging.warning("using local embeddings/llm due to error: %s", exc)
             try:
+                from langchain_huggingface import HuggingFaceEmbeddings
+
                 self._embedder = HuggingFaceEmbeddings(
                     model_name="sentence-transformers/all-MiniLM-L6-v2"
                 )
