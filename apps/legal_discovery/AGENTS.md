@@ -866,3 +866,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Installed ffmpeg and espeak in Dockerfile for Whisper and TTS support.
 - Added Redis service and audio cache volume to docker-compose; documented build/run steps.
 - Next: test voice flows end-to-end and optimise cache storage.
+
+## Update 2025-09-17T17:01Z
+- Added feature flags for voice transcription, synthesis and commands with UI toggles.
+- Wired flags into chat routes and voice utilities.
+- Next: persist flag selections across restarts and expand UI validation.

@@ -11,6 +11,7 @@ from prometheus_client import Counter, Histogram
 
 from .database import db
 from .models import VoiceCache
+from .feature_flags import FEATURE_FLAGS
 
 try:  # pragma: no cover - optional
     import redis
@@ -96,6 +97,8 @@ _ENGINE_MAP = {
 
 def synthesize_voice(text: str, model: str) -> str:
     """Generate base64-encoded audio, cached by text and model."""
+    if not FEATURE_FLAGS["voice_tts"]:
+        return ""
     key = f"{model}:{text}"
     cached = _cache_get(key, text, model)
     if cached:
@@ -121,6 +124,8 @@ def synthesize_voice(text: str, model: str) -> str:
 
 def get_available_voices() -> List[Dict[str, str]]:
     """Return list of available voices for the configured engine."""
+    if not FEATURE_FLAGS["voice_tts"]:
+        return []
     engine = os.getenv("VOICE_ENGINE", "gtts").lower()
     if engine == "system":
         try:  # pragma: no cover - optional
