@@ -871,3 +871,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added feature flags for voice transcription, synthesis and commands with UI toggles.
 - Wired flags into chat routes and voice utilities.
 - Next: persist flag selections across restarts and expand UI validation.
+
+## Update 2025-09-17T18:30Z
+- Added in-memory vector DB and optional embedding imports to keep tests passing without heavy services
+- Next: verify full test suite after restoring chromadb integration
