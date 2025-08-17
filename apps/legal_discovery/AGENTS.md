@@ -858,3 +858,6 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-09-15T00:00Z
 - Instrumented STT/TTS with Prometheus metrics and logging; exposed `/metrics` endpoint and added alert rules.
 - Next: monitor metrics in staging and tune alert thresholds.
+## Update 2025-09-16T00:00Z
+- Mocked STT/TTS layers and added tests for voice command routing, auth failures, message bus alerts, WebSocket transcripts and objection detection.
+- Next: broaden command coverage and expand streaming edge-case tests.
