@@ -12,9 +12,48 @@ from .stt import stream_transcribe
 from .voice_commands import execute_command
 
 import base64
+import logging
+
+from apps.message_bus import (
+    AUTO_DRAFTER_ALERT_TOPIC,
+    TIMELINE_ALERT_TOPIC,
+    MessageBus,
+    TeamMessage,
+)
 
 
 chat_bp = Blueprint("chat", __name__, url_prefix="/api/chat")
+
+bus = MessageBus()
+_listeners_started = False
+
+
+def _ensure_listeners_started() -> None:
+    """Subscribe cross-team services to message bus events."""
+    global _listeners_started  # pylint: disable=global-statement
+    if _listeners_started:
+        return
+    try:
+        from apps.legal_discovery import listener as ld_listener
+        from apps.conscious_assistant import listener as ca_listener
+        from apps.wwaw import listener as ww_listener
+        from apps.cruse import listener as cr_listener
+        from apps.log_analyzer import listener as la_listener
+
+        ld_listener.start_listening()
+        ca_listener.start_listening()
+        ww_listener.start_listening()
+        cr_listener.start_listening()
+        la_listener.start_listening()
+        _listeners_started = True
+    except Exception as exc:  # pragma: no cover - network/services optional
+        logging.warning("Listener startup failed: %s", exc)
+
+
+def _publish_alert(topic: str, payload: dict) -> None:
+    """Publish a TeamMessage and log it for audit."""
+    bus.publish(topic, TeamMessage("voice", payload))
+    logging.info("Cross-team alert on %s: %s", topic, payload)
 
 
 def _handle_transcript(transcript: str, data: dict) -> dict:
@@ -125,10 +164,26 @@ def voice_query():
     transcript = data.get("transcript")
     if not transcript:
         return jsonify({"status": "error", "error": "transcript required"}), 400
+    _ensure_listeners_started()
+    case_id = data.get("case_id", 1)
+    tm = TimelineManager()
+    event = tm.upsert_event_from_text(transcript, case_id)
+    if event:
+        _publish_alert(TIMELINE_ALERT_TOPIC, {"case_id": case_id, "event": event})
+    if "document" in transcript.lower():
+        _publish_alert(AUTO_DRAFTER_ALERT_TOPIC, {"transcript": transcript})
 
     command = execute_command(transcript, data)
     if command:
         keyword, output = command
+        if keyword.startswith("timeline"):
+            _publish_alert(
+                TIMELINE_ALERT_TOPIC, {"case_id": case_id, "command": keyword}
+            )
+        if "document" in keyword:
+            _publish_alert(
+                AUTO_DRAFTER_ALERT_TOPIC, {"command": keyword, "case_id": case_id}
+            )
         result = _handle_transcript(transcript, data)
         db.session.add(
             MessageAuditLog(
@@ -139,7 +194,14 @@ def voice_query():
             )
         )
         db.session.commit()
-        return jsonify({"status": "ok", "command": keyword, "result": output, "message_id": result["message_id"]})
+        return jsonify(
+            {
+                "status": "ok",
+                "command": keyword,
+                "result": output,
+                "message_id": result["message_id"],
+            }
+        )
 
     result = _handle_transcript(transcript, data)
     return jsonify(result)
