@@ -4,7 +4,10 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from neuro_san.interfaces.coded_tool import CodedTool
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_google_genai import (
+    GoogleGenerativeAIEmbeddings,
+    ChatGoogleGenerativeAI,
+)
 from langchain_huggingface import HuggingFaceEmbeddings
 
 from apps.legal_discovery.chain_logger import ChainEventType, log_event
@@ -36,14 +39,16 @@ class RetrievalChatAgent(CodedTool):
         self.detector = PrivilegeDetector()
         try:
             self._embedder = GoogleGenerativeAIEmbeddings()
+            self._llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash")
         except Exception as exc:  # pragma: no cover - offline fallback
-            logging.warning("using local embeddings due to error: %s", exc)
+            logging.warning("using local embeddings/llm due to error: %s", exc)
             try:
                 self._embedder = HuggingFaceEmbeddings(
                     model_name="sentence-transformers/all-MiniLM-L6-v2"
                 )
             except Exception as inner_exc:  # pragma: no cover - last resort
                 logging.warning("huggingface embeddings unavailable: %s", inner_exc)
+
                 class HashedEmbedding:
                     def embed_query(self, text: str) -> List[float]:
                         import hashlib
@@ -52,6 +57,12 @@ class RetrievalChatAgent(CodedTool):
                         return [b / 255 for b in digest[:16]]
 
                 self._embedder = HashedEmbedding()
+
+            class NoopLLM:
+                def invoke(self, prompt: str):
+                    return type("R", (), {"content": ""})()
+
+            self._llm = NoopLLM()
 
     def _ensure_conversation(self, conversation_id: Optional[str], sender_id: int) -> Conversation:
         if conversation_id:
@@ -166,11 +177,27 @@ class RetrievalChatAgent(CodedTool):
         except Exception as exc:  # pragma: no cover - best effort
             logging.warning("graph query failed: %s", exc)
             facts = []
+
+        snippets = [m["content"] for m in messages]
+        prompt_parts = []
+        if snippets:
+            prompt_parts.append("Prior conversation:\n" + "\n".join(snippets))
+        if facts:
+            prompt_parts.append("Relevant facts:\n" + "\n".join(facts))
+        prompt = "\n\n".join(prompt_parts + [f"Question: {question}"])
+        answer = ""
+        try:
+            answer = self._llm.invoke(prompt).content
+        except Exception as exc:  # pragma: no cover - best effort
+            logging.warning("llm invocation failed: %s", exc)
+
         return {
             "message_id": message.id,
+            "conversation_id": message.conversation_id,
             "documents": documents,
             "facts": facts,
             "messages": messages,
+            "answer": answer,
         }
 
 

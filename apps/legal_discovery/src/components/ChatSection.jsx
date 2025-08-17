@@ -6,6 +6,7 @@ function ChatSection() {
   const [input, setInput] = useState("");
   const [recording, setRecording] = useState(false);
   const [voiceModel, setVoiceModel] = useState("en-US");
+  const [conversationId, setConversationId] = useState(null);
   const boxRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -38,8 +39,17 @@ function ChatSection() {
     fetch("/api/chat/query", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: input, voice_model: voiceModel }),
-    }).then(() => setInput(""));
+      body: JSON.stringify({
+        text: input,
+        voice_model: voiceModel,
+        conversation_id: conversationId,
+      }),
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.conversation_id) setConversationId(d.conversation_id);
+      })
+      .finally(() => setInput(""));
   };
 
   const startRecording = async () => {
@@ -88,8 +98,17 @@ function ChatSection() {
     fetch("/api/chat/voice", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ audio, transcript, voice_model: voiceModel }),
-    });
+      body: JSON.stringify({
+        audio,
+        transcript,
+        voice_model: voiceModel,
+        conversation_id: conversationId,
+      }),
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.conversation_id) setConversationId(d.conversation_id);
+      });
     if (transcript) {
       setMessages((m) => [...m, { type: "user", text: transcript }]);
     }
@@ -119,7 +138,7 @@ function ChatSection() {
       </div>
       <div
         ref={boxRef}
-        className="chat-box overflow-y-auto"
+        className="chat-box overflow-y-auto p-2 bg-gray-900 rounded border border-gray-700 shadow-inner"
         style={{ maxHeight: "200px" }}
       >
         {messages.map((m, i) => (

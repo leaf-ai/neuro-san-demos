@@ -33,6 +33,7 @@ def test_voice_query_logs_message(client, monkeypatch):
         json={"audio": audio, "transcript": "hi", "voice_model": "en-US"},
     )
     assert resp.status_code == 200
+    data = resp.get_json()
     with app.app_context():
         log = MessageAuditLog.query.filter_by(transcript="hi").first()
         assert log is not None
@@ -41,14 +42,24 @@ def test_voice_query_logs_message(client, monkeypatch):
 
 def test_voice_command_executes_and_logs(client, monkeypatch):
     monkeypatch.setattr("apps.legal_discovery.voice.synthesize_voice", lambda text, model: "")
-    monkeypatch.setattr("coded_tools.legal_discovery.chat_agent.RetrievalChatAgent.query", lambda self, question, sender_id=0, conversation_id=None: {"message_id": "1", "facts": []})
+    monkeypatch.setattr(
+        "coded_tools.legal_discovery.chat_agent.RetrievalChatAgent.query",
+        lambda self, question, sender_id=0, conversation_id=None: {
+            "message_id": "1",
+            "facts": [],
+            "conversation_id": "abc",
+        },
+    )
     called = {}
     from apps.legal_discovery import voice_commands
     def dummy(data):
         called["hit"] = True
         return "done"
     monkeypatch.setattr(voice_commands, "COMMAND_REGISTRY", {"dummy": dummy})
-    resp = client.post("/api/chat/voice", json={"transcript": "dummy action", "voice_model": "en-US"})
+    resp = client.post(
+        "/api/chat/voice",
+        json={"transcript": "dummy action", "voice_model": "en-US"},
+    )
     assert resp.status_code == 200
     data = resp.get_json()
     assert data["command"] == "dummy"
