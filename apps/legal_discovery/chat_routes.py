@@ -8,10 +8,46 @@ from .models import MessageAuditLog
 from .extensions import socketio
 from .chat_state import user_input_queue
 from .voice import synthesize_voice
+from .stt import stream_transcribe
+
+import base64
 
 
 chat_bp = Blueprint("chat", __name__, url_prefix="/api/chat")
 
+
+def _handle_transcript(transcript: str, data: dict) -> dict:
+    """Common handler for processing a user transcript."""
+    user_input_queue.put(transcript)
+    agent = RetrievalChatAgent()
+    result = agent.query(
+        question=transcript,
+        sender_id=data.get("sender_id", 0),
+        conversation_id=data.get("conversation_id"),
+    )
+    response_text = "\n".join(result.get("facts", []))
+    if response_text:
+        socketio.emit("update_speech", {"data": response_text}, namespace="/chat")
+        audio = synthesize_voice(response_text, data.get("voice_model", "en-US"))
+        socketio.emit("voice_output", {"audio": audio}, namespace="/chat")
+        db.session.add(
+            MessageAuditLog(
+                message_id=result["message_id"],
+                sender="assistant",
+                transcript=response_text,
+                voice_model=data.get("voice_model"),
+            )
+        )
+    db.session.add(
+        MessageAuditLog(
+            message_id=result["message_id"],
+            sender="user",
+            transcript=transcript,
+            voice_model=data.get("voice_model"),
+        )
+    )
+    db.session.commit()
+    return {"status": "ok", "message_id": result["message_id"]}
 
 @chat_bp.post("/query")
 def query_agent():
@@ -69,36 +105,44 @@ def voice_query():
     transcript = data.get("transcript")
     if not transcript:
         return jsonify({"status": "error", "error": "transcript required"}), 400
-    user_input_queue.put(transcript)
-    agent = RetrievalChatAgent()
-    result = agent.query(
-        question=transcript,
-        sender_id=data.get("sender_id", 0),
-        conversation_id=data.get("conversation_id"),
-    )
-    response_text = "\n".join(result.get("facts", []))
-    if response_text:
-        socketio.emit("update_speech", {"data": response_text}, namespace="/chat")
-        audio = synthesize_voice(response_text, data.get("voice_model", "en-US"))
-        socketio.emit("voice_output", {"audio": audio}, namespace="/chat")
-        db.session.add(
-            MessageAuditLog(
-                message_id=result["message_id"],
-                sender="assistant",
-                transcript=response_text,
-                voice_model=data.get("voice_model"),
+    result = _handle_transcript(transcript, data)
+    return jsonify(result)
+
+
+@socketio.on("voice_query", namespace="/chat")
+def voice_query_ws(data):
+    """Handle streaming audio frames over WebSocket."""
+    frames = data.get("frames") or []
+    if not frames:
+        socketio.emit("voice_error", {"error": "no audio"}, namespace="/chat")
+        return
+
+    audio_iter = (base64.b64decode(f) for f in frames)
+    final_text = ""
+    for chunk in stream_transcribe(audio_iter):
+        if chunk.get("error"):
+            socketio.emit("voice_error", {"error": chunk["error"]}, namespace="/chat")
+            return
+        if chunk["is_final"]:
+            final_text = chunk["text"]
+        else:
+            socketio.emit(
+                "voice_transcript",
+                {"text": chunk["text"], "final": False},
+                namespace="/chat",
             )
+
+    if not final_text:
+        socketio.emit(
+            "voice_error", {"error": "transcription_unavailable"}, namespace="/chat"
         )
-    db.session.add(
-        MessageAuditLog(
-            message_id=result["message_id"],
-            sender="user",
-            transcript=transcript,
-            voice_model=data.get("voice_model"),
-        )
+        return
+
+    socketio.emit(
+        "voice_transcript", {"text": final_text, "final": True}, namespace="/chat"
     )
-    db.session.commit()
-    return jsonify({"status": "ok", "message_id": result["message_id"]})
+    _handle_transcript(final_text, data)
+    return {"text": final_text}
 
 
 __all__ = ["chat_bp"]

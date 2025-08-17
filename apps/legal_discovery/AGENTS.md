@@ -824,3 +824,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-16T12:00Z
 - Added Makefile target to build React dashboard with npm ci and verified `npm run build` succeeds.
 - Next: trim pdf.js bundle size and track build warnings.
+
+## Update 2025-08-16T18:00Z
+- Introduced Whisper-based streaming STT with WebSocket voice query and offline fallback.
+- Next: tune interim transcription latency and expand client integration.
