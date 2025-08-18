@@ -1,9 +1,10 @@
 from flask import Flask
 
 from apps.legal_discovery.extensions import socketio
-from apps.legal_discovery.database import db
+from apps.legal_discovery.database import db, RetrievalTrace
 from apps.legal_discovery.trial_assistant import bp
-from apps.legal_discovery.models_trial import ObjectionEvent
+from apps.legal_discovery.models_trial import ObjectionEvent, TrialSession
+from apps.legal_discovery import hippo
 
 
 def _create_app():
@@ -22,6 +23,12 @@ def test_objection_event_emitted_and_persisted():
     app = _create_app()
     client = socketio.test_client(app, namespace="/ws/trial")
     client.emit("join", {"session_id": "s"}, namespace="/ws/trial")
+    with app.app_context():
+        hippo.INDEX.clear()
+        sess = TrialSession(id="s", case_id="c1")
+        db.session.add(sess)
+        db.session.commit()
+        hippo.ingest_document("c1", "this is hearsay evidence", "doc.txt")
     client.emit(
         "segment",
         {
@@ -36,9 +43,12 @@ def test_objection_event_emitted_and_persisted():
     )
     received = client.get_received("/ws/trial")
     assert any(
-        r["name"] == "objection_event" and "segment_id" in r["args"][0]
+        r["name"] == "objection_event" and r["args"][0]["refs"]
         for r in received
     )
     with app.app_context():
-        assert ObjectionEvent.query.count() == 1
+        evt = ObjectionEvent.query.one()
+        trace = db.session.query(RetrievalTrace).one()
+        assert evt.trace_id == trace.trace_id
+        assert evt.refs and evt.path
 

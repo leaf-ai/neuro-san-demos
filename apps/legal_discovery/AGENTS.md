@@ -905,3 +905,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added objection segment analysis route with citation refs and Socket.IO broadcast.
 - Recorded cures in new resolution table and cleared highlights on cure events.
 - Next: refine citation ranking and expand highlight clearing strategies.
+
+## Update 2025-09-20T12:00Z
+- Introduced RetrievalTrace, ObjectionEvent and ObjectionResolution models with migrations.
+- Trial and Hippo modules now log retrieval traces and link objection events via shared trace_ids.
+- Next: expose trace analytics in the dashboard and enrich objection paths.

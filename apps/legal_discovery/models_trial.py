@@ -71,6 +71,7 @@ class ObjectionEvent(db.Model):
     id = db.Column(db.String, primary_key=True, default=uuid4)
     session_id = db.Column(db.String, index=True)
     segment_id = db.Column(db.String, index=True)
+    trace_id = db.Column(db.String(40), index=True)
     ts = db.Column(db.DateTime, default=datetime.utcnow)
     type = db.Column(db.String)
     ground = db.Column(db.String)
@@ -78,6 +79,7 @@ class ObjectionEvent(db.Model):
     extracted_phrase = db.Column(db.String)
     suggested_cures = db.Column(db.JSON)
     refs = db.Column(db.JSON)
+    path = db.Column(db.JSON)
     action_taken = db.Column(db.String)
     outcome = db.Column(db.String)
 

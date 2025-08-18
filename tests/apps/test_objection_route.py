@@ -1,7 +1,7 @@
 from flask import Flask
 
 from apps.legal_discovery.extensions import socketio
-from apps.legal_discovery.database import db
+from apps.legal_discovery.database import db, RetrievalTrace
 from apps.legal_discovery.trial_assistant import bp as trial_bp
 from apps.legal_discovery.objection_routes import bp as objections_bp
 from apps.legal_discovery.models_trial import (
@@ -53,10 +53,14 @@ def test_analyze_segment_emits_refs_and_persists():
     )
     assert res.status_code == 200
     received = sock.get_received("/ws/trial")
-    assert any(r["name"] == "objection_event" and r["args"][0]["refs"] for r in received)
+    assert any(
+        r["name"] == "objection_event" and r["args"][0]["refs"] for r in received
+    )
     with app.app_context():
         evt = ObjectionEvent.query.one()
-        assert evt.refs
+        trace = db.session.query(RetrievalTrace).one()
+        assert evt.refs and evt.path
+        assert evt.trace_id == trace.trace_id
 
 
 def test_cure_chosen_records_resolution_and_clears_highlight():
