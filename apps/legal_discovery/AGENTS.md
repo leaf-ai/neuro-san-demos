@@ -915,3 +915,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added HippoRAG, sentence-transformers and scikit-learn dependencies; bumped Neo4j to 5.23.
 - Documented EMBED_MODEL and CROSS_ENCODER_MODEL environment variables.
 - Next: build Docker image and verify retrieval models load correctly.
+
+## Update 2025-09-22T00:00Z
+- Added `/api/health` endpoint checking Neo4j and Chroma connectivity.
+- Dockerfile and compose now use this route for container health checks.
+- Next: monitor service health and expand diagnostics.

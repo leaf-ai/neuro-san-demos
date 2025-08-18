@@ -26,6 +26,11 @@ services:
       - ./docker_volumes/legal_discovery/uploads:/usr/src/app/uploads
       - ./docker_volumes/legal_discovery/audio_cache:/usr/src/app/audio_cache
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
 
   postgres:
     image: postgres:16-alpine
