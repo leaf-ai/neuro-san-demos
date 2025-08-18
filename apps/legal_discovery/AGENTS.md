@@ -910,3 +910,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Introduced RetrievalTrace, ObjectionEvent and ObjectionResolution models with migrations.
 - Trial and Hippo modules now log retrieval traces and link objection events via shared trace_ids.
 - Next: expose trace analytics in the dashboard and enrich objection paths.
+
+## Update 2025-09-21T00:00Z
+- Added HippoRAG, sentence-transformers and scikit-learn dependencies; bumped Neo4j to 5.23.
+- Documented EMBED_MODEL and CROSS_ENCODER_MODEL environment variables.
+- Next: build Docker image and verify retrieval models load correctly.

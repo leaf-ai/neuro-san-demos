@@ -24,6 +24,15 @@ Docker Compose reads `NEO4J_PASSWORD` for both the app and database services so
 they always share the same credentials. If the variable is empty, the database
 starts without authentication which is convenient for local testing.
 
+### Model configuration
+
+Set optional environment variables to customise the retrieval models used by HippoRAG:
+
+- `EMBED_MODEL` – embedding model name, for example `sentence-transformers/all-MiniLM-L6-v2`.
+- `CROSS_ENCODER_MODEL` – cross-encoder model for reranking, e.g. `cross-encoder/ms-marco-MiniLM-L-6-v2`.
+
+Add these variables to your `.env` file to override the defaults.
+
 ## Running with Docker Compose
 
 From the project root run:
