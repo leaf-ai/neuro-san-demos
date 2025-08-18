@@ -3,7 +3,7 @@ from flask import Blueprint, request, jsonify
 from flask_socketio import emit, join_room
 from ..extensions import socketio
 from ..database import db
-from ..models_trial import TranscriptSegment, ObjectionEvent
+from ..models_trial import TranscriptSegment, ObjectionEvent, ObjectionResolution
 from .services.objection_engine import engine
 
 bp = Blueprint("trial_assistant", __name__, url_prefix="/api/trial")
@@ -67,4 +67,22 @@ def handle_segment(data):
                 "suggested_cures": e.suggested_cures,
             },
             room=session_id,
+        )
+
+
+@socketio.on("objection_cure_chosen", namespace="/ws/trial")
+def cure_chosen(data):
+    evt_id = data.get("event_id")
+    cure = data.get("cure")
+    if not evt_id:
+        return
+    resolution = ObjectionResolution(event_id=evt_id, chosen_cure=cure)
+    db.session.add(resolution)
+    db.session.commit()
+    evt = db.session.get(ObjectionEvent, evt_id)
+    if evt:
+        emit(
+            "clear_highlights",
+            {"segment_id": evt.segment_id},
+            room="trial_objections",
         )

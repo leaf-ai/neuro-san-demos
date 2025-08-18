@@ -900,3 +900,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Logged retrieval traces with timing data and trace identifiers in Hippo routes.
 - Persisted queries to a new ``retrieval_traces`` table and added tests for path toggling.
 - Next: surface retrieval trace analytics in the dashboard UI.
+
+## Update 2025-09-20T00:00Z
+- Added objection segment analysis route with citation refs and Socket.IO broadcast.
+- Recorded cures in new resolution table and cleared highlights on cure events.
+- Next: refine citation ranking and expand highlight clearing strategies.
