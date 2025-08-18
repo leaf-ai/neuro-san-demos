@@ -32,6 +32,7 @@ def test_query_endpoint_returns_paths():
     assert res.status_code == 200
     data = res.get_json()
     assert data["items"]
+    assert "trace_id" in data and data["timings"]["total_ms"] >= 0
     first = data["items"][0]
     assert "segment_id" in first
     assert first["path"]  # at least one element
@@ -48,7 +49,8 @@ def test_query_scores_and_document_path():
         "/api/hippo/query",
         json={"case_id": "c1", "query": "Bob"},
     )
-    first = res.get_json()["items"][0]
+    data = res.get_json()
+    first = data["items"][0]
     assert {"graph", "dense", "hybrid"}.issubset(first["scores"])  # scoring fields
     assert first["path"][0]["type"] == "Document"
 
@@ -66,3 +68,18 @@ def test_query_fallback_to_token_seeding():
     )
     assert res.status_code == 200
     assert res.get_json()["items"]  # tokens still return results
+
+
+def test_query_return_paths_toggle():
+    app = _create_app()
+    client = app.test_client()
+    client.post(
+        "/api/hippo/index",
+        json={"case_id": "c1", "text": "Alice met Bob at Acme."},
+    )
+    res = client.post(
+        "/api/hippo/query",
+        json={"case_id": "c1", "query": "Bob", "return_paths": False},
+    )
+    first = res.get_json()["items"][0]
+    assert "path" not in first

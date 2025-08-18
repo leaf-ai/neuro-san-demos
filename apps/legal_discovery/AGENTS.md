@@ -895,3 +895,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added entity-linked query seeding with fallback tokens and merged Neo4j/Chroma candidate searches in ``hippo_query``.
 - Introduced simple cross-encoder re-ranking and expanded result paths with document nodes.
 - Next: wire to real GDS PPR and Chroma similarity APIs for richer scoring.
+
+## Update 2025-09-19T12:00Z
+- Logged retrieval traces with timing data and trace identifiers in Hippo routes.
+- Persisted queries to a new ``retrieval_traces`` table and added tests for path toggling.
+- Next: surface retrieval trace analytics in the dashboard UI.
