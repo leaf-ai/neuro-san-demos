@@ -14,6 +14,12 @@ from difflib import SequenceMatcher
 from io import BytesIO, StringIO
 import csv
 import difflib
+import requests
+
+try:  # pragma: no cover - optional dependency
+    from neo4j import GraphDatabase
+except Exception:  # pragma: no cover - driver may be absent
+    GraphDatabase = None
 
 # pylint: disable=import-error
 import schedule
@@ -169,6 +175,40 @@ bates_service = BatesNumberingService()
 def metrics() -> Response:
     """Expose Prometheus metrics."""
     return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
+
+
+@app.get("/api/health")
+def health() -> Response:
+    """Report connectivity status for Neo4j and Chroma services."""
+    neo4j_status = "ok"
+    chroma_status = "ok"
+
+    try:  # pragma: no cover - external service
+        if GraphDatabase is None:
+            raise RuntimeError("neo4j driver missing")
+        uri = os.environ.get("NEO4J_URI", "bolt://neo4j:7687")
+        user = os.environ.get("NEO4J_USER", "neo4j")
+        pwd = os.environ.get("NEO4J_PASSWORD")
+        auth = (user, pwd) if pwd else None
+        db = os.environ.get("NEO4J_DATABASE", "neo4j")
+        with GraphDatabase.driver(uri, auth=auth) as driver:
+            with driver.session(database=db) as session:
+                session.run("RETURN 1")
+    except Exception:
+        neo4j_status = "fail"
+
+    try:  # pragma: no cover - external service
+        host = os.environ.get("CHROMA_HOST", "localhost")
+        port = int(os.environ.get("CHROMA_PORT", "8000"))
+        resp = requests.get(
+            f"http://{host}:{port}/api/v1/heartbeat", timeout=2
+        )
+        if resp.status_code != 200:
+            raise RuntimeError("chroma heartbeat failed")
+    except Exception:
+        chroma_status = "fail"
+
+    return jsonify({"neo4j": neo4j_status, "chroma": chroma_status})
 
 # Shared crawler instance for legal references
 legal_crawler = LegalCrawler()

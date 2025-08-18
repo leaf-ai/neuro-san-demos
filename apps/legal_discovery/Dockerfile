@@ -31,6 +31,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       libxml2 libxslt1.1 fonts-liberation \
       tesseract-ocr tesseract-ocr-eng \
       ffmpeg libsndfile1 espeak \
+      curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Upgrade pip/setuptools first
@@ -57,6 +58,8 @@ RUN rm -rf apps/legal_discovery/node_modules
 
 # Expose app port
 EXPOSE 5001
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=5 CMD curl -f http://localhost:5001/api/health || exit 1
 
 # Environment defaults (can be overridden at runtime)
 ENV AGENT_MANIFEST_FILE=/usr/src/app/registries/manifest.hocon \
