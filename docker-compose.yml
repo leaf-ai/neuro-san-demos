@@ -40,7 +40,7 @@ services:
     restart: unless-stopped
 
   neo4j:
-    image: neo4j:4.4
+    image: neo4j:5.23
     ports:
       - "7474:7474"
       - "7687:7687"
