@@ -12,7 +12,8 @@ from dataclasses import dataclass
 import hashlib
 import os
 import re
-from typing import Callable, Dict, Iterable, List, Optional
+import time
+from typing import Callable, Dict, Iterable, List, Optional, Tuple
 
 try:  # pragma: no cover - allows tests without neo4j package
     from neo4j import GraphDatabase, Driver
@@ -37,6 +38,7 @@ class Segment:
     tok_start: int
     tok_end: int
     entities: List[str]
+    facts: List[Tuple[str, str, str]]
 
 
 # In-memory index: {case_id: {doc_id: [Segment, ...]}}
@@ -98,12 +100,10 @@ def make_doc_id(case_id: str, path: str) -> str:
     return hashlib.sha256(f"{case_id}:{path}".encode()).hexdigest()[:32]
 
 
-def _segment_hash(doc_id: str, start: int, end: int) -> str:
-    """Return a 64-bit hex hash for a text segment."""
+def _segment_hash(text: str) -> str:
+    """Return a 64-bit hex hash for a text segment based on its contents."""
 
-    h = hashlib.sha256(f"{doc_id}:{start}:{end}".encode()).hexdigest()
-    # first 16 hex = 64 bits
-    return h[:16]
+    return hashlib.sha256(text.encode()).hexdigest()[:16]
 
 
 def chunk_text(
@@ -111,13 +111,13 @@ def chunk_text(
     doc_id: str,
     page: int = 1,
     tokens_per_chunk: int = 200,
-    entity_extractor: Optional[Callable[[str], List[str]]] = None,
+    entity_extractor: Optional[Callable[[str], List[str] | Dict[str, object]]] = None,
 ) -> List[Segment]:
     """Deterministically split ``text`` into segments.
 
-    Each segment id follows the ``doc_id:page:para:start-end`` pattern and a
-    64-bit ``segment_hash`` is derived from these values.  Tokens are simple
-    whitespace splits which is adequate for the unit tests.  The ``entity_extractor``
+    Each segment id follows the ``doc_id:hash`` pattern where ``hash`` is a
+    64-bit digest of the segment text. Tokens are simple whitespace splits
+    which is adequate for the unit tests.  The ``entity_extractor``
     parameter allows callers to plug in a richer legal information extraction
     routine.  When omitted, a tiny built-in extractor is used.
     """
@@ -131,10 +131,16 @@ def chunk_text(
         chunk_tokens = tokens[t : t + tokens_per_chunk]
         start = t
         end = t + len(chunk_tokens)
-        segment_id = f"{doc_id}:{page}:{para}:{start}-{end}"
         seg_text = " ".join(chunk_tokens)
-        seg_hash = _segment_hash(doc_id, start, end)
-        entities = extractor(seg_text)
+        seg_hash = _segment_hash(seg_text)
+        segment_id = f"{doc_id}:{seg_hash}"
+        result = extractor(seg_text)
+        if isinstance(result, dict):
+            entities = result.get("entities", [])
+            facts = result.get("facts", [])
+        else:
+            entities = result
+            facts = []
         segments.append(
             Segment(
                 doc_id=doc_id,
@@ -146,6 +152,7 @@ def chunk_text(
                 tok_start=start,
                 tok_end=end,
                 entities=entities,
+                facts=facts,
             )
         )
         para += 1
@@ -183,7 +190,14 @@ def upsert_document_and_segments(
         "MERGE (s:Segment {hash: seg.hash}) "
         "SET s.text=seg.text, s.page=seg.page, s.para=seg.para "
         "MERGE (d)-[:HAS_SEGMENT]->(s) "
-        "FOREACH (e IN seg.entities | MERGE (ent:Entity {key:e}) MERGE (s)-[:MENTIONS]->(ent))"
+        "FOREACH (e IN seg.entities | MERGE (ent:Entity {key:e}) MERGE (s)-[:MENTIONS]->(ent)) "
+        "FOREACH (f IN seg.facts | "
+        "MERGE (sub:Entity {key:f.subject}) "
+        "MERGE (obj:Entity {key:f.object}) "
+        "MERGE (fact:Fact {key:f.key, predicate:f.predicate}) "
+        "MERGE (fact)-[:SUBJECT]->(sub) "
+        "MERGE (fact)-[:OBJECT]->(obj) "
+        "MERGE (s)-[:ASSERTS]->(fact))"
     )
     params = {
         "doc_id": doc_id,
@@ -212,7 +226,7 @@ def ingest_document(
     text: str,
     path: str = "",
     *,
-    entity_extractor: Optional[Callable[[str], List[str]]] = None,
+    entity_extractor: Optional[Callable[[str], List[str] | Dict[str, object]]] = None,
     graph_db: Optional[object] = None,
     vector_db: Optional[object] = None,
 ) -> str:
@@ -223,16 +237,23 @@ def ingest_document(
     supply a custom ``entity_extractor`` for legal information extraction.
     """
 
+    start = time.perf_counter()
+    errors: List[str] = []
     doc_id = make_doc_id(case_id, path or "inline")
-    case_index = INDEX.setdefault(case_id, {})
-    if doc_id in case_index:
-        return doc_id
     segments = chunk_text(text, doc_id, entity_extractor=entity_extractor)
+    segment_hashes = [s.segment_hash for s in segments]
 
-    # In-memory index -----------------------------------------------------------------
+    try:  # pragma: no cover - best effort
+        from .database import ingestion_matches
+
+        if ingestion_matches(doc_id, segment_hashes):
+            return doc_id
+    except Exception:
+        pass
+
+    case_index = INDEX.setdefault(case_id, {})
     case_index[doc_id] = segments
 
-    # Bulk vector upsert ---------------------------------------------------------------
     if vector_db:
         try:  # pragma: no cover - best effort
             vector_db.add_documents(
@@ -249,30 +270,40 @@ def ingest_document(
                 ],
                 ids=[s.segment_hash for s in segments],
             )
-        except Exception:
-            pass
+        except Exception as e:
+            errors.append(f"vector: {e}")
 
-    # Bulk graph upsert ----------------------------------------------------------------
     if graph_db and segments:
         try:  # pragma: no cover - best effort
-            seg_dicts = [
-                {
-                    "hash": s.segment_hash,
-                    "text": s.text,
-                    "page": s.page,
-                    "para": s.para,
-                    "entities": s.entities,
-                }
-                for s in segments
-            ]
+            seg_dicts = []
+            for s in segments:
+                fact_dicts = [
+                    {
+                        "key": hashlib.sha256(f"{sub}:{pred}:{obj}".encode()).hexdigest()[:32],
+                        "subject": sub,
+                        "predicate": pred,
+                        "object": obj,
+                    }
+                    for sub, pred, obj in s.facts
+                ]
+                seg_dicts.append(
+                    {
+                        "hash": s.segment_hash,
+                        "text": s.text,
+                        "page": s.page,
+                        "para": s.para,
+                        "entities": s.entities,
+                        "facts": fact_dicts,
+                    }
+                )
             graph_db.run_query(
                 *upsert_document_and_segments(doc_id, case_id, path, seg_dicts),
                 cache=False,
             )
-        except Exception:
-            pass
+        except Exception as e:
+            errors.append(f"graph: {e}")
 
-    # Postgres ingestion log ----------------------------------------------------------
+    elapsed_ms = (time.perf_counter() - start) * 1000
     try:  # pragma: no cover - external dependency
         from .database import log_ingestion
 
@@ -280,7 +311,10 @@ def ingest_document(
             case_id=case_id,
             path=path,
             doc_id=doc_id,
-            segment_hashes=[s.segment_hash for s in segments],
+            segment_hashes=segment_hashes,
+            status="failed" if errors else "ingested",
+            duration_ms=elapsed_ms,
+            error="; ".join(errors) if errors else None,
         )
     except Exception:
         pass
