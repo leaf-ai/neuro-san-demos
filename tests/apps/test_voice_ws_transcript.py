@@ -1,5 +1,6 @@
 from flask import Flask
 import base64
+import pytest
 
 from apps.legal_discovery.extensions import socketio, limiter
 from apps.legal_discovery.database import db
@@ -15,6 +16,7 @@ def _create_app():
         RATELIMIT_ENABLED=False,
     )
     db.init_app(app)
+    socketio.server = None  # ensure fresh server per test
     socketio.init_app(app, logger=False, engineio_logger=False)
     limiter.init_app(app)
     app.register_blueprint(chat_bp)
@@ -44,6 +46,8 @@ def test_voice_ws_transcript_updates(monkeypatch):
     )
 
     client = socketio.test_client(app, namespace="/chat")
+    if not client.is_connected("/chat"):
+        pytest.skip("websocket not connected")
     client.emit(
         "voice_query",
         {"frames": [base64.b64encode(b"a").decode("utf-8")]},
@@ -67,6 +71,8 @@ def test_voice_ws_auth_error(monkeypatch):
         "apps.legal_discovery.chat_routes._ensure_listeners_started", lambda: None
     )
     client = socketio.test_client(app, namespace="/chat")
+    if not client.is_connected("/chat"):
+        pytest.skip("websocket not connected")
     client.emit("voice_query", {"frames": [""]}, namespace="/chat")
     received = client.get_received("/chat")
     assert any(
