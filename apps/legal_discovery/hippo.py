@@ -184,20 +184,29 @@ def upsert_document_and_segments(
     """Return Cypher and parameters to upsert document segments."""
 
     cypher = (
-        "MERGE (d:Document {doc_id: $doc_id}) "
-        "SET d.case_id=$case_id, d.path=$path "
-        "WITH d UNWIND $segments AS seg "
-        "MERGE (s:Segment {hash: seg.hash}) "
-        "SET s.text=seg.text, s.page=seg.page, s.para=seg.para "
-        "MERGE (d)-[:HAS_SEGMENT]->(s) "
-        "FOREACH (e IN seg.entities | MERGE (ent:Entity {key:e}) MERGE (s)-[:MENTIONS]->(ent)) "
-        "FOREACH (f IN seg.facts | "
-        "MERGE (sub:Entity {key:f.subject}) "
-        "MERGE (obj:Entity {key:f.object}) "
-        "MERGE (fact:Fact {key:f.key, predicate:f.predicate}) "
-        "MERGE (fact)-[:SUBJECT]->(sub) "
-        "MERGE (fact)-[:OBJECT]->(obj) "
-        "MERGE (s)-[:ASSERTS]->(fact))"
+        "\n".join(
+            [
+                "MERGE (d:Document {doc_id: $doc_id})",
+                "SET d.case_id=$case_id, d.path=$path",
+                "WITH d UNWIND $segments AS seg",
+                "MERGE (s:Segment {hash: seg.hash})",
+                "SET s.text=seg.text, s.page=seg.page, s.para=seg.para",
+                "MERGE (d)-[:HAS_SEGMENT]->(s)",
+                (
+                    "FOREACH (e IN seg.entities | MERGE (ent:Entity {key:e}) "
+                    "MERGE (s)-[:MENTIONS]->(ent))"
+                ),
+                (
+                    "FOREACH (f IN seg.facts | "
+                    "MERGE (sub:Entity {key:f.subject}) "
+                    "MERGE (obj:Entity {key:f.object}) "
+                    "MERGE (fact:Fact {key:f.key, predicate:f.predicate}) "
+                    "MERGE (fact)-[:SUBJECT]->(sub) "
+                    "MERGE (fact)-[:OBJECT]->(obj) "
+                    "MERGE (s)-[:ASSERTS]->(fact))"
+                ),
+            ]
+        )
     )
     params = {
         "doc_id": doc_id,
@@ -211,12 +220,14 @@ def upsert_document_and_segments(
 def upsert_graph(edges: Iterable[dict]) -> tuple[str, dict]:
     """Return Cypher and parameters to upsert generic edges."""
 
-    cypher = (
-        "UNWIND $edges AS edge "
-        "MATCH (s:Segment {hash: edge.src}) "
-        "MATCH (t:Segment {hash: edge.dst}) "
-        "MERGE (s)-[r:EDGE {type: edge.type}]->(t) "
-        "SET r.weight=edge.weight"
+    cypher = "\n".join(
+        [
+            "UNWIND $edges AS edge",
+            "MATCH (s:Segment {hash: edge.src})",
+            "MATCH (t:Segment {hash: edge.dst})",
+            "MERGE (s)-[r:EDGE {type: edge.type}]->(t)",
+            "SET r.weight=edge.weight",
+        ]
     )
     return cypher, {"edges": list(edges)}
 

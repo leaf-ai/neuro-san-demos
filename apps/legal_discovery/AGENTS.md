@@ -925,3 +925,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added content-hashed segment IDs with pluggable legal IE and bulk Neo4j/Chroma upserts.
 - Introduced `ingestion_logs` table to track status, timing and failures for idempotent indexing.
 - Next: validate graph/vector batch operations against live services and expand ingestion telemetry.
+
+## Update 2025-09-22T18:00Z
+- Bootstrapped Neo4j schema during app start and added container startup check.
+- Implemented document/segment and edge upsert helpers for Hippo ingestion.
+- Next: validate schema and upsert operations against a live Neo4j service.
