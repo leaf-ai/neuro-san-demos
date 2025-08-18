@@ -920,3 +920,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added `/api/health` endpoint checking Neo4j and Chroma connectivity.
 - Dockerfile and compose now use this route for container health checks.
 - Next: monitor service health and expand diagnostics.
+
+## Update 2025-09-22T12:00Z
+- Added content-hashed segment IDs with pluggable legal IE and bulk Neo4j/Chroma upserts.
+- Introduced `ingestion_logs` table to track status, timing and failures for idempotent indexing.
+- Next: validate graph/vector batch operations against live services and expand ingestion telemetry.
