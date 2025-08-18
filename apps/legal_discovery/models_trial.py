@@ -77,5 +77,14 @@ class ObjectionEvent(db.Model):
     confidence = db.Column(db.Integer)
     extracted_phrase = db.Column(db.String)
     suggested_cures = db.Column(db.JSON)
+    refs = db.Column(db.JSON)
     action_taken = db.Column(db.String)
     outcome = db.Column(db.String)
+
+
+class ObjectionResolution(db.Model):
+    __tablename__ = "objection_resolutions"
+    id = db.Column(db.String, primary_key=True, default=uuid4)
+    event_id = db.Column(db.String, db.ForeignKey("objection_events.id"), index=True)
+    chosen_cure = db.Column(db.String)
+    ts = db.Column(db.DateTime, default=datetime.utcnow)
