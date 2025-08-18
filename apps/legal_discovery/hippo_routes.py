@@ -1,11 +1,17 @@
 """Flask blueprint exposing minimal HippoRAG endpoints."""
 from __future__ import annotations
 
+import logging
+import time
+
 from flask import Blueprint, jsonify, request
 
 from . import hippo
+from .database import log_retrieval_trace
 
 bp = Blueprint("hippo", __name__, url_prefix="/api/hippo")
+
+logger = logging.getLogger(__name__)
 
 
 @bp.post("/index")
@@ -27,6 +33,40 @@ def query_document():
     case_id = data.get("case_id")
     query = data.get("query", "")
     k = int(data.get("k", 10))
+    graph_weight = float(data.get("graph_weight", 1.0))
+    dense_weight = float(data.get("dense_weight", 1.0))
+    return_paths = data.get("return_paths", True)
     if not case_id:
         return jsonify({"error": "case_id required"}), 400
-    return jsonify(hippo.hippo_query(case_id, query, k=k))
+
+    start = time.perf_counter()
+    result = hippo.hippo_query(case_id, query, k=k)
+    elapsed_ms = (time.perf_counter() - start) * 1000
+
+    items = result.get("items", [])
+    for item in items:
+        scores = item.get("scores", {})
+        graph_score = scores.get("graph", 0) * graph_weight
+        dense_score = scores.get("dense", 0) * dense_weight
+        scores["graph"] = graph_score
+        scores["dense"] = dense_score
+        scores["hybrid"] = graph_score + dense_score
+        if not return_paths:
+            item.pop("path", None)
+
+    items.sort(key=lambda r: r["scores"]["hybrid"], reverse=True)
+    trace_id = result.get("trace_id")
+    timings = {"total_ms": round(elapsed_ms, 2)}
+
+    log_retrieval_trace(
+        trace_id=trace_id,
+        case_id=case_id,
+        query=query,
+        graph_weight=graph_weight,
+        dense_weight=dense_weight,
+        timings=timings,
+        results=items,
+    )
+    logger.info("hippo query trace %s %.2fms", trace_id, elapsed_ms)
+
+    return jsonify({"items": items, "trace_id": trace_id, "timings": timings})
