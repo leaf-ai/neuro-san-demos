@@ -885,3 +885,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added deterministic ``segment_hash`` plus pluggable entity extractor and bulk Neo4j/Chroma upserts in ``hippo.py``.
 - Created ``ingestion_logs`` table and helper to record document ingestions with idempotent hashing.
 - Next: validate graph/vector batch operations against live services and expand ingestion telemetry.
+
+## Update 2025-09-18T18:00Z
+- Bootstrapped Neo4j schema with constraints and indices in ``hippo.py`` and added upsert helpers.
+- Startup routine now ensures constraints run on application launch.
+- Next: validate Neo4j upserts against a live database service.

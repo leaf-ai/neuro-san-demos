@@ -10,8 +10,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import hashlib
+import os
 import re
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, Iterable, List, Optional
+
+try:  # pragma: no cover - allows tests without neo4j package
+    from neo4j import GraphDatabase, Driver
+except Exception:  # pragma: no cover - fallback when driver unavailable
+    GraphDatabase = Driver = None
 
 
 # ---------------------------------------------------------------------------
@@ -35,6 +41,51 @@ class Segment:
 
 # In-memory index: {case_id: {doc_id: [Segment, ...]}}
 INDEX: Dict[str, Dict[str, List[Segment]]] = {}
+
+
+# ---------------------------------------------------------------------------
+# Neo4j schema
+# ---------------------------------------------------------------------------
+
+SCHEMA_QUERIES: Iterable[str] = (
+    "CREATE CONSTRAINT hippo_document_doc_id IF NOT EXISTS FOR (d:Document) REQUIRE d.doc_id IS UNIQUE",
+    "CREATE CONSTRAINT hippo_segment_hash IF NOT EXISTS FOR (s:Segment) REQUIRE s.hash IS UNIQUE",
+    "CREATE CONSTRAINT hippo_entity_key IF NOT EXISTS FOR (e:Entity) REQUIRE e.key IS UNIQUE",
+    "CREATE TEXT INDEX hippo_segment_text IF NOT EXISTS FOR (s:Segment) ON EACH [s.text]",
+)
+
+
+def setup_neo4j_schema(driver: Driver, database: str | None = None) -> None:
+    """Ensure Neo4j constraints and indexes exist."""
+
+    if not driver:  # pragma: no cover - driver not installed
+        return
+    db = database or os.environ.get("NEO4J_DATABASE", "neo4j")
+    with driver.session(database=db) as session:  # pragma: no cover - network path
+        for q in SCHEMA_QUERIES:
+            session.run(q)
+
+
+def ensure_graph_constraints() -> None:
+    """Best-effort schema bootstrap using environment variables."""
+
+    if not GraphDatabase:  # pragma: no cover - driver not installed
+        return
+    uri = os.environ.get("NEO4J_URI", "bolt://neo4j:7687")
+    user = os.environ.get("NEO4J_USER", "neo4j")
+    pwd = os.environ.get("NEO4J_PASSWORD")
+    auth = (user, pwd) if pwd else None
+    db = os.environ.get("NEO4J_DATABASE", "neo4j")
+    try:  # pragma: no cover - external dependency
+        driver = GraphDatabase.driver(uri, auth=auth)
+        setup_neo4j_schema(driver, db)
+    except Exception:
+        pass
+    finally:  # pragma: no cover - ensure closure
+        try:
+            driver.close()
+        except Exception:
+            pass
 
 
 # ---------------------------------------------------------------------------
@@ -120,6 +171,42 @@ def _extract_entities(text: str) -> List[str]:
 # Ingestion / Query
 
 
+def upsert_document_and_segments(
+    doc_id: str, case_id: str, path: str, segments: List[dict]
+) -> tuple[str, dict]:
+    """Return Cypher and parameters to upsert document segments."""
+
+    cypher = (
+        "MERGE (d:Document {doc_id: $doc_id}) "
+        "SET d.case_id=$case_id, d.path=$path "
+        "WITH d UNWIND $segments AS seg "
+        "MERGE (s:Segment {hash: seg.hash}) "
+        "SET s.text=seg.text, s.page=seg.page, s.para=seg.para "
+        "MERGE (d)-[:HAS_SEGMENT]->(s) "
+        "FOREACH (e IN seg.entities | MERGE (ent:Entity {key:e}) MERGE (s)-[:MENTIONS]->(ent))"
+    )
+    params = {
+        "doc_id": doc_id,
+        "case_id": case_id,
+        "path": path,
+        "segments": segments,
+    }
+    return cypher, params
+
+
+def upsert_graph(edges: Iterable[dict]) -> tuple[str, dict]:
+    """Return Cypher and parameters to upsert generic edges."""
+
+    cypher = (
+        "UNWIND $edges AS edge "
+        "MATCH (s:Segment {hash: edge.src}) "
+        "MATCH (t:Segment {hash: edge.dst}) "
+        "MERGE (s)-[r:EDGE {type: edge.type}]->(t) "
+        "SET r.weight=edge.weight"
+    )
+    return cypher, {"edges": list(edges)}
+
+
 def ingest_document(
     case_id: str,
     text: str,
@@ -178,23 +265,8 @@ def ingest_document(
                 }
                 for s in segments
             ]
-            cypher = (
-                "MERGE (d:Document {doc_id: $doc_id}) "
-                "SET d.case_id=$case_id, d.path=$path "
-                "WITH d UNWIND $segments AS seg "
-                "MERGE (s:Segment {hash: seg.hash}) "
-                "SET s.text=seg.text, s.page=seg.page, s.para=seg.para "
-                "MERGE (d)-[:HAS_SEGMENT]->(s) "
-                "FOREACH (e IN seg.entities | MERGE (ent:Entity {key:e}) MERGE (s)-[:MENTIONS]->(ent))"
-            )
             graph_db.run_query(
-                cypher,
-                {
-                    "doc_id": doc_id,
-                    "case_id": case_id,
-                    "path": path,
-                    "segments": seg_dicts,
-                },
+                *upsert_document_and_segments(doc_id, case_id, path, seg_dicts),
                 cache=False,
             )
         except Exception:
