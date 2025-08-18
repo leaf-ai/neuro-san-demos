@@ -179,3 +179,9 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 ## Update 2025-09-16T00:00Z
 - Mocked speech engines and added tests for command routing, auth errors, message bus alerts, streaming transcripts and objection detection.
 - Next: expand coverage for additional voice workflows.
+
+## Update 2025-09-16T12:00Z
+- Added unit tests for extractor typing, Neo4j upsert idempotency, and segment hashing.
+- Introduced integration test for hybrid retrieval paths and objection events with refs.
+- Implemented load test harness for 200 concurrent /api/hippo/query calls asserting p95 latency.
+- Next: extend load metrics and broaden graph retrieval coverage.
