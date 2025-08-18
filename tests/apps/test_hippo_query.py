@@ -1,7 +1,5 @@
 from flask import Flask
 
-from flask import Flask
-
 from apps.legal_discovery.hippo import chunk_text, make_doc_id
 from apps.legal_discovery.hippo_routes import bp as hippo_bp
 
@@ -37,3 +35,34 @@ def test_query_endpoint_returns_paths():
     first = data["items"][0]
     assert "segment_id" in first
     assert first["path"]  # at least one element
+
+
+def test_query_scores_and_document_path():
+    app = _create_app()
+    client = app.test_client()
+    client.post(
+        "/api/hippo/index",
+        json={"case_id": "c1", "text": "Alice met Bob at Acme."},
+    )
+    res = client.post(
+        "/api/hippo/query",
+        json={"case_id": "c1", "query": "Bob"},
+    )
+    first = res.get_json()["items"][0]
+    assert {"graph", "dense", "hybrid"}.issubset(first["scores"])  # scoring fields
+    assert first["path"][0]["type"] == "Document"
+
+
+def test_query_fallback_to_token_seeding():
+    app = _create_app()
+    client = app.test_client()
+    client.post(
+        "/api/hippo/index",
+        json={"case_id": "c1", "text": "Alice met Bob at Acme."},
+    )
+    res = client.post(
+        "/api/hippo/query",
+        json={"case_id": "c1", "query": "Zoe met"},
+    )
+    assert res.status_code == 200
+    assert res.get_json()["items"]  # tokens still return results
