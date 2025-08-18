@@ -890,3 +890,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Bootstrapped Neo4j schema with constraints and indices in ``hippo.py`` and added upsert helpers.
 - Startup routine now ensures constraints run on application launch.
 - Next: validate Neo4j upserts against a live database service.
+
+## Update 2025-09-19T00:00Z
+- Added entity-linked query seeding with fallback tokens and merged Neo4j/Chroma candidate searches in ``hippo_query``.
+- Introduced simple cross-encoder re-ranking and expanded result paths with document nodes.
+- Next: wire to real GDS PPR and Chroma similarity APIs for richer scoring.

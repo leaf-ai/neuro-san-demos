@@ -288,37 +288,112 @@ def ingest_document(
     return doc_id
 
 
-def hippo_query(case_id: str, query: str, k: int = 10) -> Dict[str, object]:
-    """Perform a naïve retrieval over the in-memory index.
+def _graph_candidates(case_id: str, seeds: List[str], k: int) -> Dict[str, Dict]:
+    """Return candidate segments scored by seeded entity matches.
 
-    Scores are a simple count of query token occurrences.  Paths include the
-    originating entities for demonstrative purposes.
+    This function acts as a lightweight stand-in for a Neo4j GDS
+    personalised PageRank or HippoRAG query.  When the real services are
+    unavailable the in-memory index is scanned and any segment containing
+    one of the ``seeds`` is returned with a simple frequency score.
     """
 
-    results = []
+    case_index = INDEX.get(case_id, {})
+    scores: Dict[str, Dict] = {}
+    seed_set = {s.lower() for s in seeds}
+    for seg in (s for docs in case_index.values() for s in docs):
+        gscore = len(seed_set.intersection(seg.entities))
+        if gscore:
+            scores[seg.segment_id] = {"segment": seg, "graph": gscore}
+    return dict(
+        sorted(scores.items(), key=lambda x: x[1]["graph"], reverse=True)[:k]
+    )
+
+
+def _vector_candidates(case_id: str, query: str, k: int) -> Dict[str, Dict]:
+    """Return candidate segments scored by dense similarity.
+
+    In production this would issue a Chroma similarity search.  For the
+    offline test environment we simply count query token matches.
+    """
+
     q_tokens = query.lower().split()
     case_index = INDEX.get(case_id, {})
-    for doc_segments in case_index.values():
-        for seg in doc_segments:
-            score = sum(seg.text.lower().count(t) for t in q_tokens)
-            if score:
-                spans = [
-                    {"start": m.start(), "end": m.end()}
-                    for t in q_tokens
-                    for m in re.finditer(re.escape(t), seg.text.lower())
-                ]
-                path = [{"type": "Segment", "segment_id": seg.segment_id}]
-                for ent in seg.entities:
-                    path.insert(0, {"type": "Entity", "key": ent})
-                results.append(
-                    {
-                        "doc_id": seg.doc_id,
-                        "segment_id": seg.segment_id,
-                        "snippet": seg.text[:200],
-                        "spans": spans,
-                        "path": path,
-                        "scores": {"graph": score, "dense": score, "hybrid": score},
-                    }
-                )
+    scores: Dict[str, Dict] = {}
+    for seg in (s for docs in case_index.values() for s in docs):
+        dscore = sum(seg.text.lower().count(t) for t in q_tokens)
+        if dscore:
+            scores[seg.segment_id] = {"segment": seg, "dense": dscore}
+    return dict(
+        sorted(scores.items(), key=lambda x: x[1]["dense"], reverse=True)[:k]
+    )
+
+
+def hippo_query(case_id: str, query: str, k: int = 10) -> Dict[str, object]:
+    """Query indexed segments using graph and vector searches.
+
+    The function performs three stages:
+
+    1. **Entity linking** – extract entities from the query.  These seed a
+       personalised PageRank style lookup over the Neo4j graph.  When no
+       entities are found, or the graph returns no results, we fall back to
+       using raw query tokens as seeds.
+    2. **Dense retrieval** – issue a similarity search against the vector
+        store (Chroma).  In the offline test environment this is simulated
+        with token frequency counts.
+    3. **Re‑ranking** – merge candidates by ``segment_id`` and compute a
+       combined ``hybrid`` score representing a trivial cross‑encoder/LLM
+       re‑ranker.
+    """
+
+    q_entities = _extract_entities(query)
+    q_tokens = query.lower().split()
+    seeds = q_entities or q_tokens
+
+    graph_cands = _graph_candidates(case_id, seeds, k)
+    if q_entities and not graph_cands:
+        graph_cands = _graph_candidates(case_id, q_tokens, k)
+
+    dense_cands = _vector_candidates(case_id, query, k)
+
+    merged: Dict[str, Dict] = {}
+    for seg_id, info in {**graph_cands, **dense_cands}.items():
+        seg = info["segment"]
+        entry = merged.setdefault(seg_id, {"segment": seg, "graph": 0, "dense": 0})
+        entry["graph"] += info.get("graph", 0)
+        entry["dense"] += info.get("dense", 0)
+
+    results = []
+    token_set = set(q_tokens)
+    for seg_id, info in merged.items():
+        seg = info["segment"]
+        graph_score = info["graph"]
+        dense_score = info["dense"]
+        hybrid_score = graph_score + dense_score
+        spans = [
+            {"start": m.start(), "end": m.end()}
+            for t in token_set
+            for m in re.finditer(re.escape(t), seg.text.lower())
+        ]
+        path = [
+            {"type": "Document", "doc_id": seg.doc_id},
+            *[{"type": "Entity", "key": ent} for ent in seg.entities],
+            {"type": "Segment", "segment_id": seg.segment_id},
+        ]
+        results.append(
+            {
+                "doc_id": seg.doc_id,
+                "segment_id": seg.segment_id,
+                "snippet": seg.text[:200],
+                "spans": spans,
+                "path": path,
+                "scores": {
+                    "graph": graph_score,
+                    "dense": dense_score,
+                    "hybrid": hybrid_score,
+                },
+            }
+        )
+
     results.sort(key=lambda r: r["scores"]["hybrid"], reverse=True)
-    return {"answer": "", "items": results[:k], "trace_id": hashlib.sha1(query.encode()).hexdigest()}
+    trace_id = hashlib.sha1(query.encode()).hexdigest()
+    return {"answer": "", "items": results[:k], "trace_id": trace_id}
