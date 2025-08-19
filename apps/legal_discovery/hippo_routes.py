@@ -48,9 +48,10 @@ def query_document():
         scores = item.get("scores", {})
         graph_score = scores.get("graph", 0) * graph_weight
         dense_score = scores.get("dense", 0) * dense_weight
+        cross_score = scores.get("cross", 0)
         scores["graph"] = graph_score
         scores["dense"] = dense_score
-        scores["hybrid"] = graph_score + dense_score
+        scores["hybrid"] = graph_score + dense_score + cross_score
         if not return_paths:
             item.pop("path", None)
 
