@@ -3,7 +3,7 @@ from flask import Flask
 from apps.legal_discovery.extensions import socketio
 from apps.legal_discovery.database import db, RetrievalTrace
 from apps.legal_discovery.trial_assistant import bp as trial_bp
-from apps.legal_discovery.objection_routes import bp as objections_bp
+from apps.legal_discovery.hippo_routes import objections_bp
 from apps.legal_discovery.models_trial import (
     TrialSession,
     ObjectionEvent,

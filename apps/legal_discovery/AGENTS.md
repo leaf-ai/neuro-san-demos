@@ -954,3 +954,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added query weighting, path toggling and trace timing to `hippo_routes` with persistence to `retrieval_traces`.
 - Extended tests for score weighting and retrieval trace logging.
 - Next: surface retrieval trace analytics in the dashboard UI.
+
+## Update 2025-09-24T12:00Z
+- Implemented `/api/objections/analyze-segment` in `hippo_routes` with Hippo citation refs and Socket.IO broadcast.
+- Added `objection_cure_chosen` handler to clear highlights and persist cures.
+- Next: refine citation ranking and broaden highlight clearing strategies.
