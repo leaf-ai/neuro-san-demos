@@ -945,3 +945,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Consolidated Neo4j schema bootstrap via shared `bootstrap_graph` helper and removed legacy `ensure_graph_constraints`.
 - `hippo_routes` and `interface_flask` now invoke `bootstrap_graph` on load.
 - Next: verify redundant calls are trimmed once live Neo4j integration is confirmed.
+
+## Update 2025-09-23T18:00Z
+- Safeguarded Neo4j driver initialization and cleanup in `hippo.py`.
+- Next: validate failure paths when Neo4j is unreachable.
