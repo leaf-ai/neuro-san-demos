@@ -87,28 +87,6 @@ def setup_neo4j_schema(driver: Driver, database: str | None = None) -> None:
             session.run(q)
 
 
-def ensure_graph_constraints() -> None:
-    """Best-effort schema bootstrap using environment variables."""
-
-    if not GraphDatabase:  # pragma: no cover - driver not installed
-        return
-    uri = os.environ.get("NEO4J_URI", "bolt://neo4j:7687")
-    user = os.environ.get("NEO4J_USER", "neo4j")
-    pwd = os.environ.get("NEO4J_PASSWORD")
-    auth = (user, pwd) if pwd else None
-    db = os.environ.get("NEO4J_DATABASE", "neo4j")
-    try:  # pragma: no cover - external dependency
-        driver = GraphDatabase.driver(uri, auth=auth)
-        setup_neo4j_schema(driver, db)
-    except Exception:
-        pass
-    finally:  # pragma: no cover - ensure closure
-        try:
-            driver.close()
-        except Exception:
-            pass
-
-
 # ---------------------------------------------------------------------------
 # Helpers
 
