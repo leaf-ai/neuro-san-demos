@@ -930,3 +930,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Bootstrapped Neo4j schema during app start and added container startup check.
 - Implemented document/segment and edge upsert helpers for Hippo ingestion.
 - Next: validate schema and upsert operations against a live Neo4j service.
+
+## Update 2025-09-22T20:00Z
+- Refactored graph bootstrap to reuse shared schema helper and wired Dockerfile to run it before gunicorn.
+- Ensured container startup applies Neo4j 5.23 constraints and indexes automatically.
+- Next: exercise upsert routines against a live Neo4j instance.

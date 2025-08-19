@@ -181,7 +181,11 @@ def _extract_entities(text: str) -> List[str]:
 def upsert_document_and_segments(
     doc_id: str, case_id: str, path: str, segments: List[dict]
 ) -> tuple[str, dict]:
-    """Return Cypher and parameters to upsert document segments."""
+    """Return Cypher and parameters to upsert document segments.
+
+    The statement merges ``Document`` and ``Segment`` nodes alongside
+    related ``Entity`` and ``Fact`` nodes using the Neo4j 5.23 templates.
+    """
 
     cypher = (
         "\n".join(
@@ -218,7 +222,7 @@ def upsert_document_and_segments(
 
 
 def upsert_graph(edges: Iterable[dict]) -> tuple[str, dict]:
-    """Return Cypher and parameters to upsert generic edges."""
+    """Return Cypher and parameters to upsert generic edges between segments."""
 
     cypher = "\n".join(
         [

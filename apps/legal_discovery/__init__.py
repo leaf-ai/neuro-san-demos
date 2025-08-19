@@ -9,13 +9,13 @@ try:  # pragma: no cover - allow tests without Neo4j installed
 except Exception:  # pragma: no cover - fallback when driver unavailable
     GraphDatabase = None
 
-from .hippo import SCHEMA_QUERIES
+from .hippo import setup_neo4j_schema
 
 __all__ = ["create_app", "bootstrap_graph"]
 
 
 def bootstrap_graph() -> None:
-    """Apply Neo4j constraints and indexes if possible."""
+    """Apply Neo4j 5.23 constraints and indexes if possible."""
 
     if not GraphDatabase:  # pragma: no cover - driver not installed
         return
@@ -29,9 +29,7 @@ def bootstrap_graph() -> None:
     driver = None
     try:  # pragma: no cover - external dependency
         driver = GraphDatabase.driver(uri, auth=auth)
-        with driver.session(database=db) as session:
-            for query in SCHEMA_QUERIES:
-                session.run(query)
+        setup_neo4j_schema(driver, db)
     except Exception:
         pass
     finally:  # pragma: no cover - ensure closure
