@@ -53,8 +53,10 @@ from more_itertools import chunked
 from pyhocon import ConfigFactory
 from werkzeug.utils import secure_filename
 
-from apps.legal_discovery import settings
-from apps.legal_discovery.database import db
+from . import settings, bootstrap_graph
+from .database import db
+
+bootstrap_graph()
 from coded_tools.legal_discovery.deposition_prep import DepositionPrep
 from apps.legal_discovery.models import (
     Agent,

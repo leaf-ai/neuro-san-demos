@@ -940,3 +940,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added entity-linked query seeding fallback and integrated Neo4j GDS PPR plus Chroma retrieval in `hippo_query`.
 - Introduced optional cross-encoder re-ranking with merged graph/dense/LLM scores and path expansion.
 - Next: validate retrieval quality against real services and tune re-ranker weights.
+
+## Update 2025-09-23T12:00Z
+- Consolidated Neo4j schema bootstrap via shared `bootstrap_graph` helper and removed legacy `ensure_graph_constraints`.
+- `hippo_routes` and `interface_flask` now invoke `bootstrap_graph` on load.
+- Next: verify redundant calls are trimmed once live Neo4j integration is confirmed.

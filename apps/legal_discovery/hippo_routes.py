@@ -6,8 +6,10 @@ import time
 
 from flask import Blueprint, jsonify, request
 
-from . import hippo
+from . import hippo, bootstrap_graph
 from .database import log_retrieval_trace
+
+bootstrap_graph()
 
 bp = Blueprint("hippo", __name__, url_prefix="/api/hippo")
 
