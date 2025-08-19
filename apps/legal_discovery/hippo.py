@@ -20,6 +20,25 @@ try:  # pragma: no cover - allows tests without neo4j package
 except Exception:  # pragma: no cover - fallback when driver unavailable
     GraphDatabase = Driver = None
 
+try:  # pragma: no cover - optional chroma dependency
+    import chromadb  # type: ignore
+except Exception:  # pragma: no cover - chroma not installed
+    chromadb = None
+
+try:  # pragma: no cover - optional cross-encoder dependency
+    from sentence_transformers import CrossEncoder  # type: ignore
+except Exception:  # pragma: no cover - transformer library not installed
+    CrossEncoder = None
+
+CROSS_ENCODER_MODEL = os.environ.get("CROSS_ENCODER_MODEL")
+if CrossEncoder and CROSS_ENCODER_MODEL:
+    try:  # pragma: no cover - model loading path
+        CROSS_ENCODER = CrossEncoder(CROSS_ENCODER_MODEL)
+    except Exception:  # pragma: no cover - model load failures
+        CROSS_ENCODER = None
+else:  # pragma: no cover - environment did not request a model
+    CROSS_ENCODER = None
+
 
 # ---------------------------------------------------------------------------
 # Dataclasses
@@ -338,18 +357,66 @@ def ingest_document(
 
 
 def _graph_candidates(case_id: str, seeds: List[str], k: int) -> Dict[str, Dict]:
-    """Return candidate segments scored by seeded entity matches.
+    """Return candidate segments scored by personalised PageRank.
 
-    This function acts as a lightweight stand-in for a Neo4j GDS
-    personalised PageRank or HippoRAG query.  When the real services are
-    unavailable the in-memory index is scanned and any segment containing
-    one of the ``seeds`` is returned with a simple frequency score.
+    The routine prefers a real Neo4j GDS or HippoRAG lookup when the
+    ``neo4j`` driver is available and environment variables point to a
+    running service.  Failing that, it falls back to a tiny in-memory
+    scorer that simply counts overlapping entities.
     """
 
     case_index = INDEX.get(case_id, {})
+    lookup = {s.segment_id: s for docs in case_index.values() for s in docs}
+
+    if GraphDatabase and seeds:
+        uri = os.environ.get("NEO4J_URI", "bolt://neo4j:7687")
+        user = os.environ.get("NEO4J_USER", "neo4j")
+        pwd = os.environ.get("NEO4J_PASSWORD")
+        auth = (user, pwd) if pwd else None
+        db = os.environ.get("NEO4J_DATABASE", "neo4j")
+        try:  # pragma: no cover - external dependency
+            driver = GraphDatabase.driver(uri, auth=auth)
+            with driver.session(database=db) as session:
+                cypher = (
+                    "CALL { MATCH (e:Entity) WHERE e.key IN $seeds RETURN collect(e) AS seed } "
+                    "CALL gds.pageRank.stream({"
+                    " nodeProjection:'Segment',"
+                    " relationshipProjection:{MENTIONS:{type:'MENTIONS',orientation:'REVERSE'}},"
+                    " sourceNodes: seed }) "
+                    "YIELD nodeId, score "
+                    "WITH gds.util.asNode(nodeId) AS s, score "
+                    "MATCH (d:Document)-[:HAS_SEGMENT]->(s) "
+                    "WHERE d.case_id=$case_id "
+                    "RETURN s.segment_id AS segment_id, score "
+                    "ORDER BY score DESC LIMIT $k"
+                )
+                records = session.run(
+                    cypher,
+                    {"seeds": seeds, "case_id": case_id, "k": k},
+                )
+                results: Dict[str, Dict] = {}
+                for rec in records:
+                    seg_id = rec.get("segment_id")
+                    seg = lookup.get(seg_id)
+                    if seg:
+                        results[seg_id] = {
+                            "segment": seg,
+                            "graph": float(rec.get("score", 0.0)),
+                        }
+                if results:
+                    return results
+        except Exception:
+            pass
+        finally:  # pragma: no cover - ensure closure
+            try:
+                driver.close()
+            except Exception:
+                pass
+
+    # Fallback to deterministic entity overlap scoring
     scores: Dict[str, Dict] = {}
     seed_set = {s.lower() for s in seeds}
-    for seg in (s for docs in case_index.values() for s in docs):
+    for seg in lookup.values():
         gscore = len(seed_set.intersection(seg.entities))
         if gscore:
             scores[seg.segment_id] = {"segment": seg, "graph": gscore}
@@ -361,14 +428,35 @@ def _graph_candidates(case_id: str, seeds: List[str], k: int) -> Dict[str, Dict]
 def _vector_candidates(case_id: str, query: str, k: int) -> Dict[str, Dict]:
     """Return candidate segments scored by dense similarity.
 
-    In production this would issue a Chroma similarity search.  For the
-    offline test environment we simply count query token matches.
+    A real deployment would use a Chroma collection.  When the ``chromadb``
+    package or service is missing we degrade to a bag-of-words overlap which
+    keeps the unit tests hermetic.
     """
 
-    q_tokens = query.lower().split()
     case_index = INDEX.get(case_id, {})
+    lookup = {s.segment_id: s for docs in case_index.values() for s in docs}
+
+    if chromadb:
+        try:  # pragma: no cover - external dependency
+            client = chromadb.Client()
+            coll = client.get_collection(case_id)
+            res = coll.query(query_texts=[query], n_results=k)
+            scores: Dict[str, Dict] = {}
+            ids = res.get("ids", [[]])[0]
+            dists = res.get("distances", [[]])[0]
+            for seg_id, dist in zip(ids, dists):
+                seg = lookup.get(seg_id)
+                if seg:
+                    scores[seg_id] = {"segment": seg, "dense": float(dist)}
+            if scores:
+                return scores
+        except Exception:
+            pass
+
+    # Fallback token frequency approach
+    q_tokens = query.lower().split()
     scores: Dict[str, Dict] = {}
-    for seg in (s for docs in case_index.values() for s in docs):
+    for seg in lookup.values():
         dscore = sum(seg.text.lower().count(t) for t in q_tokens)
         if dscore:
             scores[seg.segment_id] = {"segment": seg, "dense": dscore}
@@ -387,11 +475,11 @@ def hippo_query(case_id: str, query: str, k: int = 10) -> Dict[str, object]:
        entities are found, or the graph returns no results, we fall back to
        using raw query tokens as seeds.
     2. **Dense retrieval** – issue a similarity search against the vector
-        store (Chroma).  In the offline test environment this is simulated
-        with token frequency counts.
-    3. **Re‑ranking** – merge candidates by ``segment_id`` and compute a
-       combined ``hybrid`` score representing a trivial cross‑encoder/LLM
-       re‑ranker.
+       store (Chroma).  In the offline test environment this is simulated
+       with token frequency counts.
+    3. **Cross‑encoder/LLM re‑ranking** – merge candidates by ``segment_id``
+       and compute a combined ``hybrid`` score incorporating the cross
+       encoder when available.
     """
 
     q_entities = _extract_entities(query)
@@ -411,13 +499,24 @@ def hippo_query(case_id: str, query: str, k: int = 10) -> Dict[str, object]:
         entry["graph"] += info.get("graph", 0)
         entry["dense"] += info.get("dense", 0)
 
+    cross_scores: List[float]
+    if CROSS_ENCODER and merged:
+        try:  # pragma: no cover - external dependency
+            pairs = [(query, info["segment"].text) for info in merged.values()]
+            cross_scores = list(CROSS_ENCODER.predict(pairs))
+        except Exception:
+            cross_scores = [0.0] * len(merged)
+    else:
+        cross_scores = [0.0] * len(merged)
+
     results = []
     token_set = set(q_tokens)
-    for seg_id, info in merged.items():
+    for (seg_id, info), cross_score in zip(merged.items(), cross_scores):
         seg = info["segment"]
-        graph_score = info["graph"]
-        dense_score = info["dense"]
-        hybrid_score = graph_score + dense_score
+        graph_score = info.get("graph", 0)
+        dense_score = info.get("dense", 0)
+        cross_score = float(cross_score)
+        hybrid_score = graph_score + dense_score + cross_score
         spans = [
             {"start": m.start(), "end": m.end()}
             for t in token_set
@@ -438,6 +537,7 @@ def hippo_query(case_id: str, query: str, k: int = 10) -> Dict[str, object]:
                 "scores": {
                     "graph": graph_score,
                     "dense": dense_score,
+                    "cross": cross_score,
                     "hybrid": hybrid_score,
                 },
             }

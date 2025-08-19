@@ -935,3 +935,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Refactored graph bootstrap to reuse shared schema helper and wired Dockerfile to run it before gunicorn.
 - Ensured container startup applies Neo4j 5.23 constraints and indexes automatically.
 - Next: exercise upsert routines against a live Neo4j instance.
+
+## Update 2025-09-23T00:00Z
+- Added entity-linked query seeding fallback and integrated Neo4j GDS PPR plus Chroma retrieval in `hippo_query`.
+- Introduced optional cross-encoder re-ranking with merged graph/dense/LLM scores and path expansion.
+- Next: validate retrieval quality against real services and tune re-ranker weights.
