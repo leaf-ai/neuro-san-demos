@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 import time
+import uuid
 
 from flask import Blueprint, jsonify, request
 
@@ -41,11 +42,13 @@ def query_document():
     if not case_id:
         return jsonify({"error": "case_id required"}), 400
 
-    start = time.perf_counter()
+    overall_start = time.perf_counter()
+    query_start = overall_start
     result = hippo.hippo_query(case_id, query, k=k)
-    elapsed_ms = (time.perf_counter() - start) * 1000
+    query_ms = (time.perf_counter() - query_start) * 1000
 
     items = result.get("items", [])
+    format_start = time.perf_counter()
     for item in items:
         scores = item.get("scores", {})
         graph_score = scores.get("graph", 0) * graph_weight
@@ -57,9 +60,16 @@ def query_document():
         if not return_paths:
             item.pop("path", None)
 
+    format_ms = (time.perf_counter() - format_start) * 1000
+    total_ms = (time.perf_counter() - overall_start) * 1000
+
     items.sort(key=lambda r: r["scores"]["hybrid"], reverse=True)
-    trace_id = result.get("trace_id")
-    timings = {"total_ms": round(elapsed_ms, 2)}
+    trace_id = uuid.uuid4().hex
+    timings = {
+        "query_ms": round(query_ms, 2),
+        "format_ms": round(format_ms, 2),
+        "total_ms": round(total_ms, 2),
+    }
 
     log_retrieval_trace(
         trace_id=trace_id,
@@ -70,6 +80,6 @@ def query_document():
         timings=timings,
         results=items,
     )
-    logger.info("hippo query trace %s %.2fms", trace_id, elapsed_ms)
+    logger.info("hippo query trace %s %.2fms", trace_id, total_ms)
 
     return jsonify({"items": items, "trace_id": trace_id, "timings": timings})

@@ -949,3 +949,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-09-23T18:00Z
 - Safeguarded Neo4j driver initialization and cleanup in `hippo.py`.
 - Next: validate failure paths when Neo4j is unreachable.
+
+## Update 2025-09-24T00:00Z
+- Added query weighting, path toggling and trace timing to `hippo_routes` with persistence to `retrieval_traces`.
+- Extended tests for score weighting and retrieval trace logging.
+- Next: surface retrieval trace analytics in the dashboard UI.
