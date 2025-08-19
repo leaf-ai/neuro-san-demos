@@ -5,6 +5,7 @@ from apps.legal_discovery.hippo import (
     chunk_text,
     make_doc_id,
     upsert_document_and_segments,
+    upsert_graph,
 )
 
 
@@ -46,3 +47,24 @@ def test_upsert_document_and_segments_idempotent():
     assert params1 == params2
     assert "MERGE (d:Document" in cypher1
     assert "MERGE (s:Segment" in cypher1
+
+
+def test_upsert_graph_returns_expected_cypher_and_params():
+    edges = [
+        {"src": "h1", "dst": "h2", "type": "REL", "weight": 0.5},
+        {"src": "h2", "dst": "h3", "type": "CITES", "weight": 1.0},
+    ]
+    cypher, params = upsert_graph(edges)
+    expected_cypher = "\n".join(
+        [
+            "UNWIND $edges AS edge",
+            "MATCH (s:Segment {hash: edge.src})",
+            "MATCH (t:Segment {hash: edge.dst})",
+            "MERGE (s)-[r:EDGE {type: edge.type}]->(t)",
+            "SET r.weight=edge.weight",
+        ]
+    )
+    assert cypher == expected_cypher
+    assert params == {"edges": edges}
+    assert "MATCH (s:Segment {hash: edge.src})" in cypher
+    assert "MERGE (s)-[r:EDGE {type: edge.type}]->(t)" in cypher
