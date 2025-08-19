@@ -363,6 +363,29 @@ For examples of agent networks, check out [docs/examples.md](docs/examples.md).
 
 ---
 
+## Legal Discovery Docker Setup
+
+The `apps/legal_discovery` stack runs a Flask frontend backed by PostgreSQL, Neo4j, ChromaDB and Redis. To launch the full stack with Docker:
+
+1. Copy `.env.example` to `.env` and set required secrets. At minimum set the shared Neo4j password and optionally override the retrieval models:
+
+   ```bash
+   NEO4J_PASSWORD=neo4jPass123
+   EMBED_MODEL=sentence-transformers/all-MiniLM-L6-v2
+   CROSS_ENCODER_MODEL=cross-encoder/ms-marco-MiniLM-L-6-v2
+   ```
+
+2. Build and start the services:
+
+   ```bash
+   docker compose build legal_discovery
+   docker compose up
+   ```
+
+The web UI is available at <http://localhost:8080>. Neo4j exposes its browser on port 7474 and the Bolt protocol on 7687; both use the password specified in `NEO4J_PASSWORD`.
+
+---
+
 ## Developer Guide
 
 For the development guide, check out [docs/dev_guide.md](docs/dev_guide.md).
