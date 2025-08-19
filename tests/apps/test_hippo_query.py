@@ -3,7 +3,8 @@ import pytest
 
 from apps.legal_discovery.hippo import chunk_text, make_doc_id
 from apps.legal_discovery.hippo_routes import bp as hippo_bp
-from apps.legal_discovery.database import db, RetrievalTrace
+from apps.legal_discovery.database import db
+from apps.legal_discovery.models import RetrievalTrace
 
 
 def _create_app():

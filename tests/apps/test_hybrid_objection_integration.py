@@ -1,9 +1,10 @@
 from flask import Flask
 
-from apps.legal_discovery.database import db, RetrievalTrace
+from apps.legal_discovery.database import db
 from apps.legal_discovery.extensions import socketio
 from apps.legal_discovery.hippo_routes import bp as hippo_bp, objections_bp
 from apps.legal_discovery.trial_assistant import bp as trial_bp
+from apps.legal_discovery.models import RetrievalTrace
 from apps.legal_discovery.models_trial import TrialSession
 from apps.legal_discovery import hippo
 

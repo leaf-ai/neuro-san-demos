@@ -2,8 +2,9 @@ from __future__ import annotations
 import re
 import yaml
 from typing import List
-from ...models_trial import ObjectionEvent, TranscriptSegment
-from ...database import db
+from ...models import ObjectionEvent
+from ...models_trial import TranscriptSegment
+from ...database import log_objection_event
 
 
 class ObjectionEngine:
@@ -29,7 +30,7 @@ class ObjectionEngine:
         found: List[ObjectionEvent] = []
         for ground, patterns, cures in self.compiled:
             if any(p.search(text) for p in patterns):
-                evt = ObjectionEvent(
+                evt = log_objection_event(
                     session_id=session_id,
                     segment_id=seg.id,
                     type="incoming" if "objection" in text.lower() else "risk",
@@ -38,11 +39,11 @@ class ObjectionEngine:
                     extracted_phrase=text[:160],
                     suggested_cures=cures,
                 )
-                db.session.add(evt)
-                found.append(evt)
+                if evt:
+                    found.append(evt)
         for ground, patterns, cures in self.counter_compiled:
             if any(p.search(text) for p in patterns):
-                evt = ObjectionEvent(
+                evt = log_objection_event(
                     session_id=session_id,
                     segment_id=seg.id,
                     type="counter",
@@ -51,10 +52,8 @@ class ObjectionEngine:
                     extracted_phrase=text[:160],
                     suggested_cures=cures,
                 )
-                db.session.add(evt)
-                found.append(evt)
-        if found:
-            db.session.commit()
+                if evt:
+                    found.append(evt)
         return found
 
 

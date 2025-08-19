@@ -959,3 +959,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Implemented `/api/objections/analyze-segment` in `hippo_routes` with Hippo citation refs and Socket.IO broadcast.
 - Added `objection_cure_chosen` handler to clear highlights and persist cures.
 - Next: refine citation ranking and broaden highlight clearing strategies.
+
+## Update 2025-09-24T18:00Z
+- Moved RetrievalTrace, ObjectionEvent and ObjectionResolution models into `models.py` and added logging helpers.
+- Ensured retrieval traces and objections share trace_ids for auditability.
+- Next: surface trace analytics in the dashboard UI.
