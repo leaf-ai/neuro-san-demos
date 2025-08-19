@@ -5,7 +5,14 @@ import logging
 import time
 import uuid
 
+import os
 from flask import Blueprint, jsonify, request
+import requests
+
+try:  # pragma: no cover - optional dependency
+    from neo4j import GraphDatabase
+except Exception:  # pragma: no cover - driver may be absent
+    GraphDatabase = None
 
 from . import hippo, bootstrap_graph
 from .database import db, log_retrieval_trace, log_objection_resolution
@@ -18,8 +25,43 @@ bootstrap_graph()
 
 bp = Blueprint("hippo", __name__, url_prefix="/api/hippo")
 objections_bp = Blueprint("objections", __name__, url_prefix="/api/objections")
+health_bp = Blueprint("health", __name__, url_prefix="/api")
 
 logger = logging.getLogger(__name__)
+
+
+@health_bp.get("/health")
+def health() -> 'flask.Response':
+    """Report connectivity status for Neo4j and Chroma services."""
+    neo4j_status = "ok"
+    chroma_status = "ok"
+
+    try:  # pragma: no cover - external service
+        if GraphDatabase is None:
+            raise RuntimeError("neo4j driver missing")
+        uri = os.environ.get("NEO4J_URI", "bolt://neo4j:7687")
+        user = os.environ.get("NEO4J_USER", "neo4j")
+        pwd = os.environ.get("NEO4J_PASSWORD")
+        auth = (user, pwd) if pwd else None
+        db_name = os.environ.get("NEO4J_DATABASE", "neo4j")
+        with GraphDatabase.driver(uri, auth=auth) as driver:
+            with driver.session(database=db_name) as session:
+                session.run("RETURN 1")
+    except Exception:
+        neo4j_status = "fail"
+
+    try:  # pragma: no cover - external service
+        host = os.environ.get("CHROMA_HOST", "localhost")
+        port = int(os.environ.get("CHROMA_PORT", "8000"))
+        resp = requests.get(
+            f"http://{host}:{port}/api/v1/heartbeat", timeout=2
+        )
+        if resp.status_code != 200:
+            raise RuntimeError("chroma heartbeat failed")
+    except Exception:
+        chroma_status = "fail"
+
+    return jsonify({"neo4j": neo4j_status, "chroma": chroma_status})
 
 
 @bp.post("/index")
