@@ -970,3 +970,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Ensured HippoRAG, sentence-transformers and scikit-learn dependencies are listed.
 - Documented `EMBED_MODEL` and `CROSS_ENCODER_MODEL` variables and Docker setup in the root README.
 - Next: build the Docker image and verify retrieval models load correctly.
+
+## Update 2025-09-25T00:00Z
+- Added `/api/health` route in `hippo_routes` checking Neo4j and Chroma connectivity.
+- Registered blueprint in `interface_flask` and pointed Docker health checks to this endpoint.
+- Next: monitor service health and extend diagnostics as needed.
