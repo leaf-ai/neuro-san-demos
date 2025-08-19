@@ -185,3 +185,9 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 - Introduced integration test for hybrid retrieval paths and objection events with refs.
 - Implemented load test harness for 200 concurrent /api/hippo/query calls asserting p95 latency.
 - Next: extend load metrics and broaden graph retrieval coverage.
+
+## Update 2025-09-24T20:00Z
+- Synced default Neo4j password across compose and env samples and confirmed service ports.
+- Ensured HippoRAG, sentence-transformers and scikit-learn dependencies are present.
+- Added README section covering `EMBED_MODEL`, `CROSS_ENCODER_MODEL` and Docker compose usage.
+- Next: rebuild the Docker image and verify retrieval models load successfully.

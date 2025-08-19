@@ -964,3 +964,9 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Moved RetrievalTrace, ObjectionEvent and ObjectionResolution models into `models.py` and added logging helpers.
 - Ensured retrieval traces and objections share trace_ids for auditability.
 - Next: surface trace analytics in the dashboard UI.
+
+## Update 2025-09-24T20:00Z
+- Aligned Neo4j password defaults in `docker-compose.yml` with `.env` sample and confirmed ports.
+- Ensured HippoRAG, sentence-transformers and scikit-learn dependencies are listed.
+- Documented `EMBED_MODEL` and `CROSS_ENCODER_MODEL` variables and Docker setup in the root README.
+- Next: build the Docker image and verify retrieval models load correctly.
