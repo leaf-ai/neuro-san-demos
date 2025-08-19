@@ -37,6 +37,14 @@ def test_segment_hashing_deterministic_and_unique():
     assert len(h1) == 16
 
 
+def test_chunk_text_segment_ids_deterministic():
+    doc_id = make_doc_id("case", "doc.txt")
+    text = "foo bar baz"
+    segs1 = chunk_text(text, doc_id)
+    segs2 = chunk_text(text, doc_id)
+    assert [s.segment_id for s in segs1] == [s.segment_id for s in segs2]
+
+
 def test_upsert_document_and_segments_idempotent():
     segs = [
         {"hash": "h1", "text": "seg", "page": 1, "para": 0, "entities": [], "facts": []}

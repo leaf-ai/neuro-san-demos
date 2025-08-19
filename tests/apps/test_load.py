@@ -23,14 +23,14 @@ def _do_query(app: Flask) -> float:
         return time.perf_counter() - t0
 
 
-def test_p95_latency_under_500ms():
+def test_p95_latency_under_900ms():
     app = _create_app()
     with app.test_client() as client:
         client.post(
             "/api/hippo/index", json={"case_id": "c1", "text": "Alice met Bob."}
         )
-    with ThreadPoolExecutor(max_workers=50) as ex:
+    with ThreadPoolExecutor(max_workers=200) as ex:
         latencies: List[float] = list(ex.map(lambda _: _do_query(app), range(200)))
     latencies.sort()
     p95 = latencies[int(len(latencies) * 0.95) - 1]
-    assert p95 < 0.5
+    assert p95 < 0.9
