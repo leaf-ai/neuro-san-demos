@@ -352,6 +352,7 @@ def _graph_candidates(case_id: str, seeds: List[str], k: int) -> Dict[str, Dict]
         pwd = os.environ.get("NEO4J_PASSWORD")
         auth = (user, pwd) if pwd else None
         db = os.environ.get("NEO4J_DATABASE", "neo4j")
+        driver: Driver | None = None
         try:  # pragma: no cover - external dependency
             driver = GraphDatabase.driver(uri, auth=auth)
             with driver.session(database=db) as session:
@@ -386,10 +387,11 @@ def _graph_candidates(case_id: str, seeds: List[str], k: int) -> Dict[str, Dict]
         except Exception:
             pass
         finally:  # pragma: no cover - ensure closure
-            try:
-                driver.close()
-            except Exception:
-                pass
+            if driver:
+                try:
+                    driver.close()
+                except Exception:
+                    pass
 
     # Fallback to deterministic entity overlap scoring
     scores: Dict[str, Dict] = {}
