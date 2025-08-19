@@ -1,11 +1,8 @@
 from flask import Flask
 
 from apps.legal_discovery.database import db
-from apps.legal_discovery.models_trial import (
-    TrialSession,
-    TranscriptSegment,
-    ObjectionEvent,
-)
+from apps.legal_discovery.models import ObjectionEvent
+from apps.legal_discovery.models_trial import TrialSession, TranscriptSegment
 from apps.legal_discovery.trial_assistant.services.objection_engine import (
     ObjectionEngine,
 )

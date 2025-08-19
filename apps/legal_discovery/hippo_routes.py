@@ -8,14 +8,10 @@ import uuid
 from flask import Blueprint, jsonify, request
 
 from . import hippo, bootstrap_graph
-from .database import db, log_retrieval_trace
+from .database import db, log_retrieval_trace, log_objection_resolution
 from .extensions import socketio
-from .models_trial import (
-    TranscriptSegment,
-    TrialSession,
-    ObjectionEvent,
-    ObjectionResolution,
-)
+from .models import ObjectionEvent, ObjectionResolution
+from .models_trial import TranscriptSegment, TrialSession
 from .trial_assistant.services.objection_engine import engine
 
 bootstrap_graph()
@@ -167,9 +163,7 @@ def objection_cure_chosen(data):
     cure = data.get("cure")
     if not evt_id:
         return
-    resolution = ObjectionResolution(event_id=evt_id, chosen_cure=cure)
-    db.session.add(resolution)
-    db.session.commit()
+    log_objection_resolution(event_id=evt_id, chosen_cure=cure)
     evt = db.session.get(ObjectionEvent, evt_id)
     if evt:
         socketio.emit(

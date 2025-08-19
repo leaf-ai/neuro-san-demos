@@ -4,11 +4,8 @@ from flask_socketio import emit, join_room
 import time
 from ..extensions import socketio
 from ..database import db, log_retrieval_trace
-from ..models_trial import (
-    TranscriptSegment,
-    ObjectionEvent,
-    TrialSession,
-)
+from ..models import ObjectionEvent
+from ..models_trial import TranscriptSegment, TrialSession
 from .. import hippo
 from .services.objection_engine import engine
 

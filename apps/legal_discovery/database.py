@@ -66,22 +66,6 @@ def ingestion_matches(doc_id: str, segment_hashes: List[str]) -> bool:
         return False
 
 
-class RetrievalTrace(db.Model):
-    """Persists retrieval query results for analysis."""
-
-    __tablename__ = "retrieval_traces"
-
-    id = db.Column(db.Integer, primary_key=True)
-    trace_id = db.Column(db.String(40), nullable=False, index=True)
-    case_id = db.Column(db.String(64), nullable=False)
-    query = db.Column(db.Text, nullable=False)
-    graph_weight = db.Column(db.Float, nullable=False, default=1.0)
-    dense_weight = db.Column(db.Float, nullable=False, default=1.0)
-    timings = db.Column(db.JSON, nullable=False)
-    results = db.Column(db.JSON, nullable=False)
-    created_at = db.Column(db.DateTime, server_default=db.func.now())
-
-
 def log_retrieval_trace(
     *,
     trace_id: str,
@@ -95,6 +79,8 @@ def log_retrieval_trace(
     """Best-effort persistence of a retrieval trace."""
 
     try:
+        from .models import RetrievalTrace
+
         entry = RetrievalTrace(
             trace_id=trace_id,
             case_id=case_id,
@@ -105,6 +91,57 @@ def log_retrieval_trace(
             results=results,
         )
         db.session.add(entry)
+        db.session.commit()
+    except Exception:  # pragma: no cover - best effort
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
+
+
+def log_objection_event(
+    *,
+    session_id: str,
+    segment_id: str,
+    type: str,
+    ground: str,
+    confidence: int,
+    extracted_phrase: str,
+    suggested_cures: List[str] | None = None,
+) -> "ObjectionEvent":
+    """Persist and return an objection event."""
+
+    from .models import ObjectionEvent
+
+    try:
+        evt = ObjectionEvent(
+            session_id=session_id,
+            segment_id=segment_id,
+            type=type,
+            ground=ground,
+            confidence=confidence,
+            extracted_phrase=extracted_phrase,
+            suggested_cures=suggested_cures or [],
+        )
+        db.session.add(evt)
+        db.session.commit()
+        return evt
+    except Exception:  # pragma: no cover - best effort
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
+        return None
+
+
+def log_objection_resolution(*, event_id: str, chosen_cure: str) -> None:
+    """Record a chosen cure for an objection event."""
+
+    from .models import ObjectionResolution
+
+    try:
+        resolution = ObjectionResolution(event_id=event_id, chosen_cure=chosen_cure)
+        db.session.add(resolution)
         db.session.commit()
     except Exception:  # pragma: no cover - best effort
         try:
