@@ -17,7 +17,7 @@ except Exception:  # pragma: no cover - driver may be absent
 
 from . import hippo
 from .database import db, log_retrieval_trace, log_objection_resolution
-from .extensions import socketio
+from .extensions import socketio, limiter, user_limit_key, blocked_requests
 from .models import ObjectionEvent, ObjectionResolution
 from .models_trial import TranscriptSegment, TrialSession
 from .trial_assistant.services.objection_engine import engine
@@ -61,7 +61,11 @@ def health() -> 'flask.Response':
     except Exception:
         chroma_status = "fail"
 
-    return jsonify({"neo4j": neo4j_status, "chroma": chroma_status})
+    return jsonify({
+        "neo4j": neo4j_status,
+        "chroma": chroma_status,
+        "blocked_requests": dict(blocked_requests),
+    })
 
 
 @bp.post("/index")
@@ -80,6 +84,8 @@ def index_document():
 
 
 @bp.post("/query")
+@limiter.limit("100/minute")
+@limiter.limit("50/minute", key_func=user_limit_key)
 @auth_required
 def query_document():
     data = request.get_json() or {}

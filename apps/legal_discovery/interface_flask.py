@@ -31,7 +31,7 @@ from .chat_state import user_input_queue
 from .chain_logger import ChainEventType, log_event
 from .database import db
 from .exhibit_routes import exhibits_bp
-from .extensions import limiter, socketio
+from .extensions import limiter, socketio, blocked_requests
 from .feature_flags import FEATURE_FLAGS
 from .hippo_routes import bp as hippo_bp, objections_bp, health_bp
 from .tasks import tasks_bp
@@ -127,6 +127,8 @@ if not secret_key or not jwt_secret:
     raise RuntimeError("FLASK_SECRET_KEY and JWT_SECRET must be set")
 app.config["SECRET_KEY"] = secret_key
 app.config["JWT_SECRET"] = jwt_secret
+# Configure rate limiting storage (Redis in production).
+app.config["RATELIMIT_STORAGE_URI"] = os.environ.get("REDIS_URL", "memory://")
 # Allow the primary relational store to be configured at runtime. Default to
 # SQLite for local development but override with an environment-provided
 # PostgreSQL connection string when available so the application scales under
@@ -174,6 +176,14 @@ thread_started = False  # pylint: disable=invalid-name
 def metrics() -> Response:
     """Expose Prometheus metrics."""
     return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
+
+
+@app.errorhandler(429)
+def rate_limit_handler(exc):
+    """Increment blocked request metrics and return a JSON error."""
+    endpoint = request.endpoint or request.path
+    blocked_requests[endpoint] += 1
+    return jsonify({"error": "rate limit exceeded"}), 429
 
 # Shared crawler instance for legal references
 legal_crawler = LegalCrawler()

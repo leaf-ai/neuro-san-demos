@@ -5,7 +5,7 @@ from coded_tools.legal_discovery.timeline_manager import TimelineManager
 
 from .database import db
 from .models import MessageAuditLog
-from .extensions import socketio, limiter
+from .extensions import socketio, limiter, user_limit_key
 from .chat_state import user_input_queue
 from .voice import synthesize_voice, get_available_voices
 from .feature_flags import FEATURE_FLAGS
@@ -103,6 +103,8 @@ def _handle_transcript(transcript: str, data: dict) -> dict:
     }
 
 @chat_bp.post("/query")
+@limiter.limit("100/minute")
+@limiter.limit("50/minute", key_func=user_limit_key)
 @auth_required
 def query_agent():
     data = request.get_json() or {}

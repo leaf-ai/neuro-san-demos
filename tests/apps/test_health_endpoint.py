@@ -12,4 +12,4 @@ def test_health_endpoint_returns_status_keys():
     resp = client.get("/api/health")
     assert resp.status_code == 200
     data = resp.get_json()
-    assert set(data.keys()) == {"neo4j", "chroma"}
+    assert set(data.keys()) == {"neo4j", "chroma", "blocked_requests"}
