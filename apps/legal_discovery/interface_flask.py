@@ -31,6 +31,7 @@ from .chat_state import user_input_queue
 from .chain_logger import ChainEventType, log_event
 from .database import db
 from .exhibit_routes import exhibits_bp
+from .cache import redis_cache, invalidate_prefix
 from .extensions import (
     blocked_requests,
     configure_logging,
@@ -1499,7 +1500,15 @@ def vector_add_documents():
         return jsonify({"error": "Invalid metadata length"}), 400
     manager = VectorDatabaseManager()
     manager.add_documents(documents, metadatas, ids)
+    invalidate_prefix("vector_search")
+    invalidate_prefix("hippo_query")
     return jsonify({"status": "ok"})
+
+
+@redis_cache("vector_search", key_func=lambda q: q)
+def _vector_search_cached(q: str):
+    manager = VectorDatabaseManager()
+    return manager.query([q], n_results=5)
 
 
 @app.route("/api/vector/search", methods=["GET"])
@@ -1508,8 +1517,7 @@ def vector_search():
     query = request.args.get("q")
     if not query:
         return jsonify({"status": "ok", "data": {}})
-    manager = VectorDatabaseManager()
-    result = manager.query([query], n_results=5)
+    result = _vector_search_cached(query)
     return jsonify({"status": "ok", "data": result})
 
 

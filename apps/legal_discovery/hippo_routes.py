@@ -17,7 +17,8 @@ except Exception:  # pragma: no cover - driver may be absent
 
 from . import hippo
 from .database import db, log_retrieval_trace, log_objection_resolution
-from .extensions import socketio, limiter, user_limit_key, blocked_requests
+from .extensions import socketio, limiter, user_limit_key, blocked_requests, cache_stats
+from .cache import redis_cache
 from .models import ObjectionEvent, ObjectionResolution
 from .models_trial import TranscriptSegment, TrialSession
 from .trial_assistant.services.objection_engine import engine
@@ -28,6 +29,11 @@ objections_bp = Blueprint("objections", __name__, url_prefix="/api/objections")
 health_bp = Blueprint("health", __name__, url_prefix="/api")
 
 logger = logging.getLogger(__name__)
+
+
+@redis_cache("hippo_query", key_func=lambda case_id, query, k=10: f"{case_id}:{query}:{k}")
+def _hippo_query_cached(case_id: str, query: str, k: int = 10):
+    return hippo.hippo_query(case_id, query, k=k)
 
 
 @health_bp.get("/health")
@@ -65,6 +71,7 @@ def health() -> 'flask.Response':
         "neo4j": neo4j_status,
         "chroma": chroma_status,
         "blocked_requests": dict(blocked_requests),
+        "cache": {"hits": cache_stats.get("hits", 0), "misses": cache_stats.get("misses", 0)},
     })
 
 
@@ -100,7 +107,7 @@ def query_document():
 
     overall_start = time.perf_counter()
     query_start = overall_start
-    result = hippo.hippo_query(case_id, query, k=k)
+    result = _hippo_query_cached(case_id, query, k)
     query_ms = (time.perf_counter() - query_start) * 1000
 
     items = result.get("items", [])
