@@ -1,15 +1,15 @@
 """Blueprint exposing REST endpoints for exhibit operations."""
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
-from flask import Blueprint, jsonify, request, current_app
-from .auth import auth_required
+from flask import Blueprint, jsonify, request, current_app, session
+from werkzeug.utils import secure_filename
+from .chat_routes import auth_required
 from PyPDF2 import PdfReader
 
 from .database import db
-from .models import ChainOfCustodyLog, Document, DocumentSource
+from .models import Case, ChainOfCustodyLog, Document, DocumentSource
 from .exhibit_manager import assign_exhibit_number, export_zip, generate_binder
 
 exhibits_bp = Blueprint("exhibits", __name__, url_prefix="/api/exhibits")
@@ -116,13 +116,30 @@ def binder():
     """Generate a combined PDF binder for the case exhibits."""
     payload = request.get_json() or {}
     case_id = payload.get("case_id")
-    if not case_id:
+    try:
+        case_id = int(case_id)
+    except (TypeError, ValueError):
         return jsonify({"error": "case_id required"}), 400
-    export_dir = Path(current_app.config.get("UPLOAD_FOLDER", "uploads"))
+
+    case = Case.query.get(case_id)
+    if not case:
+        return jsonify({"error": "case not found"}), 404
+    user = session.get("user")
+    if user and case_id not in user.get("cases", []):
+        return jsonify({"error": "forbidden"}), 403
+
+    export_dir = Path(current_app.config.get("UPLOAD_FOLDER", "uploads")).resolve()
     export_dir.mkdir(parents=True, exist_ok=True)
-    target = export_dir / f"case_{case_id}_binder.pdf"
-    path = generate_binder(case_id, target)
-    return jsonify({"binder_path": f"/uploads/{target.name}", "path": path})
+    filename = secure_filename(f"case_{case_id}_binder.pdf")
+    target = (export_dir / filename).resolve()
+    if export_dir not in target.parents:
+        return jsonify({"error": "invalid path"}), 400
+
+    path = Path(generate_binder(case_id, target)).resolve()
+    if export_dir not in path.parents or not path.exists():
+        return jsonify({"error": "file generation failed"}), 500
+
+    return jsonify({"binder_path": f"/uploads/{path.name}", "path": str(path)})
 
 
 @exhibits_bp.post("/zip")
@@ -131,10 +148,27 @@ def zip_export():
     """Export exhibits and manifest as a zip archive."""
     payload = request.get_json() or {}
     case_id = payload.get("case_id")
-    if not case_id:
+    try:
+        case_id = int(case_id)
+    except (TypeError, ValueError):
         return jsonify({"error": "case_id required"}), 400
-    export_dir = Path(current_app.config.get("UPLOAD_FOLDER", "uploads"))
+
+    case = Case.query.get(case_id)
+    if not case:
+        return jsonify({"error": "case not found"}), 404
+    user = session.get("user")
+    if user and case_id not in user.get("cases", []):
+        return jsonify({"error": "forbidden"}), 403
+
+    export_dir = Path(current_app.config.get("UPLOAD_FOLDER", "uploads")).resolve()
     export_dir.mkdir(parents=True, exist_ok=True)
-    target = export_dir / f"case_{case_id}_exhibits.zip"
-    path = export_zip(case_id, target)
-    return jsonify({"zip_path": f"/uploads/{target.name}", "path": path})
+    filename = secure_filename(f"case_{case_id}_exhibits.zip")
+    target = (export_dir / filename).resolve()
+    if export_dir not in target.parents:
+        return jsonify({"error": "invalid path"}), 400
+
+    path = Path(export_zip(case_id, target)).resolve()
+    if export_dir not in path.parents or not path.exists():
+        return jsonify({"error": "file generation failed"}), 500
+
+    return jsonify({"zip_path": f"/uploads/{path.name}", "path": str(path)})

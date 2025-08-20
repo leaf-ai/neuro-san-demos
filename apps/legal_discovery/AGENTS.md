@@ -1001,3 +1001,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Dockerfile and shell startup scripts now import the pre-initialized app.
 - Next: confirm deployment uses `apps.legal_discovery.startup:app` and update
   any remaining documentation references.
+
+## Update 2025-09-27T15:00Z
+- Secured binder and zip export routes with auth enforcement, case ownership checks and path sanitization.
+- Next: expand tests for unauthorized and invalid path scenarios.
