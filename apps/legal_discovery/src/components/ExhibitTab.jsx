@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { fetchJSON, alertResponse } from "../utils";
+import { theme } from "../theme";
 
 function ExhibitTab() {
   const [caseId, setCaseId] = useState(1);
@@ -50,14 +51,15 @@ function ExhibitTab() {
   return (
     <section className="card">
       <h2>Exhibits</h2>
-      <div className="mb-2 flex gap-2 items-center">
+      <div className="flex items-center" style={{ gap: theme.spacing.sm, marginBottom: theme.spacing.sm }}>
         <input
           type="number"
           value={caseId}
           onChange={(e) => setCaseId(Number(e.target.value))}
-          className="w-24 p-2 rounded"
+          className="w-24"
+          style={{ padding: theme.spacing.sm, borderRadius: theme.spacing.xs }}
         />
-        <label className="flex items-center gap-1 text-sm">
+        <label className="flex items-center" style={{ gap: theme.spacing.xs, fontSize: theme.typography.sizeSm }}>
           <input
             type="checkbox"
             checked={includePriv}
@@ -68,14 +70,14 @@ function ExhibitTab() {
         <select
           value={source}
           onChange={(e) => setSource(e.target.value)}
-          className="p-2 rounded"
+          style={{ padding: theme.spacing.sm, borderRadius: theme.spacing.xs }}
         >
           <option value="">All Sources</option>
           <option value="user">User</option>
           <option value="opp_counsel">Opposing Counsel</option>
           <option value="court">Court</option>
         </select>
-        <button className="button-secondary" onClick={load}>
+        <button className="button-secondary" style={{ padding: theme.spacing.xs }} onClick={load}>
           <i className="fa fa-sync mr-1"></i>Refresh
         </button>
       </div>
@@ -87,21 +89,22 @@ function ExhibitTab() {
             onDragStart={(e) => onDragStart(e, idx)}
             onDragOver={allowDrop}
             onDrop={(e) => onDrop(e, idx)}
-            className={`p-2 mb-1 border rounded ${ex.privileged ? "privileged" : ""}`}
+            className={`${ex.privileged ? "privileged" : ""}`}
+            style={{ padding: theme.spacing.sm, marginBottom: theme.spacing.xs, border: `1px solid ${theme.colors.border}`, borderRadius: theme.spacing.xs }}
           >
-            <div className="flex justify-between">
+            <div className="flex justify-between" style={{ marginBottom: theme.spacing.xs }}>
               <span>
                 {ex.exhibit_number} - {ex.title}
               </span>
-              <span className="text-xs">{ex.source}</span>
+              <span style={{ fontSize: theme.typography.sizeSm }}>{ex.source}</span>
             </div>
             {ex.theories && ex.theories.length > 0 && (
-              <div className="text-xs mt-1">
+              <div style={{ fontSize: theme.typography.sizeSm, marginTop: theme.spacing.xs }}>
                 <strong>Theories:</strong> {ex.theories.join(", ")}
               </div>
             )}
             {ex.timeline && ex.timeline.length > 0 && (
-              <div className="text-xs mt-1">
+              <div style={{ fontSize: theme.typography.sizeSm, marginTop: theme.spacing.xs }}>
                 <strong>Timeline:</strong> {ex.timeline.map((t) => t.date).join(", ")}
               </div>
             )}

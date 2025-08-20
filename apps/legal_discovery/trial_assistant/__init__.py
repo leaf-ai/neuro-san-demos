@@ -1,33 +1,15 @@
 from __future__ import annotations
-from flask import Blueprint, request, jsonify
+from flask import Blueprint
 from flask_socketio import emit, join_room
 import time
 from ..extensions import socketio
 from ..database import db, log_retrieval_trace
-from ..models_trial import (
-    TranscriptSegment,
-    ObjectionEvent,
-    ObjectionResolution,
-    TrialSession,
-)
+from ..models import ObjectionEvent
+from ..models_trial import TranscriptSegment, TrialSession
 from .. import hippo
 from .services.objection_engine import engine
 
 bp = Blueprint("trial_assistant", __name__, url_prefix="/api/trial")
-
-
-@bp.post("/objection/action")
-def objection_action():
-    payload = request.json or {}
-    evt_id = payload.get("event_id")
-    action = payload.get("action")
-    if not evt_id:
-        return jsonify({"error": "event_id required"}), 400
-    evt = db.session.get(ObjectionEvent, evt_id)
-    if evt:
-        evt.action_taken = action
-        db.session.commit()
-    return jsonify({"ok": True})
 
 
 @socketio.on("join", namespace="/ws/trial")
@@ -107,22 +89,4 @@ def handle_segment(data):
                 "trace_id": e.trace_id,
             },
             room=session_id,
-        )
-
-
-@socketio.on("objection_cure_chosen", namespace="/ws/trial")
-def cure_chosen(data):
-    evt_id = data.get("event_id")
-    cure = data.get("cure")
-    if not evt_id:
-        return
-    resolution = ObjectionResolution(event_id=evt_id, chosen_cure=cure)
-    db.session.add(resolution)
-    db.session.commit()
-    evt = db.session.get(ObjectionEvent, evt_id)
-    if evt:
-        emit(
-            "clear_highlights",
-            {"segment_id": evt.segment_id},
-            room="trial_objections",
         )

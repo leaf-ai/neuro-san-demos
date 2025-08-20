@@ -12,12 +12,17 @@ powered by Google's Gemini 2.5 models.
 - A running PostgreSQL instance (the provided `docker-compose.yml` spins one up automatically)
 - API keys configured in `.env` (set `GOOGLE_API_KEY` for Gemini 2.5)
 
-Make a copy of `.env.example` to `.env` and fill in the required values. In
-particular set a password for Neo4j:
+Make a copy of `config/.env.sample` to `.env` and fill in the required values. In
+particular generate secrets for Flask sessions and JWTs, then set a password for Neo4j:
 
 ```bash
-cp .env.example .env  # if you haven't created one
-# then edit .env and set NEO4J_PASSWORD=your_password (leave blank to disable auth)
+cp config/.env.sample .env  # if you haven't created one
+# generate secrets
+python -c 'import secrets; print(secrets.token_hex(32))'
+# then edit .env and set:
+# FLASK_SECRET_KEY=<output>
+# JWT_SECRET=<output>
+# NEO4J_PASSWORD=your_password (leave blank to disable auth)
 ```
 
 Docker Compose reads `NEO4J_PASSWORD` for both the app and database services so

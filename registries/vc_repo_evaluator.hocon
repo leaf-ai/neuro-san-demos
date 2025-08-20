@@ -235,7 +235,7 @@ For each of the following 10 sub‑criteria, give a score from 1 to 100 (1 = ver
     - Presence of Makefile or similar build automation
     - Presence of docker-compose.yml or Kubernetes manifests for orchestration
     - CI/CD pipeline indicators (.github/workflows/, .gitlab-ci.yml)
-    - Config‑driven design (config.py, pipeline.yaml, params.json, .env.example)
+    - Config‑driven design (config.py, pipeline.yaml, params.json, config/.env.sample)
     - Modular folder structure (services/, plugins/, adapters/, modules/)
     - Reusability signals (well‑separated libraries/components)
     - Depth of file organization indicating separation of concerns

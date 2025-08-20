@@ -17,7 +17,17 @@ function PipelineSection() {
   useEffect(refresh, []);
   return (
     <section className="card">
-      <h2>Team Pipeline</h2>
+      <h2>
+        Team Pipeline
+        <i
+          className="fa fa-question-circle ml-2 text-sm"
+          title="Counts of items processed in each stage of the discovery pipeline."
+          aria-label="Pipeline info"
+        ></i>
+      </h2>
+      <p className="text-sm text-gray-600 mb-2">
+        Track how documents move from ingestion through analysis and tasking.
+      </p>
       <div className="pipeline">
         <div className="stage">
           <i className="fa fa-file-upload"></i>

@@ -41,7 +41,17 @@ function LegalTheorySection() {
 
   return (
     <section className="card">
-      <h2>Case Theory</h2>
+      <h2>
+        Case Theory
+        <i
+          className="fa fa-question-circle ml-2 text-sm"
+          title="Suggested causes of action with supporting evidence."
+          aria-label="Case theory info"
+        ></i>
+      </h2>
+      <p className="text-sm text-gray-600 mb-2">
+        Approve, reject or comment on theories and inspect their supporting elements.
+      </p>
       <button className="button-secondary mb-2" onClick={load} disabled={loading}>
         <i className="fa fa-sync mr-1"></i>{loading ? "Loading" : "Refresh"}
       </button>

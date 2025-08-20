@@ -1,21 +1,27 @@
 """Blueprint exposing REST endpoints for exhibit operations."""
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
-from flask import Blueprint, jsonify, request, current_app
+from flask import Blueprint, jsonify, request, current_app, session
+from werkzeug.utils import secure_filename
+from .chat_routes import auth_required
 from PyPDF2 import PdfReader
+from pydantic import ValidationError
+
+from .validators import ExhibitAssignPayload
 
 from .database import db
-from .models import Document, ChainOfCustodyLog, DocumentSource
-from .exhibit_manager import assign_exhibit_number, generate_binder, export_zip
+from .models import Case, ChainOfCustodyLog, Document, DocumentSource
+from .exhibit_manager import assign_exhibit_number, export_zip
+from .tasks import enqueue, binder_task
 
 exhibits_bp = Blueprint("exhibits", __name__, url_prefix="/api/exhibits")
 
 
 @exhibits_bp.route("", methods=["GET"])
 @exhibits_bp.route("/", methods=["GET"])
+@auth_required
 def list_exhibits():
     """Return all exhibits for a given case."""
     case_id = request.args.get("case_id", type=int)
@@ -61,6 +67,7 @@ def list_exhibits():
 
 
 @exhibits_bp.route("/<int:doc_id>/links", methods=["GET"])
+@auth_required
 def exhibit_links(doc_id: int):
     """Return legal theories and timeline nodes linked to an exhibit."""
     doc = Document.query.get_or_404(doc_id)
@@ -73,19 +80,20 @@ def exhibit_links(doc_id: int):
 
 
 @exhibits_bp.post("/assign")
+@auth_required
 def assign():
     """Assign the next exhibit number to a document."""
     payload = request.get_json() or {}
-    doc_id = payload.get("document_id")
-    title = payload.get("title")
-    user = payload.get("user")
-    if not doc_id:
-        return jsonify({"error": "document_id required"}), 400
-    num = assign_exhibit_number(doc_id, title, user)
+    try:
+        data = ExhibitAssignPayload.model_validate(payload)
+    except ValidationError as e:
+        return jsonify({"errors": e.errors()}), 400
+    num = assign_exhibit_number(data.document_id, data.title, data.user)
     return jsonify({"exhibit_number": num})
 
 
 @exhibits_bp.post("/reorder")
+@auth_required
 def reorder():
     """Update exhibit order based on provided list of IDs."""
     payload = request.get_json() or {}
@@ -106,28 +114,66 @@ def reorder():
 
 
 @exhibits_bp.post("/binder")
+@auth_required
 def binder():
     """Generate a combined PDF binder for the case exhibits."""
     payload = request.get_json() or {}
     case_id = payload.get("case_id")
-    if not case_id:
+    try:
+        case_id = int(case_id)
+    except (TypeError, ValueError):
         return jsonify({"error": "case_id required"}), 400
-    export_dir = Path(current_app.config.get("UPLOAD_FOLDER", "uploads"))
+
+    case = Case.query.get(case_id)
+    if not case:
+        return jsonify({"error": "case not found"}), 404
+    user = session.get("user")
+    if user and case_id not in user.get("cases", []):
+        return jsonify({"error": "forbidden"}), 403
+
+    export_dir = Path(current_app.config.get("UPLOAD_FOLDER", "uploads")).resolve()
     export_dir.mkdir(parents=True, exist_ok=True)
-    target = export_dir / f"case_{case_id}_binder.pdf"
-    path = generate_binder(case_id, target)
-    return jsonify({"binder_path": f"/uploads/{target.name}", "path": path})
+    filename = secure_filename(f"case_{case_id}_binder.pdf")
+    target = (export_dir / filename).resolve()
+    if export_dir not in target.parents:
+        return jsonify({"error": "invalid path"}), 400
+
+    task_id, result = enqueue(binder_task, case_id, str(target))
+    if result is not None:
+        path = Path(result).resolve()
+        if export_dir not in path.parents or not path.exists():
+            return jsonify({"error": "file generation failed"}), 500
+        return jsonify({"task_id": task_id, "binder_path": f"/uploads/{path.name}", "path": str(path)})
+    return jsonify({"task_id": task_id}), 202
 
 
 @exhibits_bp.post("/zip")
+@auth_required
 def zip_export():
     """Export exhibits and manifest as a zip archive."""
     payload = request.get_json() or {}
     case_id = payload.get("case_id")
-    if not case_id:
+    try:
+        case_id = int(case_id)
+    except (TypeError, ValueError):
         return jsonify({"error": "case_id required"}), 400
-    export_dir = Path(current_app.config.get("UPLOAD_FOLDER", "uploads"))
+
+    case = Case.query.get(case_id)
+    if not case:
+        return jsonify({"error": "case not found"}), 404
+    user = session.get("user")
+    if user and case_id not in user.get("cases", []):
+        return jsonify({"error": "forbidden"}), 403
+
+    export_dir = Path(current_app.config.get("UPLOAD_FOLDER", "uploads")).resolve()
     export_dir.mkdir(parents=True, exist_ok=True)
-    target = export_dir / f"case_{case_id}_exhibits.zip"
-    path = export_zip(case_id, target)
-    return jsonify({"zip_path": f"/uploads/{target.name}", "path": path})
+    filename = secure_filename(f"case_{case_id}_exhibits.zip")
+    target = (export_dir / filename).resolve()
+    if export_dir not in target.parents:
+        return jsonify({"error": "invalid path"}), 400
+
+    path = Path(export_zip(case_id, target)).resolve()
+    if export_dir not in path.parents or not path.exists():
+        return jsonify({"error": "file generation failed"}), 500
+
+    return jsonify({"zip_path": f"/uploads/{path.name}", "path": str(path)})

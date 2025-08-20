@@ -950,3 +950,130 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Switched Hippo ingestion to upsert segments in Chroma with deterministic IDs.
 - Added composite index for `ingestion_logs` lookups.
 - Next: validate ingestion telemetry with live Postgres and vector stores.
+- Safeguarded Neo4j driver initialization and cleanup in `hippo.py`.
+- Next: validate failure paths when Neo4j is unreachable.
+
+## Update 2025-09-24T00:00Z
+- Added query weighting, path toggling and trace timing to `hippo_routes` with persistence to `retrieval_traces`.
+- Extended tests for score weighting and retrieval trace logging.
+- Next: surface retrieval trace analytics in the dashboard UI.
+
+## Update 2025-09-24T12:00Z
+- Implemented `/api/objections/analyze-segment` in `hippo_routes` with Hippo citation refs and Socket.IO broadcast.
+- Added `objection_cure_chosen` handler to clear highlights and persist cures.
+- Next: refine citation ranking and broaden highlight clearing strategies.
+
+## Update 2025-09-24T18:00Z
+- Moved RetrievalTrace, ObjectionEvent and ObjectionResolution models into `models.py` and added logging helpers.
+- Ensured retrieval traces and objections share trace_ids for auditability.
+- Next: surface trace analytics in the dashboard UI.
+
+## Update 2025-09-24T20:00Z
+- Aligned Neo4j password defaults in `docker-compose.yml` with `.env` sample and confirmed ports.
+- Ensured HippoRAG, sentence-transformers and scikit-learn dependencies are listed.
+- Documented `EMBED_MODEL` and `CROSS_ENCODER_MODEL` variables and Docker setup in the root README.
+- Next: build the Docker image and verify retrieval models load correctly.
+
+## Update 2025-09-25T00:00Z
+- Added `/api/health` route in `hippo_routes` checking Neo4j and Chroma connectivity.
+- Registered blueprint in `interface_flask` and pointed Docker health checks to this endpoint.
+- Next: monitor service health and extend diagnostics as needed.
+
+## Update 2025-09-27T00:00Z
+- Added missing imports across legal discovery modules and cleaned redundant numpy import in trial prep.
+- Next: ensure modules load within Flask app and expand tests for import coverage.
+
+## Update 2025-09-27T12:00Z
+- Consolidated Flask interface imports and removed runtime npm build reliance.
+- Initialized BatesNumberingService once after imports.
+- Next: ensure deployment pipeline builds frontend assets prior to startup.
+
+## Update 2025-09-27T12:30Z
+- Added `pyhocon` and `more-itertools` to `requirements.txt`, sorted dependencies alphabetically, and removed extra blank lines.
+- Next: verify installation of new dependencies and keep requirements tidy.
+
+## Update 2025-09-27T13:00Z
+- Enforced authentication across chat, exhibit, hippo and trial prep APIs.
+- Secrets now load from environment or config and fail fast when missing.
+- Documented secret generation and wired Docker environment variables.
+- Next: verify integration with remaining blueprints and expand auth tests.
+
+## Update 2025-09-27T14:00Z
+- Centralized Neo4j schema bootstrap in `startup.py` and removed redundant
+  `bootstrap_graph` calls from Flask modules.
+- Dockerfile and shell startup scripts now import the pre-initialized app.
+- Next: confirm deployment uses `apps.legal_discovery.startup:app` and update
+  any remaining documentation references.
+
+## Update 2025-09-27T15:00Z
+- Secured binder and zip export routes with auth enforcement, case ownership checks and path sanitization.
+- Next: expand tests for unauthorized and invalid path scenarios.
+
+## Update 2025-09-27T16:00Z
+- Replaced silent exception handlers with structured logging in Hippo, interface, database and trial prep modules.
+- Added error responses for redaction review and tests confirming error logs and HTTP failures.
+- Next: audit remaining modules for hidden failures and broaden negative-case tests.
+- Persisted feature flags in user settings with REST APIs and React toggles.
+- Next: extend tests for flag persistence and blueprint registration.
+
+## Update 2025-09-27T16:10Z
+- Cleaned up duplicate imports in settings module.
+- Next: monitor test hangs and streamline initialization.
+
+## Update 2025-09-27T17:00Z
+- Introduced Pydantic schemas for exhibit assignment and narrative discrepancy analysis.
+- Applied validation with 400 responses for invalid payloads and added corresponding tests.
+- Next: extend schema validation to remaining API routes.
+
+- Finalised objection analysis endpoint and Socket.IO cure handler.
+- Next: expose objection resolution history in dashboard.
+
+## Update 2025-09-27T18:00Z
+- Converted dashboard tabs to React Router routes with responsive grid layout, global context and theme toggling. Added skeleton loaders, error boundaries and accessibility improvements.
+- Next: extend loading/error handling across remaining components and enhance test coverage.
+
+## Update 2025-09-27T19:00Z
+- Integrated Flask-Limiter with Redis backend and per-user/per-IP caps on chat and hippo queries.
+- `/api/health` now reports blocked request counts for monitoring.
+- Next: tune rate thresholds and expand rate-limit tests.
+## Update 2025-09-28T00:00Z
+- Introduced RQ task queue with Redis and async routes for binder generation, indexing and transcript analysis.
+- Added /api/tasks/<id> for polling.
+- Next: hook frontend to poll task status and handle long-running jobs.
+
+## Update 2025-10-05T00:00Z
+- Implemented `/api/trial/objection/action` in `hippo_routes` to persist cures and broadcast selections.
+- Updated `voice-widget.jsx` and `TrialConsole.tsx` to emit `objection_cure_chosen` via Socket.IO.
+- Added integration test ensuring cures persist through `log_objection_resolution`.
+- Next: refine client highlight clearing and expose resolution history in UI.
+## Update 2025-09-28T01:00Z
+- Added Redis-backed caching for Hippo and vector search queries with cache metrics in `/api/health`.
+- Cache invalidated on document ingestion and vector additions; tests cover hit/miss logic.
+- Next: expose cache metrics in dashboard and tune TTLs.
+
+## Update 2025-09-28T06:00Z
+- Enabled structured JSON logging, Prometheus metrics and OpenTelemetry tracing in the backend.
+- Next: expand tracing coverage across additional routes and export spans to an OTLP backend.
+
+## Update 2025-10-06T00:00Z
+- Switched Vite build to emit manifest with hashed assets and configurable API base.
+- Flask loads hashed bundle from manifest and CI builds frontend.
+- Next: verify CDN caching and review manifest handling for styles.
+
+## Update 2025-10-06T12:00Z
+- Introduced design tokens for typography, spacing and accent scale with global CSS variables.
+- Refactored GraphSection and ExhibitTab to consume spacing and font tokens for consistent theming.
+- Next: migrate remaining components to the new theme system and expand color usage.
+
+## Update 2025-10-06T12:30Z
+- Persisted theme selection in user settings and applied body class.
+- Next: sync remaining components with theme preference.
+
+## Update 2025-10-06T13:00Z
+- Streamlined Dockerfile with explicit frontend build stage and asset copy.
+- Corrected `docker-compose.yml` environment block indentation so services parse cleanly.
+- Next: confirm docker-compose build succeeds with new multi-stage layout.
+
+## Update 2025-10-06T13:30Z
+- Regenerated package-lock.json via npm ci to lock frontend dependencies.
+- Next: ensure CI uses package-lock for consistent builds.

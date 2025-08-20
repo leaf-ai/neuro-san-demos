@@ -1,4 +1,8 @@
 import React, { useState, useEffect } from "react";
+import ErrorBoundary from "./ErrorBoundary";
+import Spinner from "./common/Spinner";
+import ErrorBanner from "./common/ErrorBanner";
+
 function UploadSection() {
   const inputRef = React.useRef();
   const pausedRef = React.useRef(false);
@@ -11,14 +15,23 @@ function UploadSection() {
   const [source,setSource] = useState('user');
   const [filter,setFilter] = useState('all');
   const [paused,setPaused] = useState(false);
+  const [loading,setLoading] = useState(false);
+  const [error,setError] = useState(null);
   const togglePrivilege = (id, privileged) => {
     const reviewer = prompt('Reviewer (optional):') || '';
     const reason = prompt('Reason (optional):') || '';
+    setLoading(true);
+    setError(null);
     fetch(`/api/privilege/${id}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ privileged, reviewer, reason })
-    }).then(fetchFiles);
+    })
+      .then(fetchFiles)
+      .catch(e => {
+        setError(e.message || 'Privilege update failed');
+        setLoading(false);
+      });
   };
   const upload = async () => {
     const files = Array.from(inputRef.current.files);
@@ -59,11 +72,23 @@ function UploadSection() {
     window.dispatchEvent(new Event('graphRefresh'));
   };
   const fetchFiles = () => {
-    fetch('/api/files').then(r=>r.json()).then(d=>setTree(d.data||[]));
+    setLoading(true);
+    setError(null);
+    fetch('/api/files')
+      .then(r=>r.json())
+      .then(d=>setTree(d.data||[]))
+      .catch(e=>setError(e.message || 'Failed to load files'))
+      .finally(()=>setLoading(false));
   };
   const exportAll = () => { window.open('/api/export', '_blank'); };
   const organize = () => {
-    fetch('/api/organized-files').then(r=>r.json()).then(d=>setTree(d.data||[]));
+    setLoading(true);
+    setError(null);
+    fetch('/api/organized-files')
+      .then(r=>r.json())
+      .then(d=>setTree(d.data||[]))
+      .catch(e=>setError(e.message || 'Failed to organize files'))
+      .finally(()=>setLoading(false));
   };
   const togglePause = () => {
     pausedRef.current = !pausedRef.current;
@@ -109,8 +134,9 @@ function UploadSection() {
     );
   });
   return (
-    <section className="card">
-      <h2>Upload</h2>
+    <ErrorBoundary>
+      <section className="card">
+        <h2>Upload</h2>
       <input type="file" ref={inputRef} className="mb-3" webkitdirectory="" directory="" multiple />
       <div className="flex flex-wrap gap-2 mb-3">
         <select value={source} onChange={e=>setSource(e.target.value)} className="px-2 py-1 bg-gray-800 border border-gray-600 rounded">
@@ -134,6 +160,8 @@ function UploadSection() {
           </button>
         )}
       </div>
+      {loading && <Spinner />}
+      {error && <ErrorBanner message={error} />}
       {prog>0 && (
         <>
           <progress value={prog} max="100" className="w-full mb-2"></progress>
@@ -153,7 +181,8 @@ function UploadSection() {
         </>
       )}
       <div className="folder-tree text-sm"><ul>{renderNodes(tree)}</ul></div>
-    </section>
+      </section>
+    </ErrorBoundary>
   );
 }
 

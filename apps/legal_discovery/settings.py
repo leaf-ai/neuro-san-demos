@@ -1,7 +1,8 @@
-from .database import db
 from .models import UserSetting
+from .database import db
 
 
+# Settings helpers
 def get_user_settings(user_id=1):
     """
     Retrieves user settings from the database.
@@ -36,7 +37,26 @@ def save_user_settings(data, user_id=1):
     settings.gcp_vertex_ai_data_store_id = data.get("gcp_vertex_ai_data_store_id")
     settings.gcp_vertex_ai_search_app = data.get("gcp_vertex_ai_search_app")
     settings.gcp_service_account_key = data.get("gcp_service_account_key")
-
+    settings.theme = data.get("theme")
     db.session.add(settings)
     db.session.commit()
     return settings
+
+
+def get_feature_flags(user_id=1):
+    """Return persisted feature flags for ``user_id``."""
+    settings = get_user_settings(user_id)
+    return settings.feature_flags if settings and settings.feature_flags else {}
+
+
+def save_feature_flags(flags, user_id=1):
+    """Persist feature flags for ``user_id``."""
+    settings = get_user_settings(user_id)
+    if not settings:
+        settings = UserSetting(user_id=user_id, feature_flags={})
+    current = settings.feature_flags or {}
+    current.update({k: bool(v) for k, v in flags.items()})
+    settings.feature_flags = current
+    db.session.add(settings)
+    db.session.commit()
+    return current

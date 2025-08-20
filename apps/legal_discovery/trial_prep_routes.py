@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from flask import Blueprint, abort, jsonify, request
+from .auth import auth_required
 
 from .models import LegalResource, Lesson
 from .trial_prep import CurriculumManager, ResourceManager
@@ -12,6 +13,7 @@ curriculum_manager = CurriculumManager()
 
 
 @trial_prep_bp.route("/api/resources/search")
+@auth_required
 def search_resources():
     query = request.args.get("query", "")
     resources = (
@@ -21,12 +23,14 @@ def search_resources():
 
 
 @trial_prep_bp.route("/api/resources/<int:res_id>")
+@auth_required
 def get_resource(res_id: int):
     resource = LegalResource.query.get_or_404(res_id)
     return jsonify(resource.to_dict(include_content=True))
 
 
 @trial_prep_bp.route("/api/lessons")
+@auth_required
 def list_lessons():
     topic = request.args.get("topic")
     lessons = curriculum_manager.list_lessons(topic)
@@ -34,6 +38,7 @@ def list_lessons():
 
 
 @trial_prep_bp.route("/api/lessons/<int:lesson_id>/progress", methods=["POST"])
+@auth_required
 def update_progress(lesson_id: int):
     data = request.get_json() or {}
     progress = curriculum_manager.record_progress(

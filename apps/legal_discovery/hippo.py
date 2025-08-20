@@ -13,7 +13,10 @@ import hashlib
 import os
 import re
 import time
+import logging
 from typing import Callable, Dict, Iterable, List, Optional, Tuple
+
+from .cache import invalidate_prefix
 
 try:  # pragma: no cover - allows tests without neo4j package
     from neo4j import GraphDatabase, Driver
@@ -38,6 +41,9 @@ if CrossEncoder and CROSS_ENCODER_MODEL:
         CROSS_ENCODER = None
 else:  # pragma: no cover - environment did not request a model
     CROSS_ENCODER = None
+
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -262,11 +268,13 @@ def ingest_document(
 
         if ingestion_matches(doc_id, segment_hashes):
             return doc_id
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.exception("failed to check ingestion match", exc_info=exc)
 
     case_index = INDEX.setdefault(case_id, {})
     case_index[doc_id] = segments
+    invalidate_prefix("hippo_query")
+    invalidate_prefix("vector_search")
 
     if vector_db:
         try:  # pragma: no cover - best effort
@@ -332,8 +340,8 @@ def ingest_document(
             duration_ms=elapsed_ms,
             error="; ".join(errors) if errors else None,
         )
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.exception("failed to log ingestion", exc_info=exc)
 
     return doc_id
 
@@ -356,6 +364,7 @@ def _graph_candidates(case_id: str, seeds: List[str], k: int) -> Dict[str, Dict]
         pwd = os.environ.get("NEO4J_PASSWORD")
         auth = (user, pwd) if pwd else None
         db = os.environ.get("NEO4J_DATABASE", "neo4j")
+        driver: Driver | None = None
         try:  # pragma: no cover - external dependency
             driver = GraphDatabase.driver(uri, auth=auth)
             with driver.session(database=db) as session:
@@ -387,13 +396,14 @@ def _graph_candidates(case_id: str, seeds: List[str], k: int) -> Dict[str, Dict]
                         }
                 if results:
                     return results
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.exception("graph candidate retrieval failed", exc_info=exc)
         finally:  # pragma: no cover - ensure closure
-            try:
-                driver.close()
-            except Exception:
-                pass
+            if driver:
+                try:
+                    driver.close()
+                except Exception as exc:
+                    logger.exception("driver close failed", exc_info=exc)
 
     # Fallback to deterministic entity overlap scoring
     scores: Dict[str, Dict] = {}
@@ -432,8 +442,8 @@ def _vector_candidates(case_id: str, query: str, k: int) -> Dict[str, Dict]:
                     scores[seg_id] = {"segment": seg, "dense": float(dist)}
             if scores:
                 return scores
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.exception("vector candidate retrieval failed", exc_info=exc)
 
     # Fallback token frequency approach
     q_tokens = query.lower().split()

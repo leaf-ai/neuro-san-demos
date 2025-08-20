@@ -43,10 +43,6 @@ def bootstrap_graph() -> None:
 def create_app():
     """Return the configured Flask application."""
 
-    from .interface_flask import app
+    from .startup import app
 
-    try:  # pragma: no cover - best effort
-        bootstrap_graph()
-    except Exception:  # pragma: no cover - external dependency may fail
-        pass
     return app

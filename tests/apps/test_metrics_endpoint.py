@@ -1,3 +1,8 @@
+import os
+
+os.environ.setdefault("FLASK_SECRET_KEY", "test")
+os.environ.setdefault("JWT_SECRET", "test")
+
 from apps.legal_discovery.interface_flask import app
 from apps.legal_discovery.stt import stt_errors, stream_transcribe
 

@@ -136,9 +136,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-# .env is tracked to provide a template with API key placeholders
-# Uncomment the line below to ignore .env locally
-# .env
+.env
 .venv
 env/
 venv/
@@ -191,6 +189,8 @@ token.json
 # Node build artifacts
 apps/legal_discovery/node_modules/
 apps/legal_discovery/static/bundle.js
+apps/legal_discovery/static/manifest.json
+apps/legal_discovery/static/assets/
 apps/legal_discovery/static/main.css
 apps/legal_discovery/dist/
 

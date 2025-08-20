@@ -9,15 +9,19 @@ from dataclasses import dataclass
 from typing import Iterable, List
 
 import chromadb
+import numpy as np
 import requests
 import spacy
-from spacy.cli import download as spacy_download
 from bs4 import BeautifulSoup
 from chromadb.config import Settings
 from neo4j import GraphDatabase
+from spacy.cli import download as spacy_download
 
 from .database import db
 from .models import LegalResource, Lesson, LessonProgress
+
+
+logger = logging.getLogger(__name__)
 
 
 def _load_spacy_model():
@@ -145,8 +149,6 @@ class KnowledgeBase:
         if self.use_chroma:
             result = self.collection.query(query_embeddings=[doc.vector.tolist()], n_results=limit)
             return [int(rid) for rid in result.get("ids", [[]])[0]]
-        import numpy as np
-
         q = doc.vector
         scores = []
         for rid, vec in self.collection.items():
@@ -183,8 +185,8 @@ class GraphManager:
                 title=resource.title,
                 topic=topic,
             )
-        except Exception:  # pragma: no cover - external service
-            pass
+        except Exception as exc:  # pragma: no cover - external service
+            logger.exception("failed to link resource to graph", exc_info=exc)
 
     def close(self) -> None:
         if self.session:

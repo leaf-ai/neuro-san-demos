@@ -16,6 +16,10 @@ def _create_app():
         RATELIMIT_ENABLED=False,
     )
     db.init_app(app)
+    # Ensure voice STT feature flag enabled for each test run
+    from apps.legal_discovery.feature_flags import FEATURE_FLAGS
+
+    FEATURE_FLAGS["voice_stt"] = True
     socketio.server = None  # ensure fresh server per test
     socketio.init_app(app, logger=False, engineio_logger=False)
     limiter.init_app(app)
@@ -27,6 +31,9 @@ def _create_app():
 
 def test_voice_ws_transcript_updates(monkeypatch):
     app = _create_app()
+    monkeypatch.setattr(
+        "apps.legal_discovery.auth._require_auth", lambda: True
+    )
     monkeypatch.setattr(
         "apps.legal_discovery.chat_routes._require_auth", lambda: True
     )

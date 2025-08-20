@@ -1,12 +1,19 @@
 from flask import Flask
+import pytest
 
-from apps.legal_discovery.database import db, RetrievalTrace
+from apps.legal_discovery.database import db
 from apps.legal_discovery.extensions import socketio
-from apps.legal_discovery.hippo_routes import bp as hippo_bp
-from apps.legal_discovery.objection_routes import bp as objections_bp
+from apps.legal_discovery.hippo_routes import bp as hippo_bp, objections_bp
 from apps.legal_discovery.trial_assistant import bp as trial_bp
+from apps.legal_discovery.models import RetrievalTrace
 from apps.legal_discovery.models_trial import TrialSession
 from apps.legal_discovery import hippo
+from apps.legal_discovery import auth as auth_module
+
+
+@pytest.fixture(autouse=True)
+def _no_auth(monkeypatch):
+    monkeypatch.setattr(auth_module, "_require_auth", lambda: True)
 
 
 def _create_app():

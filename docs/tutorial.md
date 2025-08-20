@@ -466,7 +466,7 @@ More details can be found in the following resources:
 
 * [User Guide: LLM Configuration](user_guide.md#llm-configuration)
 * [API Key Documentation](api_key.md)
-* [.env.example](../.env.example)
+* [config/.env.sample](../config/.env.sample)
 * [LLM Info HOCON Reference Guide](https://github.com/cognizant-ai-lab/neuro-san/blob/main/docs/llm_info_hocon_reference.md)
 * [Agent HOCON Reference Guide](https://github.com/cognizant-ai-lab/neuro-san/blob/main/docs/agent_hocon_reference.md)
 

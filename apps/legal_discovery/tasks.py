@@ -1,0 +1,152 @@
+import os
+import time
+import uuid
+import logging
+from typing import Any, Dict, Tuple
+
+from redis import Redis
+from rq import Queue
+from rq.job import Job
+from flask import Blueprint, jsonify
+
+from .auth import auth_required
+from .exhibit_manager import generate_binder
+from . import hippo
+from .models_trial import TranscriptSegment, TrialSession
+from .database import db, log_retrieval_trace
+from .extensions import socketio
+from .trial_assistant.services.objection_engine import engine
+from flask import has_app_context
+from contextlib import nullcontext
+
+logger = logging.getLogger(__name__)
+
+redis_url = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+redis_conn: Redis | None = None
+queue: Queue | None = None
+_results: Dict[str, Any] = {}
+
+try:  # pragma: no cover - redis may be unavailable
+    redis_conn = Redis.from_url(redis_url)
+    redis_conn.ping()
+    queue = Queue("legal", connection=redis_conn)
+except Exception:  # pragma: no cover - fallback to sync
+    queue = None
+
+
+def enqueue(func, *args, **kwargs) -> Tuple[str, Any | None]:
+    """Enqueue *func* with ``rq`` or run synchronously if Redis unavailable."""
+    if queue is not None:
+        job = queue.enqueue(func, *args, **kwargs)
+        return job.id, None
+    job_id = uuid.uuid4().hex
+    result = func(*args, **kwargs)
+    _results[job_id] = result
+    return job_id, result
+
+
+# ---- task implementations -------------------------------------------------
+
+
+def _context():
+    if has_app_context():
+        return nullcontext()
+    from .startup import app
+    return app.app_context()
+
+
+def binder_task(case_id: int, output_path: str | None = None) -> str:
+    with _context():
+        return generate_binder(case_id, output_path)
+
+
+def index_document_task(case_id: str, text: str, path: str = "") -> Dict[str, Any]:
+    with _context():
+        doc_id = hippo.ingest_document(case_id, text, path)
+        segments = len(hippo.INDEX[case_id][doc_id])
+        return {"doc_id": doc_id, "segments": segments}
+
+
+def analyze_segment_task(segment_id: str, session_id: str) -> Dict[str, Any]:
+    with _context():
+        seg = db.session.get(TranscriptSegment, segment_id)
+        if seg is None:
+            return {"error": "segment not found"}
+        events = engine.analyze_segment(session_id, seg)
+        refs: list = []
+        trace_id = None
+        try:
+            sess = db.session.get(TrialSession, session_id)
+            if sess:
+                start = time.perf_counter()
+                result = hippo.hippo_query(sess.case_id, seg.text, k=3)
+                elapsed_ms = (time.perf_counter() - start) * 1000
+                items = result.get("items", [])
+                trace_id = result.get("trace_id")
+                refs = [
+                    {"segment_id": item.get("segment_id"), "path": item.get("path")}
+                    for item in items
+                ]
+                timings = {"total_ms": round(elapsed_ms, 2)}
+                log_retrieval_trace(
+                    trace_id=trace_id,
+                    case_id=sess.case_id,
+                    query=seg.text,
+                    graph_weight=1.0,
+                    dense_weight=1.0,
+                    timings=timings,
+                    results=items,
+                )
+        except Exception as exc:  # pragma: no cover - best effort
+            logger.exception("hippo_query failed: %s", exc)
+        for e in events:
+            e.refs = refs
+            e.trace_id = trace_id
+            e.path = refs[0]["path"] if refs else None
+        db.session.commit()
+        for e in events:
+            socketio.emit(
+                "objection_event",
+                {
+                    "event_id": e.id,
+                    "segment_id": e.segment_id,
+                    "ground": e.ground,
+                    "confidence": e.confidence,
+                    "suggested_cures": e.suggested_cures,
+                    "refs": e.refs,
+                    "trace_id": e.trace_id,
+                },
+                room="trial_objections",
+                namespace="/ws/trial",
+            )
+        return {"events": [e.id for e in events], "segment_id": seg.id}
+
+
+# ---- task status API ------------------------------------------------------
+
+tasks_bp = Blueprint("tasks", __name__, url_prefix="/api/tasks")
+
+
+@tasks_bp.get("/<task_id>")
+@auth_required
+def task_status(task_id: str):
+    if queue is not None:
+        try:
+            job = Job.fetch(task_id, connection=redis_conn)  # type: ignore[arg-type]
+        except Exception:
+            return jsonify({"status": "unknown"}), 404
+        status = job.get_status()
+        result = job.result if job.is_finished else None
+        return jsonify({"status": status, "result": result})
+    result = _results.get(task_id)
+    status = "finished" if result is not None else "unknown"
+    return jsonify({"status": status, "result": result})
+
+
+__all__ = [
+    "enqueue",
+    "binder_task",
+    "index_document_task",
+    "analyze_segment_task",
+    "tasks_bp",
+]

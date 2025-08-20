@@ -1,14 +1,14 @@
 # ---------- Frontend build (Node) ----------
 FROM node:18-slim AS frontend
-WORKDIR /app
+WORKDIR /frontend
 
-# Install only deps first for better caching
-COPY apps/legal_discovery/package*.json apps/legal_discovery/
-RUN npm --prefix apps/legal_discovery ci
+# Install dependencies separately for better caching
+COPY apps/legal_discovery/package*.json ./
+RUN npm ci
 
-# Build
-COPY apps/legal_discovery apps/legal_discovery
-RUN npm --prefix apps/legal_discovery run build --silent
+# Build the React bundle so Flask can serve precompiled assets
+COPY apps/legal_discovery/ ./
+RUN npm run build --silent
 
 
 # ---------- Backend (Python) ----------
@@ -51,7 +51,7 @@ RUN python -m pip install -r requirements.txt \
 COPY . .
 
 # Bring in built static assets from the frontend stage
-COPY --from=frontend /app/apps/legal_discovery/static apps/legal_discovery/static
+COPY --from=frontend /frontend/static apps/legal_discovery/static
 
 # Clean up any leftover frontend dev folders (defensive)
 RUN rm -rf apps/legal_discovery/node_modules
@@ -59,11 +59,14 @@ RUN rm -rf apps/legal_discovery/node_modules
 # Expose app port
 EXPOSE 5001
 
-HEALTHCHECK --interval=30s --timeout=5s --retries=5 CMD curl -f http://localhost:5001/api/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --retries=5 CMD curl -fsS http://localhost:5001/api/health || exit 1
 
 # Environment defaults (can be overridden at runtime)
 ENV AGENT_MANIFEST_FILE=/usr/src/app/registries/manifest.hocon \
     AGENT_LLM_INFO_FILE=/usr/src/app/registries/llm_config.hocon
+ENV FLASK_SECRET_KEY="" \
+    JWT_SECRET=""
 
-# Run the Flask app via gunicorn+eventlet after ensuring Neo4j schema
-CMD ["bash", "-c", "python -c 'from apps.legal_discovery import bootstrap_graph; bootstrap_graph()' && python -m gunicorn -k eventlet -w 1 -b 0.0.0.0:5001 apps.legal_discovery.interface_flask:app"]
+# Run the Flask app via gunicorn+eventlet. Graph schema is bootstrapped in
+# `apps.legal_discovery.startup` when the application is imported.
+CMD ["bash", "-c", "python -m gunicorn -k eventlet -w 1 -b 0.0.0.0:5001 apps.legal_discovery.startup:app"]

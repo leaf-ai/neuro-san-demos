@@ -328,6 +328,8 @@ class UserSetting(db.Model):
     gcp_vertex_ai_data_store_id = db.Column(db.String(255), nullable=True)
     gcp_vertex_ai_search_app = db.Column(db.String(255), nullable=True)
     gcp_service_account_key = db.Column(db.Text, nullable=True)
+    theme = db.Column(db.String(20), nullable=True)
+    feature_flags = db.Column(db.JSON, nullable=False, default=dict)
 
 
 class FileUpload(db.Model):
@@ -612,3 +614,48 @@ class LessonProgress(db.Model):
             "thumbs_up": self.thumbs_up,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
+
+
+class RetrievalTrace(db.Model):
+    """Persists retrieval query results for analysis."""
+
+    __tablename__ = "retrieval_traces"
+
+    id = db.Column(db.Integer, primary_key=True)
+    trace_id = db.Column(db.String(40), nullable=False, index=True)
+    case_id = db.Column(db.String(64), nullable=False)
+    query = db.Column(db.Text, nullable=False)
+    graph_weight = db.Column(db.Float, nullable=False, default=1.0)
+    dense_weight = db.Column(db.Float, nullable=False, default=1.0)
+    timings = db.Column(db.JSON, nullable=False)
+    results = db.Column(db.JSON, nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+
+class ObjectionEvent(db.Model):
+    __tablename__ = "objection_events"
+
+    id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    session_id = db.Column(db.String, index=True)
+    segment_id = db.Column(db.String, index=True)
+    trace_id = db.Column(db.String(40), index=True)
+    ts = db.Column(db.DateTime, default=datetime.utcnow)
+    type = db.Column(db.String)
+    ground = db.Column(db.String)
+    confidence = db.Column(db.Integer)
+    extracted_phrase = db.Column(db.String)
+    suggested_cures = db.Column(db.JSON)
+    refs = db.Column(db.JSON)
+    path = db.Column(db.JSON)
+    action_taken = db.Column(db.String)
+    outcome = db.Column(db.String)
+
+
+class ObjectionResolution(db.Model):
+    __tablename__ = "objection_resolutions"
+
+    id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    event_id = db.Column(db.String, db.ForeignKey("objection_events.id"), index=True)
+    chosen_cure = db.Column(db.String)
+    ts = db.Column(db.DateTime, default=datetime.utcnow)
+

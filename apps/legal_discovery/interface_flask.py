@@ -1,63 +1,52 @@
 import atexit
-import base64
+import csv
+import difflib
 import hashlib
 import json
 import logging
 import os
 import re
-import subprocess
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from datetime import datetime
 from difflib import SequenceMatcher
 from io import BytesIO, StringIO
-import csv
-import difflib
-import requests
 
-try:  # pragma: no cover - optional dependency
-    from neo4j import GraphDatabase
-except Exception:  # pragma: no cover - driver may be absent
-    GraphDatabase = None
-
-# pylint: disable=import-error
+import fitz
 import schedule
-from flask import Flask
-from flask import Response, jsonify, render_template, request, send_file
-from werkzeug.utils import secure_filename
-from flask import Flask, Response, jsonify, render_template, request, send_file
-
 import spacy
+from flask import Flask, Response, jsonify, render_template, request, send_file
+from more_itertools import chunked
+import structlog
+from pyhocon import ConfigFactory
 from spacy.cli import download as spacy_download
 from weasyprint import HTML
-import fitz
-
-try:
-    from apps.legal_discovery.legal_discovery import (
-        legal_discovery_thinker,
-        set_up_legal_discovery_assistant,
-        tear_down_legal_discovery_assistant,
-    )
-except Exception:  # pragma: no cover - optional dependency
-    legal_discovery_thinker = None
-
-    def set_up_legal_discovery_assistant(*args, **kwargs):
-        return None, None
-
-    def tear_down_legal_discovery_assistant(*args, **kwargs):
-        return None
-
-
-from more_itertools import chunked
-from pyhocon import ConfigFactory
 from werkzeug.utils import secure_filename
+from pydantic import ValidationError
 
-from . import settings, bootstrap_graph
+from . import settings
+from . import presentation_ws  # noqa: F401
+from .chat_state import user_input_queue
+from .chain_logger import ChainEventType, log_event
 from .database import db
-
-bootstrap_graph()
-from coded_tools.legal_discovery.deposition_prep import DepositionPrep
+from .exhibit_routes import exhibits_bp
+from .cache import redis_cache, invalidate_prefix
+from .extensions import (
+    blocked_requests,
+    configure_logging,
+    init_tracing,
+    limiter,
+    metrics,
+    socketio,
+    tracer,
+)
+from .feature_flags import FEATURE_FLAGS
+from .hippo_routes import bp as hippo_bp, objections_bp, health_bp
+from .tasks import tasks_bp
+from .trial_assistant import bp as trial_assistant_bp
+from .trial_prep_routes import trial_prep_bp
+from .validators import NarrativeDiscrepancyAnalyzePayload
 from apps.legal_discovery.models import (
     Agent,
     CalendarEvent,
@@ -82,36 +71,35 @@ from apps.legal_discovery.models import (
     DocumentVersion,
     VoiceCache,
 )
-from .feature_flags import FEATURE_FLAGS
+from coded_tools.legal_discovery.bates_numbering import (
+    BatesNumberingService,
+    stamp_pdf,
+)
 from coded_tools.legal_discovery.deposition_prep import DepositionPrep
 from coded_tools.legal_discovery.legal_crawler import LegalCrawler
 from coded_tools.legal_discovery.narrative_discrepancy_detector import (
     NarrativeDiscrepancyDetector,
 )
-from coded_tools.legal_discovery.bates_numbering import (
-    BatesNumberingService,
-    stamp_pdf,
-)
-from .exhibit_routes import exhibits_bp
-from .trial_prep_routes import trial_prep_bp
-from .chain_logger import ChainEventType, log_event
-from .trial_assistant import bp as trial_assistant_bp  # noqa: E402
-from .hippo_routes import bp as hippo_bp  # noqa: E402
-from .objection_routes import bp as objections_bp  # noqa: E402
-from coded_tools.legal_discovery.bates_numbering import (
-    BatesNumberingService,
-    stamp_pdf,
-)
-import difflib
-import fitz
-from .feature_flags import FEATURE_FLAGS
-from .extensions import socketio, limiter
-from .chat_state import user_input_queue
-from . import presentation_ws  # noqa: F401
-from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
-# Configure logging before any other setup so early steps are captured
-logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
+try:
+    from apps.legal_discovery.legal_discovery import (
+        legal_discovery_thinker,
+        set_up_legal_discovery_assistant,
+        tear_down_legal_discovery_assistant,
+    )
+except Exception:  # pragma: no cover - optional dependency
+    legal_discovery_thinker = None
+
+    def set_up_legal_discovery_assistant(*args, **kwargs):
+        return None, None
+
+    def tear_down_legal_discovery_assistant(*args, **kwargs):
+        return None
+
+
+# Configure logging and tracing before any other setup
+configure_logging()
+logger = structlog.get_logger(__name__)
 
 bates_service = BatesNumberingService()
 
@@ -131,16 +119,33 @@ os.environ["AGENT_LLM_INFO_FILE"] = os.environ.get(
 )
 # Ensure the React build exists so the dashboard can render
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
-BUNDLE_PATH = os.path.join(STATIC_DIR, "bundle.js")
-if not os.path.exists(BUNDLE_PATH):
-    logging.info("No frontend bundle found; running npm build")
-    subprocess.run(
-        ["npm", "--prefix", os.path.dirname(__file__), "run", "build", "--silent"],
-        check=True,
+MANIFEST_PATH = os.path.join(STATIC_DIR, "manifest.json")
+if not os.path.exists(MANIFEST_PATH):
+    logger.warning(
+        "Frontend manifest missing at %s; run `npm --prefix apps/legal_discovery run build` before starting the server.",
+        MANIFEST_PATH,
     )
+    BUNDLE_NAME = "bundle.js"
+else:
+    with open(MANIFEST_PATH) as f:
+        manifest = json.load(f)
+    BUNDLE_NAME = manifest.get("src/main.jsx", {}).get("file", "bundle.js")
 app = Flask(__name__)
-app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", os.urandom(24).hex())
-app.config["JWT_SECRET"] = os.environ.get("JWT_SECRET", os.urandom(24).hex())
+metrics.init_app(app)
+init_tracing(app)
+config_path = os.environ.get("LEGAL_DISCOVERY_CONFIG")
+secret_key = os.environ.get("FLASK_SECRET_KEY")
+jwt_secret = os.environ.get("JWT_SECRET")
+if config_path and (not secret_key or not jwt_secret):
+    cfg = ConfigFactory.parse_file(config_path)
+    secret_key = secret_key or cfg.get("flask.secret_key", None)
+    jwt_secret = jwt_secret or cfg.get("flask.jwt_secret", None)
+if not secret_key or not jwt_secret:
+    raise RuntimeError("FLASK_SECRET_KEY and JWT_SECRET must be set")
+app.config["SECRET_KEY"] = secret_key
+app.config["JWT_SECRET"] = jwt_secret
+# Configure rate limiting storage (Redis in production).
+app.config["RATELIMIT_STORAGE_URI"] = os.environ.get("REDIS_URL", "memory://")
 # Allow the primary relational store to be configured at runtime. Default to
 # SQLite for local development but override with an environment-provided
 # PostgreSQL connection string when available so the application scales under
@@ -150,11 +155,23 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 socketio.init_app(app)
 limiter.init_app(app)
+with app.app_context():
+    db.create_all()
+    if not Case.query.first():
+        default_case = Case(name="Default Case")
+        db.session.add(default_case)
+        db.session.commit()
+    db_flags = settings.get_feature_flags()
+    if db_flags:
+        for k, v in db_flags.items():
+            FEATURE_FLAGS[k] = bool(v)
 app.register_blueprint(exhibits_bp)
 app.register_blueprint(trial_prep_bp)
 app.register_blueprint(trial_assistant_bp)
 app.register_blueprint(hippo_bp)
 app.register_blueprint(objections_bp)
+app.register_blueprint(health_bp)
+app.register_blueprint(tasks_bp)
 if FEATURE_FLAGS.get("theories"):
     from .theory_routes import theories_bp
 
@@ -170,47 +187,16 @@ if FEATURE_FLAGS.get("chat"):
 executor = ThreadPoolExecutor(max_workers=int(os.environ.get("INGESTION_WORKERS", "4")))
 atexit.register(executor.shutdown)
 thread_started = False  # pylint: disable=invalid-name
-bates_service = BatesNumberingService()
 
 
-@app.route("/metrics")
-def metrics() -> Response:
-    """Expose Prometheus metrics."""
-    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
+@app.errorhandler(429)
+def rate_limit_handler(exc):
+    """Increment blocked request metrics and return a JSON error."""
+    with tracer.start_as_current_span("rate_limit_handler"):
+        endpoint = request.endpoint or request.path
+        blocked_requests[endpoint] += 1
+        return jsonify({"error": "rate limit exceeded"}), 429
 
-
-@app.get("/api/health")
-def health() -> Response:
-    """Report connectivity status for Neo4j and Chroma services."""
-    neo4j_status = "ok"
-    chroma_status = "ok"
-
-    try:  # pragma: no cover - external service
-        if GraphDatabase is None:
-            raise RuntimeError("neo4j driver missing")
-        uri = os.environ.get("NEO4J_URI", "bolt://neo4j:7687")
-        user = os.environ.get("NEO4J_USER", "neo4j")
-        pwd = os.environ.get("NEO4J_PASSWORD")
-        auth = (user, pwd) if pwd else None
-        db = os.environ.get("NEO4J_DATABASE", "neo4j")
-        with GraphDatabase.driver(uri, auth=auth) as driver:
-            with driver.session(database=db) as session:
-                session.run("RETURN 1")
-    except Exception:
-        neo4j_status = "fail"
-
-    try:  # pragma: no cover - external service
-        host = os.environ.get("CHROMA_HOST", "localhost")
-        port = int(os.environ.get("CHROMA_PORT", "8000"))
-        resp = requests.get(
-            f"http://{host}:{port}/api/v1/heartbeat", timeout=2
-        )
-        if resp.status_code != 200:
-            raise RuntimeError("chroma heartbeat failed")
-    except Exception:
-        chroma_status = "fail"
-
-    return jsonify({"neo4j": neo4j_status, "chroma": chroma_status})
 
 # Shared crawler instance for legal references
 legal_crawler = LegalCrawler()
@@ -240,13 +226,6 @@ def _initialize_agent() -> None:
         legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant(_gather_upload_paths())
         app.logger.info("...legal discovery assistant set up.")
 
-
-with app.app_context():
-    db.create_all()
-    if not Case.query.first():
-        default_case = Case(name="Default Case")
-        db.session.add(default_case)
-        db.session.commit()
 
 threading.Thread(target=_initialize_agent, daemon=True).start()
 
@@ -342,16 +321,35 @@ def on_connect():
 @app.route("/api/settings", methods=["GET", "POST"])
 def manage_settings():
     if request.method == "POST":
-        data = request.get_json()
+        data = request.get_json() or {}
         settings.save_user_settings(data)
-        for flag, env_var in [
-            ("voice_stt", "ENABLE_VOICE_STT"),
-            ("voice_tts", "ENABLE_VOICE_TTS"),
-            ("voice_commands", "ENABLE_VOICE_COMMANDS"),
-        ]:
-            if flag in data:
-                FEATURE_FLAGS[flag] = bool(data[flag])
-                os.environ[env_var] = "1" if data[flag] else "0"
+        flags = {
+            k: data[k]
+            for k in [
+                "voice_stt",
+                "voice_tts",
+                "voice_commands",
+                "theories",
+                "binder",
+                "chat",
+            ]
+            if k in data
+        }
+        if flags:
+            settings.save_feature_flags(flags)
+            env_map = {
+                "theories": "ENABLE_THEORIES",
+                "binder": "ENABLE_BINDER",
+                "chat": "ENABLE_CHAT",
+                "voice_stt": "ENABLE_VOICE_STT",
+                "voice_tts": "ENABLE_VOICE_TTS",
+                "voice_commands": "ENABLE_VOICE_COMMANDS",
+            }
+            for flag, value in flags.items():
+                FEATURE_FLAGS[flag] = bool(value)
+                env_var = env_map.get(flag)
+                if env_var:
+                    os.environ[env_var] = "1" if value else "0"
         return jsonify({"message": "Settings saved successfully"})
     else:
         user_settings = settings.get_user_settings()
@@ -376,14 +374,12 @@ def manage_settings():
                 "gcp_vertex_ai_data_store_id": user_settings.gcp_vertex_ai_data_store_id,
                 "gcp_vertex_ai_search_app": user_settings.gcp_vertex_ai_search_app,
                 "gcp_service_account_key": user_settings.gcp_service_account_key,
+                "theme": user_settings.theme,
             }
-        resp.update(
-            {
-                "voice_stt": FEATURE_FLAGS["voice_stt"],
-                "voice_tts": FEATURE_FLAGS["voice_tts"],
-                "voice_commands": FEATURE_FLAGS["voice_commands"],
-            }
-        )
+        flags = settings.get_feature_flags()
+        for key in FEATURE_FLAGS:
+            flags.setdefault(key, FEATURE_FLAGS[key])
+        resp.update(flags)
         return jsonify(resp)
 
 
@@ -391,6 +387,31 @@ def manage_settings():
 def manage_api_keys():
     """Manage extended API key settings."""
     return manage_settings()
+
+
+@app.route("/api/feature-flags", methods=["GET", "POST"])
+def manage_feature_flags():
+    if request.method == "POST":
+        data = request.get_json() or {}
+        settings.save_feature_flags(data)
+        env_map = {
+            "theories": "ENABLE_THEORIES",
+            "binder": "ENABLE_BINDER",
+            "chat": "ENABLE_CHAT",
+            "voice_stt": "ENABLE_VOICE_STT",
+            "voice_tts": "ENABLE_VOICE_TTS",
+            "voice_commands": "ENABLE_VOICE_COMMANDS",
+        }
+        for flag, value in data.items():
+            FEATURE_FLAGS[flag] = bool(value)
+            env_var = env_map.get(flag)
+            if env_var:
+                os.environ[env_var] = "1" if value else "0"
+        return jsonify({"message": "Flags updated"})
+    flags = settings.get_feature_flags()
+    for key in FEATURE_FLAGS:
+        flags.setdefault(key, FEATURE_FLAGS[key])
+    return jsonify(flags)
 
 
 import shutil
@@ -548,8 +569,9 @@ def review_redaction(doc_id: int):
         orig = os.path.join(app.config["SECURE_FOLDER"], doc.name)
         try:
             shutil.copy(orig, doc.file_path)
-        except OSError:
-            pass
+        except OSError as exc:
+            logger.exception("failed to restore original file", exc_info=exc)
+            return jsonify({"error": "Failed to restore original document"}), 500
     elif action == "confirm":
         doc.needs_review = False
     else:
@@ -820,8 +842,8 @@ def ingest_document(
         try:
             sanctions = SanctionsRiskAnalyzer().assess(redacted_text, scorecard=scores)
             db.session.add(DocumentMetadata(document_id=doc_id, schema="sanctions_risk", data=sanctions))
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.exception("sanctions risk analysis failed", exc_info=exc)
         db.session.commit()
 
         VectorDatabaseManager().add_documents([redacted_text], [chroma_metadata], [str(doc_id)])
@@ -1000,8 +1022,8 @@ def upload_files():
                 for ext in ("", ".meta.json"):
                     try:
                         os.remove(redacted_path + ext)
-                    except OSError:
-                        pass
+                    except OSError as exc:
+                        logger.exception("failed to remove file %s", redacted_path + ext, exc_info=exc)
             except Exception as exc:  # pragma: no cover - best effort
                 record_skip(raw_name, f"ingestion error: {exc}")
                 db.session.delete(doc)
@@ -1010,8 +1032,8 @@ def upload_files():
                 for ext in ("", ".meta.json"):
                     try:
                         os.remove(redacted_path + ext)
-                    except OSError:
-                        pass
+                    except OSError as exc:
+                        logger.exception("failed to remove file %s", redacted_path + ext, exc_info=exc)
             else:
                 processed.append(filename)
                 batch_processed.append(filename)
@@ -1100,9 +1122,12 @@ def list_narrative_discrepancies():
 @app.route("/api/narrative_discrepancies/analyze", methods=["POST"])
 def analyze_narrative_discrepancy():
     """Analyze an opposition document for discrepancies."""
-    data = request.get_json(force=True)
-    doc_id = data.get("opposing_doc_id")
-    doc = Document.query.get_or_404(doc_id)
+    data = request.get_json(force=True) or {}
+    try:
+        payload = NarrativeDiscrepancyAnalyzePayload.model_validate(data)
+    except ValidationError as e:
+        return jsonify({"errors": e.errors()}), 400
+    doc = Document.query.get_or_404(payload.opposing_doc_id)
     detector = NarrativeDiscrepancyDetector()
     results = detector.analyze(doc)
     return jsonify([r.__dict__ for r in results])
@@ -1481,7 +1506,15 @@ def vector_add_documents():
         return jsonify({"error": "Invalid metadata length"}), 400
     manager = VectorDatabaseManager()
     manager.add_documents(documents, metadatas, ids)
+    invalidate_prefix("vector_search")
+    invalidate_prefix("hippo_query")
     return jsonify({"status": "ok"})
+
+
+@redis_cache("vector_search", key_func=lambda q: q)
+def _vector_search_cached(q: str):
+    manager = VectorDatabaseManager()
+    return manager.query([q], n_results=5)
 
 
 @app.route("/api/vector/search", methods=["GET"])
@@ -1490,8 +1523,7 @@ def vector_search():
     query = request.args.get("q")
     if not query:
         return jsonify({"status": "ok", "data": {}})
-    manager = VectorDatabaseManager()
-    result = manager.query([query], n_results=5)
+    result = _vector_search_cached(query)
     return jsonify({"status": "ok", "data": result})
 
 
@@ -1914,19 +1946,19 @@ def export_report():
 @app.route("/present/<mode>/<doc_id>")
 def present(mode: str, doc_id: str):
     """Render the document viewer for live presentations."""
-    return render_template("dashboard.html")
+    return render_template("dashboard.html", bundle_js=BUNDLE_NAME)
 
 
 @app.route("/")
 def index():
     """Serve the React dashboard by default."""
-    return render_template("dashboard.html")
+    return render_template("dashboard.html", bundle_js=BUNDLE_NAME)
 
 
 @app.route("/dashboard")
 def dashboard():
     """Return the dashboard UI."""
-    return render_template("dashboard.html")
+    return render_template("dashboard.html", bundle_js=BUNDLE_NAME)
 
 
 @socketio.on("user_input", namespace="/chat")

@@ -5,19 +5,24 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint src/main.jsx"
   },
   "dependencies": {
+    "pdfjs-dist": "^3.11.174",
     "react": "^18.2.0",
     "react-calendar": "^6.0.0",
     "react-dom": "^18.2.0",
-    "socket.io-client": "^4.8.1",
+    "react-joyride": "^2.9.3",
     "react-pdf": "^7.5.0",
-    "pdfjs-dist": "^3.11.174"
+    "react-router-dom": "^6.22.3",
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.0",
-    "vite": "^4.2.0",
-    "cypress": "^13.5.0"
+    "cypress": "^13.5.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react": "^7.33.2",
+    "vite": "^4.2.0"
   }
 }

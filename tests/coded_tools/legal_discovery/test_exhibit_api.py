@@ -14,6 +14,13 @@ from apps.legal_discovery.models import (
     Fact,
 )
 from apps.legal_discovery.exhibit_routes import exhibits_bp
+from apps.legal_discovery import auth as auth_module
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _no_auth(monkeypatch):
+    monkeypatch.setattr(auth_module, "_require_auth", lambda: True)
 
 def _create_pdf(path):
     c = canvas.Canvas(str(path))
@@ -150,3 +157,11 @@ def test_assign_list_and_exports(tmp_path):
     assert res.status_code == 200
     assert res.json["theories"] == ["Breach"]
     assert res.json["timeline"][0]["date"] == "2020-01-01"
+
+
+def test_assign_validation(tmp_path):
+    app, case_id, doc1, doc2, doc3 = _setup(tmp_path)
+    client = app.test_client()
+    res = client.post("/api/exhibits/assign", json={"title": "T1"})
+    assert res.status_code == 400
+    assert res.json["errors"][0]["loc"] == ["document_id"]

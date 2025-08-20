@@ -1,17 +1,20 @@
 from flask import Flask
+import pytest
 
 from apps.legal_discovery.extensions import socketio
-from apps.legal_discovery.database import db, RetrievalTrace
+from apps.legal_discovery.database import db
 from apps.legal_discovery.trial_assistant import bp as trial_bp
-from apps.legal_discovery.objection_routes import bp as objections_bp
-from apps.legal_discovery.models_trial import (
-    TrialSession,
-    ObjectionEvent,
-    ObjectionResolution,
-    TranscriptSegment,
-)
+from apps.legal_discovery.hippo_routes import objections_bp
+from apps.legal_discovery.models import ObjectionEvent, ObjectionResolution, RetrievalTrace
+from apps.legal_discovery.models_trial import TrialSession, TranscriptSegment
 from apps.legal_discovery.trial_assistant.services.objection_engine import engine
 from apps.legal_discovery import hippo
+from apps.legal_discovery import auth as auth_module
+
+
+@pytest.fixture(autouse=True)
+def _no_auth(monkeypatch):
+    monkeypatch.setattr(auth_module, "_require_auth", lambda: True)
 
 
 def _create_app():
@@ -88,5 +91,35 @@ def test_cure_chosen_records_resolution_and_clears_highlight():
     )
     received = sock.get_received("/ws/trial")
     assert any(r["name"] == "clear_highlights" for r in received)
+    with app.app_context():
+        assert ObjectionResolution.query.count() == 1
+
+
+def test_http_objection_action_emits_and_logs():
+    app = _create_app()
+    client = app.test_client()
+    sock = socketio.test_client(app, namespace="/ws/trial")
+    sock.emit("join", {"session_id": "trial_objections"}, namespace="/ws/trial")
+    with app.app_context():
+        sess = TrialSession(id="s1", case_id="c1")
+        seg = TranscriptSegment(
+            session_id="s1",
+            t0_ms=0,
+            t1_ms=1,
+            speaker="lawyer",
+            text="objection hearsay",
+            confidence=100,
+        )
+        db.session.add_all([sess, seg])
+        db.session.commit()
+        events = engine.analyze_segment("s1", seg)
+        evt_id = events[0].id
+    res = client.post(
+        "/api/trial/objection/action",
+        json={"event_id": evt_id, "cure": "rephrase"},
+    )
+    assert res.status_code == 200
+    received = sock.get_received("/ws/trial")
+    assert any(r["name"] == "objection_cure_chosen" for r in received)
     with app.app_context():
         assert ObjectionResolution.query.count() == 1

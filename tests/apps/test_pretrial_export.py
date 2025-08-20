@@ -3,6 +3,8 @@ import pytest
 from pathlib import Path
 
 os.environ["DATABASE_URL"] = "sqlite://"
+os.environ.setdefault("FLASK_SECRET_KEY", "test")
+os.environ.setdefault("JWT_SECRET", "test")
 
 from apps.legal_discovery.interface_flask import app, db
 
