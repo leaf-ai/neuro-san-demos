@@ -1024,3 +1024,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-09-27T18:00Z
 - Converted dashboard tabs to React Router routes with responsive grid layout, global context and theme toggling. Added skeleton loaders, error boundaries and accessibility improvements.
 - Next: extend loading/error handling across remaining components and enhance test coverage.
+
+## Update 2025-09-27T19:00Z
+- Integrated Flask-Limiter with Redis backend and per-user/per-IP caps on chat and hippo queries.
+- `/api/health` now reports blocked request counts for monitoring.
+- Next: tune rate thresholds and expand rate-limit tests.
