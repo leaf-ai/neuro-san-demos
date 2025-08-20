@@ -1,8 +1,8 @@
+import logging
 import os
 
 from neuro_san.client.agent_session_factory import AgentSessionFactory
 from neuro_san.client.streaming_input_processor import StreamingInputProcessor
-import logging
 
 AGENT_NETWORK_NAME = "legal_discovery"
 

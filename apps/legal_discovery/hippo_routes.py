@@ -2,12 +2,12 @@
 from __future__ import annotations
 
 import logging
+import os
 import time
 import uuid
 
-import os
-from flask import Blueprint, jsonify, request
 import requests
+from flask import Blueprint, jsonify, request
 
 try:  # pragma: no cover - optional dependency
     from neo4j import GraphDatabase

@@ -2,6 +2,7 @@ from .database import db
 from .models import UserSetting
 
 
+# Settings helpers
 def get_user_settings(user_id=1):
     """
     Retrieves user settings from the database.

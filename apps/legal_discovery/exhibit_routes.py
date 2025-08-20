@@ -8,8 +8,8 @@ from flask import Blueprint, jsonify, request, current_app
 from PyPDF2 import PdfReader
 
 from .database import db
-from .models import Document, ChainOfCustodyLog, DocumentSource
-from .exhibit_manager import assign_exhibit_number, generate_binder, export_zip
+from .models import ChainOfCustodyLog, Document, DocumentSource
+from .exhibit_manager import assign_exhibit_number, export_zip, generate_binder
 
 exhibits_bp = Blueprint("exhibits", __name__, url_prefix="/api/exhibits")
 

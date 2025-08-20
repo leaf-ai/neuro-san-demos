@@ -1,10 +1,15 @@
+"""Objection analysis engine for trial assistant."""
+
 from __future__ import annotations
+
 import re
-import yaml
 from typing import List
+
+import yaml
+
+from ...database import log_objection_event
 from ...models import ObjectionEvent
 from ...models_trial import TranscriptSegment
-from ...database import log_objection_event
 
 
 class ObjectionEngine:
