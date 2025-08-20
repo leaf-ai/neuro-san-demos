@@ -5,6 +5,15 @@ import { AppProvider } from './AppContext';
 import Dashboard from './Dashboard';
 import DocumentViewer from './components/DocumentViewer';
 
+const API_BASE = __API_BASE__ || '';
+const originalFetch = window.fetch.bind(window);
+window.fetch = (input, init) => {
+  if (typeof input === 'string' && input.startsWith('/')) {
+    return originalFetch(API_BASE + input, init);
+  }
+  return originalFetch(input, init);
+};
+
 function DocumentViewerWrapper() {
   const { mode, '*': docId } = useParams();
   return <DocumentViewer mode={mode} docId={decodeURIComponent(docId)} />;

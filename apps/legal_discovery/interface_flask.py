@@ -119,12 +119,17 @@ os.environ["AGENT_LLM_INFO_FILE"] = os.environ.get(
 )
 # Ensure the React build exists so the dashboard can render
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
-BUNDLE_PATH = os.path.join(STATIC_DIR, "bundle.js")
-if not os.path.exists(BUNDLE_PATH):
+MANIFEST_PATH = os.path.join(STATIC_DIR, "manifest.json")
+if not os.path.exists(MANIFEST_PATH):
     logger.warning(
-        "Frontend bundle missing at %s; run `npm --prefix apps/legal_discovery run build` before starting the server.",
-        BUNDLE_PATH,
+        "Frontend manifest missing at %s; run `npm --prefix apps/legal_discovery run build` before starting the server.",
+        MANIFEST_PATH,
     )
+    BUNDLE_NAME = "bundle.js"
+else:
+    with open(MANIFEST_PATH) as f:
+        manifest = json.load(f)
+    BUNDLE_NAME = manifest.get("src/main.jsx", {}).get("file", "bundle.js")
 app = Flask(__name__)
 metrics.init_app(app)
 init_tracing(app)
@@ -1940,19 +1945,19 @@ def export_report():
 @app.route("/present/<mode>/<doc_id>")
 def present(mode: str, doc_id: str):
     """Render the document viewer for live presentations."""
-    return render_template("dashboard.html")
+    return render_template("dashboard.html", bundle_js=BUNDLE_NAME)
 
 
 @app.route("/")
 def index():
     """Serve the React dashboard by default."""
-    return render_template("dashboard.html")
+    return render_template("dashboard.html", bundle_js=BUNDLE_NAME)
 
 
 @app.route("/dashboard")
 def dashboard():
     """Return the dashboard UI."""
-    return render_template("dashboard.html")
+    return render_template("dashboard.html", bundle_js=BUNDLE_NAME)
 
 
 @socketio.on("user_input", namespace="/chat")
