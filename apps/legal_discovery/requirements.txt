@@ -34,6 +34,7 @@ redis
 reportlab
 requests
 rfc3987
+rq
 schedule
 scikit-learn
 sentence-transformers

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { fetchJSON } from "../utils";
+import Skeleton from "./Skeleton";
 /* global cytoscape */
 function GraphSection() {
   const [nodes,setNodes] = useState([]);
@@ -11,9 +12,11 @@ function GraphSection() {
   const cyRef = useRef(null);
   const [exporting,setExporting] = useState(false);
   const [analysis,setAnalysis] = useState([]);
+  const [loading,setLoading] = useState(true);
   const load = useCallback(() => {
+    setLoading(true);
     const url = '/api/graph' + (subnet?`?subnet=${encodeURIComponent(subnet)}`:'');
-    fetchJSON(url).then(d=>{setNodes(d.data.nodes||[]);setEdges(d.data.edges||[]);});
+    fetchJSON(url).then(d=>{setNodes(d.data.nodes||[]);setEdges(d.data.edges||[]);}).finally(()=>setLoading(false));
   }, [subnet]);
   useEffect(load, []);
   useEffect(() => {
@@ -74,6 +77,14 @@ function GraphSection() {
     fetch('/api/graph/cypher',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query})})
       .then(r=>r.json()).then(d=>setCypherResult(d.data||d.error||null));
   };
+  if (loading) {
+    return (
+      <section className="card">
+        <h2>Knowledge Graph</h2>
+        <Skeleton className="h-48" />
+      </section>
+    );
+  }
   return (
     <section className="card">
       <h2>Knowledge Graph</h2>

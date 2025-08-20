@@ -1021,3 +1021,15 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Introduced Pydantic schemas for exhibit assignment and narrative discrepancy analysis.
 - Applied validation with 400 responses for invalid payloads and added corresponding tests.
 - Next: extend schema validation to remaining API routes.
+
+- Finalised objection analysis endpoint and Socket.IO cure handler.
+- Next: expose objection resolution history in dashboard.
+
+## Update 2025-09-27T18:00Z
+- Converted dashboard tabs to React Router routes with responsive grid layout, global context and theme toggling. Added skeleton loaders, error boundaries and accessibility improvements.
+- Next: extend loading/error handling across remaining components and enhance test coverage.
+
+## Update 2025-09-28T00:00Z
+- Introduced RQ task queue with Redis and async routes for binder generation, indexing and transcript analysis.
+- Added /api/tasks/<id> for polling.
+- Next: hook frontend to poll task status and handle long-running jobs.

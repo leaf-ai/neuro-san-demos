@@ -21,6 +21,7 @@ from .extensions import socketio
 from .models import ObjectionEvent, ObjectionResolution
 from .models_trial import TranscriptSegment, TrialSession
 from .trial_assistant.services.objection_engine import engine
+from .tasks import enqueue, index_document_task, analyze_segment_task
 
 bp = Blueprint("hippo", __name__, url_prefix="/api/hippo")
 objections_bp = Blueprint("objections", __name__, url_prefix="/api/objections")
@@ -72,9 +73,10 @@ def index_document():
     path = data.get("doc_path", "")
     if not case_id or not text:
         return jsonify({"error": "case_id and text required"}), 400
-    doc_id = hippo.ingest_document(case_id, text, path)
-    segments = len(hippo.INDEX[case_id][doc_id])
-    return jsonify({"doc_id": doc_id, "segments": segments})
+    task_id, result = enqueue(index_document_task, case_id, text, path)
+    if result is not None:
+        return jsonify({"task_id": task_id, **result})
+    return jsonify({"task_id": task_id}), 202
 
 
 @bp.post("/query")
@@ -136,6 +138,14 @@ def query_document():
 @objections_bp.post("/analyze-segment")
 @auth_required
 def analyze_segment():
+    """Run objection analysis on a transcript segment.
+
+    The segment text is stored, analysed by the objection engine and
+    supporting reference passages are pulled via ``hippo_query``.  Any
+    generated objection events are persisted and broadcast to clients
+    listening on the ``trial_objections`` Socket.IO room.
+    """
+
     data = request.get_json() or {}
     session_id = data.get("session_id")
     text = data.get("text", "")
@@ -151,58 +161,16 @@ def analyze_segment():
     )
     db.session.add(seg)
     db.session.commit()
-    events = engine.analyze_segment(session_id, seg)
-    refs: list = []
-    trace_id = None
-    try:
-        sess = db.session.get(TrialSession, session_id)
-        if sess:
-            start = time.perf_counter()
-            result = hippo.hippo_query(sess.case_id, text, k=3)
-            elapsed_ms = (time.perf_counter() - start) * 1000
-            items = result.get("items", [])
-            trace_id = result.get("trace_id")
-            refs = [
-                {"segment_id": item.get("segment_id"), "path": item.get("path")}
-                for item in items
-            ]
-            timings = {"total_ms": round(elapsed_ms, 2)}
-            log_retrieval_trace(
-                trace_id=trace_id,
-                case_id=sess.case_id,
-                query=text,
-                graph_weight=1.0,
-                dense_weight=1.0,
-                timings=timings,
-                results=items,
-            )
-    except Exception as exc:  # pragma: no cover - retrieval best effort
-        logger.exception("hippo_query failed: %s", exc)
-    for e in events:
-        e.refs = refs
-        e.trace_id = trace_id
-        e.path = refs[0]["path"] if refs else None
-    db.session.commit()
-    for e in events:
-        socketio.emit(
-            "objection_event",
-            {
-                "event_id": e.id,
-                "segment_id": e.segment_id,
-                "ground": e.ground,
-                "confidence": e.confidence,
-                "suggested_cures": e.suggested_cures,
-                "refs": e.refs,
-                "trace_id": e.trace_id,
-            },
-            room="trial_objections",
-            namespace="/ws/trial",
-        )
-    return jsonify({"events": [e.id for e in events], "segment_id": seg.id})
+    task_id, result = enqueue(analyze_segment_task, seg.id, session_id)
+    if result is not None:
+        return jsonify({"task_id": task_id, **result})
+    return jsonify({"task_id": task_id, "segment_id": seg.id}), 202
 
 
 @socketio.on("objection_cure_chosen", namespace="/ws/trial")
 def objection_cure_chosen(data):
+    """Record an attorney's chosen cure and clear active highlights."""
+
     evt_id = data.get("event_id")
     cure = data.get("cure")
     if not evt_id:

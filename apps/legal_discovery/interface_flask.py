@@ -34,6 +34,7 @@ from .exhibit_routes import exhibits_bp
 from .extensions import limiter, socketio
 from .feature_flags import FEATURE_FLAGS
 from .hippo_routes import bp as hippo_bp, objections_bp, health_bp
+from .tasks import tasks_bp
 from .trial_assistant import bp as trial_assistant_bp
 from .trial_prep_routes import trial_prep_bp
 from .validators import NarrativeDiscrepancyAnalyzePayload
@@ -151,6 +152,7 @@ app.register_blueprint(trial_assistant_bp)
 app.register_blueprint(hippo_bp)
 app.register_blueprint(objections_bp)
 app.register_blueprint(health_bp)
+app.register_blueprint(tasks_bp)
 if FEATURE_FLAGS.get("theories"):
     from .theory_routes import theories_bp
 

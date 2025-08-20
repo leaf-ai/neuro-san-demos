@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
+import Skeleton from "./Skeleton";
 function TimelineSection() {
   const [query,setQuery] = useState('');
   const [events,setEvents] = useState([]);
@@ -8,9 +9,11 @@ function TimelineSection() {
   const [exporting,setExporting] = useState(false);
   const [startDate,setStartDate] = useState('');
   const [endDate,setEndDate] = useState('');
+  const [loading,setLoading] = useState(false);
   const load = () => {
+    setLoading(true);
     fetch('/api/timeline?query='+encodeURIComponent(query))
-      .then(r=>r.json()).then(d=>setEvents(d.data||[]));
+      .then(r=>r.json()).then(d=>setEvents(d.data||[])).finally(()=>setLoading(false));
   };
   const exportTimeline = () => {
     setExporting(true);
@@ -74,7 +77,7 @@ function TimelineSection() {
         <button className="button-secondary" onClick={exportTimeline}><i className="fa fa-file-export mr-1"></i>Export</button>
       </div>
       {exporting && <p className="text-sm mb-1">Exporting...</p>}
-      <div ref={containerRef} style={{height:'200px'}}></div>
+      {loading ? <Skeleton className="h-48" /> : <div ref={containerRef} style={{height:'200px'}}></div>}
     </section>
   );
 }
