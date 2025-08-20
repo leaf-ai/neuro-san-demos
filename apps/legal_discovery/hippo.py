@@ -16,6 +16,8 @@ import time
 import logging
 from typing import Callable, Dict, Iterable, List, Optional, Tuple
 
+from .cache import invalidate_prefix
+
 try:  # pragma: no cover - allows tests without neo4j package
     from neo4j import GraphDatabase, Driver
 except Exception:  # pragma: no cover - fallback when driver unavailable
@@ -269,6 +271,8 @@ def ingest_document(
 
     case_index = INDEX.setdefault(case_id, {})
     case_index[doc_id] = segments
+    invalidate_prefix("hippo_query")
+    invalidate_prefix("vector_search")
 
     if vector_db:
         try:  # pragma: no cover - best effort

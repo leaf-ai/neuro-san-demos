@@ -1043,3 +1043,11 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Updated `voice-widget.jsx` and `TrialConsole.tsx` to emit `objection_cure_chosen` via Socket.IO.
 - Added integration test ensuring cures persist through `log_objection_resolution`.
 - Next: refine client highlight clearing and expose resolution history in UI.
+## Update 2025-09-28T01:00Z
+- Added Redis-backed caching for Hippo and vector search queries with cache metrics in `/api/health`.
+- Cache invalidated on document ingestion and vector additions; tests cover hit/miss logic.
+- Next: expose cache metrics in dashboard and tune TTLs.
+
+## Update 2025-09-28T06:00Z
+- Enabled structured JSON logging, Prometheus metrics and OpenTelemetry tracing in the backend.
+- Next: expand tracing coverage across additional routes and export spans to an OTLP backend.

@@ -1,12 +1,22 @@
 """Shared Flask extensions for the legal discovery app."""
 
+import logging
+import os
 from collections import Counter
+import os
 
 import jwt
+import redis
+import structlog
 from flask import current_app, request, session
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_socketio import SocketIO
+from opentelemetry import trace
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+from prometheus_flask_exporter import PrometheusMetrics
 
 
 def user_limit_key() -> str:
@@ -32,13 +42,63 @@ def user_limit_key() -> str:
 
 socketio = SocketIO()
 limiter = Limiter(key_func=get_remote_address)
+metrics = PrometheusMetrics.for_app_factory()
+
+
+def configure_logging() -> None:
+    """Configure structlog for JSON-formatted logs."""
+
+    log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
+    logging.basicConfig(format="%(message)s", level=log_level)
+    structlog.configure(
+        processors=[
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.stdlib.add_log_level,
+            structlog.processors.StackInfoRenderer(),
+            structlog.processors.format_exc_info,
+            structlog.processors.JSONRenderer(),
+        ],
+        context_class=dict,
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        wrapper_class=structlog.stdlib.BoundLogger,
+        cache_logger_on_first_use=True,
+    )
+
+
+def init_tracing(app) -> None:
+    """Initialize OpenTelemetry tracing for the Flask app."""
+
+    provider = TracerProvider()
+    provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
+    trace.set_tracer_provider(provider)
+    FlaskInstrumentor().instrument_app(app)
+
+
+tracer = trace.get_tracer(__name__)
 
 # Track how many requests were blocked by rate limiting.
 blocked_requests: Counter[str] = Counter()
 
+# Redis connection used for request caching.  Falls back to ``None`` when
+# the service is unavailable so callers can degrade gracefully.
+try:  # pragma: no cover - best effort
+    redis_client = redis.Redis.from_url(os.environ.get("REDIS_URL", "redis://localhost:6379/0"))
+    redis_client.ping()
+except Exception:  # pragma: no cover - redis may be absent
+    redis_client = None
+
+# Global counters for cache metrics exposed via ``/api/health``.
+cache_stats: Counter[str] = Counter()
+
 __all__ = [
     "socketio",
     "limiter",
+    "metrics",
     "user_limit_key",
     "blocked_requests",
+    "redis_client",
+    "cache_stats",
+    "configure_logging",
+    "init_tracing",
+    "tracer",
 ]

@@ -18,7 +18,7 @@ import schedule
 import spacy
 from flask import Flask, Response, jsonify, render_template, request, send_file
 from more_itertools import chunked
-from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+import structlog
 from pyhocon import ConfigFactory
 from spacy.cli import download as spacy_download
 from weasyprint import HTML
@@ -31,7 +31,16 @@ from .chat_state import user_input_queue
 from .chain_logger import ChainEventType, log_event
 from .database import db
 from .exhibit_routes import exhibits_bp
-from .extensions import limiter, socketio, blocked_requests
+from .cache import redis_cache, invalidate_prefix
+from .extensions import (
+    blocked_requests,
+    configure_logging,
+    init_tracing,
+    limiter,
+    metrics,
+    socketio,
+    tracer,
+)
 from .feature_flags import FEATURE_FLAGS
 from .hippo_routes import bp as hippo_bp, objections_bp, health_bp
 from .tasks import tasks_bp
@@ -87,8 +96,10 @@ except Exception:  # pragma: no cover - optional dependency
     def tear_down_legal_discovery_assistant(*args, **kwargs):
         return None
 
-# Configure logging before any other setup so early steps are captured
-logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
+
+# Configure logging and tracing before any other setup
+configure_logging()
+logger = structlog.get_logger(__name__)
 
 bates_service = BatesNumberingService()
 
@@ -110,12 +121,13 @@ os.environ["AGENT_LLM_INFO_FILE"] = os.environ.get(
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 BUNDLE_PATH = os.path.join(STATIC_DIR, "bundle.js")
 if not os.path.exists(BUNDLE_PATH):
-    logging.warning(
+    logger.warning(
         "Frontend bundle missing at %s; run `npm --prefix apps/legal_discovery run build` before starting the server.",
         BUNDLE_PATH,
     )
 app = Flask(__name__)
-logger = app.logger
+metrics.init_app(app)
+init_tracing(app)
 config_path = os.environ.get("LEGAL_DISCOVERY_CONFIG")
 secret_key = os.environ.get("FLASK_SECRET_KEY")
 jwt_secret = os.environ.get("JWT_SECRET")
@@ -172,18 +184,14 @@ atexit.register(executor.shutdown)
 thread_started = False  # pylint: disable=invalid-name
 
 
-@app.route("/metrics")
-def metrics() -> Response:
-    """Expose Prometheus metrics."""
-    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
-
-
 @app.errorhandler(429)
 def rate_limit_handler(exc):
     """Increment blocked request metrics and return a JSON error."""
-    endpoint = request.endpoint or request.path
-    blocked_requests[endpoint] += 1
-    return jsonify({"error": "rate limit exceeded"}), 429
+    with tracer.start_as_current_span("rate_limit_handler"):
+        endpoint = request.endpoint or request.path
+        blocked_requests[endpoint] += 1
+        return jsonify({"error": "rate limit exceeded"}), 429
+
 
 # Shared crawler instance for legal references
 legal_crawler = LegalCrawler()
@@ -212,6 +220,7 @@ def _initialize_agent() -> None:
         app.logger.info("Setting up legal discovery assistant...")
         legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant(_gather_upload_paths())
         app.logger.info("...legal discovery assistant set up.")
+
 
 threading.Thread(target=_initialize_agent, daemon=True).start()
 
@@ -826,9 +835,7 @@ def ingest_document(
         db.session.add(DocumentMetadata(document_id=doc_id, schema="evidence_scorecard", data=scores))
         try:
             sanctions = SanctionsRiskAnalyzer().assess(redacted_text, scorecard=scores)
-            db.session.add(
-                DocumentMetadata(document_id=doc_id, schema="sanctions_risk", data=sanctions)
-            )
+            db.session.add(DocumentMetadata(document_id=doc_id, schema="sanctions_risk", data=sanctions))
         except Exception as exc:
             logger.exception("sanctions risk analysis failed", exc_info=exc)
         db.session.commit()
@@ -1493,7 +1500,15 @@ def vector_add_documents():
         return jsonify({"error": "Invalid metadata length"}), 400
     manager = VectorDatabaseManager()
     manager.add_documents(documents, metadatas, ids)
+    invalidate_prefix("vector_search")
+    invalidate_prefix("hippo_query")
     return jsonify({"status": "ok"})
+
+
+@redis_cache("vector_search", key_func=lambda q: q)
+def _vector_search_cached(q: str):
+    manager = VectorDatabaseManager()
+    return manager.query([q], n_results=5)
 
 
 @app.route("/api/vector/search", methods=["GET"])
@@ -1502,8 +1517,7 @@ def vector_search():
     query = request.args.get("q")
     if not query:
         return jsonify({"status": "ok", "data": {}})
-    manager = VectorDatabaseManager()
-    result = manager.query([query], n_results=5)
+    result = _vector_search_cached(query)
     return jsonify({"status": "ok", "data": result})
 
 
