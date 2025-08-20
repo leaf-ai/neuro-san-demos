@@ -102,7 +102,7 @@ By following these steps and fulfilling the requirements, you can successfully n
 These are coded tools called by Inspection and Listing agents:
 
 * **BraveSearch**
-    * Performs web search using Brave search API. Must set Brave search environment variables specified in .env.examples.
+    * Performs web search using Brave search API. Must set Brave search environment variables specified in config/.env.sample.
 
 **Note**: it is assumed that the agent coordination mechanism is AAOSA.
 
