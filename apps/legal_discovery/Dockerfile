@@ -1,14 +1,14 @@
 # ---------- Frontend build (Node) ----------
 FROM node:18-slim AS frontend
-WORKDIR /app
+WORKDIR /frontend
 
-# Install only deps first for better caching
-COPY apps/legal_discovery/package*.json apps/legal_discovery/
-RUN npm --prefix apps/legal_discovery ci
+# Install dependencies separately for better caching
+COPY apps/legal_discovery/package*.json ./
+RUN npm ci
 
-# Build React bundle ahead of runtime so Flask serves precompiled assets
-COPY apps/legal_discovery apps/legal_discovery
-RUN npm --prefix apps/legal_discovery run build --silent
+# Build the React bundle so Flask can serve precompiled assets
+COPY apps/legal_discovery/ ./
+RUN npm run build --silent
 
 
 # ---------- Backend (Python) ----------
@@ -51,7 +51,7 @@ RUN python -m pip install -r requirements.txt \
 COPY . .
 
 # Bring in built static assets from the frontend stage
-COPY --from=frontend /app/apps/legal_discovery/static apps/legal_discovery/static
+COPY --from=frontend /frontend/static apps/legal_discovery/static
 
 # Clean up any leftover frontend dev folders (defensive)
 RUN rm -rf apps/legal_discovery/node_modules
