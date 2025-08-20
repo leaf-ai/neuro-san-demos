@@ -1070,3 +1070,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Streamlined Dockerfile with explicit frontend build stage and asset copy.
 - Corrected `docker-compose.yml` environment block indentation so services parse cleanly.
 - Next: confirm docker-compose build succeeds with new multi-stage layout.
+
+## Update 2025-10-06T13:30Z
+- Regenerated package-lock.json via npm ci to lock frontend dependencies.
+- Next: ensure CI uses package-lock for consistent builds.
