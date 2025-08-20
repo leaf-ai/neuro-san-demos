@@ -6,6 +6,33 @@ from apps.legal_discovery.hippo_routes import bp as hippo_bp
 from apps.legal_discovery.database import db
 from apps.legal_discovery.models import RetrievalTrace
 from apps.legal_discovery import auth as auth_module
+from apps.legal_discovery import hippo
+from apps.legal_discovery.extensions import cache_stats
+
+
+class FakeRedis:
+    def __init__(self):
+        self.store: dict[str, str] = {}
+
+    def get(self, key: str):
+        return self.store.get(key)
+
+    def setex(self, key: str, ttl: int, value: str):
+        self.store[key] = value
+
+    def scan_iter(self, pattern: str):
+        import re
+
+        regex = re.compile(pattern.replace("*", ".*"))
+        for k in list(self.store.keys()):
+            if regex.fullmatch(k):
+                yield k
+
+    def delete(self, key: str):
+        self.store.pop(key, None)
+
+    def ping(self):
+        return True
 
 
 @pytest.fixture(autouse=True)
@@ -133,3 +160,30 @@ def test_query_logs_retrieval_trace():
         trace = db.session.query(RetrievalTrace).filter_by(trace_id=trace_id).first()
         assert trace is not None
         assert trace.results
+
+
+def test_query_caching_and_invalidation(monkeypatch):
+    app = _create_app()
+    client = app.test_client()
+    fake = FakeRedis()
+    monkeypatch.setattr("apps.legal_discovery.extensions.redis_client", fake)
+    cache_stats.clear()
+
+    call_count = {"n": 0}
+
+    def fake_query(case_id: str, query: str, k: int = 10):
+        call_count["n"] += 1
+        return {"items": []}
+
+    monkeypatch.setattr(hippo, "hippo_query", fake_query)
+
+    payload = {"case_id": "c1", "query": "Bob"}
+    client.post("/api/hippo/query", json=payload)
+    client.post("/api/hippo/query", json=payload)
+    assert call_count["n"] == 1
+    assert cache_stats["hits"] == 1
+    assert cache_stats["misses"] == 1
+
+    hippo.ingest_document("c1", "New text")
+    client.post("/api/hippo/query", json=payload)
+    assert call_count["n"] == 2
