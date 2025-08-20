@@ -30,7 +30,7 @@ def test_voice_command_routing_and_bus(monkeypatch):
         "apps.legal_discovery.chat_routes._ensure_listeners_started", lambda: None
     )
     monkeypatch.setattr(
-        "apps.legal_discovery.chat_routes._require_auth", lambda: True
+        "apps.legal_discovery.auth._require_auth", lambda: True
     )
 
     publish_calls = []

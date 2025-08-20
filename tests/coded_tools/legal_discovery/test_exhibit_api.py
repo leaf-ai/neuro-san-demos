@@ -14,6 +14,13 @@ from apps.legal_discovery.models import (
     Fact,
 )
 from apps.legal_discovery.exhibit_routes import exhibits_bp
+from apps.legal_discovery import auth as auth_module
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _no_auth(monkeypatch):
+    monkeypatch.setattr(auth_module, "_require_auth", lambda: True)
 
 def _create_pdf(path):
     c = canvas.Canvas(str(path))

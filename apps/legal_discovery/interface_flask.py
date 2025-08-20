@@ -114,8 +114,17 @@ if not os.path.exists(BUNDLE_PATH):
         BUNDLE_PATH,
     )
 app = Flask(__name__)
-app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", os.urandom(24).hex())
-app.config["JWT_SECRET"] = os.environ.get("JWT_SECRET", os.urandom(24).hex())
+config_path = os.environ.get("LEGAL_DISCOVERY_CONFIG")
+secret_key = os.environ.get("FLASK_SECRET_KEY")
+jwt_secret = os.environ.get("JWT_SECRET")
+if config_path and (not secret_key or not jwt_secret):
+    cfg = ConfigFactory.parse_file(config_path)
+    secret_key = secret_key or cfg.get("flask.secret_key", None)
+    jwt_secret = jwt_secret or cfg.get("flask.jwt_secret", None)
+if not secret_key or not jwt_secret:
+    raise RuntimeError("FLASK_SECRET_KEY and JWT_SECRET must be set")
+app.config["SECRET_KEY"] = secret_key
+app.config["JWT_SECRET"] = jwt_secret
 # Allow the primary relational store to be configured at runtime. Default to
 # SQLite for local development but override with an environment-provided
 # PostgreSQL connection string when available so the application scales under

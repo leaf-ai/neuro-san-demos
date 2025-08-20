@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, session, current_app
+from flask import Blueprint, jsonify, request
 
 from coded_tools.legal_discovery.chat_agent import RetrievalChatAgent
 from coded_tools.legal_discovery.timeline_manager import TimelineManager
@@ -11,11 +11,10 @@ from .voice import synthesize_voice, get_available_voices
 from .feature_flags import FEATURE_FLAGS
 from .stt import stream_transcribe
 from .voice_commands import execute_command
+from .auth import auth_required, _require_auth
 
 import base64
 import logging
-import jwt
-from functools import wraps
 
 from apps.message_bus import (
     AUTO_DRAFTER_ALERT_TOPIC,
@@ -29,40 +28,6 @@ chat_bp = Blueprint("chat", __name__, url_prefix="/api/chat")
 
 bus = MessageBus()
 _listeners_started = False
-
-
-def _log_auth_failure(reason: str) -> None:
-    db.session.add(MessageAuditLog(message_id=None, sender="system", transcript=reason))
-    db.session.commit()
-
-
-def _require_auth() -> bool:
-    """Validate JWT or session token presence."""
-    auth_header = request.headers.get("Authorization", "")
-    token = None
-    if auth_header.startswith("Bearer "):
-        token = auth_header.split(" ", 1)[1]
-    if token:
-        try:
-            jwt.decode(token, current_app.config["JWT_SECRET"], algorithms=["HS256"])
-            return True
-        except jwt.PyJWTError:
-            _log_auth_failure("invalid_token")
-            return False
-    if session.get("user"):
-        return True
-    _log_auth_failure("missing_token")
-    return False
-
-
-def auth_required(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if not _require_auth():
-            return jsonify({"status": "error", "error": "unauthorized"}), 401
-        return func(*args, **kwargs)
-
-    return wrapper
 
 
 def _ensure_listeners_started() -> None:
@@ -138,6 +103,7 @@ def _handle_transcript(transcript: str, data: dict) -> dict:
     }
 
 @chat_bp.post("/query")
+@auth_required
 def query_agent():
     data = request.get_json() or {}
     text = data.get("text")

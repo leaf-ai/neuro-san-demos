@@ -3,6 +3,8 @@ import os
 import pytest
 
 os.environ["DATABASE_URL"] = "sqlite://"
+os.environ.setdefault("FLASK_SECRET_KEY", "test")
+os.environ.setdefault("JWT_SECRET", "test")
 
 from apps.message_bus import AUTO_DRAFTER_ALERT_TOPIC, TIMELINE_ALERT_TOPIC
 from apps.legal_discovery.interface_flask import app, db, MessageAuditLog, Case

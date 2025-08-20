@@ -4,6 +4,8 @@ import pathlib
 import pytest
 
 os.environ["DATABASE_URL"] = "sqlite://"
+os.environ.setdefault("FLASK_SECRET_KEY", "test")
+os.environ.setdefault("JWT_SECRET", "test")
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[2]))
 
 from apps.legal_discovery.interface_flask import app, db, Case, TimelineEvent
@@ -17,7 +19,10 @@ def client():
         case = Case(name="Test")
         db.session.add(case)
         db.session.commit()
-    return app.test_client()
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess["user"] = "tester"
+    return client
 
 
 def test_chat_creates_timeline_event(client):

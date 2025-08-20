@@ -8,6 +8,7 @@ import uuid
 
 import requests
 from flask import Blueprint, jsonify, request
+from .auth import auth_required
 
 try:  # pragma: no cover - optional dependency
     from neo4j import GraphDatabase
@@ -65,6 +66,7 @@ def health() -> 'flask.Response':
 
 
 @bp.post("/index")
+@auth_required
 def index_document():
     data = request.get_json() or {}
     case_id = data.get("case_id")
@@ -78,6 +80,7 @@ def index_document():
 
 
 @bp.post("/query")
+@auth_required
 def query_document():
     data = request.get_json() or {}
     case_id = data.get("case_id")
@@ -133,6 +136,7 @@ def query_document():
 
 
 @objections_bp.post("/analyze-segment")
+@auth_required
 def analyze_segment():
     data = request.get_json() or {}
     session_id = data.get("session_id")

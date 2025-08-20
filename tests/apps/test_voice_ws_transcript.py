@@ -28,7 +28,7 @@ def _create_app():
 def test_voice_ws_transcript_updates(monkeypatch):
     app = _create_app()
     monkeypatch.setattr(
-        "apps.legal_discovery.chat_routes._require_auth", lambda: True
+        "apps.legal_discovery.auth._require_auth", lambda: True
     )
     monkeypatch.setattr(
         "apps.legal_discovery.chat_routes._ensure_listeners_started", lambda: None
