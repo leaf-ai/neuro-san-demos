@@ -1020,3 +1020,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-09-27T17:00Z
 - Finalised objection analysis endpoint and Socket.IO cure handler.
 - Next: expose objection resolution history in dashboard.
+
+## Update 2025-09-27T18:00Z
+- Converted dashboard tabs to React Router routes with responsive grid layout, global context and theme toggling. Added skeleton loaders, error boundaries and accessibility improvements.
+- Next: extend loading/error handling across remaining components and enhance test coverage.
