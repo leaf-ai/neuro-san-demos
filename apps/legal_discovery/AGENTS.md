@@ -1005,3 +1005,11 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-09-27T15:00Z
 - Secured binder and zip export routes with auth enforcement, case ownership checks and path sanitization.
 - Next: expand tests for unauthorized and invalid path scenarios.
+
+## Update 2025-09-27T16:00Z
+- Persisted feature flags in user settings with REST APIs and React toggles.
+- Next: extend tests for flag persistence and blueprint registration.
+
+## Update 2025-09-27T16:10Z
+- Cleaned up duplicate imports in settings module.
+- Next: monitor test hangs and streamline initialization.
