@@ -136,6 +136,14 @@ def query_document():
 @objections_bp.post("/analyze-segment")
 @auth_required
 def analyze_segment():
+    """Run objection analysis on a transcript segment.
+
+    The segment text is stored, analysed by the objection engine and
+    supporting reference passages are pulled via ``hippo_query``.  Any
+    generated objection events are persisted and broadcast to clients
+    listening on the ``trial_objections`` Socket.IO room.
+    """
+
     data = request.get_json() or {}
     session_id = data.get("session_id")
     text = data.get("text", "")
@@ -203,6 +211,8 @@ def analyze_segment():
 
 @socketio.on("objection_cure_chosen", namespace="/ws/trial")
 def objection_cure_chosen(data):
+    """Record an attorney's chosen cure and clear active highlights."""
+
     evt_id = data.get("event_id")
     cure = data.get("cure")
     if not evt_id:
