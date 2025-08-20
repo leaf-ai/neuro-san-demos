@@ -1056,3 +1056,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Switched Vite build to emit manifest with hashed assets and configurable API base.
 - Flask loads hashed bundle from manifest and CI builds frontend.
 - Next: verify CDN caching and review manifest handling for styles.
+
+## Update 2025-10-06T12:00Z
+- Introduced design tokens for typography, spacing and accent scale with global CSS variables.
+- Refactored GraphSection and ExhibitTab to consume spacing and font tokens for consistent theming.
+- Next: migrate remaining components to the new theme system and expand color usage.
