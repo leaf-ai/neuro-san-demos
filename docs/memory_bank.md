@@ -35,7 +35,7 @@ This compiles React files in `src/` into `static/bundle.js`. The bundle is ignor
 
 ## Docker Compose
 
-Copy `.env.example` to `.env` and set `NEO4J_PASSWORD`. Then execute:
+Copy `config/.env.sample` to `.env` and set `NEO4J_PASSWORD`. Then execute:
 ```bash
 docker-compose build
 docker-compose up

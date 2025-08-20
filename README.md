@@ -262,7 +262,13 @@ API keys section in your profile.
 <!-- pyml enable commands-show-output -->
 
 Other providers such as Anthropic, AzureOpenAI, Ollama and more are supported too but will require proper setup.
-Look at the `.env.example` file to set up environment variables for specific use-cases.
+Copy `config/.env.sample` to `.env` and set the required keys:
+- `OPENAI_API_KEY`
+- `ANTHROPIC_API_KEY`
+- `GOOGLE_API_KEY`
+- `FLASK_SECRET_KEY`
+- `JWT_SECRET`
+- `NEO4J_PASSWORD`
 
 For testing the API keys, please refer to this [documentation](./docs/api_key.md)
 
@@ -367,7 +373,7 @@ For examples of agent networks, check out [docs/examples.md](docs/examples.md).
 
 The `apps/legal_discovery` stack runs a Flask frontend backed by PostgreSQL, Neo4j, ChromaDB and Redis. To launch the full stack with Docker:
 
-1. Copy `.env.example` to `.env` and set required secrets. Generate strong values for `FLASK_SECRET_KEY` and `JWT_SECRET` used by the Flask app:
+1. Copy `config/.env.sample` to `.env` and set required secrets. Generate strong values for `FLASK_SECRET_KEY` and `JWT_SECRET` used by the Flask app:
 
     ```bash
     python -c 'import secrets; print(secrets.token_hex(32))'
@@ -382,6 +388,8 @@ The `apps/legal_discovery` stack runs a Flask frontend backed by PostgreSQL, Neo
     EMBED_MODEL=sentence-transformers/all-MiniLM-L6-v2
     CROSS_ENCODER_MODEL=cross-encoder/ms-marco-MiniLM-L-6-v2
     ```
+
+Docker Compose mounts the `.env` file into the application container so `config.py` can read it.
 
 2. Build and start the services:
 

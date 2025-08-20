@@ -136,9 +136,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-# .env is tracked to provide a template with API key placeholders
-# Uncomment the line below to ignore .env locally
-# .env
+.env
 .venv
 env/
 venv/
