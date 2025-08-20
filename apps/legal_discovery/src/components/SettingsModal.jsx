@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useAppContext } from "../AppContext";
 
 function SettingsModal({open,onClose}) {
-  const { setSettings, setFeatureFlags } = useAppContext();
+  const { setSettings, setFeatureFlags, theme, setTheme } = useAppContext();
   const [form,setForm] = useState({});
   const ref = useRef();
   const firstFieldRef = useRef();
@@ -14,7 +14,7 @@ function SettingsModal({open,onClose}) {
       Promise.all([
         fetch('/api/settings').then(r=>r.json()),
         fetch('/api/feature-flags').then(r=>r.json())
-      ]).then(([settings, flags]) => setForm({...settings, ...flags}));
+      ]).then(([settings, flags]) => setForm({ theme, ...settings, ...flags }));
       setTimeout(()=>firstFieldRef.current && firstFieldRef.current.focus(),0);
     } else if(previousFocus.current) {
       previousFocus.current.focus();
@@ -36,6 +36,7 @@ function SettingsModal({open,onClose}) {
     ]).then(()=>{
       setSettings(rest);
       setFeatureFlags(flags);
+      if(rest.theme) setTheme(rest.theme);
       onClose();
     });
   };
@@ -80,6 +81,12 @@ function SettingsModal({open,onClose}) {
           <label>GCP Vertex Data Store<input type="text" name="gcp_vertex_ai_data_store_id" value={form.gcp_vertex_ai_data_store_id||''} onChange={update} className="w-full p-2 rounded"/></label>
           <label>GCP Search App<input type="text" name="gcp_vertex_ai_search_app" value={form.gcp_vertex_ai_search_app||''} onChange={update} className="w-full p-2 rounded"/></label>
           <label>GCP Service Account Key<textarea name="gcp_service_account_key" value={form.gcp_service_account_key||''} onChange={update} className="w-full p-2 rounded" rows="2"/></label>
+          <label>Theme
+            <select name="theme" value={form.theme||'dark'} onChange={update} className="w-full p-2 rounded">
+              <option value="dark">Dark</option>
+              <option value="light">Light</option>
+            </select>
+          </label>
           <label className="flex items-center space-x-2"><input type="checkbox" name="theories" checked={form.theories||false} onChange={update}/><span>Enable Legal Theories</span></label>
           <label className="flex items-center space-x-2"><input type="checkbox" name="binder" checked={form.binder||false} onChange={update}/><span>Enable Binder</span></label>
           <label className="flex items-center space-x-2"><input type="checkbox" name="chat" checked={form.chat||false} onChange={update}/><span>Enable Chat</span></label>

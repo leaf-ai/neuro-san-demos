@@ -37,6 +37,7 @@ def save_user_settings(data, user_id=1):
     settings.gcp_vertex_ai_data_store_id = data.get("gcp_vertex_ai_data_store_id")
     settings.gcp_vertex_ai_search_app = data.get("gcp_vertex_ai_search_app")
     settings.gcp_service_account_key = data.get("gcp_service_account_key")
+    settings.theme = data.get("theme")
     db.session.add(settings)
     db.session.commit()
     return settings

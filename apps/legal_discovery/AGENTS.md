@@ -1061,3 +1061,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Introduced design tokens for typography, spacing and accent scale with global CSS variables.
 - Refactored GraphSection and ExhibitTab to consume spacing and font tokens for consistent theming.
 - Next: migrate remaining components to the new theme system and expand color usage.
+
+## Update 2025-10-06T12:30Z
+- Persisted theme selection in user settings and applied body class.
+- Next: sync remaining components with theme preference.
