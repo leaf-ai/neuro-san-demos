@@ -1,5 +1,5 @@
 from __future__ import annotations
-from flask import Blueprint, request, jsonify
+from flask import Blueprint
 from flask_socketio import emit, join_room
 import time
 from ..extensions import socketio
@@ -10,20 +10,6 @@ from .. import hippo
 from .services.objection_engine import engine
 
 bp = Blueprint("trial_assistant", __name__, url_prefix="/api/trial")
-
-
-@bp.post("/objection/action")
-def objection_action():
-    payload = request.json or {}
-    evt_id = payload.get("event_id")
-    action = payload.get("action")
-    if not evt_id:
-        return jsonify({"error": "event_id required"}), 400
-    evt = db.session.get(ObjectionEvent, evt_id)
-    if evt:
-        evt.action_taken = action
-        db.session.commit()
-    return jsonify({"ok": True})
 
 
 @socketio.on("join", namespace="/ws/trial")

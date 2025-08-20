@@ -21,6 +21,7 @@ from .extensions import socketio, limiter, user_limit_key, blocked_requests, cac
 from .cache import redis_cache
 from .models import ObjectionEvent, ObjectionResolution
 from .models_trial import TranscriptSegment, TrialSession
+from .trial_assistant import bp as trial_bp
 from .trial_assistant.services.objection_engine import engine
 from .tasks import enqueue, index_document_task, analyze_segment_task
 
@@ -178,6 +179,35 @@ def analyze_segment():
     if result is not None:
         return jsonify({"task_id": task_id, **result})
     return jsonify({"task_id": task_id, "segment_id": seg.id}), 202
+
+
+@trial_bp.post("/objection/action")
+@auth_required
+def objection_action():
+    """Persist an attorney's chosen cure and notify listeners."""
+
+    data = request.get_json() or {}
+    evt_id = data.get("event_id")
+    cure = data.get("cure") or data.get("action")
+    if not evt_id or not cure:
+        return jsonify({"error": "event_id and cure required"}), 400
+
+    log_objection_resolution(event_id=evt_id, chosen_cure=cure)
+    socketio.emit(
+        "objection_cure_chosen",
+        {"event_id": evt_id, "cure": cure},
+        room="trial_objections",
+        namespace="/ws/trial",
+    )
+    evt = db.session.get(ObjectionEvent, evt_id)
+    if evt:
+        socketio.emit(
+            "clear_highlights",
+            {"segment_id": evt.segment_id},
+            room="trial_objections",
+            namespace="/ws/trial",
+        )
+    return jsonify({"ok": True})
 
 
 @socketio.on("objection_cure_chosen", namespace="/ws/trial")

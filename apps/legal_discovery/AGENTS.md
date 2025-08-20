@@ -1037,6 +1037,12 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Introduced RQ task queue with Redis and async routes for binder generation, indexing and transcript analysis.
 - Added /api/tasks/<id> for polling.
 - Next: hook frontend to poll task status and handle long-running jobs.
+
+## Update 2025-10-05T00:00Z
+- Implemented `/api/trial/objection/action` in `hippo_routes` to persist cures and broadcast selections.
+- Updated `voice-widget.jsx` and `TrialConsole.tsx` to emit `objection_cure_chosen` via Socket.IO.
+- Added integration test ensuring cures persist through `log_objection_resolution`.
+- Next: refine client highlight clearing and expose resolution history in UI.
 ## Update 2025-09-28T01:00Z
 - Added Redis-backed caching for Hippo and vector search queries with cache metrics in `/api/health`.
 - Cache invalidated on document ingestion and vector additions; tests cover hit/miss logic.

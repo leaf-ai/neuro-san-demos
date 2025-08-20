@@ -88,11 +88,12 @@ export default function TrialConsole({ sessionId }: { sessionId: string }) {
   }, [sessionId]);
 
   const chooseCure = (eventId: string, cureKey: string) => {
-    fetch("/api/trial/objection/action", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ event_id: eventId, action: cureKey }),
-    });
+    if (sock.current) {
+      sock.current.emit("objection_cure_chosen", {
+        event_id: eventId,
+        cure: cureKey,
+      });
+    }
     setObjection(null);
     setHighlightId(null);
   };
