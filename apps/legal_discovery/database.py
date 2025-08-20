@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 from typing import Dict, List
+import logging
 
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
+
+
+logger = logging.getLogger(__name__)
 
 
 class IngestionLog(db.Model):
@@ -49,11 +53,12 @@ def log_ingestion(
         )
         db.session.merge(entry)
         db.session.commit()
-    except Exception:  # pragma: no cover - best effort
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.exception("failed to log ingestion", exc_info=exc)
         try:
             db.session.rollback()
-        except Exception:
-            pass
+        except Exception as rollback_exc:
+            logger.exception("failed to rollback ingestion log", exc_info=rollback_exc)
 
 
 def ingestion_matches(doc_id: str, segment_hashes: List[str]) -> bool:
@@ -62,7 +67,8 @@ def ingestion_matches(doc_id: str, segment_hashes: List[str]) -> bool:
     try:
         entry = IngestionLog.query.filter_by(doc_id=doc_id, status="ingested").first()
         return bool(entry and entry.segment_hashes == segment_hashes)
-    except Exception:
+    except Exception as exc:
+        logger.exception("failed to check ingestion match", exc_info=exc)
         return False
 
 
@@ -92,11 +98,12 @@ def log_retrieval_trace(
         )
         db.session.add(entry)
         db.session.commit()
-    except Exception:  # pragma: no cover - best effort
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.exception("failed to log retrieval trace", exc_info=exc)
         try:
             db.session.rollback()
-        except Exception:
-            pass
+        except Exception as rollback_exc:
+            logger.exception("failed to rollback retrieval trace", exc_info=rollback_exc)
 
 
 def log_objection_event(
@@ -126,11 +133,12 @@ def log_objection_event(
         db.session.add(evt)
         db.session.commit()
         return evt
-    except Exception:  # pragma: no cover - best effort
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.exception("failed to log objection event", exc_info=exc)
         try:
             db.session.rollback()
-        except Exception:
-            pass
+        except Exception as rollback_exc:
+            logger.exception("failed to rollback objection event", exc_info=rollback_exc)
         return None
 
 
@@ -143,9 +151,12 @@ def log_objection_resolution(*, event_id: str, chosen_cure: str) -> None:
         resolution = ObjectionResolution(event_id=event_id, chosen_cure=chosen_cure)
         db.session.add(resolution)
         db.session.commit()
-    except Exception:  # pragma: no cover - best effort
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.exception("failed to log objection resolution", exc_info=exc)
         try:
             db.session.rollback()
-        except Exception:
-            pass
+        except Exception as rollback_exc:
+            logger.exception(
+                "failed to rollback objection resolution", exc_info=rollback_exc
+            )
 

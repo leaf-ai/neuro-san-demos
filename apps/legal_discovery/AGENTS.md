@@ -1005,3 +1005,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-09-27T15:00Z
 - Secured binder and zip export routes with auth enforcement, case ownership checks and path sanitization.
 - Next: expand tests for unauthorized and invalid path scenarios.
+
+## Update 2025-09-27T16:00Z
+- Replaced silent exception handlers with structured logging in Hippo, interface, database and trial prep modules.
+- Added error responses for redaction review and tests confirming error logs and HTTP failures.
+- Next: audit remaining modules for hidden failures and broaden negative-case tests.

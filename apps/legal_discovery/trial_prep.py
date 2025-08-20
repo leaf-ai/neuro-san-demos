@@ -21,6 +21,9 @@ from .database import db
 from .models import LegalResource, Lesson, LessonProgress
 
 
+logger = logging.getLogger(__name__)
+
+
 def _load_spacy_model():
     try:
         return spacy.load("en_core_web_sm")
@@ -182,8 +185,8 @@ class GraphManager:
                 title=resource.title,
                 topic=topic,
             )
-        except Exception:  # pragma: no cover - external service
-            pass
+        except Exception as exc:  # pragma: no cover - external service
+            logger.exception("failed to link resource to graph", exc_info=exc)
 
     def close(self) -> None:
         if self.session:

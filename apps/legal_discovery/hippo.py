@@ -13,6 +13,7 @@ import hashlib
 import os
 import re
 import time
+import logging
 from typing import Callable, Dict, Iterable, List, Optional, Tuple
 
 try:  # pragma: no cover - allows tests without neo4j package
@@ -38,6 +39,9 @@ if CrossEncoder and CROSS_ENCODER_MODEL:
         CROSS_ENCODER = None
 else:  # pragma: no cover - environment did not request a model
     CROSS_ENCODER = None
+
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -260,8 +264,8 @@ def ingest_document(
 
         if ingestion_matches(doc_id, segment_hashes):
             return doc_id
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.exception("failed to check ingestion match", exc_info=exc)
 
     case_index = INDEX.setdefault(case_id, {})
     case_index[doc_id] = segments
@@ -328,8 +332,8 @@ def ingest_document(
             duration_ms=elapsed_ms,
             error="; ".join(errors) if errors else None,
         )
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.exception("failed to log ingestion", exc_info=exc)
 
     return doc_id
 
@@ -384,14 +388,14 @@ def _graph_candidates(case_id: str, seeds: List[str], k: int) -> Dict[str, Dict]
                         }
                 if results:
                     return results
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.exception("graph candidate retrieval failed", exc_info=exc)
         finally:  # pragma: no cover - ensure closure
             if driver:
                 try:
                     driver.close()
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.exception("driver close failed", exc_info=exc)
 
     # Fallback to deterministic entity overlap scoring
     scores: Dict[str, Dict] = {}
@@ -430,8 +434,8 @@ def _vector_candidates(case_id: str, query: str, k: int) -> Dict[str, Dict]:
                     scores[seg_id] = {"segment": seg, "dense": float(dist)}
             if scores:
                 return scores
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.exception("vector candidate retrieval failed", exc_info=exc)
 
     # Fallback token frequency approach
     q_tokens = query.lower().split()

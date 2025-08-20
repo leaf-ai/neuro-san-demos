@@ -112,6 +112,7 @@ if not os.path.exists(BUNDLE_PATH):
         BUNDLE_PATH,
     )
 app = Flask(__name__)
+logger = app.logger
 config_path = os.environ.get("LEGAL_DISCOVERY_CONFIG")
 secret_key = os.environ.get("FLASK_SECRET_KEY")
 jwt_secret = os.environ.get("JWT_SECRET")
@@ -496,8 +497,9 @@ def review_redaction(doc_id: int):
         orig = os.path.join(app.config["SECURE_FOLDER"], doc.name)
         try:
             shutil.copy(orig, doc.file_path)
-        except OSError:
-            pass
+        except OSError as exc:
+            logger.exception("failed to restore original file", exc_info=exc)
+            return jsonify({"error": "Failed to restore original document"}), 500
     elif action == "confirm":
         doc.needs_review = False
     else:
@@ -767,9 +769,11 @@ def ingest_document(
         db.session.add(DocumentMetadata(document_id=doc_id, schema="evidence_scorecard", data=scores))
         try:
             sanctions = SanctionsRiskAnalyzer().assess(redacted_text, scorecard=scores)
-            db.session.add(DocumentMetadata(document_id=doc_id, schema="sanctions_risk", data=sanctions))
-        except Exception:
-            pass
+            db.session.add(
+                DocumentMetadata(document_id=doc_id, schema="sanctions_risk", data=sanctions)
+            )
+        except Exception as exc:
+            logger.exception("sanctions risk analysis failed", exc_info=exc)
         db.session.commit()
 
         VectorDatabaseManager().add_documents([redacted_text], [chroma_metadata], [str(doc_id)])
@@ -948,8 +952,8 @@ def upload_files():
                 for ext in ("", ".meta.json"):
                     try:
                         os.remove(redacted_path + ext)
-                    except OSError:
-                        pass
+                    except OSError as exc:
+                        logger.exception("failed to remove file %s", redacted_path + ext, exc_info=exc)
             except Exception as exc:  # pragma: no cover - best effort
                 record_skip(raw_name, f"ingestion error: {exc}")
                 db.session.delete(doc)
@@ -958,8 +962,8 @@ def upload_files():
                 for ext in ("", ".meta.json"):
                     try:
                         os.remove(redacted_path + ext)
-                    except OSError:
-                        pass
+                    except OSError as exc:
+                        logger.exception("failed to remove file %s", redacted_path + ext, exc_info=exc)
             else:
                 processed.append(filename)
                 batch_processed.append(filename)
