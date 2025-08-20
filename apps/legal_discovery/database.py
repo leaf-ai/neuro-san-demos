@@ -17,6 +17,7 @@ class IngestionLog(db.Model):
     """Tracks document ingestions to ensure idempotency."""
 
     __tablename__ = "ingestion_logs"
+    __table_args__ = (db.Index("ix_ingestion_case_path", "case_id", "path"),)
 
     id = db.Column(db.Integer, primary_key=True)
     case_id = db.Column(db.String(64), nullable=False)

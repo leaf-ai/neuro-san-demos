@@ -947,6 +947,9 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Next: verify redundant calls are trimmed once live Neo4j integration is confirmed.
 
 ## Update 2025-09-23T18:00Z
+- Switched Hippo ingestion to upsert segments in Chroma with deterministic IDs.
+- Added composite index for `ingestion_logs` lookups.
+- Next: validate ingestion telemetry with live Postgres and vector stores.
 - Safeguarded Neo4j driver initialization and cleanup in `hippo.py`.
 - Next: validate failure paths when Neo4j is unreachable.
 

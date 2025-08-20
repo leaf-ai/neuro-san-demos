@@ -250,9 +250,11 @@ def ingest_document(
 ) -> str:
     """Index ``text`` for ``case_id`` and return the generated ``doc_id``.
 
-    The function accepts optional ``graph_db`` and ``vector_db`` managers to
-    perform bulk upserts to Neo4j and Chroma respectively.  Callers may also
-    supply a custom ``entity_extractor`` for legal information extraction.
+    ``doc_id`` and ``segment_hash`` values are deterministically derived from
+    ``(case_id, path)`` and the segment contents so that repeated ingestions
+    are idempotent.  Optional ``graph_db`` and ``vector_db`` managers allow
+    bulk upserts to Neo4j and Chroma.  Callers may also provide a pluggable
+    ``entity_extractor`` for richer legal information extraction.
     """
 
     start = time.perf_counter()
@@ -276,20 +278,22 @@ def ingest_document(
 
     if vector_db:
         try:  # pragma: no cover - best effort
-            vector_db.add_documents(
-                documents=[s.text for s in segments],
-                metadatas=[
-                    {
-                        "doc_id": doc_id,
-                        "case_id": case_id,
-                        "segment_id": s.segment_id,
-                        "segment_hash": s.segment_hash,
-                        "path": path,
-                    }
-                    for s in segments
-                ],
-                ids=[s.segment_hash for s in segments],
-            )
+            docs = [s.text for s in segments]
+            metas = [
+                {
+                    "doc_id": doc_id,
+                    "case_id": case_id,
+                    "segment_id": s.segment_id,
+                    "segment_hash": s.segment_hash,
+                    "path": path,
+                }
+                for s in segments
+            ]
+            ids = [s.segment_hash for s in segments]
+            if hasattr(vector_db, "upsert"):
+                vector_db.upsert(documents=docs, metadatas=metas, ids=ids)
+            else:
+                vector_db.add_documents(documents=docs, metadatas=metas, ids=ids)
         except Exception as e:
             errors.append(f"vector: {e}")
 
