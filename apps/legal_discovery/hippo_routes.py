@@ -15,14 +15,12 @@ try:  # pragma: no cover - optional dependency
 except Exception:  # pragma: no cover - driver may be absent
     GraphDatabase = None
 
-from . import hippo, bootstrap_graph
+from . import hippo
 from .database import db, log_retrieval_trace, log_objection_resolution
 from .extensions import socketio
 from .models import ObjectionEvent, ObjectionResolution
 from .models_trial import TranscriptSegment, TrialSession
 from .trial_assistant.services.objection_engine import engine
-
-bootstrap_graph()
 
 bp = Blueprint("hippo", __name__, url_prefix="/api/hippo")
 objections_bp = Blueprint("objections", __name__, url_prefix="/api/objections")
