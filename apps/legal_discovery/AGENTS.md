@@ -1016,3 +1016,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-09-27T16:10Z
 - Cleaned up duplicate imports in settings module.
 - Next: monitor test hangs and streamline initialization.
+
+## Update 2025-09-27T17:00Z
+- Finalised objection analysis endpoint and Socket.IO cure handler.
+- Next: expose objection resolution history in dashboard.
