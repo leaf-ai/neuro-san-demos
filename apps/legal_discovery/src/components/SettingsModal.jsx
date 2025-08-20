@@ -1,19 +1,31 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useAppContext } from "../AppContext";
+
 function SettingsModal({open,onClose}) {
+  const { setSettings, setFeatureFlags } = useAppContext();
   const [form,setForm] = useState({});
   const ref = useRef();
+  const firstFieldRef = useRef();
+  const previousFocus = useRef();
+
   useEffect(() => {
     if(open) {
+      previousFocus.current = document.activeElement;
       Promise.all([
         fetch('/api/settings').then(r=>r.json()),
         fetch('/api/feature-flags').then(r=>r.json())
       ]).then(([settings, flags]) => setForm({...settings, ...flags}));
+      setTimeout(()=>firstFieldRef.current && firstFieldRef.current.focus(),0);
+    } else if(previousFocus.current) {
+      previousFocus.current.focus();
     }
   }, [open]);
+
   const update = e => {
     const { name, type, checked, value } = e.target;
     setForm({ ...form, [name]: type === "checkbox" ? checked : value });
   };
+
   const submit = e => {
     e.preventDefault();
     const { voice_stt, voice_tts, voice_commands, theories, binder, chat, ...rest } = form;
@@ -21,16 +33,36 @@ function SettingsModal({open,onClose}) {
     Promise.all([
       fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(rest)}),
       fetch('/api/feature-flags',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(flags)})
-    ]).then(()=>onClose());
+    ]).then(()=>{
+      setSettings(rest);
+      setFeatureFlags(flags);
+      onClose();
+    });
   };
+
+  const trapFocus = e => {
+    if(e.key !== 'Tab') return;
+    const focusable = ref.current.querySelectorAll('a,button,input,textarea');
+    if(!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length-1];
+    if(e.shiftKey && document.activeElement === first){
+      e.preventDefault();
+      last.focus();
+    } else if(!e.shiftKey && document.activeElement === last){
+      e.preventDefault();
+      first.focus();
+    }
+  };
+
   if(!open) return null;
   return (
-    <div className="modal" onClick={e=>{if(e.target===ref.current) onClose();}} ref={ref}>
+    <div className="modal" role="dialog" aria-modal="true" aria-labelledby="settings-title" onKeyDown={trapFocus} onClick={e=>{if(e.target===ref.current) onClose();}} ref={ref}>
       <div className="modal-content">
-        <span className="close-btn" onClick={onClose}>&times;</span>
-        <h2>API Settings</h2>
+        <button className="close-btn" onClick={onClose} aria-label="Close settings">&times;</button>
+        <h2 id="settings-title">API Settings</h2>
         <form id="settings-form" onSubmit={submit} className="space-y-2 overflow-y-auto" style={{maxHeight:'60vh'}}>
-          <label>CourtListener API Key<input type="text" name="courtlistener_api_key" value={form.courtlistener_api_key||''} onChange={update} className="w-full p-2 rounded"/></label>
+          <label>CourtListener API Key<input ref={firstFieldRef} type="text" name="courtlistener_api_key" value={form.courtlistener_api_key||''} onChange={update} className="w-full p-2 rounded"/></label>
           <label>CourtListener Endpoint<input type="text" name="courtlistener_com_api_endpoint" value={form.courtlistener_com_api_endpoint||''} onChange={update} className="w-full p-2 rounded"/></label>
           <label>California Codes URL<input type="text" name="california_codes_url" value={form.california_codes_url||''} onChange={update} className="w-full p-2 rounded"/></label>
           <label>Gemini API Key<input type="text" name="gemini_api_key" value={form.gemini_api_key||''} onChange={update} className="w-full p-2 rounded"/></label>
