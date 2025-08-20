@@ -1,3 +1,5 @@
+"""Streaming speech-to-text utilities with Prometheus metrics."""
+
 import logging
 import time
 from typing import Generator, Iterable

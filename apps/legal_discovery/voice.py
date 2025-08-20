@@ -5,7 +5,7 @@ import logging
 import os
 import time
 from io import BytesIO
-from typing import List, Dict
+from typing import Dict, List
 
 from prometheus_client import Counter, Histogram
 

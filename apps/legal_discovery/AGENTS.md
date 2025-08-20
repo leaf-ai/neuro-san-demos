@@ -975,3 +975,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Added `/api/health` route in `hippo_routes` checking Neo4j and Chroma connectivity.
 - Registered blueprint in `interface_flask` and pointed Docker health checks to this endpoint.
 - Next: monitor service health and extend diagnostics as needed.
+
+## Update 2025-09-27T00:00Z
+- Added missing imports across legal discovery modules and cleaned redundant numpy import in trial prep.
+- Next: ensure modules load within Flask app and expand tests for import coverage.
