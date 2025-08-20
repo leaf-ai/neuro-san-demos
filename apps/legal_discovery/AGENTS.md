@@ -1037,3 +1037,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Introduced RQ task queue with Redis and async routes for binder generation, indexing and transcript analysis.
 - Added /api/tasks/<id> for polling.
 - Next: hook frontend to poll task status and handle long-running jobs.
+
+## Update 2025-09-28T06:00Z
+- Enabled structured JSON logging, Prometheus metrics and OpenTelemetry tracing in the backend.
+- Next: expand tracing coverage across additional routes and export spans to an OTLP backend.

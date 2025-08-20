@@ -15,9 +15,12 @@ more-itertools
 neo4j
 networkx
 neuro-san
+opentelemetry-instrumentation-flask
+opentelemetry-sdk
 pandas
 Pillow
 prometheus-client>=0.20.0
+prometheus-flask-exporter
 psycopg2-binary
 pydantic
 pyhocon
@@ -39,5 +42,6 @@ schedule
 scikit-learn
 sentence-transformers
 spacy
+structlog
 TTS
 weasyprint
