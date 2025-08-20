@@ -994,3 +994,10 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Secrets now load from environment or config and fail fast when missing.
 - Documented secret generation and wired Docker environment variables.
 - Next: verify integration with remaining blueprints and expand auth tests.
+
+## Update 2025-09-27T14:00Z
+- Centralized Neo4j schema bootstrap in `startup.py` and removed redundant
+  `bootstrap_graph` calls from Flask modules.
+- Dockerfile and shell startup scripts now import the pre-initialized app.
+- Next: confirm deployment uses `apps.legal_discovery.startup:app` and update
+  any remaining documentation references.

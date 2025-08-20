@@ -24,7 +24,7 @@ from spacy.cli import download as spacy_download
 from weasyprint import HTML
 from werkzeug.utils import secure_filename
 
-from . import bootstrap_graph, settings
+from . import settings
 from . import presentation_ws  # noqa: F401
 from .chat_state import user_input_queue
 from .chain_logger import ChainEventType, log_event
@@ -83,8 +83,6 @@ except Exception:  # pragma: no cover - optional dependency
 
     def tear_down_legal_discovery_assistant(*args, **kwargs):
         return None
-
-bootstrap_graph()
 
 # Configure logging before any other setup so early steps are captured
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
