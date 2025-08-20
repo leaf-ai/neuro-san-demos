@@ -4,7 +4,10 @@ function SettingsModal({open,onClose}) {
   const ref = useRef();
   useEffect(() => {
     if(open) {
-      fetch('/api/settings').then(r=>r.json()).then(d=>setForm(d||{}));
+      Promise.all([
+        fetch('/api/settings').then(r=>r.json()),
+        fetch('/api/feature-flags').then(r=>r.json())
+      ]).then(([settings, flags]) => setForm({...settings, ...flags}));
     }
   }, [open]);
   const update = e => {
@@ -13,8 +16,12 @@ function SettingsModal({open,onClose}) {
   };
   const submit = e => {
     e.preventDefault();
-    fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(form)})
-      .then(()=>onClose());
+    const { voice_stt, voice_tts, voice_commands, theories, binder, chat, ...rest } = form;
+    const flags = { voice_stt, voice_tts, voice_commands, theories, binder, chat };
+    Promise.all([
+      fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(rest)}),
+      fetch('/api/feature-flags',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(flags)})
+    ]).then(()=>onClose());
   };
   if(!open) return null;
   return (
@@ -41,6 +48,9 @@ function SettingsModal({open,onClose}) {
           <label>GCP Vertex Data Store<input type="text" name="gcp_vertex_ai_data_store_id" value={form.gcp_vertex_ai_data_store_id||''} onChange={update} className="w-full p-2 rounded"/></label>
           <label>GCP Search App<input type="text" name="gcp_vertex_ai_search_app" value={form.gcp_vertex_ai_search_app||''} onChange={update} className="w-full p-2 rounded"/></label>
           <label>GCP Service Account Key<textarea name="gcp_service_account_key" value={form.gcp_service_account_key||''} onChange={update} className="w-full p-2 rounded" rows="2"/></label>
+          <label className="flex items-center space-x-2"><input type="checkbox" name="theories" checked={form.theories||false} onChange={update}/><span>Enable Legal Theories</span></label>
+          <label className="flex items-center space-x-2"><input type="checkbox" name="binder" checked={form.binder||false} onChange={update}/><span>Enable Binder</span></label>
+          <label className="flex items-center space-x-2"><input type="checkbox" name="chat" checked={form.chat||false} onChange={update}/><span>Enable Chat</span></label>
           <label className="flex items-center space-x-2"><input type="checkbox" name="voice_stt" checked={form.voice_stt||false} onChange={update}/><span>Enable Voice Transcription</span></label>
           <label className="flex items-center space-x-2"><input type="checkbox" name="voice_tts" checked={form.voice_tts||false} onChange={update}/><span>Enable Voice Synthesis</span></label>
           <label className="flex items-center space-x-2"><input type="checkbox" name="voice_commands" checked={form.voice_commands||false} onChange={update}/><span>Enable Voice Commands</span></label>
