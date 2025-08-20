@@ -1051,3 +1051,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-09-28T06:00Z
 - Enabled structured JSON logging, Prometheus metrics and OpenTelemetry tracing in the backend.
 - Next: expand tracing coverage across additional routes and export spans to an OTLP backend.
+
+## Update 2025-10-06T00:00Z
+- Switched Vite build to emit manifest with hashed assets and configurable API base.
+- Flask loads hashed bundle from manifest and CI builds frontend.
+- Next: verify CDN caching and review manifest handling for styles.

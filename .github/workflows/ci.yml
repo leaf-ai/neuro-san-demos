@@ -32,8 +32,28 @@ jobs:
           make lint-tests
           make test
 
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm --prefix apps/legal_discovery ci
+
+      - name: Lint frontend
+        run: npm --prefix apps/legal_discovery run lint
+
+      - name: Build frontend
+        run: npm --prefix apps/legal_discovery run build
+
   build:
-    needs: test
+    needs: [test, frontend]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
