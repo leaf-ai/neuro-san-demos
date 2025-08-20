@@ -1018,6 +1018,10 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Next: monitor test hangs and streamline initialization.
 
 ## Update 2025-09-27T17:00Z
+- Introduced Pydantic schemas for exhibit assignment and narrative discrepancy analysis.
+- Applied validation with 400 responses for invalid payloads and added corresponding tests.
+- Next: extend schema validation to remaining API routes.
+
 - Finalised objection analysis endpoint and Socket.IO cure handler.
 - Next: expose objection resolution history in dashboard.
 

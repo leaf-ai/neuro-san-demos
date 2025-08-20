@@ -7,6 +7,9 @@ from flask import Blueprint, jsonify, request, current_app, session
 from werkzeug.utils import secure_filename
 from .chat_routes import auth_required
 from PyPDF2 import PdfReader
+from pydantic import ValidationError
+
+from .validators import ExhibitAssignPayload
 
 from .database import db
 from .models import Case, ChainOfCustodyLog, Document, DocumentSource
@@ -81,12 +84,11 @@ def exhibit_links(doc_id: int):
 def assign():
     """Assign the next exhibit number to a document."""
     payload = request.get_json() or {}
-    doc_id = payload.get("document_id")
-    title = payload.get("title")
-    user = payload.get("user")
-    if not doc_id:
-        return jsonify({"error": "document_id required"}), 400
-    num = assign_exhibit_number(doc_id, title, user)
+    try:
+        data = ExhibitAssignPayload.model_validate(payload)
+    except ValidationError as e:
+        return jsonify({"errors": e.errors()}), 400
+    num = assign_exhibit_number(data.document_id, data.title, data.user)
     return jsonify({"exhibit_number": num})
 
 
