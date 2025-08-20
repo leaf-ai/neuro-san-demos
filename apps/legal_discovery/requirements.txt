@@ -19,6 +19,7 @@ pandas
 Pillow
 prometheus-client>=0.20.0
 psycopg2-binary
+pydantic
 pyhocon
 PyJWT
 PyMuPDF
@@ -33,6 +34,7 @@ redis
 reportlab
 requests
 rfc3987
+rq
 schedule
 scikit-learn
 sentence-transformers

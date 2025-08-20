@@ -1018,6 +1018,10 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Next: monitor test hangs and streamline initialization.
 
 ## Update 2025-09-27T17:00Z
+- Introduced Pydantic schemas for exhibit assignment and narrative discrepancy analysis.
+- Applied validation with 400 responses for invalid payloads and added corresponding tests.
+- Next: extend schema validation to remaining API routes.
+
 - Finalised objection analysis endpoint and Socket.IO cure handler.
 - Next: expose objection resolution history in dashboard.
 
@@ -1029,3 +1033,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Integrated Flask-Limiter with Redis backend and per-user/per-IP caps on chat and hippo queries.
 - `/api/health` now reports blocked request counts for monitoring.
 - Next: tune rate thresholds and expand rate-limit tests.
+## Update 2025-09-28T00:00Z
+- Introduced RQ task queue with Redis and async routes for binder generation, indexing and transcript analysis.
+- Added /api/tasks/<id> for polling.
+- Next: hook frontend to poll task status and handle long-running jobs.
