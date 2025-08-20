@@ -64,6 +64,8 @@ HEALTHCHECK --interval=30s --timeout=5s --retries=5 CMD curl -fsS http://localho
 # Environment defaults (can be overridden at runtime)
 ENV AGENT_MANIFEST_FILE=/usr/src/app/registries/manifest.hocon \
     AGENT_LLM_INFO_FILE=/usr/src/app/registries/llm_config.hocon
+ENV FLASK_SECRET_KEY="" \
+    JWT_SECRET=""
 
 # Run the Flask app via gunicorn+eventlet after ensuring Neo4j schema
 CMD ["bash", "-c", "python -c 'from apps.legal_discovery import bootstrap_graph; bootstrap_graph()' && python -m gunicorn -k eventlet -w 1 -b 0.0.0.0:5001 apps.legal_discovery.interface_flask:app"]

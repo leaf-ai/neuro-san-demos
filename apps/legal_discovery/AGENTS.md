@@ -988,3 +988,9 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-09-27T12:30Z
 - Added `pyhocon` and `more-itertools` to `requirements.txt`, sorted dependencies alphabetically, and removed extra blank lines.
 - Next: verify installation of new dependencies and keep requirements tidy.
+
+## Update 2025-09-27T13:00Z
+- Enforced authentication across chat, exhibit, hippo and trial prep APIs.
+- Secrets now load from environment or config and fail fast when missing.
+- Documented secret generation and wired Docker environment variables.
+- Next: verify integration with remaining blueprints and expand auth tests.

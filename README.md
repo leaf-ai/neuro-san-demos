@@ -367,13 +367,21 @@ For examples of agent networks, check out [docs/examples.md](docs/examples.md).
 
 The `apps/legal_discovery` stack runs a Flask frontend backed by PostgreSQL, Neo4j, ChromaDB and Redis. To launch the full stack with Docker:
 
-1. Copy `.env.example` to `.env` and set required secrets. At minimum set the shared Neo4j password and optionally override the retrieval models:
+1. Copy `.env.example` to `.env` and set required secrets. Generate strong values for `FLASK_SECRET_KEY` and `JWT_SECRET` used by the Flask app:
 
-   ```bash
-   NEO4J_PASSWORD=neo4jPass123
-   EMBED_MODEL=sentence-transformers/all-MiniLM-L6-v2
-   CROSS_ENCODER_MODEL=cross-encoder/ms-marco-MiniLM-L-6-v2
-   ```
+    ```bash
+    python -c 'import secrets; print(secrets.token_hex(32))'
+    ```
+
+    Then populate `.env`:
+
+    ```bash
+    FLASK_SECRET_KEY=<output from script>
+    JWT_SECRET=<output from script>
+    NEO4J_PASSWORD=neo4jPass123
+    EMBED_MODEL=sentence-transformers/all-MiniLM-L6-v2
+    CROSS_ENCODER_MODEL=cross-encoder/ms-marco-MiniLM-L-6-v2
+    ```
 
 2. Build and start the services:
 

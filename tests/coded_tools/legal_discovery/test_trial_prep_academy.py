@@ -4,6 +4,13 @@ from flask import Flask
 from apps.legal_discovery.database import db
 from apps.legal_discovery.trial_prep_routes import trial_prep_bp
 from apps.legal_discovery.trial_prep import LessonBuilder, ResourceManager
+from apps.legal_discovery import auth as auth_module
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _no_auth(monkeypatch):
+    monkeypatch.setattr(auth_module, "_require_auth", lambda: True)
 
 
 class TrialPrepAcademyAPITest(unittest.TestCase):

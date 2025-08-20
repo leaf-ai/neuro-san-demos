@@ -4,6 +4,8 @@ import fitz
 import pytest
 
 os.environ["DATABASE_URL"] = "sqlite://"
+os.environ.setdefault("FLASK_SECRET_KEY", "test")
+os.environ.setdefault("JWT_SECRET", "test")
 
 from apps.legal_discovery.interface_flask import app, db, Document, Agent, Case, DocumentVersion, DocumentSource
 

@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 
 from flask import Blueprint, jsonify, request, current_app
+from .auth import auth_required
 from PyPDF2 import PdfReader
 
 from .database import db
@@ -16,6 +17,7 @@ exhibits_bp = Blueprint("exhibits", __name__, url_prefix="/api/exhibits")
 
 @exhibits_bp.route("", methods=["GET"])
 @exhibits_bp.route("/", methods=["GET"])
+@auth_required
 def list_exhibits():
     """Return all exhibits for a given case."""
     case_id = request.args.get("case_id", type=int)
@@ -61,6 +63,7 @@ def list_exhibits():
 
 
 @exhibits_bp.route("/<int:doc_id>/links", methods=["GET"])
+@auth_required
 def exhibit_links(doc_id: int):
     """Return legal theories and timeline nodes linked to an exhibit."""
     doc = Document.query.get_or_404(doc_id)
@@ -73,6 +76,7 @@ def exhibit_links(doc_id: int):
 
 
 @exhibits_bp.post("/assign")
+@auth_required
 def assign():
     """Assign the next exhibit number to a document."""
     payload = request.get_json() or {}
@@ -86,6 +90,7 @@ def assign():
 
 
 @exhibits_bp.post("/reorder")
+@auth_required
 def reorder():
     """Update exhibit order based on provided list of IDs."""
     payload = request.get_json() or {}
@@ -106,6 +111,7 @@ def reorder():
 
 
 @exhibits_bp.post("/binder")
+@auth_required
 def binder():
     """Generate a combined PDF binder for the case exhibits."""
     payload = request.get_json() or {}
@@ -120,6 +126,7 @@ def binder():
 
 
 @exhibits_bp.post("/zip")
+@auth_required
 def zip_export():
     """Export exhibits and manifest as a zip archive."""
     payload = request.get_json() or {}
