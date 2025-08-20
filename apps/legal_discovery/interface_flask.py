@@ -133,6 +133,16 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 socketio.init_app(app)
 limiter.init_app(app)
+with app.app_context():
+    db.create_all()
+    if not Case.query.first():
+        default_case = Case(name="Default Case")
+        db.session.add(default_case)
+        db.session.commit()
+    db_flags = settings.get_feature_flags()
+    if db_flags:
+        for k, v in db_flags.items():
+            FEATURE_FLAGS[k] = bool(v)
 app.register_blueprint(exhibits_bp)
 app.register_blueprint(trial_prep_bp)
 app.register_blueprint(trial_assistant_bp)
@@ -188,14 +198,6 @@ def _initialize_agent() -> None:
         app.logger.info("Setting up legal discovery assistant...")
         legal_discovery_session, legal_discovery_thread = set_up_legal_discovery_assistant(_gather_upload_paths())
         app.logger.info("...legal discovery assistant set up.")
-
-
-with app.app_context():
-    db.create_all()
-    if not Case.query.first():
-        default_case = Case(name="Default Case")
-        db.session.add(default_case)
-        db.session.commit()
 
 threading.Thread(target=_initialize_agent, daemon=True).start()
 
@@ -291,16 +293,35 @@ def on_connect():
 @app.route("/api/settings", methods=["GET", "POST"])
 def manage_settings():
     if request.method == "POST":
-        data = request.get_json()
+        data = request.get_json() or {}
         settings.save_user_settings(data)
-        for flag, env_var in [
-            ("voice_stt", "ENABLE_VOICE_STT"),
-            ("voice_tts", "ENABLE_VOICE_TTS"),
-            ("voice_commands", "ENABLE_VOICE_COMMANDS"),
-        ]:
-            if flag in data:
-                FEATURE_FLAGS[flag] = bool(data[flag])
-                os.environ[env_var] = "1" if data[flag] else "0"
+        flags = {
+            k: data[k]
+            for k in [
+                "voice_stt",
+                "voice_tts",
+                "voice_commands",
+                "theories",
+                "binder",
+                "chat",
+            ]
+            if k in data
+        }
+        if flags:
+            settings.save_feature_flags(flags)
+            env_map = {
+                "theories": "ENABLE_THEORIES",
+                "binder": "ENABLE_BINDER",
+                "chat": "ENABLE_CHAT",
+                "voice_stt": "ENABLE_VOICE_STT",
+                "voice_tts": "ENABLE_VOICE_TTS",
+                "voice_commands": "ENABLE_VOICE_COMMANDS",
+            }
+            for flag, value in flags.items():
+                FEATURE_FLAGS[flag] = bool(value)
+                env_var = env_map.get(flag)
+                if env_var:
+                    os.environ[env_var] = "1" if value else "0"
         return jsonify({"message": "Settings saved successfully"})
     else:
         user_settings = settings.get_user_settings()
@@ -326,13 +347,10 @@ def manage_settings():
                 "gcp_vertex_ai_search_app": user_settings.gcp_vertex_ai_search_app,
                 "gcp_service_account_key": user_settings.gcp_service_account_key,
             }
-        resp.update(
-            {
-                "voice_stt": FEATURE_FLAGS["voice_stt"],
-                "voice_tts": FEATURE_FLAGS["voice_tts"],
-                "voice_commands": FEATURE_FLAGS["voice_commands"],
-            }
-        )
+        flags = settings.get_feature_flags()
+        for key in FEATURE_FLAGS:
+            flags.setdefault(key, FEATURE_FLAGS[key])
+        resp.update(flags)
         return jsonify(resp)
 
 
@@ -340,6 +358,31 @@ def manage_settings():
 def manage_api_keys():
     """Manage extended API key settings."""
     return manage_settings()
+
+
+@app.route("/api/feature-flags", methods=["GET", "POST"])
+def manage_feature_flags():
+    if request.method == "POST":
+        data = request.get_json() or {}
+        settings.save_feature_flags(data)
+        env_map = {
+            "theories": "ENABLE_THEORIES",
+            "binder": "ENABLE_BINDER",
+            "chat": "ENABLE_CHAT",
+            "voice_stt": "ENABLE_VOICE_STT",
+            "voice_tts": "ENABLE_VOICE_TTS",
+            "voice_commands": "ENABLE_VOICE_COMMANDS",
+        }
+        for flag, value in data.items():
+            FEATURE_FLAGS[flag] = bool(value)
+            env_var = env_map.get(flag)
+            if env_var:
+                os.environ[env_var] = "1" if value else "0"
+        return jsonify({"message": "Flags updated"})
+    flags = settings.get_feature_flags()
+    for key in FEATURE_FLAGS:
+        flags.setdefault(key, FEATURE_FLAGS[key])
+    return jsonify(flags)
 
 
 import shutil
