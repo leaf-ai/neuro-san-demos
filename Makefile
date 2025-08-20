@@ -65,7 +65,11 @@ frontend-build: ## Install deps and build the legal discovery React dashboard
 	npm --prefix apps/legal_discovery run build
 
 test: lint lint-tests ## Run tests with coverage
-        PYTHONPATH=$(CURDIR) python -m pytest tests/ -v --cov=coded_tools,run.py
+       PYTHONPATH=$(CURDIR) python -m pytest tests/ -v --cov=coded_tools,run.py
+
+compose-up: ## Build images and start all services with seed data
+	docker-compose up --build -d
+	python deploy/seed_postgres.py
 
 .PHONY: help venv install activate stt-service tts-service lint lint-tests test
 .DEFAULT_GOAL := help

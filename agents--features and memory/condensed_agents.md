@@ -299,3 +299,8 @@ WE STARTED ON #3, INSTEAD OF #1. DEAL WITH IT, FINISH IMPLEMENTING #3, AND THEN 
 - Added ffmpeg and espeak packages to Dockerfile for STT/TTS libraries.
 - Extended docker-compose with Redis service and audio cache volume; documented build/run commands.
 - Next: verify audio cache persistence and message bus behaviour in the full stack.
+
+## Update 2025-08-20T22:57Z
+- Added scripts to seed PostgreSQL and launch Chroma/Neo4j containers.
+- Makefile now includes `compose-up` target to build stack and apply seed data.
+- Next: verify `compose-up` runs cleanly across environments.
