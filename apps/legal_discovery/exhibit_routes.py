@@ -10,7 +10,8 @@ from PyPDF2 import PdfReader
 
 from .database import db
 from .models import Case, ChainOfCustodyLog, Document, DocumentSource
-from .exhibit_manager import assign_exhibit_number, export_zip, generate_binder
+from .exhibit_manager import assign_exhibit_number, export_zip
+from .tasks import enqueue, binder_task
 
 exhibits_bp = Blueprint("exhibits", __name__, url_prefix="/api/exhibits")
 
@@ -135,11 +136,13 @@ def binder():
     if export_dir not in target.parents:
         return jsonify({"error": "invalid path"}), 400
 
-    path = Path(generate_binder(case_id, target)).resolve()
-    if export_dir not in path.parents or not path.exists():
-        return jsonify({"error": "file generation failed"}), 500
-
-    return jsonify({"binder_path": f"/uploads/{path.name}", "path": str(path)})
+    task_id, result = enqueue(binder_task, case_id, str(target))
+    if result is not None:
+        path = Path(result).resolve()
+        if export_dir not in path.parents or not path.exists():
+            return jsonify({"error": "file generation failed"}), 500
+        return jsonify({"task_id": task_id, "binder_path": f"/uploads/{path.name}", "path": str(path)})
+    return jsonify({"task_id": task_id}), 202
 
 
 @exhibits_bp.post("/zip")
