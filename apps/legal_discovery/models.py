@@ -328,6 +328,7 @@ class UserSetting(db.Model):
     gcp_vertex_ai_data_store_id = db.Column(db.String(255), nullable=True)
     gcp_vertex_ai_search_app = db.Column(db.String(255), nullable=True)
     gcp_service_account_key = db.Column(db.Text, nullable=True)
+    theme = db.Column(db.String(20), nullable=True)
     feature_flags = db.Column(db.JSON, nullable=False, default=dict)
 
 

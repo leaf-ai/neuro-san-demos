@@ -374,6 +374,7 @@ def manage_settings():
                 "gcp_vertex_ai_data_store_id": user_settings.gcp_vertex_ai_data_store_id,
                 "gcp_vertex_ai_search_app": user_settings.gcp_vertex_ai_search_app,
                 "gcp_service_account_key": user_settings.gcp_service_account_key,
+                "theme": user_settings.theme,
             }
         flags = settings.get_feature_flags()
         for key in FEATURE_FLAGS:
