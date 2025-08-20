@@ -64,11 +64,12 @@ export default function VoiceWidget({ sessionId }) {
   };
 
   const chooseCure = (id, key) => {
-    fetch("/api/trial/objection/action", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ event_id: id, action: key }),
-    });
+    if (socketRef.current) {
+      socketRef.current.emit("objection_cure_chosen", {
+        event_id: id,
+        cure: key,
+      });
+    }
     setObjection(null);
   };
 
