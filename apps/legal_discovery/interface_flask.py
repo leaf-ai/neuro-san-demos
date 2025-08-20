@@ -23,6 +23,7 @@ from pyhocon import ConfigFactory
 from spacy.cli import download as spacy_download
 from weasyprint import HTML
 from werkzeug.utils import secure_filename
+from pydantic import ValidationError
 
 from . import settings
 from . import presentation_ws  # noqa: F401
@@ -35,6 +36,7 @@ from .feature_flags import FEATURE_FLAGS
 from .hippo_routes import bp as hippo_bp, objections_bp, health_bp
 from .trial_assistant import bp as trial_assistant_bp
 from .trial_prep_routes import trial_prep_bp
+from .validators import NarrativeDiscrepancyAnalyzePayload
 from apps.legal_discovery.models import (
     Agent,
     CalendarEvent,
@@ -1095,9 +1097,12 @@ def list_narrative_discrepancies():
 @app.route("/api/narrative_discrepancies/analyze", methods=["POST"])
 def analyze_narrative_discrepancy():
     """Analyze an opposition document for discrepancies."""
-    data = request.get_json(force=True)
-    doc_id = data.get("opposing_doc_id")
-    doc = Document.query.get_or_404(doc_id)
+    data = request.get_json(force=True) or {}
+    try:
+        payload = NarrativeDiscrepancyAnalyzePayload.model_validate(data)
+    except ValidationError as e:
+        return jsonify({"errors": e.errors()}), 400
+    doc = Document.query.get_or_404(payload.opposing_doc_id)
     detector = NarrativeDiscrepancyDetector()
     results = detector.analyze(doc)
     return jsonify([r.__dict__ for r in results])

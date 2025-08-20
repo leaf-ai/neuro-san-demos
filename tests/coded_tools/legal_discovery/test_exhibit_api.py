@@ -157,3 +157,11 @@ def test_assign_list_and_exports(tmp_path):
     assert res.status_code == 200
     assert res.json["theories"] == ["Breach"]
     assert res.json["timeline"][0]["date"] == "2020-01-01"
+
+
+def test_assign_validation(tmp_path):
+    app, case_id, doc1, doc2, doc3 = _setup(tmp_path)
+    client = app.test_client()
+    res = client.post("/api/exhibits/assign", json={"title": "T1"})
+    assert res.status_code == 400
+    assert res.json["errors"][0]["loc"] == ["document_id"]
