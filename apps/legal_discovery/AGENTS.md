@@ -1074,3 +1074,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-10-06T13:30Z
 - Regenerated package-lock.json via npm ci to lock frontend dependencies.
 - Next: ensure CI uses package-lock for consistent builds.
+
+## Update 2025-10-06T14:45Z
+- Added entity-linked Hippo query combining Neo4j PPR, Chroma search and cross-encoder/LLM re-ranking.
+- Next: surface score breakdown in the dashboard and broaden ranking tests.

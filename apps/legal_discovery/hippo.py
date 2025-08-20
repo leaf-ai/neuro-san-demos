@@ -33,6 +33,11 @@ try:  # pragma: no cover - optional cross-encoder dependency
 except Exception:  # pragma: no cover - transformer library not installed
     CrossEncoder = None
 
+try:  # pragma: no cover - optional LLM scoring dependency
+    from openai import OpenAI  # type: ignore
+except Exception:  # pragma: no cover - OpenAI not installed
+    OpenAI = None
+
 CROSS_ENCODER_MODEL = os.environ.get("CROSS_ENCODER_MODEL")
 if CrossEncoder and CROSS_ENCODER_MODEL:
     try:  # pragma: no cover - model loading path
@@ -41,6 +46,15 @@ if CrossEncoder and CROSS_ENCODER_MODEL:
         CROSS_ENCODER = None
 else:  # pragma: no cover - environment did not request a model
     CROSS_ENCODER = None
+
+LLM_SCORER_MODEL = os.environ.get("LLM_SCORER_MODEL")
+if OpenAI and LLM_SCORER_MODEL and os.environ.get("OPENAI_API_KEY"):
+    try:  # pragma: no cover - network path
+        _openai_client = OpenAI()
+    except Exception:  # pragma: no cover - client init failures
+        _openai_client = None
+else:  # pragma: no cover - no LLM scoring
+    _openai_client = None
 
 
 logger = logging.getLogger(__name__)
@@ -467,7 +481,7 @@ def hippo_query(case_id: str, query: str, k: int = 10) -> Dict[str, object]:
        with token frequency counts.
     3. **Cross‑encoder/LLM re‑ranking** – merge candidates by ``segment_id``
        and compute a combined ``hybrid`` score incorporating the cross
-       encoder when available.
+       encoder or an LLM scoring model when available.
     """
 
     q_entities = _extract_entities(query)
@@ -494,6 +508,23 @@ def hippo_query(case_id: str, query: str, k: int = 10) -> Dict[str, object]:
             cross_scores = list(CROSS_ENCODER.predict(pairs))
         except Exception:
             cross_scores = [0.0] * len(merged)
+    elif _openai_client and LLM_SCORER_MODEL and merged:
+        cross_scores = []
+        for info in merged.values():
+            try:  # pragma: no cover - network path
+                prompt = (
+                    "Rate the relevance of the passage to the query on a 0-1 scale.\n"
+                    f"Query: {query}\nPassage: {info['segment'].text}\nScore:"
+                )
+                resp = _openai_client.responses.create(
+                    model=LLM_SCORER_MODEL,
+                    input=prompt,
+                    temperature=0,
+                )
+                out = resp.output[0].content[0].text  # type: ignore[index]
+                cross_scores.append(float(out.strip()))
+            except Exception:
+                cross_scores.append(0.0)
     else:
         cross_scores = [0.0] * len(merged)
 
