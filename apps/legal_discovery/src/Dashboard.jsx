@@ -4,6 +4,7 @@ import SettingsModal from "./components/SettingsModal";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Skeleton from "./components/Skeleton";
 import ThemeToggle from "./components/ThemeToggle";
+import Tour from "./components/Tour";
 
 const AgentNetworkSection = React.lazy(()=>import('./components/AgentNetworkSection'));
 const OverviewSection = React.lazy(()=>import('./components/OverviewSection'));
@@ -91,9 +92,10 @@ function Dashboard() {
 
   return (
     <div className="dashboard-grid">
+      <Tour />
       <div className="tab-buttons" role="tablist" onKeyDown={handleKeyDown} ref={tabListRef}>
         {TABS.map(t => (
-          <NavLink key={t.id} to={t.id} className={({isActive})=>`tab-button${isActive?' active':''}`} role="tab" aria-label={t.label}>
+          <NavLink id={`tab-${t.id}`} key={t.id} to={t.id} className={({isActive})=>`tab-button${isActive?' active':''}`} role="tab" aria-label={t.label}>
             <i className={`fa ${t.icon} mr-1`} aria-hidden="true"></i>{t.label}
           </NavLink>
         ))}
