@@ -1,57 +1,40 @@
 import atexit
+import csv
+import difflib
 import hashlib
 import json
 import logging
 import os
 import re
-import subprocess
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from datetime import datetime
 from difflib import SequenceMatcher
 from io import BytesIO, StringIO
-import csv
-import difflib
 
-
-# pylint: disable=import-error
+import fitz
 import schedule
-from flask import Flask
-from flask import Response, jsonify, render_template, request, send_file
-from werkzeug.utils import secure_filename
-from flask import Flask, Response, jsonify, render_template, request, send_file
-
 import spacy
+from flask import Flask, Response, jsonify, render_template, request, send_file
+from more_itertools import chunked
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+from pyhocon import ConfigFactory
 from spacy.cli import download as spacy_download
 from weasyprint import HTML
-import fitz
-
-try:
-    from apps.legal_discovery.legal_discovery import (
-        legal_discovery_thinker,
-        set_up_legal_discovery_assistant,
-        tear_down_legal_discovery_assistant,
-    )
-except Exception:  # pragma: no cover - optional dependency
-    legal_discovery_thinker = None
-
-    def set_up_legal_discovery_assistant(*args, **kwargs):
-        return None, None
-
-    def tear_down_legal_discovery_assistant(*args, **kwargs):
-        return None
-
-
-from more_itertools import chunked
-from pyhocon import ConfigFactory
 from werkzeug.utils import secure_filename
 
-from . import settings, bootstrap_graph
+from . import bootstrap_graph, settings
+from . import presentation_ws  # noqa: F401
+from .chat_state import user_input_queue
+from .chain_logger import ChainEventType, log_event
 from .database import db
-
-bootstrap_graph()
-from coded_tools.legal_discovery.deposition_prep import DepositionPrep
+from .exhibit_routes import exhibits_bp
+from .extensions import limiter, socketio
+from .feature_flags import FEATURE_FLAGS
+from .hippo_routes import bp as hippo_bp, objections_bp, health_bp
+from .trial_assistant import bp as trial_assistant_bp
+from .trial_prep_routes import trial_prep_bp
 from apps.legal_discovery.models import (
     Agent,
     CalendarEvent,
@@ -76,32 +59,32 @@ from apps.legal_discovery.models import (
     DocumentVersion,
     VoiceCache,
 )
-from .feature_flags import FEATURE_FLAGS
+from coded_tools.legal_discovery.bates_numbering import (
+    BatesNumberingService,
+    stamp_pdf,
+)
 from coded_tools.legal_discovery.deposition_prep import DepositionPrep
 from coded_tools.legal_discovery.legal_crawler import LegalCrawler
 from coded_tools.legal_discovery.narrative_discrepancy_detector import (
     NarrativeDiscrepancyDetector,
 )
-from coded_tools.legal_discovery.bates_numbering import (
-    BatesNumberingService,
-    stamp_pdf,
-)
-from .exhibit_routes import exhibits_bp
-from .trial_prep_routes import trial_prep_bp
-from .chain_logger import ChainEventType, log_event
-from .trial_assistant import bp as trial_assistant_bp  # noqa: E402
-from .hippo_routes import bp as hippo_bp, objections_bp, health_bp  # noqa: E402
-from coded_tools.legal_discovery.bates_numbering import (
-    BatesNumberingService,
-    stamp_pdf,
-)
-import difflib
-import fitz
-from .feature_flags import FEATURE_FLAGS
-from .extensions import socketio, limiter
-from .chat_state import user_input_queue
-from . import presentation_ws  # noqa: F401
-from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+
+try:
+    from apps.legal_discovery.legal_discovery import (
+        legal_discovery_thinker,
+        set_up_legal_discovery_assistant,
+        tear_down_legal_discovery_assistant,
+    )
+except Exception:  # pragma: no cover - optional dependency
+    legal_discovery_thinker = None
+
+    def set_up_legal_discovery_assistant(*args, **kwargs):
+        return None, None
+
+    def tear_down_legal_discovery_assistant(*args, **kwargs):
+        return None
+
+bootstrap_graph()
 
 # Configure logging before any other setup so early steps are captured
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
@@ -126,10 +109,9 @@ os.environ["AGENT_LLM_INFO_FILE"] = os.environ.get(
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 BUNDLE_PATH = os.path.join(STATIC_DIR, "bundle.js")
 if not os.path.exists(BUNDLE_PATH):
-    logging.info("No frontend bundle found; running npm build")
-    subprocess.run(
-        ["npm", "--prefix", os.path.dirname(__file__), "run", "build", "--silent"],
-        check=True,
+    logging.warning(
+        "Frontend bundle missing at %s; run `npm --prefix apps/legal_discovery run build` before starting the server.",
+        BUNDLE_PATH,
     )
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", os.urandom(24).hex())
@@ -164,7 +146,6 @@ if FEATURE_FLAGS.get("chat"):
 executor = ThreadPoolExecutor(max_workers=int(os.environ.get("INGESTION_WORKERS", "4")))
 atexit.register(executor.shutdown)
 thread_started = False  # pylint: disable=invalid-name
-bates_service = BatesNumberingService()
 
 
 @app.route("/metrics")

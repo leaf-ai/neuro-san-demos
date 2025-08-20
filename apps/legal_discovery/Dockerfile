@@ -6,7 +6,7 @@ WORKDIR /app
 COPY apps/legal_discovery/package*.json apps/legal_discovery/
 RUN npm --prefix apps/legal_discovery ci
 
-# Build
+# Build React bundle ahead of runtime so Flask serves precompiled assets
 COPY apps/legal_discovery apps/legal_discovery
 RUN npm --prefix apps/legal_discovery run build --silent
 

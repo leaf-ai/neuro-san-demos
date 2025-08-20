@@ -979,3 +979,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-09-27T00:00Z
 - Added missing imports across legal discovery modules and cleaned redundant numpy import in trial prep.
 - Next: ensure modules load within Flask app and expand tests for import coverage.
+
+## Update 2025-09-27T12:00Z
+- Consolidated Flask interface imports and removed runtime npm build reliance.
+- Initialized BatesNumberingService once after imports.
+- Next: ensure deployment pipeline builds frontend assets prior to startup.
