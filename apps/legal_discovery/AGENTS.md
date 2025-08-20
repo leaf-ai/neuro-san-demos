@@ -984,3 +984,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Consolidated Flask interface imports and removed runtime npm build reliance.
 - Initialized BatesNumberingService once after imports.
 - Next: ensure deployment pipeline builds frontend assets prior to startup.
+
+## Update 2025-09-27T12:30Z
+- Added `pyhocon` and `more-itertools` to `requirements.txt`, sorted dependencies alphabetically, and removed extra blank lines.
+- Next: verify installation of new dependencies and keep requirements tidy.
