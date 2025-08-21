@@ -1,10 +1,29 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "neuro-san-studio"
 version = "0.1.0"
+description = "Backend components for Neuro SAN Studio"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {file = "LICENSE.txt"}
+authors = [{name = "Neuro SAN"}]
+dependencies = [
+    "neuro-san>=0.5.52",
+    "Flask",
+    "Flask-SocketIO",
+    "redis>=5.0.0",
+    "rq>=1.15.1",
+    "python-dotenv>=1.0.1",
+    "gunicorn",
+    "pandas",
+    "prometheus-client>=0.20.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["neuro_san*", "apps*", "coded_tools*"]
 description = "Neuro SAN Studio backend"
 readme = "README.md"
 requires-python = ">=3.9"

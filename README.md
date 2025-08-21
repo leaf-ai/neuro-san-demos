@@ -454,6 +454,19 @@ python package_windows_exe.py
 The resulting `neuro-san-studio.exe` will be created under the `dist`
 directory for easy launching.
 
+### Building release artifacts
+
+Use the helper script to generate a distributable bundle that includes the
+backend wheel and the compiled frontend assets:
+
+```bash
+./package_release.sh
+```
+
+The script builds the React dashboard, creates a Python wheel via
+`python -m build`, and packages both into `dist/neuro-san-studio.tar.gz`.
+Upload the resulting tarball to your internal registry or a GitHub Release for
+easy distribution.
 ### Packaging backend wheel and frontend assets
 
 To distribute the Flask backend and React dashboard together, build the
