@@ -1,4 +1,5 @@
 """Flask blueprint exposing minimal HippoRAG endpoints."""
+
 from __future__ import annotations
 
 import logging
@@ -38,10 +39,12 @@ def _hippo_query_cached(case_id: str, query: str, k: int = 10):
 
 
 @health_bp.get("/health")
-def health() -> 'flask.Response':
+def health() -> "flask.Response":
     """Report connectivity status for Neo4j and Chroma services."""
     neo4j_status = "ok"
     chroma_status = "ok"
+    neo4j_error = None
+    chroma_error = None
 
     try:  # pragma: no cover - external service
         if GraphDatabase is None:
@@ -54,26 +57,33 @@ def health() -> 'flask.Response':
         with GraphDatabase.driver(uri, auth=auth) as driver:
             with driver.session(database=db_name) as session:
                 session.run("RETURN 1")
-    except Exception:
+    except Exception as exc:
+        logger.exception("Neo4j health check failed")
         neo4j_status = "fail"
+        neo4j_error = str(exc)
 
     try:  # pragma: no cover - external service
         host = os.environ.get("CHROMA_HOST", "localhost")
         port = int(os.environ.get("CHROMA_PORT", "8000"))
-        resp = requests.get(
-            f"http://{host}:{port}/api/v1/heartbeat", timeout=2
-        )
+        resp = requests.get(f"http://{host}:{port}/api/v1/heartbeat", timeout=2)
         if resp.status_code != 200:
             raise RuntimeError("chroma heartbeat failed")
-    except Exception:
+    except Exception as exc:
+        logger.exception("Chroma health check failed")
         chroma_status = "fail"
+        chroma_error = str(exc)
 
-    return jsonify({
+    payload = {
         "neo4j": neo4j_status,
         "chroma": chroma_status,
         "blocked_requests": dict(blocked_requests),
         "cache": {"hits": cache_stats.get("hits", 0), "misses": cache_stats.get("misses", 0)},
-    })
+    }
+    if neo4j_error:
+        payload["neo4j_error"] = neo4j_error
+    if chroma_error:
+        payload["chroma_error"] = chroma_error
+    return jsonify(payload)
 
 
 @bp.post("/index")
