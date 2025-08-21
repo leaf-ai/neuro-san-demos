@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import dataclass
 from typing import Any, Callable, Dict
 
 import redis
+from redis.client import PubSubWorkerThread
+
+logger = logging.getLogger(__name__)
 
 # Topic names shared across features
 FORENSIC_HASH_TOPIC = "team.forensic.hashes"
@@ -31,14 +35,26 @@ class MessageBus:
         data = json.dumps({"source_team": message.source_team, "payload": message.payload})
         self._client.publish(topic, data)
 
-    def subscribe(self, topic: str, handler: Callable[[TeamMessage], None]) -> None:
+    def subscribe(self, topic: str, handler: Callable[[TeamMessage], None]) -> PubSubWorkerThread:
         pubsub = self._client.pubsub()
 
         def _callback(msg: Dict[str, Any]) -> None:
-            data = json.loads(msg["data"]) if isinstance(msg["data"], bytes) else {}
+            data: Dict[str, Any] = {}
+            if isinstance(msg.get("data"), bytes):
+                try:
+                    data = json.loads(msg["data"])
+                except json.JSONDecodeError:
+                    logger.warning("Malformed message: %r", msg["data"])
+                    return
             handler(
                 TeamMessage(source_team=data.get("source_team", "unknown"), payload=data.get("payload", {}))
             )
 
         pubsub.subscribe(**{topic: _callback})
-        pubsub.run_in_thread(sleep_time=0.001, daemon=True)
+        thread = pubsub.run_in_thread(sleep_time=0.001, daemon=True)
+        return thread
+
+    def unsubscribe(self, thread: PubSubWorkerThread) -> None:
+        """Stop a running subscription thread."""
+        thread.stop()
+        thread.join()
