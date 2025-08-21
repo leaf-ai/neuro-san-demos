@@ -191,3 +191,12 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 - Ensured HippoRAG, sentence-transformers and scikit-learn dependencies are present.
 - Added README section covering `EMBED_MODEL`, `CROSS_ENCODER_MODEL` and Docker compose usage.
 - Next: rebuild the Docker image and verify retrieval models load successfully.
+
+## Update 2025-08-21T09:48Z
+- Added `package_release.sh` to build a backend wheel and bundle frontend assets into a release tarball.
+- Documented the packaging workflow in the README for easy distribution.
+- Next: automate publishing the tarball to an internal registry or GitHub Release.
+
+## Update 2025-08-21T10:00Z
+- Committed the release packaging script to version control.
+- Next: verify the release workflow in continuous integration.
