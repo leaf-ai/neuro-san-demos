@@ -392,6 +392,10 @@ The `apps/legal_discovery` stack runs a Flask frontend backed by PostgreSQL, Neo
 `EMBED_MODEL` selects the sentence-transformers model used for embedding documents, while `CROSS_ENCODER_MODEL` chooses the cross-encoder reranker. Both default to sensible values but can be overridden in `.env`.
 
 Docker Compose mounts the `.env` file into the application container so `config.py` can read it.
+    Docker Compose mounts the `.env` file into the application container so `config.py` can read it.  
+    - `NEO4J_PASSWORD` sets the admin password for the Neo4j instance and must match the value used by `docker-compose.yml`.
+    - `EMBED_MODEL` selects the sentence embedding model for vector storage.
+    - `CROSS_ENCODER_MODEL` sets the cross-encoder used to re-rank search results.
 
 2. Build and start the services:
 
@@ -449,3 +453,19 @@ python package_windows_exe.py
 
 The resulting `neuro-san-studio.exe` will be created under the `dist`
 directory for easy launching.
+
+### Packaging backend wheel and frontend assets
+
+To distribute the Flask backend and React dashboard together, build the
+wheel and frontend assets and bundle them into a tarball:
+
+```bash
+pip install -r requirements-build.txt
+python package_release.py
+```
+
+The script creates a Python wheel via `python -m build`, compiles the
+dashboard, and writes a `release-<version>.tar.gz` file under `dist/`. Set
+`GITHUB_REPOSITORY` and `GITHUB_TOKEN` to upload the tarball to a GitHub
+release or configure `INTERNAL_REGISTRY_URL` to push to an internal
+registry.
