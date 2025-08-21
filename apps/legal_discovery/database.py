@@ -127,6 +127,11 @@ def log_objection_event(
     confidence: int,
     extracted_phrase: str,
     suggested_cures: List[str] | None = None,
+    trace_id: str | None = None,
+    refs: List[Dict] | None = None,
+    path: Dict | List | None = None,
+    action_taken: str | None = None,
+    outcome: str | None = None,
 ) -> "ObjectionEvent":
     """Persist and return an objection event."""
 
@@ -136,11 +141,16 @@ def log_objection_event(
         evt = ObjectionEvent(
             session_id=session_id,
             segment_id=segment_id,
+            trace_id=trace_id,
             type=type,
             ground=ground,
             confidence=confidence,
             extracted_phrase=extracted_phrase,
             suggested_cures=suggested_cures or [],
+            refs=refs,
+            path=path,
+            action_taken=action_taken,
+            outcome=outcome,
         )
         db.session.add(evt)
         db.session.commit()
