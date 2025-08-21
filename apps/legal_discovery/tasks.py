@@ -7,6 +7,7 @@ from typing import Any, Dict, Tuple
 from redis import Redis
 from rq import Queue
 from rq.job import Job
+from rq.exceptions import NoSuchJobError
 from flask import Blueprint, jsonify
 
 from .auth import auth_required
@@ -134,14 +135,18 @@ def task_status(task_id: str):
     if queue is not None:
         try:
             job = Job.fetch(task_id, connection=redis_conn)  # type: ignore[arg-type]
-        except Exception:
-            return jsonify({"status": "unknown"}), 404
+        except NoSuchJobError:
+            return jsonify({"status": "unknown", "error": "task not found"}), 404
+        except Exception as exc:
+            logger.exception("task lookup failed: %s", exc)
+            return jsonify({"status": "unknown", "error": "lookup failed"}), 500
         status = job.get_status()
         result = job.result if job.is_finished else None
         return jsonify({"status": status, "result": result})
     result = _results.get(task_id)
-    status = "finished" if result is not None else "unknown"
-    return jsonify({"status": status, "result": result})
+    if result is None:
+        return jsonify({"status": "unknown", "error": "task not found"}), 404
+    return jsonify({"status": "finished", "result": result})
 
 
 __all__ = [

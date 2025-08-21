@@ -1081,3 +1081,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-10-06T14:45Z
 - Added entity-linked Hippo query combining Neo4j PPR, Chroma search and cross-encoder/LLM re-ranking.
 - Next: surface score breakdown in the dashboard and broaden ranking tests.
+
+## Update 2025-08-21T11:09Z
+- Improved task status endpoint with explicit error responses and logging.
+- Added tests covering missing and malformed task IDs.
+- Next: audit remaining task handlers for consistent error reporting.
