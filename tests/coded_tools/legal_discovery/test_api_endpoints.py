@@ -34,7 +34,7 @@ class TestAPIEndpoints(unittest.TestCase):
 
         @app.route("/api/theories/suggest")
         def suggest():
-            return jsonify(self.engine.suggest_theories())
+            return jsonify({"status": "ok", "theories": self.engine.suggest_theories()})
 
         @app.route("/api/theories/graph")
         def graph():
@@ -74,8 +74,9 @@ class TestAPIEndpoints(unittest.TestCase):
         resp = self.client.get("/api/theories/suggest")
         self.assertEqual(resp.status_code, 200)
         data = resp.get_json()
-        self.assertIsInstance(data, list)
-        breach = next(t for t in data if t["cause"] == "Breach of Contract")
+        self.assertEqual(data["status"], "ok")
+        self.assertIsInstance(data["theories"], list)
+        breach = next(t for t in data["theories"] if t["cause"] == "Breach of Contract")
         self.assertIn("missing_elements", breach)
 
     def test_theories_graph_endpoint(self):
