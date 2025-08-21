@@ -50,7 +50,7 @@ services:
     restart: unless-stopped
 
   neo4j:
-    image: neo4j:5.23
+    image: neo4j:5.23  # upgrade to 5.23 for latest fixes
     ports:
       - "7474:7474"
       - "7687:7687"

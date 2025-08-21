@@ -389,6 +389,8 @@ The `apps/legal_discovery` stack runs a Flask frontend backed by PostgreSQL, Neo
     CROSS_ENCODER_MODEL=cross-encoder/ms-marco-MiniLM-L-6-v2
     ```
 
+`EMBED_MODEL` selects the sentence-transformers model used for embedding documents, while `CROSS_ENCODER_MODEL` chooses the cross-encoder reranker. Both default to sensible values but can be overridden in `.env`.
+
 Docker Compose mounts the `.env` file into the application container so `config.py` can read it.
 
 2. Build and start the services:
