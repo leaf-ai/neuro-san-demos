@@ -200,3 +200,6 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 ## Update 2025-08-21T10:00Z
 - Committed the release packaging script to version control.
 - Next: verify the release workflow in continuous integration.
+## Update 2025-09-25T10:27Z
+- Added packaging script to build backend wheel and bundle frontend assets into a release tarball.
+- Next: wire the script into CI to publish artifacts automatically.

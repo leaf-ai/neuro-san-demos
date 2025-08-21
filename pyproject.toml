@@ -24,6 +24,11 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 include = ["neuro_san*", "apps*", "coded_tools*"]
+description = "Neuro SAN Studio backend"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [{name = "Cognizant AI Lab"}]
+dependencies = []
 
 [tool.isort]
 profile = "black"
