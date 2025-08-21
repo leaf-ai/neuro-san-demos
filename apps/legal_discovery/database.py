@@ -43,16 +43,27 @@ def log_ingestion(
     """Persist an ingestion event with timing and status."""
 
     try:
-        entry = IngestionLog(
-            case_id=case_id,
-            path=path,
-            doc_id=doc_id,
-            segment_hashes=segment_hashes,
-            status=status,
-            duration_ms=duration_ms,
-            error=error,
-        )
-        db.session.merge(entry)
+        existing = IngestionLog.query.filter_by(doc_id=doc_id).one_or_none()
+
+        if existing:
+            existing.case_id = case_id
+            existing.path = path
+            existing.segment_hashes = segment_hashes
+            existing.status = status
+            existing.duration_ms = duration_ms
+            existing.error = error
+        else:
+            entry = IngestionLog(
+                case_id=case_id,
+                path=path,
+                doc_id=doc_id,
+                segment_hashes=segment_hashes,
+                status=status,
+                duration_ms=duration_ms,
+                error=error,
+            )
+            db.session.add(entry)
+
         db.session.commit()
     except Exception as exc:  # pragma: no cover - best effort
         logger.exception("failed to log ingestion", exc_info=exc)
