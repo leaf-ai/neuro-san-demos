@@ -304,3 +304,8 @@ WE STARTED ON #3, INSTEAD OF #1. DEAL WITH IT, FINISH IMPLEMENTING #3, AND THEN 
 - Added scripts to seed PostgreSQL and launch Chroma/Neo4j containers.
 - Makefile now includes `compose-up` target to build stack and apply seed data.
 - Next: verify `compose-up` runs cleanly across environments.
+
+## Update 2025-10-07T00:00Z
+- Extended `/api/theories/suggest` with review status and comments.
+- Case Theory tab now shows status badges, comments and results from approvals.
+- Next: expose downloadable theory documents and refine pretrial outputs.

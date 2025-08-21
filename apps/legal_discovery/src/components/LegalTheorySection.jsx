@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 function LegalTheorySection() {
   const [theories, setTheories] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState({});
 
   const load = () => {
     setLoading(true);
@@ -21,13 +22,18 @@ function LegalTheorySection() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cause, ...extra })
-    }).then(r=>r.json()).then(d=>{
-      if(d.status==='ok'){
-        load();
-        window.dispatchEvent(new Event('graphRefresh'));
-        window.dispatchEvent(new Event('timelineRefresh'));
-      }
-    });
+    })
+      .then(r => r.json())
+      .then(d => {
+        if (d.status === 'ok' || d.document) {
+          if (d.document || d.pretrial) {
+            setResults(prev => ({ ...prev, [cause]: d }));
+          }
+          load();
+          window.dispatchEvent(new Event('graphRefresh'));
+          window.dispatchEvent(new Event('timelineRefresh'));
+        }
+      });
   };
 
   const approve = (cause) => act('/api/theories/accept', cause);
@@ -58,7 +64,18 @@ function LegalTheorySection() {
       {theories.map(t => (
         <div key={t.cause} className="mb-4">
           <div className="flex items-center justify-between mb-1">
-            <h3 className="font-bold">{t.cause} - {(t.score*100).toFixed(0)}%</h3>
+            <h3 className="font-bold flex items-center gap-2">
+              {t.cause} - {(t.score * 100).toFixed(0)}%
+              {t.status && (
+                <span
+                  className={`px-2 py-0.5 rounded text-xs ${
+                    t.status === 'approved' ? 'bg-green-600' : 'bg-red-600'
+                  }`}
+                >
+                  {t.status}
+                </span>
+              )}
+            </h3>
             <button className="button-secondary" onClick={() => showGraph(t.cause)}>
               <i className="fa fa-project-diagram mr-1"></i>Graph
             </button>
@@ -79,10 +96,23 @@ function LegalTheorySection() {
               </li>
             ))}
           </ul>
+          {t.comment && (
+            <p className="text-xs italic mb-2">Comment: {t.comment}</p>
+          )}
+          {results[t.cause] && (
+            <div className="text-xs mb-2">
+              {results[t.cause].pretrial && (
+                <p>Pretrial: {results[t.cause].pretrial}</p>
+              )}
+              {results[t.cause].document && (
+                <p className="break-all">Doc: {results[t.cause].document}</p>
+              )}
+            </div>
+          )}
           <div className="flex gap-2">
-            <button className="button-primary" onClick={()=>approve(t.cause)}>Approve</button>
-            <button className="button-secondary" onClick={()=>reject(t.cause)}>Reject</button>
-            <button className="button-secondary" onClick={()=>comment(t.cause)}>Comment</button>
+            <button className="button-primary" onClick={() => approve(t.cause)}>Approve</button>
+            <button className="button-secondary" onClick={() => reject(t.cause)}>Reject</button>
+            <button className="button-secondary" onClick={() => comment(t.cause)}>Comment</button>
           </div>
         </div>
       ))}

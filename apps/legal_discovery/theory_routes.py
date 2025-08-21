@@ -15,10 +15,26 @@ theories_bp = Blueprint("theories", __name__, url_prefix="/api/theories")
 
 @theories_bp.get("/suggest")
 def suggest_theories():
-    """Return ranked legal theory candidates."""
+    """Return ranked legal theory candidates with review metadata."""
     engine = LegalTheoryEngine()
     theories = engine.suggest_theories()
     engine.close()
+
+    # Attach status and review comments from persisted records
+    causes = [t["cause"] for t in theories]
+    existing = {
+        lt.theory_name: lt
+        for lt in LegalTheory.query.filter(
+            LegalTheory.theory_name.in_(causes), LegalTheory.case_id == 1
+        )
+    }
+    for t in theories:
+        lt = existing.get(t["cause"])
+        if lt is not None:
+            t["status"] = lt.status
+            if lt.review_comment:
+                t["comment"] = lt.review_comment
+
     return jsonify({"status": "ok", "theories": theories})
 
 
