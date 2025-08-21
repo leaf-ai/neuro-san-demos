@@ -450,3 +450,19 @@ python package_windows_exe.py
 
 The resulting `neuro-san-studio.exe` will be created under the `dist`
 directory for easy launching.
+
+### Packaging backend wheel and frontend assets
+
+To distribute the Flask backend and React dashboard together, build the
+wheel and frontend assets and bundle them into a tarball:
+
+```bash
+pip install -r requirements-build.txt
+python package_release.py
+```
+
+The script creates a Python wheel via `python -m build`, compiles the
+dashboard, and writes a `release-<version>.tar.gz` file under `dist/`. Set
+`GITHUB_REPOSITORY` and `GITHUB_TOKEN` to upload the tarball to a GitHub
+release or configure `INTERNAL_REGISTRY_URL` to push to an internal
+registry.
