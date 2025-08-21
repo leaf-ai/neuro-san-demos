@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from typing import List
+from typing import Any, Dict, List
 
 import yaml
 
@@ -30,7 +30,15 @@ class ObjectionEngine:
                 responses = counter.get("cures", [])
                 self.counter_compiled.append((name, cpats, responses))
 
-    def analyze_segment(self, session_id: str, seg: TranscriptSegment) -> List[ObjectionEvent]:
+    def analyze_segment(
+        self,
+        session_id: str,
+        seg: TranscriptSegment,
+        *,
+        trace_id: str | None = None,
+        refs: List[Dict] | None = None,
+        path: Any | None = None,
+    ) -> List[ObjectionEvent]:
         text = seg.text or ""
         found: List[ObjectionEvent] = []
         for ground, patterns, cures in self.compiled:
@@ -43,6 +51,9 @@ class ObjectionEngine:
                     confidence=85,
                     extracted_phrase=text[:160],
                     suggested_cures=cures,
+                    trace_id=trace_id,
+                    refs=refs,
+                    path=path,
                 )
                 if evt:
                     found.append(evt)
@@ -56,6 +67,9 @@ class ObjectionEngine:
                     confidence=80,
                     extracted_phrase=text[:160],
                     suggested_cures=cures,
+                    trace_id=trace_id,
+                    refs=refs,
+                    path=path,
                 )
                 if evt:
                     found.append(evt)

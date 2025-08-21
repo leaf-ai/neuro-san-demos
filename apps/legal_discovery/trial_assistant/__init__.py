@@ -44,7 +44,6 @@ def handle_segment(data):
         },
         room=session_id,
     )
-    events = engine.analyze_segment(session_id, seg)
     refs: list = []
     trace_id = None
     sess = db.session.get(TrialSession, session_id)
@@ -71,11 +70,13 @@ def handle_segment(data):
             )
         except Exception:  # pragma: no cover - best effort
             pass
-    for e in events:
-        e.refs = refs
-        e.trace_id = trace_id
-        e.path = refs[0]["path"] if refs else None
-    db.session.commit()
+    events = engine.analyze_segment(
+        session_id,
+        seg,
+        trace_id=trace_id,
+        refs=refs,
+        path=refs[0]["path"] if refs else None,
+    )
     for e in events:
         emit(
             "objection_event",

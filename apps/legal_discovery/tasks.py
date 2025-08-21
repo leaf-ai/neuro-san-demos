@@ -72,7 +72,6 @@ def analyze_segment_task(segment_id: str, session_id: str) -> Dict[str, Any]:
         seg = db.session.get(TranscriptSegment, segment_id)
         if seg is None:
             return {"error": "segment not found"}
-        events = engine.analyze_segment(session_id, seg)
         refs: list = []
         trace_id = None
         try:
@@ -99,11 +98,13 @@ def analyze_segment_task(segment_id: str, session_id: str) -> Dict[str, Any]:
                 )
         except Exception as exc:  # pragma: no cover - best effort
             logger.exception("hippo_query failed: %s", exc)
-        for e in events:
-            e.refs = refs
-            e.trace_id = trace_id
-            e.path = refs[0]["path"] if refs else None
-        db.session.commit()
+        events = engine.analyze_segment(
+            session_id,
+            seg,
+            trace_id=trace_id,
+            refs=refs,
+            path=refs[0]["path"] if refs else None,
+        )
         for e in events:
             socketio.emit(
                 "objection_event",
