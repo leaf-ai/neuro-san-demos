@@ -16,6 +16,16 @@ or suggests running `make install` (if it doesn't)
 These Makefile commands provide a convenient alternative to the manual steps described in the Installation section for
 macOS users. Windows users should follow the manual installation instructions instead.
 
+## Dependency Management
+
+Top-level dependencies live in `requirements.in`. The locked, fully pinned set is generated with
+[`pip-compile`](https://github.com/jazzband/pip-tools) and stored in `requirements.txt`.
+After modifying `requirements.in`, regenerate the lock file and commit both:
+
+```bash
+pip-compile requirements.in
+```
+
 ### Note on Markdown Linting
 
 We use [pymarkdown](https://pymarkdown.readthedocs.io/en/latest/) to run linting on .md files.

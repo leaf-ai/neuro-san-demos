@@ -203,3 +203,6 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 ## Update 2025-09-25T10:27Z
 - Added packaging script to build backend wheel and bundle frontend assets into a release tarball.
 - Next: wire the script into CI to publish artifacts automatically.
+## Update 2025-08-21T11:47Z
+- Switched to a requirements.in + pinned requirements.txt workflow to deduplicate dependencies.
+- Next: monitor dependency updates and regenerate the lock file as needed.
