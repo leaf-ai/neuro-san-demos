@@ -55,8 +55,9 @@ FROM python:3.12-slim AS final
 # Set the shell and options in each FROM section per hadolint recommendations
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Install runtime dependencies for graph processing
-RUN apt-get update && apt-get install -y --no-install-recommends graphviz && rm -rf /var/lib/apt/lists/*
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    graphviz curl && rm -rf /var/lib/apt/lists/*
 
 # Set up user for app running in container
 ENV USERNAME=neuro-san
@@ -90,6 +91,9 @@ EXPOSE 30011
 # This default port number is also mentioned as AGENT_HTTP_PORT below
 # and ServiceAgentSession.DEFAULT_HTTP_PORT
 EXPOSE 8080
+
+# Ensure orchestrators can verify container health
+HEALTHCHECK --interval=30s --timeout=5s --retries=5 CMD curl -fsS http://localhost:8080/api/health || exit 1
 
 # Copy installed dependencies from the builder stage
 COPY --from=builder /install /usr/local

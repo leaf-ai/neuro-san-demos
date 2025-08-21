@@ -403,6 +403,21 @@ The `apps/legal_discovery` stack runs a Flask frontend backed by PostgreSQL, Neo
 
 The web UI is available at <http://localhost:8080>. Neo4j exposes its browser on port 7474 and the Bolt protocol on 7687; both use the password specified in `NEO4J_PASSWORD`.
 
+### Health Check Endpoint
+
+Containers expose `/api/health` so orchestrators can verify service status. A healthy instance returns HTTP `200` with a JSON body similar to:
+
+```json
+{
+  "neo4j": "ok",
+  "chroma": "ok",
+  "blocked_requests": {},
+  "cache": { "hits": 0, "misses": 0 }
+}
+```
+
+Any non-`200` response indicates the service is unhealthy and should be restarted.
+
 ---
 
 ## Developer Guide
