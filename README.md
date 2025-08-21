@@ -389,6 +389,9 @@ The `apps/legal_discovery` stack runs a Flask frontend backed by PostgreSQL, Neo
     CROSS_ENCODER_MODEL=cross-encoder/ms-marco-MiniLM-L-6-v2
     ```
 
+`EMBED_MODEL` selects the sentence-transformers model used for embedding documents, while `CROSS_ENCODER_MODEL` chooses the cross-encoder reranker. Both default to sensible values but can be overridden in `.env`.
+
+Docker Compose mounts the `.env` file into the application container so `config.py` can read it.
     Docker Compose mounts the `.env` file into the application container so `config.py` can read it.  
     - `NEO4J_PASSWORD` sets the admin password for the Neo4j instance and must match the value used by `docker-compose.yml`.
     - `EMBED_MODEL` selects the sentence embedding model for vector storage.
