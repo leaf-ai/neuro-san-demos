@@ -1086,3 +1086,9 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Improved task status endpoint with explicit error responses and logging.
 - Added tests covering missing and malformed task IDs.
 - Next: audit remaining task handlers for consistent error reporting.
+
+## Update 2025-08-21T11:40Z
+- Added ocean, forest and rose theme packages with accent palettes.
+- Theme toggle now cycles through all themes and settings menu lists them dynamically.
+- Added smooth theme transitions, global focus outlines, smoother scrolling and button hover lift for better UX.
+- Next: gather user feedback on new themes and refine remaining components.

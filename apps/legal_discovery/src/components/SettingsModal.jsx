@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useAppContext } from "../AppContext";
 
 function SettingsModal({open,onClose}) {
-  const { setSettings, setFeatureFlags, theme, setTheme } = useAppContext();
+  const { setSettings, setFeatureFlags, theme, setTheme, themes } = useAppContext();
   const [form,setForm] = useState({});
   const ref = useRef();
   const firstFieldRef = useRef();
@@ -83,8 +83,11 @@ function SettingsModal({open,onClose}) {
           <label>GCP Service Account Key<textarea name="gcp_service_account_key" value={form.gcp_service_account_key||''} onChange={update} className="w-full p-2 rounded" rows="2"/></label>
           <label>Theme
             <select name="theme" value={form.theme||'dark'} onChange={update} className="w-full p-2 rounded">
-              <option value="dark">Dark</option>
-              <option value="light">Light</option>
+              {themes.map(t => (
+                <option key={t} value={t}>
+                  {t.charAt(0).toUpperCase() + t.slice(1)}
+                </option>
+              ))}
             </select>
           </label>
           <label className="flex items-center space-x-2"><input type="checkbox" name="theories" checked={form.theories||false} onChange={update}/><span>Enable Legal Theories</span></label>

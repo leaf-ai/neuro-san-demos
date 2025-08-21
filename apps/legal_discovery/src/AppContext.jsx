@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect, useMemo } from '
 const AppContext = createContext();
 
 export function AppProvider({ children }) {
+  const themes = ['dark', 'light', 'ocean', 'forest', 'rose'];
   const [settings, setSettings] = useState({});
   const [session, setSession] = useState(null);
   const [featureFlags, setFeatureFlags] = useState({});
@@ -10,7 +11,7 @@ export function AppProvider({ children }) {
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    document.body.classList.remove('light', 'dark');
+    document.body.classList.remove(...themes);
     document.body.classList.add(theme);
     localStorage.setItem('theme', theme);
   }, [theme]);
@@ -29,7 +30,11 @@ export function AppProvider({ children }) {
       .catch(() => {});
   }, []);
 
-  const toggleTheme = () => setTheme(t => (t === 'dark' ? 'light' : 'dark'));
+  const toggleTheme = () =>
+    setTheme(t => {
+      const idx = themes.indexOf(t);
+      return themes[(idx + 1) % themes.length];
+    });
 
   const value = useMemo(
     () => ({
@@ -42,6 +47,7 @@ export function AppProvider({ children }) {
       theme,
       setTheme,
       toggleTheme,
+      themes,
     }),
     [settings, session, featureFlags, theme]
   );
