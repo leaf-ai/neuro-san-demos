@@ -23,13 +23,13 @@ class TestAccounting(TestCase):
         Checks the response is correctly generated when all params are provided and valid.
         """
         order_api = OrderAPI()
-        order = {"customer_name": "Olivier", "shop_name": OrderAPI.SHOP_1, "order_description": "Black coffee"}
+        order = {"customer_name": "Olivier", "shop_name": OrderAPI.SHOP_1, "order_details": "Black coffee"}
         response_1 = order_api.invoke(args=order, sly_data={})
         expected_dict_1 = {
             "id": 101,
             "shop_name": OrderAPI.SHOP_1,
             "customer_name": "Olivier",
-            "order_description": "Black coffee",
+            "order_details": "Black coffee",
         }
         self.assertDictEqual(response_1, expected_dict_1)
 
@@ -39,7 +39,7 @@ class TestAccounting(TestCase):
         Checks the fallback to sly data.
         """
         order_api = OrderAPI()
-        order = {"shop_name": OrderAPI.SHOP_1, "order_description": "Black coffee"}
+        order = {"shop_name": OrderAPI.SHOP_1, "order_details": "Black coffee"}
         response_1 = order_api.invoke(args=order, sly_data={})
         expected_error_1 = "Error: Please provide a customer name for the order."
         self.assertEqual(response_1, expected_error_1)
@@ -50,7 +50,7 @@ class TestAccounting(TestCase):
             "id": 101,
             "shop_name": OrderAPI.SHOP_1,
             "customer_name": "Olivier",
-            "order_description": "Black coffee",
+            "order_details": "Black coffee",
         }
         self.assertDictEqual(response_2, expected_dict_2)
 
@@ -59,12 +59,12 @@ class TestAccounting(TestCase):
         Tests the invoke method of the OrderAPI CodedTool when an invalid or no shop name is provided.
         """
         order_api = OrderAPI()
-        order = {"customer_name": "Olivier", "order_description": "Black coffee"}
+        order = {"customer_name": "Olivier", "order_details": "Black coffee"}
         response_1 = order_api.invoke(args=order, sly_data={})
         expected_error_1 = "Error: Please provide the name of the shop for the order."
         self.assertEqual(response_1, expected_error_1)
 
-        order = {"customer_name": "Olivier", "shop_name": "Unknown shop", "order_description": "Black coffee"}
+        order = {"customer_name": "Olivier", "shop_name": "Unknown shop", "order_details": "Black coffee"}
         response_2 = order_api.invoke(args=order, sly_data={})
         expected_error_2 = "Error: Please provide a valid shop name."
         self.assertTrue(response_2.startswith(expected_error_2))
@@ -75,32 +75,32 @@ class TestAccounting(TestCase):
         Checks the order id is different for each shop
         """
         order_api = OrderAPI()
-        order = {"customer_name": "Olivier", "shop_name": OrderAPI.SHOP_1, "order_description": "Black coffee"}
+        order = {"customer_name": "Olivier", "shop_name": OrderAPI.SHOP_1, "order_details": "Black coffee"}
         response_1 = order_api.invoke(args=order, sly_data={})
         expected_dict_1 = {
             "id": 101,
             "shop_name": OrderAPI.SHOP_1,
             "customer_name": "Olivier",
-            "order_description": "Black coffee",
+            "order_details": "Black coffee",
         }
         self.assertDictEqual(response_1, expected_dict_1)
 
-        order = {"customer_name": "Olivier", "shop_name": OrderAPI.SHOP_2, "order_description": "Black coffee"}
+        order = {"customer_name": "Olivier", "shop_name": OrderAPI.SHOP_2, "order_details": "Black coffee"}
         response_2 = order_api.invoke(args=order, sly_data={})
         expected_dict_2 = {
             "id": 201,
             "shop_name": OrderAPI.SHOP_2,
             "customer_name": "Olivier",
-            "order_description": "Black coffee",
+            "order_details": "Black coffee",
         }
         self.assertDictEqual(response_2, expected_dict_2)
 
-        order = {"customer_name": "Olivier", "shop_name": OrderAPI.SHOP_3, "order_description": "Black coffee"}
+        order = {"customer_name": "Olivier", "shop_name": OrderAPI.SHOP_3, "order_details": "Black coffee"}
         response_3 = order_api.invoke(args=order, sly_data={})
         expected_dict_3 = {
             "id": 301,
             "shop_name": OrderAPI.SHOP_3,
             "customer_name": "Olivier",
-            "order_description": "Black coffee",
+            "order_details": "Black coffee",
         }
         self.assertDictEqual(response_3, expected_dict_3)

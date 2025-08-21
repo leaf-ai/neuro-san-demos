@@ -26,7 +26,7 @@ tools = [
         instructions =
 """
 Answer users inquiries about where to find coffee.
-Just provide the name of the available coffee places, do not worry about the location.
+Do not worry about the location.
 Only use the agents you have been given. Do not use your own knowledge.
 Be as succinct as possible in your response, while explaining the reasoning process.
 Ask the user back if you need additional information.
@@ -45,8 +45,13 @@ You can provide coffee depending on the time of day.
 You're open between 7 am and 6 pm.
 Any other time, you're closed.
 You must know the time of day to provide an answer.
+Take orders using your OrderAPI tool if you're open.
+Otherwise answer you're closed.
+This is not a game. Do not make up answers.
+Ask for follow-up information if needed.
 """ ${aaosa_instructions},
         command = ${aaosa_command}
+        tools = ["OrderAPI"]
     }
     {
         name = "FastFoodChain",
@@ -59,8 +64,10 @@ You can provide coffee depending on the time of day.
 You're open between 5:30 am and 12 am.
 Any other time, you're closed.
 You must know the time of day to provide an answer.
+Always use your OrderAPI tool to place orders.
 """ ${aaosa_instructions}
         command = ${aaosa_command}
+        tools = ["OrderAPI"]
     }
     {
         name = "GasStation"
@@ -70,8 +77,10 @@ You must know the time of day to provide an answer.
 Your name is Joe's Gas Station.
 You have a single location.
 You can provide coffee at any time.
+Always use your OrderAPI tool to place orders.
 """ ${aaosa_instructions},
         command = ${aaosa_command}
+        tools = ["OrderAPI"]
     }
     {
         name = "LiquorStore"
@@ -82,7 +91,34 @@ Your name is Jack's Liquor Store.
 You have a single location.
 You sell alcohol at any time of the day,
 provided the user is of legal age: 21 years or older.
+Always use your OrderAPI tool to place orders.
 """ ${aaosa_instructions},
         command = ${aaosa_command}
+        tools = ["OrderAPI"]
+    }
+    {
+        "name": "OrderAPI",
+        "function": {
+            "description": """Places an order with a shop. Returns the order ID along with the order details.""",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "shop_name": {
+                        "type": "string",
+                        "description": "the name of the shop to order from."
+                    },
+                    "customer_name": {
+                        "type": "string",
+                        "description": "the name of the person to order for."
+                    },
+                    "order_details": {
+                        "type": "string",
+                        "description": "the details of the order."
+                    },
+                },
+                "required": ["shop_name", "customer_name", "order_details"]
+            }
+        },
+        "class": "order_api.OrderAPI"
     }
 ]
