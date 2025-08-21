@@ -25,13 +25,8 @@ class TestAccounting(TestCase):
         order_api = OrderAPI()
         order = {"customer_name": "Olivier", "shop_name": OrderAPI.SHOP_1, "order_details": "Black coffee"}
         response_1 = order_api.invoke(args=order, sly_data={})
-        expected_dict_1 = {
-            "id": 101,
-            "shop_name": OrderAPI.SHOP_1,
-            "customer_name": "Olivier",
-            "order_details": "Black coffee",
-        }
-        self.assertDictEqual(response_1, expected_dict_1)
+        expected_resp_1 = f"Order 101 placed successfully for Olivier at {OrderAPI.SHOP_1}. Details: Black coffee"
+        self.assertEqual(response_1, expected_resp_1)
 
     def test_invoke_customer_name(self):
         """
@@ -46,13 +41,8 @@ class TestAccounting(TestCase):
 
         sly_data = {"user_name": "Olivier"}
         response_2 = order_api.invoke(args=order, sly_data=sly_data)
-        expected_dict_2 = {
-            "id": 101,
-            "shop_name": OrderAPI.SHOP_1,
-            "customer_name": "Olivier",
-            "order_details": "Black coffee",
-        }
-        self.assertDictEqual(response_2, expected_dict_2)
+        expected_resp_2 = f"Order 101 placed successfully for Olivier at {OrderAPI.SHOP_1}. Details: Black coffee"
+        self.assertEqual(response_2, expected_resp_2)
 
     def test_invoke_shop_name(self):
         """
@@ -77,30 +67,15 @@ class TestAccounting(TestCase):
         order_api = OrderAPI()
         order = {"customer_name": "Olivier", "shop_name": OrderAPI.SHOP_1, "order_details": "Black coffee"}
         response_1 = order_api.invoke(args=order, sly_data={})
-        expected_dict_1 = {
-            "id": 101,
-            "shop_name": OrderAPI.SHOP_1,
-            "customer_name": "Olivier",
-            "order_details": "Black coffee",
-        }
-        self.assertDictEqual(response_1, expected_dict_1)
+        expected_resp_1 = f"Order 101 placed successfully for Olivier at {OrderAPI.SHOP_1}. Details: Black coffee"
+        self.assertEqual(response_1, expected_resp_1)
 
         order = {"customer_name": "Olivier", "shop_name": OrderAPI.SHOP_2, "order_details": "Black coffee"}
         response_2 = order_api.invoke(args=order, sly_data={})
-        expected_dict_2 = {
-            "id": 201,
-            "shop_name": OrderAPI.SHOP_2,
-            "customer_name": "Olivier",
-            "order_details": "Black coffee",
-        }
-        self.assertDictEqual(response_2, expected_dict_2)
+        expected_resp_2 = f"Order 201 placed successfully for Olivier at {OrderAPI.SHOP_2}. Details: Black coffee"
+        self.assertEqual(response_2, expected_resp_2)
 
         order = {"customer_name": "Olivier", "shop_name": OrderAPI.SHOP_3, "order_details": "Black coffee"}
         response_3 = order_api.invoke(args=order, sly_data={})
-        expected_dict_3 = {
-            "id": 301,
-            "shop_name": OrderAPI.SHOP_3,
-            "customer_name": "Olivier",
-            "order_details": "Black coffee",
-        }
-        self.assertDictEqual(response_3, expected_dict_3)
+        expected_resp_3 = f"Order 301 placed successfully for Olivier at {OrderAPI.SHOP_3}. Details: Black coffee"
+        self.assertEqual(response_3, expected_resp_3)
