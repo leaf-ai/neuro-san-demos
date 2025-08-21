@@ -18,5 +18,6 @@ isort==5.13.2
 pylint==3.3.1
 
 # Packaging
+build==1.2.1
 pyinstaller==6.4.0
 
