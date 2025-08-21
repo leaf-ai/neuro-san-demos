@@ -389,7 +389,10 @@ The `apps/legal_discovery` stack runs a Flask frontend backed by PostgreSQL, Neo
     CROSS_ENCODER_MODEL=cross-encoder/ms-marco-MiniLM-L-6-v2
     ```
 
-Docker Compose mounts the `.env` file into the application container so `config.py` can read it.
+    Docker Compose mounts the `.env` file into the application container so `config.py` can read it.  
+    - `NEO4J_PASSWORD` sets the admin password for the Neo4j instance and must match the value used by `docker-compose.yml`.
+    - `EMBED_MODEL` selects the sentence embedding model for vector storage.
+    - `CROSS_ENCODER_MODEL` sets the cross-encoder used to re-rank search results.
 
 2. Build and start the services:
 
