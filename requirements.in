@@ -36,7 +36,9 @@ python-pptx
 psycopg2-binary
 rfc3987
 more_itertools
-gunicorn
+gunicorn ; platform_system != "Windows"
+uvicorn[standard] ; platform_system != "Windows"
+uvicorn ; platform_system == "Windows"
 eventlet
 pillow
 weasyprint
