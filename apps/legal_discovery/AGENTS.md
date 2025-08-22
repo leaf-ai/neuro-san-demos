@@ -1092,3 +1092,8 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Theme toggle now cycles through all themes and settings menu lists them dynamically.
 - Added smooth theme transitions, global focus outlines, smoother scrolling and button hover lift for better UX.
 - Next: gather user feedback on new themes and refine remaining components.
+
+## Update 2025-08-22T00:00Z
+- Switched backend Docker base image to Python 3.11 because Coqui TTS lacks
+  Python 3.12 wheels, breaking Docker builds.
+- Next: watch for upstream Python 3.12 support and revert the base image when available.

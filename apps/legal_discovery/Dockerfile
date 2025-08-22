@@ -12,7 +12,10 @@ RUN npm run build --silent
 
 
 # ---------- Backend (Python) ----------
-FROM python:3.12-slim
+# Coqui TTS does not yet provide wheels for Python 3.12, which caused
+# `pip install` to fail during the image build.  Use Python 3.11 until
+# upstream support is available.
+FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
