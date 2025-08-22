@@ -29,6 +29,25 @@ Docker Compose reads `NEO4J_PASSWORD` for both the app and database services so
 they always share the same credentials. If the variable is empty, the database
 starts without authentication which is convenient for local testing.
 
+## Compiling Requirements.txt
+
+To convert a requirements.in file into a requirements.txt with Python, you typically use pip-tools, which provides the pip-compile command. This tool resolves and pins all dependencies (including sub-dependencies) into a fully locked requirements.txt.
+
+Here’s how you can do it:
+
+1. Install pip-tools
+2. Run pip-compile
+
+```bash
+pip install pip-tools
+#If your requirements.in looks like this:
+flask
+requests>=2.28
+#Run:
+pip-compile requirements.in
+```
+This will generate a requirements.txt with pinned versions
+
 ### Model configuration
 
 Set optional environment variables to customise the retrieval models used by HippoRAG:
