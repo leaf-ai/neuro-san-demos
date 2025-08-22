@@ -16,25 +16,25 @@ llm_config {
     model_name = "gpt-4.1-mini"
 }
 
+this_is_not_a_game = """This is NOT a game. Do NOT pretend, call your tools. Do NOT make up answers. Do NOT infer information. Just ask."""
+
 tools = [
     # This is the agent network's entry point.
     {
         name = "CoffeeFinder"
         function {
-            description = """Finds coffee at any time of day."""
+            description = """Finds coffee places at any time of day."""
         }
         instructions =
 """
 Answer user inquiries about coffee places and take orders.
 Always return order IDs and details when placing orders.
 Do not worry about the location.
-This is NOT a game. Do NOT make up answers.
-Call ALL your downstream agents before answering.
+Call ALL your downstream agents to see if they can help with the inquiry before answering.
 Be as succinct as possible in your response, while explaining the reasoning process if needed.
 Ask the user back if you need additional information.
-""" ${aaosa_instructions}
+""" ${this_is_not_a_game} "\n" ${aaosa_instructions},
         tools = ["CoffeeShop", "FastFoodChain", "GasStation", "LiquorStore"]
-        "structure_formats": "json"
     }
     {
         name = "CoffeeShop",
@@ -49,9 +49,7 @@ Any other time, you're closed.
 You must know the time of day to provide an answer.
 Take orders using your OrderAPI tool if you're open and return the order id and details.
 Otherwise answer you're closed.
-This is not a game. Do not make up answers.
-Ask for follow-up information if needed.
-""" ${aaosa_instructions},
+""" ${this_is_not_a_game} "\n" ${aaosa_instructions},
         command = ${aaosa_command}
         tools = ["OrderAPI"]
     }
@@ -68,9 +66,7 @@ Any other time, you're closed.
 You must know the time of day to provide an answer.
 Take orders using your OrderAPI tool if you're open and return the order id and details.
 Otherwise answer you're closed.
-This is not a game. Do not make up answers.
-Ask for follow-up information if needed.
-""" ${aaosa_instructions}
+""" ${this_is_not_a_game} "\n" ${aaosa_instructions},
         command = ${aaosa_command}
         tools = ["OrderAPI"]
     }
@@ -84,9 +80,7 @@ You have a single location.
 You can provide coffee at any time.
 Take orders using your OrderAPI tool if you're open and return the order id and details.
 Otherwise answer you're closed.
-This is not a game. Do not make up answers.
-Ask for follow-up information if needed.
-""" ${aaosa_instructions},
+""" ${this_is_not_a_game} "\n" ${aaosa_instructions},
         command = ${aaosa_command}
         tools = ["OrderAPI"]
     }
@@ -101,9 +95,7 @@ You sell alcohol at any time of the day,
 provided the user is of legal age: 21 years or older.
 Take orders using your OrderAPI tool if you're open and return the order id and details.
 Otherwise answer you're closed.
-This is not a game. Do not make up answers.
-Ask for follow-up information if needed.
-""" ${aaosa_instructions},
+""" ${this_is_not_a_game} "\n" ${aaosa_instructions},
         command = ${aaosa_command}
         tools = ["OrderAPI"]
     }
@@ -112,6 +104,7 @@ Ask for follow-up information if needed.
         function = {
             description =
 """Use this API to place orders with a shop.
+Do not make up parameters, aks for them if needed.
 Always return the order ID and details to the caller."""
             parameters = {
                 type = "object"
@@ -122,11 +115,11 @@ Always return the order ID and details to the caller."""
                     }
                     customer_name = {
                         type = "string"
-                        description = "The name of the person to order for."
+                        description = "The name of the person placing the order and that will pick it up."
                     }
                     order_details = {
                         type = "string"
-                        description = "the details of the order."
+                        description = "The details of the order."
                     }
                 }
                 required = ["shop_name", "customer_name", "order_details"]
