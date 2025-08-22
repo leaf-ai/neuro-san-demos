@@ -1,6 +1,7 @@
 """Text to speech utilities with caching support."""
 
 import base64
+import importlib.util
 import logging
 import os
 import time
@@ -30,9 +31,7 @@ if redis is not None:
 logger = logging.getLogger(__name__)
 
 # Prometheus metrics
-tts_latency = Histogram(
-    "tts_latency_seconds", "Time spent generating speech audio"
-)
+tts_latency = Histogram("tts_latency_seconds", "Time spent generating speech audio")
 tts_errors = Counter("tts_errors_total", "Count of TTS synthesis failures")
 
 
@@ -88,11 +87,13 @@ def _synthesize_system(text: str, model: str) -> str:
     return base64.b64encode(data).decode("utf-8")
 
 
+# Only register Coqui engine if the optional dependency is present
 _ENGINE_MAP = {
     "gtts": _synthesize_gtts,
-    "coqui": _synthesize_coqui,
     "system": _synthesize_system,
 }
+if importlib.util.find_spec("TTS") is not None:
+    _ENGINE_MAP["coqui"] = _synthesize_coqui
 
 
 def synthesize_voice(text: str, model: str) -> str:
@@ -114,9 +115,7 @@ def synthesize_voice(text: str, model: str) -> str:
         logger.exception("TTS synthesis failed: %s", exc)
         audio = ""
     tts_latency.observe(time.perf_counter() - start)
-    logger.info(
-        "TTS synthesis via %s completed in %.3fs", engine, time.perf_counter() - start
-    )
+    logger.info("TTS synthesis via %s completed in %.3fs", engine, time.perf_counter() - start)
     if audio:
         _cache_set(key, audio, text, model)
     return audio

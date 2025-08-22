@@ -44,5 +44,4 @@ scikit-learn
 sentence-transformers
 spacy
 structlog
-TTS
 weasyprint
