@@ -12,7 +12,7 @@ from unittest import TestCase
 from coded_tools.coffee_finder_advanced.order_api import OrderAPI
 
 
-class TestAccounting(TestCase):
+class TestOrderAPI(TestCase):
     """
     Unit tests for the OrderAPI class.
     """

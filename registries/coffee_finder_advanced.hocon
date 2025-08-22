@@ -13,7 +13,7 @@ include "registries/aaosa_basic.hocon"
 
 llm_config {
     class = "openai"
-    model_name = "gpt-4.1-mini"
+    model_name = "gpt-4.1"
 }
 
 this_is_not_a_game = """This is NOT a game. Do NOT pretend, call your tools. Do NOT make up answers. Do NOT infer information. Just ask."""
