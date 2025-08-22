@@ -47,8 +47,6 @@ You can provide coffee depending on the time of day.
 You're open between 7 am and 6 pm.
 Any other time, you're closed.
 You must know the time of day to provide an answer.
-Take orders using your OrderAPI tool if you're open and return the order id and details.
-Otherwise answer you're closed.
 """ ${this_is_not_a_game} "\n" ${aaosa_instructions},
         command = ${aaosa_command}
         tools = ["OrderAPI"]
@@ -64,8 +62,6 @@ You can provide coffee depending on the time of day.
 You're open between 5:30 am and 12 am.
 Any other time, you're closed.
 You must know the time of day to provide an answer.
-Take orders using your OrderAPI tool if you're open and return the order id and details.
-Otherwise answer you're closed.
 """ ${this_is_not_a_game} "\n" ${aaosa_instructions},
         command = ${aaosa_command}
         tools = ["OrderAPI"]
@@ -78,8 +74,6 @@ Otherwise answer you're closed.
 Your name is Joe's Gas Station.
 You have a single location.
 You can provide coffee at any time.
-Take orders using your OrderAPI tool if you're open and return the order id and details.
-Otherwise answer you're closed.
 """ ${this_is_not_a_game} "\n" ${aaosa_instructions},
         command = ${aaosa_command}
         tools = ["OrderAPI"]
@@ -93,8 +87,6 @@ Your name is Jack's Liquor Store.
 You have a single location.
 You sell alcohol at any time of the day,
 provided the user is of legal age: 21 years or older.
-Take orders using your OrderAPI tool if you're open and return the order id and details.
-Otherwise answer you're closed.
 """ ${this_is_not_a_game} "\n" ${aaosa_instructions},
         command = ${aaosa_command}
         tools = ["OrderAPI"]
