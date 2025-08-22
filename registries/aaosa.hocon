@@ -61,18 +61,18 @@ If mode is 'Determine', return a json block with the following fields:
 {
     "Name": <your name>,
     "Inquiry": <the inquiry>,
-    "Mode": <Determine | Fulfill>,
+    "Mode": <Determine | Follow up | Fulfill>,
     "Relevant": <Yes | No>,
     "Strength": <number between 1 and 10 representing how certain you are in your claim>,
-    "Claim:" <All | Partial>,
-    "Requirements" <None | list of requirements>
+    "Claim": <All | Partial | None>,
+    "Requirements": <None | list of requirements>
 }
 If mode is 'Fulfill' or "Follow up", respond to the inquiry and return a json block with the following fields:
 {
     "Name": <your name>,
     "Inquiry": <the inquiry>,
-    "Mode": Fulfill,
-    "Response" <your response>
+    "Mode": <Fulfill | Follow up>,
+    "Response": <your response>
 }
             """
 }
