@@ -9,39 +9,59 @@
 #
 import json
 import os
-import requests
-from typing import Any
-from typing import Dict
-from typing import Optional
+from typing import Any, Dict
 
+import requests
 from neuro_san.interfaces.coded_tool import CodedTool
+
 
 class NowAgentSendMessage(CodedTool):
     """
-    A tool to interact with Agentforce agents using the Agentforce API.
-    Example usage: See tests/coded_tools/agentforce/test_agentforce_api.py
+    A tool to send messages/inquiries to ServiceNow AI agents.
+
+    This tool submits user inquiries to specific ServiceNow AI agents identified by their
+    system ID. It handles session management and creates the initial interaction.
+
+    Example usage: See tests in the now_agents module.
     """
 
     def __init__(self):
         """
-        Constructs an NowAgentAPI object.
+        Constructs a NowAgentSendMessage object.
+
+        No initialization parameters required. Configuration is handled through environment variables.
         """
 
     def invoke(self, args: Dict[str, Any], sly_data: Dict[str, Any]) -> str:
         """
-        Calls the Agentforce API to get a response to the user's inquiry. If no session was provided in the sly_data,
-        a new session is created. Otherwise, the existing session is reused to keep the conversation going.
-        WARNING: The AgentforceAdapter constructor reads the AGENTFORCE_CLIENT_ID and AGENTFORCE_CLIENT_SECRET
-        environment variables. If they are NOT provided, this `invoke` call will return mock responses.
+        Sends a message/inquiry to a specific ServiceNow AI agent.
 
-        
-        :return: The response message from ServiceNow. 
-        """  # noqa E501
+        This method submits a user inquiry to a ServiceNow AI agent using the ServiceNow
+        Agentic AI API. It creates a new session and stores the session path for response retrieval.
+
+        Args:
+            args: Dictionary containing:
+                - inquiry (str): The user's question or request
+                - agent_id (str): The system ID of the ServiceNow AI agent
+            sly_data: Dictionary for session data management (updated with session_path)
+
+        Returns:
+            dict: ServiceNow API response containing session and metadata information.
+                  Response structure includes:
+                  - metadata: Dict with user_id, session_id, and other session details
+                  - request_id: ID of the submitted request
+
+        Side Effects:
+            Updates sly_data with session_path for use in NowAgentRetrieveMessage
+
+        Raises:
+            SystemExit: If the ServiceNow API returns a non-200 status code
+        """
         # Parse the arguments
-        servicenow_url: str = self._get_env_variable('SERVICENOW_INSTANCE_URL')
-        servicenow_caller_email: str = self._get_env_variable('SERVICENOW_CALLER_EMAIL')
-        servicenow_user: str = self._get_env_variable('SERVICENOW_USER')
-        servicenow_pwd: str = self._get_env_variable('SERVICENOW_PWD')
+        servicenow_url: str = self._get_env_variable("SERVICENOW_INSTANCE_URL")
+        servicenow_caller_email: str = self._get_env_variable("SERVICENOW_CALLER_EMAIL")
+        servicenow_user: str = self._get_env_variable("SERVICENOW_USER")
+        servicenow_pwd: str = self._get_env_variable("SERVICENOW_PWD")
         print(f"ServiceNow URL: {servicenow_url}")
         print(f"user:{servicenow_user}")
         print(f"pwd:{servicenow_pwd}")
@@ -50,24 +70,32 @@ class NowAgentSendMessage(CodedTool):
         inquiry: str = args.get("inquiry")
         agent_id: str = args.get("agent_id")
 
-        # Get the session_id and access_token from the sly_data. Having a session_id means the user has already started
-        # a conversation with Agentforce and wants to continue it.
-        
         tool_name = self.__class__.__name__
         print(f"========== Calling {tool_name} ==========")
 
-        # Set the request parameters
-        url = servicenow_url+'api/sn_aia/agenticai/v1/agent/id/'+agent_id
+        # Build the ServiceNow Agentic AI API URL
+        url = f"{servicenow_url}api/sn_aia/agenticai/v1/agent/id/{agent_id}"
+
         # Set proper headers
-        headers = {"Content-Type":"application/json","Accept":"application/json"}
+        headers = {"Content-Type": "application/json", "Accept": "application/json"}
 
-        # Do the HTTP request
-        response = requests.post(url, auth=(servicenow_user, servicenow_pwd), headers=headers ,data="{\"request_id\":\"56789\",\"metadata\":{\"email_id\":\""+servicenow_caller_email+"\"},\"inputs\":[{\"content_type\":\"text\",\"content\":\""+inquiry+"\"}]}")
+        # Prepare the request payload
+        request_payload = {
+            "request_id": "56789",
+            "metadata": {"email_id": servicenow_caller_email},
+            "inputs": [{"content_type": "text", "content": inquiry}],
+        }
 
+        # Execute the HTTP POST request
+        response = requests.post(
+            url, auth=(servicenow_user, servicenow_pwd), headers=headers, data=json.dumps(request_payload)
+        )
 
         # Check for HTTP codes other than 200
-        if response.status_code != 200: 
-            print('Status:', response.status_code, 'Headers:', response.headers, 'Error Response:',response.json())
+        if response.status_code != 200:
+            error_msg = f"Status: {response.status_code}, Headers: {response.headers}"
+            print(error_msg)
+            print(f"Error Response: {response.json()}")
             exit()
 
         # Decode the JSON response into a dictionary and use the data
@@ -77,27 +105,48 @@ class NowAgentSendMessage(CodedTool):
         print(f"{tool_name} tool response: ", tool_response)
         print(f"========== Done with {tool_name} ==========")
 
-        sly_data["session_path"] = tool_response["metadata"]["user_id"]+"_"+tool_response["metadata"]["session_id"]
+        # Store session information for response retrieval
+        user_id = tool_response["metadata"]["user_id"]
+        session_id = tool_response["metadata"]["session_id"]
+        sly_data["session_path"] = f"{user_id}_{session_id}"
         print(f"Updated sly_data: {sly_data}")
 
         return tool_response
-    
+
     @staticmethod
     def _get_env_variable(env_variable_name: str) -> str:
+        """
+        Retrieves an environment variable value with debug logging.
+
+        Args:
+            env_variable_name: Name of the environment variable to retrieve
+
+        Returns:
+            str: Value of the environment variable, or None if not found
+        """
         print(f"NowAgent: getting {env_variable_name} from environment variables...")
         env_var = os.getenv(env_variable_name, None)
         if env_var is None:
             print(f"NowAgent: {env_variable_name} is NOT defined")
         else:
-            print(f"NowAget: {env_variable_name} FOUND in environment variables")
+            print(f"NowAgent: {env_variable_name} FOUND in environment variables")
         print(env_var)
         return env_var
 
     async def async_invoke(self, args: Dict[str, Any], sly_data: Dict[str, Any]) -> str:
         """
-        Delegates to the synchronous invoke method for now.
+        Asynchronous version of the invoke method.
+
+        Currently delegates to the synchronous invoke method.
+
+        Args:
+            args: Dictionary containing the inquiry and agent_id parameters
+            sly_data: Dictionary for session data management
+
+        Returns:
+            dict: ServiceNow API response containing session and metadata information.
+                  Response structure includes:
+                  - metadata: Dict with user_id, session_id, and other session details
+                  - request_id: ID of the submitted request
         """
         return self.invoke(args, sly_data)
-
-
-

@@ -7,62 +7,78 @@
 # Purchase of a commercial license is mandatory for any use of the
 # neuro-san-studio SDK Software in commercial settings.
 #
-import json
 import os
-import requests
-from typing import Any
-from typing import Dict
-from typing import Optional
+from typing import Any, Dict
 
+import requests
 from neuro_san.interfaces.coded_tool import CodedTool
+
 
 class NowAgentAPIGetAgents(CodedTool):
     """
-    A tool to interact with Agentforce agents using the Agentforce API.
-    Example usage: See tests/coded_tools/agentforce/test_agentforce_api.py
+    A tool to discover and retrieve available ServiceNow AI agents from a ServiceNow instance.
+
+    This tool queries the sn_aia_agent table in ServiceNow to get a list of active AI agents
+    along with their descriptions and system IDs for further interaction.
+
+    Example usage: See tests in the now_agents module.
     """
 
     def __init__(self):
         """
-        Constructs an NowAgentAPI object.
+        Constructs a NowAgentAPIGetAgents object.
+
+        No initialization parameters required. Configuration is handled through environment variables.
         """
 
     def invoke(self, args: Dict[str, Any], sly_data: Dict[str, Any]) -> str:
         """
-        Calls the Agentforce API to get a response to the user's inquiry. If no session was provided in the sly_data,
-        a new session is created. Otherwise, the existing session is reused to keep the conversation going.
-        WARNING: The AgentforceAdapter constructor reads the AGENTFORCE_CLIENT_ID and AGENTFORCE_CLIENT_SECRET
-        environment variables. If they are NOT provided, this `invoke` call will return mock responses.
+        Discovers and retrieves available ServiceNow AI agents from the configured instance.
 
-        
-        :return: The response message from ServiceNow. 
-        """  # noqa E501
+        This method queries the ServiceNow instance's sn_aia_agent table to get a list of
+        AI agents that match the configured query criteria (typically active agents).
+
+        Args:
+            args: Dictionary containing the inquiry parameters (not used for agent discovery)
+            sly_data: Dictionary for session data management (not used for agent discovery)
+
+        Returns:
+            dict: ServiceNow API response containing the list of agents with their details.
+                  Response structure includes:
+                  - result: List of agent dictionaries with 'description', 'name', and 'sys_id' fields
+
+        Raises:
+            SystemExit: If the ServiceNow API returns a non-200 status code
+        """
         # Parse the arguments
-        servicenow_url: str = self._get_env_variable('SERVICENOW_INSTANCE_URL')
-        servicenow_get_agents_query: str = self._get_env_variable('SERVICENOW_GET_AGENTS_QUERY')
-        servicenow_user: str = self._get_env_variable('SERVICENOW_USER')
-        servicenow_pwd: str = self._get_env_variable('SERVICENOW_PWD')
+        servicenow_url: str = self._get_env_variable("SERVICENOW_INSTANCE_URL")
+        servicenow_get_agents_query: str = self._get_env_variable("SERVICENOW_GET_AGENTS_QUERY")
+        servicenow_user: str = self._get_env_variable("SERVICENOW_USER")
+        servicenow_pwd: str = self._get_env_variable("SERVICENOW_PWD")
         print(f"ServiceNow URL: {servicenow_url}")
         print(f"user:{servicenow_user}")
         print(f"pwd:{servicenow_pwd}")
 
-        # Get the session_id and access_token from the sly_data. Having a session_id means the user has already started
-        # a conversation with Agentforce and wants to continue it.
-        
         tool_name = self.__class__.__name__
         print(f"========== Calling {tool_name} ==========")
 
-        # Set the request parameters
-        url = servicenow_url+'api/now/table/sn_aia_agent?sysparm_query='+servicenow_get_agents_query+'&sysparm_fields=description%2Cname%2Csys_id'
-        # Set proper headers
-        headers = {"Content-Type":"application/json","Accept":"application/json"}
+        # Build the ServiceNow API URL for agent discovery
+        base_url = f"{servicenow_url}api/now/table/sn_aia_agent"
+        query_params = f"sysparm_query={servicenow_get_agents_query}"
+        field_params = "sysparm_fields=description%2Cname%2Csys_id"
+        url = f"{base_url}?{query_params}&{field_params}"
 
-        # Do the HTTP request
-        response = requests.get(url, auth=(servicenow_user, servicenow_pwd), headers=headers )
+        # Set proper headers
+        headers = {"Content-Type": "application/json", "Accept": "application/json"}
+
+        # Execute the HTTP request
+        response = requests.get(url, auth=(servicenow_user, servicenow_pwd), headers=headers)
 
         # Check for HTTP codes other than 200
-        if response.status_code != 200: 
-            print('Status:', response.status_code, 'Headers:', response.headers, 'Error Response:',response.json())
+        if response.status_code != 200:
+            error_msg = f"Status: {response.status_code}, Headers: {response.headers}"
+            print(error_msg)
+            print(f"Error Response: {response.json()}")
             exit()
 
         # Decode the JSON response into a dictionary and use the data
@@ -72,21 +88,38 @@ class NowAgentAPIGetAgents(CodedTool):
         print(f"{tool_name} tool response: ", tool_response)
         print(f"========== Done with {tool_name} ==========")
         return tool_response
-    
+
     @staticmethod
     def _get_env_variable(env_variable_name: str) -> str:
+        """
+        Retrieves an environment variable value with debug logging.
+
+        Args:
+            env_variable_name: Name of the environment variable to retrieve
+
+        Returns:
+            str: Value of the environment variable, or None if not found
+        """
         print(f"NowAgent: getting {env_variable_name} from environment variables...")
         env_var = os.getenv(env_variable_name, None)
         if env_var is None:
             print(f"NowAgent: {env_variable_name} is NOT defined")
         else:
-            print(f"NowAget: {env_variable_name} FOUND in environment variables")
+            print(f"NowAgent: {env_variable_name} FOUND in environment variables")
         print(env_var)
         return env_var
 
     async def async_invoke(self, args: Dict[str, Any], sly_data: Dict[str, Any]) -> str:
         """
-        Delegates to the synchronous invoke method for now.
+        Asynchronous version of the invoke method.
+
+        Currently delegates to the synchronous invoke method.
+
+        Args:
+            args: Dictionary containing the inquiry parameters
+            sly_data: Dictionary for session data management
+
+        Returns:
+            dict: ServiceNow API response containing the list of agents with their details
         """
         return self.invoke(args, sly_data)
-
