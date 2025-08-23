@@ -227,6 +227,15 @@ research papers (abstracts or full text) and produces accurate responses to user
 
 **Tags:** `tool`, `RAG`
 
+### ServiceNow AI Agents
+
+[ServiceNow AI Agents](./examples/now_agents.md) is a comprehensive integration system that enables natural language
+interaction with ServiceNow's Agentic AI platform. It provides discovery, communication, and response retrieval
+capabilities for 100+ specialized AI agents within ServiceNow instances for IT service management, HR operations,
+procurement, and other enterprise processes.
+
+**Tags:** `tool`, `API`, `ServiceNow`, `Enterprise`
+
 ## 🏢 Industry-Specific Examples
 
 Examples tailored to specific industry applications.
