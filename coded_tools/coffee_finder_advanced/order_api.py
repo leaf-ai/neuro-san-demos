@@ -32,7 +32,7 @@ class OrderAPI(CodedTool):
             - order_details: the details of the order.
 
         :param sly_data: a dictionary with the following keys:
-            - user_name: optional - the name of the person to order for, if already known.
+            - username: optional - the name of the person to order for, if already known.
 
         :return:
             In case of successful execution:
@@ -46,15 +46,15 @@ class OrderAPI(CodedTool):
         customer_name: str = args.get("customer_name", None)
         if not customer_name:
             print("No customer name provided. Trying to get it from sly_data")
-            customer_name = sly_data.get("user_name")
+            customer_name = sly_data.get("username")
         if not customer_name:
-            error = "Error: Please provide a customer name for the order."
+            error = "Error: Please provide a valid customer name for the order."
             print(error)
             return error
 
         # Now we have a client name. Keep it in the sly_data if it wasn't there before.
-        if sly_data.get("user_name", None) is None:
-            sly_data["user_name"] = customer_name
+        if sly_data.get("username", None) is None:
+            sly_data["username"] = customer_name
 
         # Shop name is required to place an order.
         shop: str = args.get("shop_name", None)

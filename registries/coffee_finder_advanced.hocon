@@ -96,8 +96,9 @@ provided the user is of legal age: 21 years or older.
         function = {
             description =
 """Use this API to place orders with a shop.
-Do not make up parameters, aks for them if needed.
-Always return the order ID and details to the caller."""
+Always ASK for the customer name before placing an order.
+Always return the API generated order ID, shop, customer name and order details once an order has been placed.
+"""
             parameters = {
                 type = "object"
                 properties = {
@@ -107,7 +108,7 @@ Always return the order ID and details to the caller."""
                     }
                     customer_name = {
                         type = "string"
-                        description = "The name of the person placing the order and that will pick it up."
+                        description = "The name of the person to call when the order is ready. It must be a valid name."
                     }
                     order_details = {
                         type = "string"
