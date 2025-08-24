@@ -309,3 +309,10 @@ WE STARTED ON #3, INSTEAD OF #1. DEAL WITH IT, FINISH IMPLEMENTING #3, AND THEN 
 - Extended `/api/theories/suggest` with review status and comments.
 - Case Theory tab now shows status badges, comments and results from approvals.
 - Next: expose downloadable theory documents and refine pretrial outputs.
+
+## Update 2025-08-24T09:48Z
+- Restricted pywinpty installation to Windows in legal_discovery requirements to avoid Linux build failures.
+- Next: rerun Docker build to confirm faster, cross-platform dependency resolution.
+## Update 2025-08-24T10:10Z
+- Pinned legal_discovery dependencies and added requirements.in for deterministic builds.
+- Next: run Docker build to confirm faster installs.

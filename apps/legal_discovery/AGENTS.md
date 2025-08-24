@@ -1101,3 +1101,10 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-24T00:15Z
 - Regenerated project requirements for Python 3.11 and updated deployment configs.
 - Next: confirm Docker compose runs on AWS.
+
+## Update 2025-08-24T09:48Z
+- Scoped pywinpty dependency to Windows-only to prevent Linux Docker build failures.
+- Next: run full Docker build to verify clean cross-platform installation.
+## Update 2025-08-24T10:10Z
+- Pinned legal_discovery requirements and added requirements.in to avoid pip backtracking.
+- Next: rebuild Docker image with new pinned requirements.
