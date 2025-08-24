@@ -1097,3 +1097,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Switched backend Docker base image to Python 3.11 because Coqui TTS lacks
   Python 3.12 wheels, breaking Docker builds.
 - Next: watch for upstream Python 3.12 support and revert the base image when available.
+
+## Update 2025-08-24T00:15Z
+- Regenerated project requirements for Python 3.11 and updated deployment configs.
+- Next: confirm Docker compose runs on AWS.

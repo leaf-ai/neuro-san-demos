@@ -198,7 +198,7 @@ Go to dir:
 cd neuro-san-studio
 ```
 
-Ensure you have a supported version of python (3.12 at this time):
+Ensure you have a supported version of python (3.11 at this time):
 
 ```bash
 python --version

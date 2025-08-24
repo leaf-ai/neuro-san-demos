@@ -2,7 +2,7 @@ name: neuro-san-studio-2  # name is cosmetic when using -p
 channels:
   - conda-forge
 dependencies:
-  - python=3.12
+  - python=3.11
   - graphviz
   - pip
   - pip:
