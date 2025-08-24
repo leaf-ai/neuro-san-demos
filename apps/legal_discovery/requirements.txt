@@ -33,7 +33,7 @@ python-docx
 python-pptx
 python-socketio
 pyttsx3
-pyvis
+pyvis==0.3.2
 redis
 reportlab
 requests
