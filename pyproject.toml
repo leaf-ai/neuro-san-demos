@@ -14,12 +14,16 @@ dependencies = [
     "neuro-san>=0.5.52",
     "Flask",
     "Flask-SocketIO",
+    "Flask-Limiter",
     "redis>=5.0.0",
     "rq>=1.15.1",
     "python-dotenv>=1.0.1",
     "gunicorn",
     "pandas",
     "prometheus-client>=0.20.0",
+    "opentelemetry-api",
+    "opentelemetry-sdk",
+    "opentelemetry-instrumentation-flask",
 ]
 
 [tool.setuptools.packages.find]

@@ -91,7 +91,6 @@ class BaseRag(ABC):
                 vectorstore = InMemoryVectorStore.load(
                     path=self.abs_vector_store_path,
                     embedding=GoogleGenerativeAIEmbeddings(),
-                    path=self.abs_vector_store_path, embedding=GoogleGenerativeAIEmbeddings()
                 )
                 logger.info("Loaded vector store from: %s", self.abs_vector_store_path)
                 return vectorstore

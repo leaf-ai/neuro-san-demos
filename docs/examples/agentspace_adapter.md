@@ -20,7 +20,7 @@ See the [Agentspace documentation](https://cloud.google.com/agentspace/agentspac
 ### Steps to install and use agentspace-neurosan-adapter
 
 - Setup your google cloud account
-- Ensure that you have python 3.12 on your machine.
+- Ensure that you have python 3.11 on your machine.
 - You should have a google cloud account with access to vertexai, googleapis, accesstoken, discoveryengine. (Following
 instructions assume that you have a service acccount that has all the necessary access)
 - Download and install google cloud CLI by following these [instructions](https://cloud.google.com/sdk/docs/install-sdk)

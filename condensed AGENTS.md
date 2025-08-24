@@ -206,3 +206,12 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 ## Update 2025-08-21T11:47Z
 - Switched to a requirements.in + pinned requirements.txt workflow to deduplicate dependencies.
 - Next: monitor dependency updates and regenerate the lock file as needed.
+
+## Update 2025-08-24T00:15Z
+- Regenerated requirements and environment for Python 3.11 and aligned Docker builds.
+- Next: validate Docker images on AWS.
+
+## Update 2025-08-24T03:30Z
+- Removed duplicate arguments in `BaseRag` loader so coverage parses cleanly.
+- Verified Python 3.11 dependency install and full test suite.
+- Next: monitor Docker builds in AWS to confirm stability.
