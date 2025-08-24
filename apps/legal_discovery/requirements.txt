@@ -35,7 +35,7 @@ python-socketio
 pyttsx3
 pyvis==0.3.2
 redis
-reportlab
+reportlab==4.4.3
 requests
 rfc3987
 rq
