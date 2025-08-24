@@ -219,3 +219,7 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 ## Update 2025-10-07T12:00Z
 - Added runtime HippoRAG installation to `docker-compose.yml` with pinned core dependencies.
 - Next: validate container startup with new packages and monitor for conflicts.
+
+## Update 2025-08-24T15:14Z
+- Restricted CUDA, Triton, and uvloop dependencies to Linux to support Windows installs.
+- Next: verify cross-platform builds in Docker.

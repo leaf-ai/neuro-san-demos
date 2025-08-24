@@ -1121,3 +1121,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-10-07T12:00Z
 - Enabled runtime installation of `hipporag` and core deps via `docker-compose`.
 - Next: verify container boot and integrate HippoRAG features.
+
+## Update 2025-08-24T15:14Z
+- Scoped CUDA, Triton, gunicorn, and uvloop packages to Linux-only to avoid Windows install failures.
+- Next: confirm cross-platform tests.
