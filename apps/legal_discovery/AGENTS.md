@@ -1108,3 +1108,12 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-24T10:10Z
 - Pinned legal_discovery requirements and added requirements.in to avoid pip backtracking.
 - Next: rebuild Docker image with new pinned requirements.
+
+## Update 2025-10-07T00:00Z
+- Pinned `networkx` to 3.4.2 to satisfy `hipporag` dependencies.
+- Next: regenerate `requirements.txt` via `pip-compile` and validate install.
+
+## Update 2025-10-07T00:30Z
+- Removed `hipporag` due to unresolved `openai` and `tiktoken` conflicts.
+- Regenerated requirements with `pip-compile`.
+- Next: reintroduce `hipporag` once a compatible release is available.
