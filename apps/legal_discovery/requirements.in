@@ -10,7 +10,6 @@ flask-sqlalchemy
 google-genai>=1.0.0
 gTTS
 gunicorn
-hipporag
 langchain-google-genai
 more-itertools
 neo4j
