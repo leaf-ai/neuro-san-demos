@@ -14,7 +14,7 @@ hipporag
 langchain-google-genai
 more-itertools
 neo4j
-networkx
+networkx==3.4.2
 neuro-san
 opentelemetry-instrumentation-flask
 opentelemetry-sdk
