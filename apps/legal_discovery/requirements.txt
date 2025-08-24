@@ -13,7 +13,7 @@ hipporag
 langchain-google-genai==2.1.9
 more-itertools==10.7.0
 neo4j==5.28.2
-networkx==3.5
+networkx==3.4.2
 neuro-san==0.5.52
 opentelemetry-instrumentation-flask==0.57b0
 opentelemetry-sdk==1.36.0
