@@ -215,3 +215,7 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 - Removed duplicate arguments in `BaseRag` loader so coverage parses cleanly.
 - Verified Python 3.11 dependency install and full test suite.
 - Next: monitor Docker builds in AWS to confirm stability.
+
+## Update 2025-10-07T12:00Z
+- Added runtime HippoRAG installation to `docker-compose.yml` with pinned core dependencies.
+- Next: validate container startup with new packages and monitor for conflicts.

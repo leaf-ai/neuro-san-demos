@@ -1117,3 +1117,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 - Removed `hipporag` due to unresolved `openai` and `tiktoken` conflicts.
 - Regenerated requirements with `pip-compile`.
 - Next: reintroduce `hipporag` once a compatible release is available.
+
+## Update 2025-10-07T12:00Z
+- Enabled runtime installation of `hipporag` and core deps via `docker-compose`.
+- Next: verify container boot and integrate HippoRAG features.
