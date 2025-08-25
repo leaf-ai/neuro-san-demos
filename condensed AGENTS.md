@@ -223,3 +223,7 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 ## Update 2025-08-24T15:14Z
 - Restricted CUDA, Triton, and uvloop dependencies to Linux to support Windows installs.
 - Next: verify cross-platform builds in Docker.
+
+## Update 2025-08-25T20:56Z
+- Removed CUDA-specific nvidia dependencies and pinned torch to CPU wheel.
+- Next: verify CPU-only install across modules.
