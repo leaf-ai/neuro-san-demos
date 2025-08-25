@@ -1125,3 +1125,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-24T15:14Z
 - Scoped CUDA, Triton, gunicorn, and uvloop packages to Linux-only to avoid Windows install failures.
 - Next: confirm cross-platform tests.
+
+## Update 2025-08-25T20:56Z
+- Dropped local CUDA packages and switched torch to CPU-only wheel for easier installs.
+- Next: confirm legal_discovery runs without GPU drivers.
