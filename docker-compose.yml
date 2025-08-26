@@ -31,22 +31,22 @@ services:
       - ./docker_volumes/legal_discovery/uploads:/usr/src/app/uploads
       - ./docker_volumes/legal_discovery/audio_cache:/usr/src/app/audio_cache
     restart: unless-stopped
+    command: >-
+      bash -c "pip install --no-cache-dir hipporag==2.0.0a3 tiktoken==0.7.0 torch==2.5.1 \
+      pydantic==2.10.4 tenacity==8.5.0 transformers==4.45.2 \
+      litellm==1.73.1 gritlm==1.0.2 python-igraph==0.11.8 \
+      vllm==0.6.6.post1 einops==0.8.1 || \
+      (echo 'Primary install failed; falling back' && \
+       pip install --no-cache-dir litellm==1.73.1 tiktoken==0.7.0 torch==2.5.1 \
+       pydantic==2.10.4 tenacity==8.5.0 transformers==4.45.2 \
+       gritlm==1.0.2 python-igraph==0.11.8 vllm==0.6.6.post1 einops==0.8.1 && \
+       pip install --no-cache-dir hipporag==2.0.0a3 --no-deps) && \
+      python -m gunicorn -k eventlet -w 1 -b 0.0.0.0:5001 apps.legal_discovery.startup:app"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:5001/api/health"]
       interval: 30s
       timeout: 5s
       retries: 5
-      command: >-
-        bash -c "pip install --no-cache-dir hipporag==2.0.0a3 tiktoken==0.7.0 torch==2.5.1 \
-        pydantic==2.10.4 tenacity==8.5.0 transformers==4.45.2 \
-        litellm==1.73.1 gritlm==1.0.2 python-igraph==0.11.8 \
-        vllm==0.6.6.post1 einops==0.8.1 || \
-        (echo 'Primary install failed; falling back' && \
-         pip install --no-cache-dir litellm==1.73.1 tiktoken==0.7.0 torch==2.5.1 \
-         pydantic==2.10.4 tenacity==8.5.0 transformers==4.45.2 \
-         gritlm==1.0.2 python-igraph==0.11.8 vllm==0.6.6.post1 einops==0.8.1 && \
-         pip install --no-cache-dir hipporag==2.0.0a3 --no-deps) && \
-        python -m gunicorn -k eventlet -w 1 -b 0.0.0.0:5001 apps.legal_discovery.startup:app"
 
   postgres:
     image: postgres:16-alpine
