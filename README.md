@@ -392,10 +392,15 @@ The `apps/legal_discovery` stack runs a Flask frontend backed by PostgreSQL, Neo
 `EMBED_MODEL` selects the sentence-transformers model used for embedding documents, while `CROSS_ENCODER_MODEL` chooses the cross-encoder reranker. Both default to sensible values but can be overridden in `.env`.
 
 Docker Compose mounts the `.env` file into the application container so `config.py` can read it.
-    Docker Compose mounts the `.env` file into the application container so `config.py` can read it.  
+    Docker Compose mounts the `.env` file into the application container so `config.py` can read it.
     - `NEO4J_PASSWORD` sets the admin password for the Neo4j instance and must match the value used by `docker-compose.yml`.
     - `EMBED_MODEL` selects the sentence embedding model for vector storage.
     - `CROSS_ENCODER_MODEL` sets the cross-encoder used to re-rank search results.
+
+The Neo4j image treats any environment variables beginning with `NEO4J_` as server settings. A
+`NEO4J_URI` variable in `.env` will trigger an "Unrecognized setting: URI" error if it reaches the
+database container. To prevent this, `docker-compose.yml` explicitly disables `.env` inheritance for
+the `neo4j` service (`env_file: []`), keeping `NEO4J_URI` available only to the application.
 
 2. Build and start the services:
 
