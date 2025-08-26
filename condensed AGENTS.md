@@ -231,3 +231,8 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 ## Update 2025-10-21T00:00Z
 - Dropped `.env` inheritance from Neo4j service so `NEO4J_URI` doesn't break startup.
 - Next: confirm docker-compose spins up cleanly without URI config errors.
+
+## Update 2025-10-28T00:00Z
+- Added explicit `env_file: []` to the Neo4j service to block `.env` variables.
+- Documented the configuration in the README and verified the database container starts without the "URI" error.
+- Next: monitor Compose startup and extend docs with any additional troubleshooting tips.

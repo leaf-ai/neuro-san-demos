@@ -61,6 +61,7 @@ services:
     ports:
       - "7474:7474"
       - "7687:7687"
+    env_file: []  # prevent .env vars like NEO4J_URI from reaching Neo4j
     environment:
       # Only pass authentication to avoid exposing app-specific vars like NEO4J_URI
       - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
