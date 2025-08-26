@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import re
+import secrets
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
@@ -140,8 +141,12 @@ if config_path and (not secret_key or not jwt_secret):
     cfg = ConfigFactory.parse_file(config_path)
     secret_key = secret_key or cfg.get("flask.secret_key", None)
     jwt_secret = jwt_secret or cfg.get("flask.jwt_secret", None)
-if not secret_key or not jwt_secret:
-    raise RuntimeError("FLASK_SECRET_KEY and JWT_SECRET must be set")
+if not secret_key:
+    secret_key = secrets.token_hex(32)
+    logger.warning("FLASK_SECRET_KEY not set; using ephemeral value")
+if not jwt_secret:
+    jwt_secret = secrets.token_hex(32)
+    logger.warning("JWT_SECRET not set; using ephemeral value")
 app.config["SECRET_KEY"] = secret_key
 app.config["JWT_SECRET"] = jwt_secret
 # Configure rate limiting storage (Redis in production).

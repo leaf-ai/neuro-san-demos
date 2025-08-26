@@ -1129,3 +1129,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-25T20:56Z
 - Dropped local CUDA packages and switched torch to CPU-only wheel for easier installs.
 - Next: confirm legal_discovery runs without GPU drivers.
+
+## Update 2025-08-26T05:34Z
+- Auto-generated Flask and JWT secrets when missing to ensure the dashboard loads.
+- Next: document secret defaults and verify container startup.
