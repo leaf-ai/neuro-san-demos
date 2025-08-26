@@ -28,4 +28,6 @@ The list is ordered, and the first LLM that succeeds will be used.
     },
 ```
 
-In this example, the agent network will use OpenAI's `gpt-4o` model first, and if that fails (for example, due to rate limits or service outages), it will automatically fall back to Anthropic's `claude-3-7-sonnet` model.
+In this example, the agent network will use OpenAI's `gpt-4o` model first,
+and if that fails (for example, due to rate limits or service outages),
+it will automatically fall back to Anthropic's `claude-3-7-sonnet` model.
