@@ -268,8 +268,8 @@ Copy `config/.env.sample` to `.env` and set the required keys:
 - `GOOGLE_API_KEY`
 - `FLASK_SECRET_KEY`
 - `JWT_SECRET`
-- `NEO4J_PASSWORD`
 
+Neo4j authentication is disabled by default; set `NEO4J_PASSWORD` and update `docker-compose.yml` if credentials are required.
 For testing the API keys, please refer to this [documentation](./docs/api_key.md)
 
 ---
@@ -384,7 +384,6 @@ The `apps/legal_discovery` stack runs a Flask frontend backed by PostgreSQL, Neo
     ```bash
     FLASK_SECRET_KEY=<output from script>
     JWT_SECRET=<output from script>
-    NEO4J_PASSWORD=neo4jPass123
     EMBED_MODEL=sentence-transformers/all-MiniLM-L6-v2
     CROSS_ENCODER_MODEL=cross-encoder/ms-marco-MiniLM-L-6-v2
     ```
@@ -393,7 +392,6 @@ The `apps/legal_discovery` stack runs a Flask frontend backed by PostgreSQL, Neo
 
 Docker Compose mounts the `.env` file into the application container so `config.py` can read it.
     Docker Compose mounts the `.env` file into the application container so `config.py` can read it.
-    - `NEO4J_PASSWORD` sets the admin password for the Neo4j instance and must match the value used by `docker-compose.yml`.
     - `EMBED_MODEL` selects the sentence embedding model for vector storage.
     - `CROSS_ENCODER_MODEL` sets the cross-encoder used to re-rank search results.
 
@@ -409,7 +407,7 @@ the `neo4j` service (`env_file: []`), keeping `NEO4J_URI` available only to the 
    docker compose up
    ```
 
-The web UI is available at <http://localhost:8080>. Neo4j exposes its browser on port 7474 and the Bolt protocol on 7687; both use the password specified in `NEO4J_PASSWORD`.
+The web UI is available at <http://localhost:8080>. Neo4j exposes its browser on port 7474 and the Bolt protocol on 7687 with authentication disabled by default.
 
 ### Health Check Endpoint
 

@@ -236,3 +236,7 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 - Added explicit `env_file: []` to the Neo4j service to block `.env` variables.
 - Documented the configuration in the README and verified the database container starts without the "URI" error.
 - Next: monitor Compose startup and extend docs with any additional troubleshooting tips.
+
+## Update 2025-08-26T07:18Z
+- Disabled Neo4j authentication across config and docker-compose to ease local development.
+- Next: re-enable secure credentials before deployment.
