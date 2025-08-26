@@ -16,8 +16,8 @@ DATABASE_URL = os.getenv(
 CHROMA_HOST = os.getenv("CHROMA_HOST", "chromadb")
 CHROMA_PORT = int(os.getenv("CHROMA_PORT", 8000))
 NEO4J_URI = os.getenv("NEO4J_URI", "bolt://neo4j:7687")
-NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
-NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "neo4jPass123")
+NEO4J_USER = os.getenv("NEO4J_USER", "")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "")
 REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")
 
 # Model configuration
