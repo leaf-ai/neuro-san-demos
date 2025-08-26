@@ -227,3 +227,7 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 ## Update 2025-08-25T20:56Z
 - Removed CUDA-specific nvidia dependencies and pinned torch to CPU wheel.
 - Next: verify CPU-only install across modules.
+
+## Update 2025-10-21T00:00Z
+- Dropped `.env` inheritance from Neo4j service so `NEO4J_URI` doesn't break startup.
+- Next: confirm docker-compose spins up cleanly without URI config errors.
