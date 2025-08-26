@@ -29,6 +29,11 @@ Docker Compose reads `NEO4J_PASSWORD` for both the app and database services so
 they always share the same credentials. If the variable is empty, the database
 starts without authentication which is convenient for local testing.
 
+If `FLASK_SECRET_KEY` or `JWT_SECRET` are omitted, the server now generates
+ephemeral values at startup so the dashboard still loads. Sessions and tokens
+will reset whenever the container restarts, so set explicit secrets in
+production environments.
+
 ## Compiling Requirements.txt
 
 To convert a requirements.in file into a requirements.txt with Python, you typically use pip-tools, which provides the pip-compile command. This tool resolves and pins all dependencies (including sub-dependencies) into a fully locked requirements.txt.
