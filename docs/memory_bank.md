@@ -35,7 +35,8 @@ This compiles React files in `src/` into `static/bundle.js`. The bundle is ignor
 
 ## Docker Compose
 
-Copy `config/.env.sample` to `.env`. Neo4j auth is disabled by default, so no password is required. Then execute:
+Copy `config/.env.sample` to `.env`. Neo4j, PostgreSQL and Chroma run without authentication by default, so no passwords are required. Then execute:
+
 ```bash
 docker-compose build
 docker-compose up

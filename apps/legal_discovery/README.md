@@ -12,7 +12,7 @@ powered by Google's Gemini 2.5 models.
 - A running PostgreSQL instance (the provided `docker-compose.yml` spins one up automatically)
 - API keys configured in `.env` (set `GOOGLE_API_KEY` for Gemini 2.5)
 
-Make a copy of `config/.env.sample` to `.env` and fill in the required values. Generate secrets for Flask sessions and JWTs; Neo4j runs without authentication by default, but you may set a password if desired:
+Make a copy of `config/.env.sample` to `.env` and fill in the required values. Generate secrets for Flask sessions and JWTs; Neo4j, PostgreSQL and Chroma run without authentication by default, but you may set passwords if desired:
 
 ```bash
 cp config/.env.sample .env  # if you haven't created one
@@ -22,11 +22,12 @@ python -c 'import secrets; print(secrets.token_hex(32))'
 # FLASK_SECRET_KEY=<output>
 # JWT_SECRET=<output>
 # NEO4J_PASSWORD=your_password  # optional; leave blank for no auth
+# POSTGRES_PASSWORD=your_password  # optional; leave blank for no auth
 ```
 
-Docker Compose reads `NEO4J_PASSWORD` for both the app and database services so
-they always share the same credentials. If the variable is empty, the database
-starts without authentication which is convenient for local testing.
+Docker Compose omits database credentials so Neo4j, PostgreSQL and Chroma start
+without authentication, which is convenient for local testing. Add passwords and
+update the compose file before deploying to production.
 
 If `FLASK_SECRET_KEY` or `JWT_SECRET` are omitted, the server now generates
 ephemeral values at startup so the dashboard still loads. Sessions and tokens

@@ -8,7 +8,7 @@ services:
     env_file:
       - .env
     environment:
-      - DATABASE_URL=${DATABASE_URL:-postgresql+psycopg2://postgres:postgres@postgres:5432/legal_discovery}
+      - DATABASE_URL=${DATABASE_URL:-postgresql+psycopg2://postgres@postgres:5432/legal_discovery}
       - CHROMA_HOST=${CHROMA_HOST:-chromadb}
       - CHROMA_PORT=${CHROMA_PORT:-8000}
       - NEO4J_URI=${NEO4J_URI:-bolt://neo4j:7687}
@@ -49,7 +49,7 @@ services:
     environment:
       - POSTGRES_DB=legal_discovery
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_HOST_AUTH_METHOD=trust
     ports:
       - "5432:5432"
     volumes:
@@ -85,7 +85,7 @@ services:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_PASSWORD=
       - POSTGRES_DATABASE=chroma
     depends_on:
       postgres:

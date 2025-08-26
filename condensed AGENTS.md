@@ -240,3 +240,7 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 ## Update 2025-08-26T07:18Z
 - Disabled Neo4j authentication across config and docker-compose to ease local development.
 - Next: re-enable secure credentials before deployment.
+
+## Update 2025-08-26T08:30Z
+- Removed Postgres passwords and disabled JWT checks so services run unauthenticated for local testing.
+- Next: restore authentication before production use.

@@ -269,7 +269,7 @@ Copy `config/.env.sample` to `.env` and set the required keys:
 - `FLASK_SECRET_KEY`
 - `JWT_SECRET`
 
-Neo4j authentication is disabled by default; set `NEO4J_PASSWORD` and update `docker-compose.yml` if credentials are required.
+Neo4j, PostgreSQL and Chroma run without authentication by default; set the respective passwords and update `docker-compose.yml` if credentials are required.
 For testing the API keys, please refer to this [documentation](./docs/api_key.md)
 
 ---
