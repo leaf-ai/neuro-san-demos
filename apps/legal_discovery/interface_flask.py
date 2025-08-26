@@ -145,8 +145,8 @@ if not secret_key:
     secret_key = secrets.token_hex(32)
     logger.warning("FLASK_SECRET_KEY not set; using ephemeral value")
 if not jwt_secret:
-    jwt_secret = secrets.token_hex(32)
-    logger.warning("JWT_SECRET not set; using ephemeral value")
+    logger.warning("JWT authentication disabled")
+    jwt_secret = ""
 app.config["SECRET_KEY"] = secret_key
 app.config["JWT_SECRET"] = jwt_secret
 # Configure rate limiting storage (Redis in production).

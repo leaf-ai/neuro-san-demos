@@ -8,7 +8,7 @@ from apps.legal_discovery.database import db
 # Default to local docker-compose settings if DATABASE_URL is unset
 os.environ.setdefault(
     "DATABASE_URL",
-    "postgresql+psycopg2://postgres:postgres@localhost:5432/legal_discovery",
+    "postgresql+psycopg2://postgres@localhost:5432/legal_discovery",
 )
 
 def main() -> None:

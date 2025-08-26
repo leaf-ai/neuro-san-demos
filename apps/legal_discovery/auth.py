@@ -31,7 +31,12 @@ def _log_auth_failure(reason: str) -> None:
 
 
 def _require_auth() -> bool:
-    """Validate JWT or session token presence."""
+    """Validate JWT or session token presence.
+
+    Authentication is skipped when ``JWT_SECRET`` is empty.
+    """
+    if not current_app.config.get("JWT_SECRET"):
+        return True
     auth_header = request.headers.get("Authorization", "")
     token = None
     if auth_header.startswith("Bearer "):

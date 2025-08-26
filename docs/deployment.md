@@ -26,9 +26,9 @@ The stack exposes plain HTTP. To serve HTTPS, place a reverse proxy such as Ngin
 
 - `FLASK_SECRET_KEY`
 - `JWT_SECRET`
-- `DATABASE_URL` (default `postgresql+psycopg2://postgres:postgres@postgres:5432/legal_discovery`)
-- `CHROMA_HOST` / `CHROMA_PORT`
-- `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`
+- `DATABASE_URL` (default `postgresql+psycopg2://postgres@postgres:5432/legal_discovery`, authentication disabled)
+- `CHROMA_HOST` / `CHROMA_PORT` (Chroma connects to Postgres without credentials)
+- `NEO4J_URI` (Neo4j authentication disabled by default)
 - `REDIS_URL`
 
 Adjust these values for your deployment. After updating the `.env` file, rerun `install.sh` to apply changes.

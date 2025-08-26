@@ -1133,3 +1133,11 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-26T05:34Z
 - Auto-generated Flask and JWT secrets when missing to ensure the dashboard loads.
 - Next: document secret defaults and verify container startup.
+
+## Update 2025-08-26T07:18Z
+- Clarified Neo4j authentication in README; default stack runs without credentials.
+- Next: restore secure auth before production use.
+
+## Update 2025-08-26T08:30Z
+- Disabled Postgres password and JWT auth to simplify local setup.
+- Next: re-enable security for production.

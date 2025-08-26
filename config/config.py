@@ -11,13 +11,13 @@ JWT_SECRET = os.getenv("JWT_SECRET", "")
 # Database and service configuration
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql+psycopg2://postgres:postgres@postgres:5432/legal_discovery",
+    "postgresql+psycopg2://postgres@postgres:5432/legal_discovery",
 )
 CHROMA_HOST = os.getenv("CHROMA_HOST", "chromadb")
 CHROMA_PORT = int(os.getenv("CHROMA_PORT", 8000))
 NEO4J_URI = os.getenv("NEO4J_URI", "bolt://neo4j:7687")
-NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
-NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "neo4jPass123")
+NEO4J_USER = os.getenv("NEO4J_USER", "")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "")
 REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")
 
 # Model configuration
