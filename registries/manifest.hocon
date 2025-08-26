@@ -20,6 +20,7 @@
     "music_nerd_pro_local.hocon": true,
     "music_nerd_pro_sly.hocon": true,
     "music_nerd_pro_sly_local.hocon": true,
+    "music_nerd_llm_fallbacks.hocon": true,
     "hello_world.hocon": true,
     "advanced_calculator.hocon": false,
     "smart_home.hocon": true,
