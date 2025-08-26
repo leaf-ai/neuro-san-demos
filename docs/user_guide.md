@@ -519,7 +519,11 @@ Neuro-SAN supports LLM fallbacks, which allow you to specify a list of LLMs to u
 In the `llm_config` block, put each LLM configuration in a `fallbacks` list.
 The list of LLM configs is tried in order until one succeeds.
 
-Here is an example, as seen in [./examples/music_nerd_llm_fallbacks.md](./examples/music_nerd_llm_fallbacks.md):
+In this example, as seen in [./examples/music_nerd_llm_fallbacks.md](./examples/music_nerd_llm_fallbacks.md),
+the agent network will use OpenAI's `gpt-4o` model first,
+and if that fails (for example, due to rate limits or service outages),
+it will automatically fall back to Anthropic's `claude-3-7-sonnet` model:
+
 ```hocon
     "llm_config": {
         "fallbacks": [
