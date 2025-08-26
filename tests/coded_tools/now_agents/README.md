@@ -8,7 +8,7 @@ Complete test suite for ServiceNow AI agents integration with clear separation b
 tests/coded_tools/now_agents/
 ├── unit_tests/                              # Fast, isolated, mocked tests
 │   ├── test_unit_agent_discovery_mocked.py     # Agent discovery with API mocks
-│   ├── test_unit_message_sending_mocked.py     # Message sending with API mocks  
+│   ├── test_unit_message_sending_mocked.py     # Message sending with API mocks
 │   └── test_unit_message_retrieval_mocked.py   # Message retrieval with API mocks
 ├── integration_tests/                       # Real API tests (require credentials)
 │   ├── test_integration_servicenow_connectivity.py      # Basic ServiceNow connectivity
@@ -31,15 +31,15 @@ tests/coded_tools/now_agents/
 # From project root - Run all unit tests (fast, no credentials needed)
 python -m pytest tests/coded_tools/now_agents/unit_tests/ -v
 
-# Run all integration tests (requires ServiceNow credentials)  
+# Run all integration tests (requires ServiceNow credentials)
 python -m pytest tests/coded_tools/now_agents/integration_tests/ -v
 ```
 
 ## 🧪 Unit Tests (Mocked)
 
-**Purpose**: Test business logic and error handling without external dependencies  
-**Speed**: Fast (< 1 second total)  
-**Requirements**: None (fully mocked)  
+**Purpose**: Test business logic and error handling without external dependencies
+**Speed**: Fast (< 1 second total)
+**Requirements**: None (fully mocked)
 **Coverage**: 100% code coverage achieved ✅
 
 ### Individual Unit Tests
@@ -50,7 +50,7 @@ python -m pytest tests/coded_tools/now_agents/unit_tests/test_unit_agent_discove
 # Test message sending functionality (mocked API calls)
 python -m pytest tests/coded_tools/now_agents/unit_tests/test_unit_message_sending_mocked.py -v
 
-# Test message retrieval with retry logic (mocked API calls)  
+# Test message retrieval with retry logic (mocked API calls)
 python -m pytest tests/coded_tools/now_agents/unit_tests/test_unit_message_retrieval_mocked.py -v
 ```
 
@@ -73,9 +73,9 @@ python -m pytest tests/coded_tools/now_agents/unit_tests/ --cov=coded_tools.now_
 
 ## 🌐 Integration Tests (Real API)
 
-**Purpose**: Test real ServiceNow API interactions and end-to-end workflows  
-**Speed**: Slower (network dependent)  
-**Requirements**: Valid ServiceNow credentials and permissions  
+**Purpose**: Test real ServiceNow API interactions and end-to-end workflows
+**Speed**: Slower (network dependent)
+**Requirements**: Valid ServiceNow credentials and permissions
 **Status**: ✅ Working! Successfully discovering 100+ ServiceNow AI agents
 
 ### Setup Integration Tests
@@ -146,7 +146,7 @@ If you encounter **403 Forbidden** errors when running integration tests:
 **Solution Steps**:
 1. **Contact your ServiceNow administrator** to grant the following permissions:
    - `sn_aia_agent.read` - Read AI agent definitions
-   - `sn_aia_external_agent_execution.read` - Read agent interactions  
+   - `sn_aia_external_agent_execution.read` - Read agent interactions
    - `sn_aia_external_agent_execution.create` - Send messages to agents
    - Access to Agentic AI API endpoints (`/api/sn_aia/agenticai/v1/`)
 
@@ -194,7 +194,7 @@ ls .env && grep -E "SERVICENOW_(INSTANCE_URL|USER|PWD)" .env
 ### Common Fixes
 1. **Import Errors**: Ensure you're running from project root directory
 2. **403 Forbidden**: Contact ServiceNow admin for permissions
-3. **Connection Timeouts**: Check ServiceNow instance URL and network connectivity  
+3. **Connection Timeouts**: Check ServiceNow instance URL and network connectivity
 4. **Missing .env**: Create `.env` file with required ServiceNow configuration
 
 ## 🚀 Development Workflow
@@ -219,7 +219,7 @@ python -m pytest tests/coded_tools/now_agents/integration_tests/ -v
 - name: Run Unit Tests
   run: python -m pytest tests/coded_tools/now_agents/unit_tests/ --cov=coded_tools.now_agents --cov-fail-under=100
 
-- name: Run Integration Tests  
+- name: Run Integration Tests
   run: python -m pytest tests/coded_tools/now_agents/integration_tests/ -v
   env:
     SERVICENOW_INSTANCE_URL: ${{ secrets.SERVICENOW_INSTANCE_URL }}
@@ -231,7 +231,7 @@ python -m pytest tests/coded_tools/now_agents/integration_tests/ -v
 
 ## 📚 Additional Resources
 
-- [ServiceNow Agentic AI Documentation](https://docs.servicenow.com/bundle/vancouver-ai/page/administer/agentic-ai/concept/agentic-ai.html)
+- [ServiceNow Agentic AI Documentation](https://www.servicenow.com/docs/bundle/yokohama-intelligent-experiences/page/administer/now-assist-ai-agents/concept/exploring-ai-agents.html)
 - [pytest Documentation](https://docs.pytest.org/)
 - [Python Mock Documentation](https://docs.python.org/3/library/unittest.mock.html)
 
