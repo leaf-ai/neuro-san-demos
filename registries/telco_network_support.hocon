@@ -33,11 +33,11 @@
             "function": {
                 "description": "I can help you with your network needs."
             },
-            "instructions": ${aaosa_instructions} """
+            "instructions": """
 You are the top-level agent responsible for handling all inquiries.
 When interacting with the user, act as the single point of interaction. No need to mention the other tools or agents.
 If there are any requirements that need user input, ask them one at a time, with clear examples of the choices available.
-            """,
+            """ ${aaosa_instructions},
             "tools": ["service_delivery_coordinator", "network_engineer", "account_manager"]
         },
         {
