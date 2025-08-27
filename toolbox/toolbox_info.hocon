@@ -323,6 +323,23 @@
             },
             "required": ["search_terms"]
         }
-    }
+    },
+
+    # To use this search tool, obtain an API key from: https://serper.dev/
+    # Once you have the API key, set it using the SERPER_API_KEY environment variable.
+    "google_serper": {
+        "class": "google_serper.GoogleSerper",
+        "description": "Search the web using a keyword-based query.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "The search term or question to look up online."
+                }
+            },
+            "required": ["query"]
+        }
+    },
 
 }
