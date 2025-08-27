@@ -1141,3 +1141,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-26T08:30Z
 - Disabled Postgres password and JWT auth to simplify local setup.
 - Next: re-enable security for production.
+
+## Update 2025-08-26T23:56Z
+- Streamlined Docker build for CPU-only hosts with uv pip and direct torch wheel download; removed GPU-only packages from docker-compose startup.
+- Next: verify legal_discovery container builds and runs on CPU-only machines.
