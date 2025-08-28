@@ -34,7 +34,7 @@ class NowAgentRetrieveMessage(CodedTool):
         No initialization parameters required. Configuration is handled through environment variables.
         """
 
-    def invoke(self, args: Dict[str, Any], sly_data: Dict[str, Any]) -> str:
+    def invoke(self, args: Dict[str, Any], sly_data: Dict[str, Any]) -> str:  # pylint: disable=too-many-locals
         """
         Retrieves responses from a ServiceNow AI agent using the session path.
 
