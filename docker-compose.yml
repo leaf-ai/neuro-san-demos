@@ -69,7 +69,7 @@ services:
       - ./docker_volumes/neo4j/data:/data
     healthcheck:
       # Ensure Bolt is up
-      test: ["CMD-SHELL", "cypher-shell -u neo4j -p \"\" -a bolt://localhost:7687 \"RETURN 1\" | grep -q 1"]
+      test: ["CMD-SHELL", "cypher-shell -a bolt://localhost:7687 --format plain \"RETURN 1\" | grep -q 1"]
       interval: 10s
       timeout: 5s
       retries: 20
