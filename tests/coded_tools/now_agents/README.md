@@ -23,7 +23,9 @@ tests/coded_tools/now_agents/
 
 ### Prerequisites
 - Python 3.8+
-- pytest installed (`pip install pytest pytest-cov`)
+- Testing dependencies installed:
+  - `pip install pytest pytest-cov` (individual packages)
+  - OR `pip install -r build-requirements.txt` (all build dependencies - recommended)
 - For integration tests: Valid ServiceNow credentials in `.env` file
 
 ### Run All Tests
