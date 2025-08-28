@@ -1145,3 +1145,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-26T23:56Z
 - Streamlined Docker build for CPU-only hosts with uv pip and direct torch wheel download; removed GPU-only packages from docker-compose startup.
 - Next: verify legal_discovery container builds and runs on CPU-only machines.
+
+## Update 2025-08-27T00:30Z
+- Removed uv dependency in Dockerfile and docker-compose, reverting to standard pip installs for reliability.
+- Next: test image build to ensure dependencies resolve correctly.
