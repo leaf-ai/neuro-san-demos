@@ -52,6 +52,7 @@ class NowAgentRetrieveMessage(CodedTool):
                   - result: List of response records from the external agent execution table
                   - error: Error message if request fails (included only on error)
                   - status_code: HTTP status code if request fails (included only on error)
+                  - error_response: Detailed ServiceNow error response for retry logic (included only on error)
 
         Note:
             Requires session_path in sly_data from a previous NowAgentSendMessage call.
@@ -98,12 +99,14 @@ class NowAgentRetrieveMessage(CodedTool):
                     error_response = response.json()
                     print(f"Error Response: {error_response}")
                 except (ValueError, TypeError):
-                    print(f"Error Response: {response.text}")
+                    error_response = response.text
+                    print(f"Error Response: {error_response}")
 
                 return {
                     "result": [],
                     "error": f"HTTP {response.status_code}: Failed to retrieve messages",
                     "status_code": response.status_code,
+                    "error_response": error_response,
                 }
 
             tool_response = response.json()
@@ -164,5 +167,6 @@ class NowAgentRetrieveMessage(CodedTool):
                   - result: List of response records from the external agent execution table
                   - error: Error message if request fails (included only on error)
                   - status_code: HTTP status code if request fails (included only on error)
+                  - error_response: Detailed ServiceNow error response for retry logic (included only on error)
         """
         return self.invoke(args, sly_data)

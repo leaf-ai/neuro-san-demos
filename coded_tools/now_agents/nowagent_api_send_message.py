@@ -53,6 +53,7 @@ class NowAgentSendMessage(CodedTool):
                   - request_id: ID of the submitted request
                   - error: Error message if request fails (included only on error)
                   - status_code: HTTP status code if request fails (included only on error)
+                  - error_response: Detailed ServiceNow error response for retry logic (included only on error)
 
         Side Effects:
             Updates sly_data with session_path for use in NowAgentRetrieveMessage
@@ -99,12 +100,14 @@ class NowAgentSendMessage(CodedTool):
                 error_response = response.json()
                 print(f"Error Response: {error_response}")
             except (ValueError, TypeError):
-                print(f"Error Response: {response.text}")
+                error_response = response.text
+                print(f"Error Response: {error_response}")
 
             return {
                 "result": None,
                 "error": f"HTTP {response.status_code}: Failed to send message",
                 "status_code": response.status_code,
+                "error_response": error_response,
             }
 
         # Decode the JSON response into a dictionary and use the data

@@ -114,6 +114,7 @@ class TestNowAgentSendMessage(unittest.TestCase):
         # Verify error response structure
         self.assertIn("error", result)
         self.assertIn("status_code", result)
+        self.assertIn("error_response", result)
         self.assertEqual(result["status_code"], 401)
         self.assertIsNone(result["result"])
         
@@ -151,6 +152,7 @@ class TestNowAgentSendMessage(unittest.TestCase):
         # Verify error response structure
         self.assertIn("error", result)
         self.assertIn("status_code", result)
+        self.assertIn("error_response", result)
         self.assertEqual(result["status_code"], 404)
 
     @patch('builtins.print')

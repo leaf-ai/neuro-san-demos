@@ -109,6 +109,7 @@ class TestNowAgentAPIGetAgents(unittest.TestCase):
         # Verify error response structure
         self.assertIn("error", result)
         self.assertIn("status_code", result)
+        self.assertIn("error_response", result)
         self.assertEqual(result["status_code"], 401)
         self.assertEqual(result["result"], [])
         
