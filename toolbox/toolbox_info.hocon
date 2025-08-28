@@ -224,6 +224,26 @@
         }      
     },
 
+    # To use this tool, start by installing the required package:
+    #     pip install langchain-docling
+    "docling_rag": {
+        # This is a coded tool for RAG on multiple file format.
+        # See https://python.langchain.com/docs/integrations/document_loaders/docling/ and
+        # https://docling-project.github.io/docling/
+        "class": "docling_rag.DoclingRag", 
+        "description": "Retrieve information from the given files",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Query for retrieval"
+                }
+            },
+            "required": ["query"]
+        }
+    },
+
     "pdf_rag": {
         # This is a coded tool for RAG on PDF files.
         "class": "pdf_rag.PdfRag", 
