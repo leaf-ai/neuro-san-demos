@@ -10,8 +10,7 @@ coded_tools/now_agents/
 ├── nowagent_api_get_agents.py              # Agent discovery functionality  
 ├── nowagent_api_send_message.py            # Message sending to agents
 ├── nowagent_api_retrieve_message.py        # Response retrieval from agents
-├── README.md                               # This documentation
-└── TESTING_RESULTS.md                      # Detailed test results and findings
+└── README.md                               # This documentation
 ```
 
 ## 🔧 Core Components
@@ -391,7 +390,6 @@ Result: {"result": []} (from retrieve_message)
 - [ServiceNow Agentic AI Documentation](https://docs.servicenow.com/bundle/vancouver-ai/page/administer/agentic-ai/concept/agentic-ai.html)
 - [ServiceNow REST API Reference](https://docs.servicenow.com/bundle/vancouver-application-development/page/integrate/inbound-rest/concept/c_RESTAPI.html)  
 - [Test Suite Documentation](../../tests/coded_tools/now_agents/README.md)
-- [Detailed Test Results](TESTING_RESULTS.md)
 
 ---
 
