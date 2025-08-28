@@ -131,10 +131,10 @@
     "airbnb.hocon": true,
     "booking.hocon": true,
     "carmax.hocon": true,
+    "ddgs_search.hocon": true,
     "expedia.hocon": true,
     "macys.hocon": true,
     "LinkedInJobSeekerSupportNetwork.hocon": true
-    "website_search.hocon": true,
 
     # Experimental and research
     "agent_network_designer.hocon": true,
