@@ -244,3 +244,7 @@ we are now working on implementing a major feature, so stand by, this is  A GDDM
 ## Update 2025-08-26T08:30Z
 - Removed Postgres passwords and disabled JWT checks so services run unauthenticated for local testing.
 - Next: restore authentication before production use.
+
+## Update 2025-08-28T07:15Z
+- Added Neo4j health check with explicit user and blank password to avoid unhealthy container state.
+- Next: confirm docker-compose brings Neo4j up healthy on Windows.
