@@ -45,6 +45,8 @@ from .extensions import (
 )
 from .feature_flags import FEATURE_FLAGS
 from .hippo_routes import bp as hippo_bp, objections_bp, health_bp
+from .openapi_docs import docs_bp
+from .api_utils import ok, err
 from .tasks import tasks_bp
 from .trial_assistant import bp as trial_assistant_bp
 from .trial_prep_routes import trial_prep_bp
@@ -191,6 +193,7 @@ app.register_blueprint(hippo_bp)
 app.register_blueprint(objections_bp)
 app.register_blueprint(health_bp)
 app.register_blueprint(tasks_bp)
+app.register_blueprint(docs_bp)
 if FEATURE_FLAGS.get("theories"):
     from .theory_routes import theories_bp
 
@@ -1541,9 +1544,9 @@ def vector_search():
     """Query the vector database."""
     query = request.args.get("q")
     if not query:
-        return jsonify({"status": "ok", "data": {}})
+        return ok({})
     result = _vector_search_cached(query)
-    return jsonify({"status": "ok", "data": result})
+    return ok(result)
 
 
 @app.route("/api/vector/count", methods=["GET"])
@@ -1551,7 +1554,7 @@ def vector_count():
     """Return the document count in the vector database."""
     manager = VectorDatabaseManager()
     count = manager.get_document_count()
-    return jsonify({"status": "ok", "data": count})
+    return ok(count)
 
 
 @app.route("/api/cocounsel/search", methods=["GET"])
