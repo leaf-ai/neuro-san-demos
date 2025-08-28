@@ -181,8 +181,9 @@ Most ServiceNow AI agents require existing business context (tickets, incidents,
 - Agent requires specific data that's not available
 
 ### Session Management
-- Current implementation supports single interaction per session
-- Multi-turn conversations require session state management
+- Session state is managed through the `sly_data` parameter
+- Multi-session handling is supported via `sly_data` state persistence
+- Session paths are automatically tracked across agent interactions
 - Sessions don't persist across application restarts
 
 ### Asynchronous Processing
@@ -219,6 +220,9 @@ coded_tools/now_agents/
 ├── nowagent_api_send_message.py            # Message sending  
 ├── nowagent_api_retrieve_message.py        # Response retrieval
 └── README.md                               # Complete documentation
+
+registries/
+└── now_agents.hocon                         # Agent network configuration
 
 tests/coded_tools/now_agents/
 ├── unit_tests/                              # Mocked tests (100% coverage)
