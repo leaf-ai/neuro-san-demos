@@ -23,7 +23,7 @@
     "hello_world.hocon": true,
     "advanced_calculator.hocon": false,
     "smart_home.hocon": true,
-
+    "coffee_finder.hocon": true,
     # Tool integration examples
     "brave_search.hocon": false,
     "agent_network_html_creator.hocon": true,
@@ -38,10 +38,10 @@
     #
     # Additional installations may be required depending on the attachment types used.
     # For details, see https://python.langchain.com/api_reference/_modules/langchain_community/document_loaders/confluence.html#ConfluenceLoader
-    # Set "username" and "api_key" in the agent network hocon or 
+    # Set "username" and "api_key" in the agent network hocon or
     # as environment variable "JIRA_USERNAME" and "JIRA_API_TOKEN", respectively.
     "confluence_rag.hocon": false,
-    
+
     # Before turning on and running the following agent network, make sure that:
     # The MCP server is running.
     # The server can be found at servers/MCP/bmi_server.py and run using the following command
@@ -121,5 +121,5 @@
     #   For example, you can run:
     #     python -m run --server-grpc-port 30012 --server-http-port 8081 --nsflow-port 4174
     "agent_network_architect.hocon": false,
-"now_agents.hocon":true
+    "now_agents.hocon": true,
 }
