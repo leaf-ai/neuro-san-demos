@@ -86,9 +86,8 @@ class TestNowAgentAPIGetAgents(unittest.TestCase):
         'SERVICENOW_PWD': 'test_password'
     })
     @patch('coded_tools.now_agents.nowagent_api_get_agents.requests.get')
-    @patch('coded_tools.now_agents.nowagent_api_get_agents.exit')
     @patch('builtins.print')
-    def test_invoke_authentication_failure(self, mock_print, mock_exit, mock_get):
+    def test_invoke_authentication_failure(self, mock_print, mock_get):
         """
         Test handling of authentication failure.
         
@@ -104,15 +103,16 @@ class TestNowAgentAPIGetAgents(unittest.TestCase):
         }
         mock_get.return_value = mock_response
         
-        # Mock exit to prevent actual exit
-        mock_exit.side_effect = SystemExit()
-
-        # Execute the tool and expect SystemExit due to authentication failure
-        with self.assertRaises(SystemExit):
-            self.tool.invoke(self.test_args, self.test_sly_data)
+        # Execute the tool and expect error response instead of SystemExit
+        result = self.tool.invoke(self.test_args, self.test_sly_data)
+        
+        # Verify error response structure
+        self.assertIn("error", result)
+        self.assertIn("status_code", result)
+        self.assertEqual(result["status_code"], 401)
+        self.assertEqual(result["result"], [])
         
         # Verify error information was printed
-        mock_exit.assert_called_once()
         error_calls = [call for call in mock_print.call_args_list 
                       if 'Status: 401' in str(call) or 'Error Response:' in str(call)]
         self.assertTrue(len(error_calls) >= 2, "Error messages should be printed")
