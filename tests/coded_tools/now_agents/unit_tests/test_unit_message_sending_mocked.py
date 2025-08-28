@@ -91,9 +91,8 @@ class TestNowAgentSendMessage(unittest.TestCase):
         'SERVICENOW_PWD': 'test_password'
     })
     @patch('coded_tools.now_agents.nowagent_api_send_message.requests.post')  
-    @patch('coded_tools.now_agents.nowagent_api_send_message.exit')
     @patch('builtins.print')
-    def test_invoke_authentication_failure(self, mock_print, mock_exit, mock_post):
+    def test_invoke_authentication_failure(self, mock_print, mock_post):
         """
         Test handling of authentication failure.
         
@@ -109,15 +108,16 @@ class TestNowAgentSendMessage(unittest.TestCase):
         }
         mock_post.return_value = mock_response
         
-        # Mock exit to prevent actual exit
-        mock_exit.side_effect = SystemExit()
-
-        # Execute the tool and expect SystemExit due to authentication failure
-        with self.assertRaises(SystemExit):
-            self.tool.invoke(self.test_args, self.test_sly_data)
+        # Execute the tool and expect error response instead of SystemExit
+        result = self.tool.invoke(self.test_args, self.test_sly_data)
+        
+        # Verify error response structure
+        self.assertIn("error", result)
+        self.assertIn("status_code", result)
+        self.assertEqual(result["status_code"], 401)
+        self.assertIsNone(result["result"])
         
         # Verify error information was printed
-        mock_exit.assert_called_once()
         error_calls = [call for call in mock_print.call_args_list 
                       if 'Status: 401' in str(call) or 'Error Response:' in str(call)]
         self.assertTrue(len(error_calls) >= 2, "Error messages should be printed")
@@ -145,8 +145,13 @@ class TestNowAgentSendMessage(unittest.TestCase):
         mock_response.json.return_value = {"error": "Not Found"}
         mock_post.return_value = mock_response
 
-        with self.assertRaises(SystemExit):
-            self.tool.invoke(args_missing_agent, self.test_sly_data)
+        # Execute the tool and expect error response instead of SystemExit
+        result = self.tool.invoke(args_missing_agent, self.test_sly_data)
+        
+        # Verify error response structure
+        self.assertIn("error", result)
+        self.assertIn("status_code", result)
+        self.assertEqual(result["status_code"], 404)
 
     @patch('builtins.print')
     def test_get_env_variable(self, mock_print):
