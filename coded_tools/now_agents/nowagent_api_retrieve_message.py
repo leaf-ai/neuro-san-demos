@@ -49,6 +49,8 @@ class NowAgentRetrieveMessage(CodedTool):
             dict: ServiceNow API response containing the agent's response messages.
                   Response structure includes:
                   - result: List of response records from the external agent execution table
+                  - error: Error message if request fails (included only on error)
+                  - status_code: HTTP status code if request fails (included only on error)
 
         Note:
             Requires session_path in sly_data from a previous NowAgentSendMessage call.
@@ -86,6 +88,23 @@ class NowAgentRetrieveMessage(CodedTool):
             print(f"Polling attempt {attempt}/{max_attempts}...")
 
             response = requests.get(url, auth=(servicenow_user, servicenow_pwd), headers=headers)
+            
+            # Check for HTTP errors
+            if response.status_code != 200:
+                error_msg = f"Status: {response.status_code}, Headers: {response.headers}"
+                print(error_msg)
+                try:
+                    error_response = response.json()
+                    print(f"Error Response: {error_response}")
+                except:
+                    print(f"Error Response: {response.text}")
+                
+                return {
+                    "result": [],
+                    "error": f"HTTP {response.status_code}: Failed to retrieve messages",
+                    "status_code": response.status_code
+                }
+            
             tool_response = response.json()
             print(f"Response: {tool_response}")
 
@@ -142,5 +161,7 @@ class NowAgentRetrieveMessage(CodedTool):
             dict: ServiceNow API response containing the agent's response messages.
                   Response structure includes:
                   - result: List of response records from the external agent execution table
+                  - error: Error message if request fails (included only on error)
+                  - status_code: HTTP status code if request fails (included only on error)
         """
         return self.invoke(args, sly_data)
