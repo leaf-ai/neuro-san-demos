@@ -29,6 +29,7 @@ Here are a few examples ordered by level of complexity.
     * [Agentic RAG Assistant](#agentic-rag-assistant)
     * [Wikipedia RAG Assistant](#wikipedia-rag-assistant)
     * [ArXiv RAG Assistant](#arxiv-rag-assistant)
+    * [ServiceNow AI Agents](#servicenow-ai-agents)
   * [🏢 Industry-Specific Examples](#-industry-specific-examples)
     * [Intranet Agents](#intranet-agents)
     * [Intranet Agents With Tools](#intranet-agents-with-tools)
