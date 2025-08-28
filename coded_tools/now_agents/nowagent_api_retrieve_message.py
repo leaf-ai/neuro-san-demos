@@ -87,7 +87,7 @@ class NowAgentRetrieveMessage(CodedTool):
         for attempt in range(1, max_attempts + 1):
             print(f"Polling attempt {attempt}/{max_attempts}...")
 
-            response = requests.get(url, auth=(servicenow_user, servicenow_pwd), headers=headers)
+            response = requests.get(url, auth=(servicenow_user, servicenow_pwd), headers=headers, timeout=30)
             
             # Check for HTTP errors
             if response.status_code != 200:

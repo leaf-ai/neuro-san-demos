@@ -87,7 +87,7 @@ class NowAgentSendMessage(CodedTool):
 
         # Execute the HTTP POST request
         response = requests.post(
-            url, auth=(servicenow_user, servicenow_pwd), headers=headers, data=json.dumps(request_payload)
+            url, auth=(servicenow_user, servicenow_pwd), headers=headers, data=json.dumps(request_payload), timeout=30
         )
 
         # Check for HTTP codes other than 200

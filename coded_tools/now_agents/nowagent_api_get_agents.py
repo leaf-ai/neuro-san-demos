@@ -71,7 +71,7 @@ class NowAgentAPIGetAgents(CodedTool):
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
 
         # Execute the HTTP request
-        response = requests.get(url, auth=(servicenow_user, servicenow_pwd), headers=headers)
+        response = requests.get(url, auth=(servicenow_user, servicenow_pwd), headers=headers, timeout=30)
 
         # Check for HTTP codes other than 200
         if response.status_code != 200:
