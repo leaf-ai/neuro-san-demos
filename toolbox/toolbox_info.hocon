@@ -281,13 +281,30 @@
     # You can also configure the request timeout (in seconds) using BRAVE_TIMEOUT; the default is 30 seconds.
     "brave_search": {
         "class": "brave_search.BraveSearch",
-        "description": "Assist caller with searching an url on the web by using your tool.",
+        "description": "Performs a web search using Brave Search.",
         "parameters": {
             "type": "object",
             "properties": {
                 "search_terms": {
                     "type": "string",
-                    "description": "Search terms to return options."
+                    "description": "The query string or keywords to search for."
+                },
+            },
+            "required": ["search_terms"]
+        }
+    },
+
+    # This search tool requires no API key.
+    # Reference: https://github.com/deedy5/ddgs
+    "ddgs_search": {
+        "class": "ddgs_search.DdgsSearch",
+        "description": "Performs a web search using DDGS Search.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "search_terms": {
+                    "type": "string",
+                    "description": "The query string or keywords to search for."
                 },
             },
             "required": ["search_terms"]
@@ -312,13 +329,13 @@
     # Otherwise, the default values of "https://www.googleapis.com/customsearch/v1" and "30" are used, respectively
     "google_search": {
         "class": "google_search.GoogleSearch",
-        "description": "Assist caller with searching an url on the web by using your tool.",
+        "description": "Performs a web search using Google Search.",
         "parameters": {
             "type": "object",
             "properties": {
                 "search_terms": {
                     "type": "string",
-                    "description": "Search terms to return options."
+                    "description": "The query string or keywords to search for."
                 },
             },
             "required": ["search_terms"]

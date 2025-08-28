@@ -51,27 +51,14 @@ Use your tool to respond to the inquiry.
         },
         {
             "name": "website_search",
-            "function": {
-                "description": """
-Assist caller with searching an url on the web by using your tool.
-```
-                """,
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "url": {
-                            "type": "string",
-                            "description": "The url to search in."
-                        },
-                        "search_terms": {
-                            "type": "string",
-                            "description": "Search terms to return options."
-                        },
-                    },
-                    "required": ["url", "search_terms"]
-                }
-            },
-            "class": "website_search.WebsiteSearch",
+            "toolbox": "ddgs_search",
+            "args": {
+                # --- Optional Arguments ---
+                "max_results": 5
+
+                # For more search parameter options, see:
+                # https://pypi.org/project/ddgs/#1-text
+            }
         },
     ]
 }
