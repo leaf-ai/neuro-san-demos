@@ -431,7 +431,7 @@ ollama==0.5.3
     # via langchain-ollama
 onnxruntime==1.22.1
     # via chromadb
-openai==1.101.0
+openai==1.58.1
     # via
     #   langchain-openai
     #   neuro-san
@@ -580,7 +580,7 @@ pybase64==1.4.2
     # via chromadb
 pycparser==2.22
     # via cffi
-pydantic==2.11.7
+pydantic==2.10.4
     # via
     #   -r requirements.in
     #   anthropic
@@ -600,7 +600,7 @@ pydantic==2.11.7
     #   spacy
     #   thinc
     #   weasel
-pydantic-core==2.33.2
+pydantic-core==2.27.2
     # via pydantic
 pydantic-settings==2.10.1
     # via langchain-community
@@ -799,7 +799,7 @@ sympy==1.14.0
     # via
     #   onnxruntime
     #   torch
-tenacity==9.1.2
+tenacity==8.5.0
     # via
     #   chromadb
     #   google-genai
@@ -821,11 +821,11 @@ tinycss2==1.4.0
     #   weasyprint
 tinyhtml5==2.0.0
     # via weasyprint
-tokenizers==0.21.4
+tokenizers==0.20.3
     # via
     #   chromadb
     #   transformers
-torch==2.8.0+cpu
+torch==2.5.1+cpu
     # via sentence-transformers
 tornado==6.5.2
     # via neuro-san
@@ -841,7 +841,7 @@ traitlets==5.14.3
     # via
     #   ipython
     #   matplotlib-inline
-transformers==4.55.4
+transformers==4.45.2
     # via sentence-transformers
 typer==0.16.1
     # via

@@ -1149,3 +1149,7 @@ pip install python-dotenv flask gunicorn pillow requests neuro-san pyvis
 ## Update 2025-08-27T00:30Z
 - Removed uv dependency in Dockerfile and docker-compose, reverting to standard pip installs for reliability.
 - Next: test image build to ensure dependencies resolve correctly.
+
+## Update 2025-08-28T08:02Z
+- Aligned requirements with HippoRAG by downgrading transformer stack and core deps; docker-compose now installs hipporag and litellm without version pins.
+- Next: build the container to confirm clean installs and runtime stability.
