@@ -46,9 +46,8 @@ class NowAgentAPIGetAgents(CodedTool):
             dict: ServiceNow API response containing the list of agents with their details.
                   Response structure includes:
                   - result: List of agent dictionaries with 'description', 'name', and 'sys_id' fields
-
-        Raises:
-            SystemExit: If the ServiceNow API returns a non-200 status code
+                  - error: Error message if request fails (included only on error)
+                  - status_code: HTTP status code if request fails (included only on error)
         """
         # Parse the arguments
         servicenow_url: str = self._get_env_variable("SERVICENOW_INSTANCE_URL")
@@ -78,8 +77,17 @@ class NowAgentAPIGetAgents(CodedTool):
         if response.status_code != 200:
             error_msg = f"Status: {response.status_code}, Headers: {response.headers}"
             print(error_msg)
-            print(f"Error Response: {response.json()}")
-            exit()
+            try:
+                error_response = response.json()
+                print(f"Error Response: {error_response}")
+            except:
+                print(f"Error Response: {response.text}")
+            
+            return {
+                "result": [],
+                "error": f"HTTP {response.status_code}: Failed to retrieve agents",
+                "status_code": response.status_code
+            }
 
         # Decode the JSON response into a dictionary and use the data
         tool_response = response.json()
