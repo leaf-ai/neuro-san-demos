@@ -44,11 +44,11 @@ RUN python -m pip install --upgrade pip setuptools wheel \
 # Install Python deps early to leverage Docker layer cache
 COPY apps/legal_discovery/requirements.txt ./requirements.txt
 
-# Use uv pip and install the CPU-only torch wheel directly
-RUN uv pip install --no-cache-dir \
+# Use uv pip with --system to install into the base environment and pull the CPU-only torch wheel directly
+RUN uv pip install --system --no-cache-dir \
       https://download.pytorch.org/whl/cpu/torch-2.5.1%2Bcpu-cp311-cp311-linux_x86_64.whl \
-    && uv pip install --no-cache-dir -r requirements.txt \
-    && uv pip install --no-cache-dir openai-whisper
+    && uv pip install --system --no-cache-dir -r requirements.txt \
+    && uv pip install --system --no-cache-dir openai-whisper
 
 # Optional: If you rely on spaCy model via `spacy download`, you can skip this
 # because your requirements already install the model wheel from GitHub.
