@@ -9,7 +9,8 @@
 #
 import json
 import os
-from typing import Any, Dict
+from typing import Any
+from typing import Dict
 
 import requests
 from neuro_san.interfaces.coded_tool import CodedTool
@@ -97,13 +98,13 @@ class NowAgentSendMessage(CodedTool):
             try:
                 error_response = response.json()
                 print(f"Error Response: {error_response}")
-            except:
+            except (ValueError, TypeError):
                 print(f"Error Response: {response.text}")
-            
+
             return {
                 "result": None,
                 "error": f"HTTP {response.status_code}: Failed to send message",
-                "status_code": response.status_code
+                "status_code": response.status_code,
             }
 
         # Decode the JSON response into a dictionary and use the data

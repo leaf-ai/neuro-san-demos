@@ -6,7 +6,7 @@ It includes functionality to discover available agents, send messages, and retri
 
 Classes:
     NowAgentAPIGetAgents: Tool to discover and retrieve available ServiceNow AI agents
-    NowAgentSendMessage: Tool to send messages/inquiries to ServiceNow AI agents  
+    NowAgentSendMessage: Tool to send messages/inquiries to ServiceNow AI agents
     NowAgentRetrieveMessage: Tool to retrieve responses from ServiceNow AI agents
 
 Example:
@@ -17,11 +17,7 @@ Example:
 """
 
 from .nowagent_api_get_agents import NowAgentAPIGetAgents
-from .nowagent_api_send_message import NowAgentSendMessage
 from .nowagent_api_retrieve_message import NowAgentRetrieveMessage
+from .nowagent_api_send_message import NowAgentSendMessage
 
-__all__ = [
-    "NowAgentAPIGetAgents",
-    "NowAgentSendMessage", 
-    "NowAgentRetrieveMessage"
-]
+__all__ = ["NowAgentAPIGetAgents", "NowAgentSendMessage", "NowAgentRetrieveMessage"]

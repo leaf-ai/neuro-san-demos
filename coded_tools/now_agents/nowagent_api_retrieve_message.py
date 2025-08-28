@@ -9,7 +9,8 @@
 #
 import os
 import time
-from typing import Any, Dict
+from typing import Any
+from typing import Dict
 
 import requests
 from neuro_san.interfaces.coded_tool import CodedTool
@@ -81,14 +82,14 @@ class NowAgentRetrieveMessage(CodedTool):
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
 
         print(f"URL: {url}")
-        
+
         # Implement polling logic to wait for agent response
         max_attempts = 5
         for attempt in range(1, max_attempts + 1):
             print(f"Polling attempt {attempt}/{max_attempts}...")
 
             response = requests.get(url, auth=(servicenow_user, servicenow_pwd), headers=headers, timeout=30)
-            
+
             # Check for HTTP errors
             if response.status_code != 200:
                 error_msg = f"Status: {response.status_code}, Headers: {response.headers}"
@@ -96,15 +97,15 @@ class NowAgentRetrieveMessage(CodedTool):
                 try:
                     error_response = response.json()
                     print(f"Error Response: {error_response}")
-                except:
+                except (ValueError, TypeError):
                     print(f"Error Response: {response.text}")
-                
+
                 return {
                     "result": [],
                     "error": f"HTTP {response.status_code}: Failed to retrieve messages",
-                    "status_code": response.status_code
+                    "status_code": response.status_code,
                 }
-            
+
             tool_response = response.json()
             print(f"Response: {tool_response}")
 
