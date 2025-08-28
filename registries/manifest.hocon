@@ -134,7 +134,7 @@
     "ddgs_search.hocon": true,
     "expedia.hocon": true,
     "macys.hocon": true,
-    "LinkedInJobSeekerSupportNetwork.hocon": true
+    "LinkedInJobSeekerSupportNetwork.hocon": true,
 
     # Experimental and research
     "agent_network_designer.hocon": true,
