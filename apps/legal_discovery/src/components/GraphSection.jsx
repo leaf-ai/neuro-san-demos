@@ -64,6 +64,21 @@ function GraphSection() {
     cy.add(edges.map(e => ({ data:{ id:(e.source+'_'+e.target+'_'+(e.type||'')), source:e.source, target:e.target, type:e.type||'EDGE', weight:(e.properties&&e.properties.weight)||1 }})));
     cy.layout({ name:'breadthfirst', directed:true }).run();
     cyRef.current = cy;
+    // Node picker for Trace Path: first click fills From, second fills To
+    const onTap = (evt) => {
+      const id = evt.target && evt.target.id && evt.target.id();
+      if (!id) return;
+      if (!pathFrom) {
+        setPathFrom(String(id));
+      } else if (!pathTo) {
+        setPathTo(String(id));
+      } else {
+        setPathFrom(String(id));
+        setPathTo("");
+      }
+    };
+    cy.on('tap','node',onTap);
+    return () => { try { cy.off('tap','node',onTap); } catch(e){} };
   }, [nodes,edges]);
   const highlight = () => {
     if(!cyRef.current) return;
@@ -176,7 +191,7 @@ function GraphSection() {
         </div>
       </div>
       {exporting && <p style={{ fontSize: theme.typography.sizeSm, marginBottom: theme.spacing.xs }}>Exporting...</p>}
-      <div id="graph" style={{height:'360px', border:`1px solid ${theme.colors.border}`, borderRadius: theme.spacing.xs }}></div>
+      <div id="graph" style={{height:'360px', border:`1px solid ${theme.colors.border}`, borderRadius: theme.spacing.xs }} title="Click a node to set From/To for Trace Path"></div>
       <div className="text-xs mt-2" style={{ color:'#94a3b8' }}>
         <span className="mr-3"><span style={{display:'inline-block',width:10,height:10,background:'#f97316',borderRadius:2,marginRight:4}}></span>CAUSES</span>
         <span className="mr-3"><span style={{display:'inline-block',width:10,height:10,background:'#06b6d4',borderRadius:2,marginRight:4}}></span>OCCURS_BEFORE</span>
