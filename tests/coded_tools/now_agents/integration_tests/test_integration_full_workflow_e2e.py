@@ -10,15 +10,17 @@ import os
 import sys
 from pathlib import Path
 
+import requests
 from dotenv import load_dotenv
-
-# Add the project root to Python path (need to go up 5 levels: integration_tests -> now_agents -> coded_tools -> tests -> project_root)
-project_root = Path(__file__).parent.parent.parent.parent.parent
-sys.path.insert(0, str(project_root))
-
 from coded_tools.now_agents.nowagent_api_get_agents import NowAgentAPIGetAgents
 from coded_tools.now_agents.nowagent_api_retrieve_message import NowAgentRetrieveMessage
 from coded_tools.now_agents.nowagent_api_send_message import NowAgentSendMessage
+
+# Add the project root to Python path (need to go up 5 levels:
+# integration_tests -> now_agents -> coded_tools -> tests ->
+# project_root)
+project_root = Path(__file__).parent.parent.parent.parent.parent
+sys.path.insert(0, str(project_root))
 
 
 def load_environment():
@@ -57,7 +59,6 @@ def test_basic_connectivity():
     print("\n[TEST] Testing basic connectivity to ServiceNow...")
 
     try:
-        import requests
 
         base_url = os.getenv("SERVICENOW_INSTANCE_URL")
         user = os.getenv("SERVICENOW_USER")
@@ -70,12 +71,12 @@ def test_basic_connectivity():
         if response.status_code == 200:
             print(f"SUCCESS: Successfully connected to ServiceNow instance: {base_url}")
             return True
-        else:
-            print(f"ERROR: Connection failed with status code: {response.status_code}")
-            print(f"Response: {response.text}")
-            return False
 
-    except Exception as e:
+        print(f"ERROR: Connection failed with status code: {response.status_code}")
+        print(f"Response: {response.text}")
+        return False
+
+    except requests.RequestException as e:
         print(f"ERROR: Connection test failed: {str(e)}")
         return False
 
@@ -109,21 +110,21 @@ def test_agent_discovery():
                     print()
 
                 return agents
-            else:
-                print("ERROR: No agents found or invalid response format")
-                print(f"Result: {result}")
-                return []
-        else:
-            print("ERROR: Agent discovery failed - invalid response format")
+
+            print("ERROR: No agents found or invalid response format")
             print(f"Result: {result}")
             return []
 
-    except Exception as e:
+        print("ERROR: Agent discovery failed - invalid response format")
+        print(f"Result: {result}")
+        return []
+
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"ERROR: Agent discovery failed: {str(e)}")
         return []
 
 
-def test_single_agent_interaction(agents):
+def test_single_agent_interaction(agents):  # pylint: disable=too-many-locals
     """Test single interaction with a ServiceNow agent"""
     if not agents:
         print("\n[WARNING] Skipping agent interaction test - no agents available")
@@ -172,19 +173,19 @@ def test_single_agent_interaction(agents):
                         content = response.get("content", "No content")
                         print(f"   Response: {content}")
                     return True
-                else:
-                    print("[WARNING] No response received (this might be expected given the limitations)")
-                    return False
-            else:
-                print("ERROR: Failed to retrieve response")
-                print(f"Result: {retrieve_result}")
+
+                print("[WARNING] No response received (this might be expected given the limitations)")
                 return False
-        else:
-            print("ERROR: Failed to send message")
-            print(f"Result: {send_result}")
+
+            print("ERROR: Failed to retrieve response")
+            print(f"Result: {retrieve_result}")
             return False
 
-    except Exception as e:
+        print("ERROR: Failed to send message")
+        print(f"Result: {send_result}")
+        return False
+
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"ERROR: Agent interaction test failed: {str(e)}")
         return False
 

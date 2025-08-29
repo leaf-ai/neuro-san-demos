@@ -7,15 +7,18 @@ This script tests the ServiceNow agents integration with the provided credential
 
 import os
 import sys
+import traceback
 from pathlib import Path
 
+import requests
 from dotenv import load_dotenv
+from coded_tools.now_agents.nowagent_api_get_agents import NowAgentAPIGetAgents
 
-# Add the project root to Python path (need to go up 5 levels: integration_tests -> now_agents -> coded_tools -> tests -> project_root)
+# Add the project root to Python path (need to go up 5 levels:
+# integration_tests -> now_agents -> coded_tools -> tests ->
+# project_root)
 project_root = Path(__file__).parent.parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
-
-from coded_tools.now_agents.nowagent_api_get_agents import NowAgentAPIGetAgents
 
 
 def load_environment():
@@ -44,7 +47,6 @@ def test_connectivity():
     print("\nTesting ServiceNow connectivity...")
 
     try:
-        import requests
 
         base_url = os.getenv("SERVICENOW_INSTANCE_URL")
         user = os.getenv("SERVICENOW_USER")
@@ -57,12 +59,12 @@ def test_connectivity():
         if response.status_code == 200:
             print(f"SUCCESS: Connected to {base_url}")
             return True
-        else:
-            print(f"ERROR: Connection failed - Status {response.status_code}")
-            print(f"Response: {response.text}")
-            return False
 
-    except Exception as e:
+        print(f"ERROR: Connection failed - Status {response.status_code}")
+        print(f"Response: {response.text}")
+        return False
+
+    except requests.RequestException as e:
         print(f"ERROR: Connection test failed - {str(e)}")
         return False
 
@@ -95,17 +97,15 @@ def test_agent_discovery():
                     print(f"    ID: {sys_id}")
 
                 return agents
-            else:
-                print("ERROR: No agents found or invalid format")
-                return []
-        else:
-            print("ERROR: Invalid response format")
+
+            print("ERROR: No agents found or invalid format")
             return []
 
-    except Exception as e:
-        print(f"ERROR: Agent discovery failed - {str(e)}")
-        import traceback
+        print("ERROR: Invalid response format")
+        return []
 
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        print(f"ERROR: Agent discovery failed - {str(e)}")
         traceback.print_exc()
         return []
 

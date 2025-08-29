@@ -4,7 +4,9 @@
 import os
 from pathlib import Path
 
+import requests
 from dotenv import load_dotenv
+from requests.auth import HTTPBasicAuth
 
 # Load environment
 project_root = Path(__file__).parent.parent.parent.parent
@@ -31,25 +33,23 @@ print(f"Personal Password length: {len(personal_pwd) if personal_pwd else 0}")
 
 # Test basic auth format
 if user and pwd:
-    import requests
-    from requests.auth import HTTPBasicAuth
 
     # Test with explicit auth
-    test_url = f"{url}api/now/table/sys_user?sysparm_limit=1"
-    print(f"\nTesting URL: {test_url}")
+    TEST_URL = f"{url}api/now/table/sys_user?sysparm_limit=1"
+    print(f"\nTesting URL: {TEST_URL}")
 
     # Test integration user
     print("\nTesting Integration User:")
     try:
         response = requests.get(
-            test_url, auth=HTTPBasicAuth(user, pwd), headers={"Accept": "application/json"}, timeout=30
+            TEST_URL, auth=HTTPBasicAuth(user, pwd), headers={"Accept": "application/json"}, timeout=30
         )
         print(f"Status code: {response.status_code}")
         if response.status_code != 200:
             print(f"Response: {response.text}")
         else:
             print("SUCCESS: Integration user authentication worked!")
-    except Exception as e:
+    except requests.RequestException as e:
         print(f"Error: {e}")
 
     # Test personal user
@@ -57,7 +57,7 @@ if user and pwd:
         print("\nTesting Personal User:")
         try:
             response = requests.get(
-                test_url,
+                TEST_URL,
                 auth=HTTPBasicAuth(personal_user, personal_pwd),
                 headers={"Accept": "application/json"},
                 timeout=30,
@@ -67,5 +67,5 @@ if user and pwd:
                 print(f"Response: {response.text}")
             else:
                 print("SUCCESS: Personal user authentication worked!")
-        except Exception as e:
+        except requests.RequestException as e:
             print(f"Error: {e}")

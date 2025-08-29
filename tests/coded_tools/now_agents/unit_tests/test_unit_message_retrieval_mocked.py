@@ -8,12 +8,13 @@
 # neuro-san-studio SDK Software in commercial settings.
 #
 
+import asyncio
 import os
 import unittest
-from unittest.mock import patch, Mock
+from unittest.mock import Mock
+from unittest.mock import patch
 
 from coded_tools.now_agents.nowagent_api_retrieve_message import NowAgentRetrieveMessage
-
 
 # Mock response data for testing
 MOCK_RETRIEVE_RESPONSE = {
@@ -21,14 +22,12 @@ MOCK_RETRIEVE_RESPONSE = {
         {
             "content": "I can help you troubleshoot your laptop issue. Please describe the problem.",
             "direction": "OUTBOUND",
-            "session_path": "test_user_123_session_456"
+            "session_path": "test_user_123_session_456",
         }
     ]
 }
 
-MOCK_EMPTY_RESPONSE = {
-    "result": []
-}
+MOCK_EMPTY_RESPONSE = {"result": []}
 
 
 class TestNowAgentRetrieveMessage(unittest.TestCase):
@@ -41,22 +40,23 @@ class TestNowAgentRetrieveMessage(unittest.TestCase):
         self.tool = NowAgentRetrieveMessage()
         self.test_args = {
             "inquiry": "Help me with my laptop issue",
-            "agent_id": "12345678-1234-1234-1234-123456789abc"
+            "agent_id": "12345678-1234-1234-1234-123456789abc",
         }
-        self.test_sly_data = {
-            "session_path": "test_user_123_session_456"
-        }
+        self.test_sly_data = {"session_path": "test_user_123_session_456"}
 
-    @patch.dict(os.environ, {
-        'SERVICENOW_INSTANCE_URL': 'https://test.service-now.com/',
-        'SERVICENOW_USER': 'test_user',
-        'SERVICENOW_PWD': 'test_password'
-    })
-    @patch('coded_tools.now_agents.nowagent_api_retrieve_message.requests.get')
+    @patch.dict(
+        os.environ,
+        {
+            "SERVICENOW_INSTANCE_URL": "https://test.service-now.com/",
+            "SERVICENOW_USER": "test_user",
+            "SERVICENOW_PWD": "test_password",
+        },
+    )
+    @patch("coded_tools.now_agents.nowagent_api_retrieve_message.requests.get")
     def test_invoke_success_immediate_response(self, mock_get):
         """
         Test successful message retrieval with immediate response.
-        
+
         This test verifies that the tool correctly retrieves a response from a ServiceNow AI agent
         when the response is available on the first attempt.
         """
@@ -82,17 +82,20 @@ class TestNowAgentRetrieveMessage(unittest.TestCase):
         self.assertIn("test_user_123_session_456", call_args[0][0])
         self.assertEqual(call_args[1]["auth"], ("test_user", "test_password"))
 
-    @patch.dict(os.environ, {
-        'SERVICENOW_INSTANCE_URL': 'https://test.service-now.com/',
-        'SERVICENOW_USER': 'test_user',
-        'SERVICENOW_PWD': 'test_password'
-    })
-    @patch('coded_tools.now_agents.nowagent_api_retrieve_message.requests.get')
-    @patch('coded_tools.now_agents.nowagent_api_retrieve_message.time.sleep')
+    @patch.dict(
+        os.environ,
+        {
+            "SERVICENOW_INSTANCE_URL": "https://test.service-now.com/",
+            "SERVICENOW_USER": "test_user",
+            "SERVICENOW_PWD": "test_password",
+        },
+    )
+    @patch("coded_tools.now_agents.nowagent_api_retrieve_message.requests.get")
+    @patch("coded_tools.now_agents.nowagent_api_retrieve_message.time.sleep")
     def test_invoke_success_with_retries(self, mock_sleep, mock_get):
         """
         Test successful message retrieval after retries.
-        
+
         This test verifies that the tool correctly handles polling with retries
         when the response is not immediately available.
         """
@@ -118,17 +121,20 @@ class TestNowAgentRetrieveMessage(unittest.TestCase):
         self.assertEqual(mock_get.call_count, 3)
         self.assertEqual(mock_sleep.call_count, 2)  # Should sleep twice before the successful attempt
 
-    @patch.dict(os.environ, {
-        'SERVICENOW_INSTANCE_URL': 'https://test.service-now.com/',
-        'SERVICENOW_USER': 'test_user',
-        'SERVICENOW_PWD': 'test_password'
-    })
-    @patch('coded_tools.now_agents.nowagent_api_retrieve_message.requests.get')
-    @patch('coded_tools.now_agents.nowagent_api_retrieve_message.time.sleep')
+    @patch.dict(
+        os.environ,
+        {
+            "SERVICENOW_INSTANCE_URL": "https://test.service-now.com/",
+            "SERVICENOW_USER": "test_user",
+            "SERVICENOW_PWD": "test_password",
+        },
+    )
+    @patch("coded_tools.now_agents.nowagent_api_retrieve_message.requests.get")
+    @patch("coded_tools.now_agents.nowagent_api_retrieve_message.time.sleep")
     def test_invoke_max_retries_reached(self, mock_sleep, mock_get):
         """
         Test behavior when maximum retries are reached without response.
-        
+
         This test verifies that the tool handles cases where no response is received
         even after all retry attempts.
         """
@@ -151,12 +157,12 @@ class TestNowAgentRetrieveMessage(unittest.TestCase):
     def test_invoke_missing_session_path(self):
         """
         Test handling of missing session_path in sly_data.
-        
+
         This test verifies that the tool handles missing session information appropriately.
         """
         # Test with missing session_path
         empty_sly_data = {}
-        
+
         # This should raise a KeyError when trying to access session_path
         with self.assertRaises(KeyError):
             self.tool.invoke(self.test_args, empty_sly_data)
@@ -164,28 +170,31 @@ class TestNowAgentRetrieveMessage(unittest.TestCase):
     def test_get_env_variable(self):
         """
         Test environment variable retrieval.
-        
+
         This test verifies that the _get_env_variable helper method correctly
         retrieves environment variables.
         """
-        with patch.dict(os.environ, {'TEST_VAR': 'test_value'}):
-            result = self.tool._get_env_variable('TEST_VAR')
-            self.assertEqual(result, 'test_value')
+        with patch.dict(os.environ, {"TEST_VAR": "test_value"}):
+            result = self.tool._get_env_variable("TEST_VAR")  # pylint: disable=protected-access
+            self.assertEqual(result, "test_value")
 
         # Test missing environment variable
-        result = self.tool._get_env_variable('NONEXISTENT_VAR')
+        result = self.tool._get_env_variable("NONEXISTENT_VAR")  # pylint: disable=protected-access
         self.assertIsNone(result)
 
-    @patch.dict(os.environ, {
-        'SERVICENOW_INSTANCE_URL': 'https://test.service-now.com/',
-        'SERVICENOW_USER': 'test_user',
-        'SERVICENOW_PWD': 'test_password'
-    })
-    @patch('coded_tools.now_agents.nowagent_api_retrieve_message.requests.get')
+    @patch.dict(
+        os.environ,
+        {
+            "SERVICENOW_INSTANCE_URL": "https://test.service-now.com/",
+            "SERVICENOW_USER": "test_user",
+            "SERVICENOW_PWD": "test_password",
+        },
+    )
+    @patch("coded_tools.now_agents.nowagent_api_retrieve_message.requests.get")
     def test_async_invoke(self, mock_get):
         """
         Test asynchronous invoke method.
-        
+
         This test verifies that the async_invoke method delegates correctly
         to the synchronous invoke method.
         """
@@ -196,12 +205,11 @@ class TestNowAgentRetrieveMessage(unittest.TestCase):
         mock_get.return_value = mock_response
 
         # Execute the async tool
-        import asyncio
         result = asyncio.run(self.tool.async_invoke(self.test_args, self.test_sly_data))
 
         # Verify the result matches synchronous behavior
         self.assertEqual(result, MOCK_RETRIEVE_RESPONSE)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
