@@ -82,10 +82,10 @@
     #
     # Additional installations may be required depending on the attachment types used.
     # For details, see https://python.langchain.com/api_reference/_modules/langchain_community/document_loaders/confluence.html#ConfluenceLoader
-    # Set "username" and "api_key" in the agent network hocon or 
+    # Set "username" and "api_key" in the agent network hocon or
     # as environment variable "JIRA_USERNAME" and "JIRA_API_TOKEN", respectively.
     "confluence_rag.hocon": false,
-    
+
     # Before turning on and running the following agent network, make sure that:
     # The MCP server is running.
     # The server can be found at servers/MCP/bmi_server.py and run using the following command
@@ -135,8 +135,7 @@
     "ddgs_search.hocon": true,
     "expedia.hocon": true,
     "macys.hocon": true,
-    "LinkedInJobSeekerSupportNetwork.hocon": true
-
+    "LinkedInJobSeekerSupportNetwork.hocon": true,
     # Experimental and research
     "agent_network_designer.hocon": true,
     "six_thinking_hats.hocon": true,
@@ -174,4 +173,5 @@
     #     python -m run --server-grpc-port 30012 --server-http-port 8081 --nsflow-port 4174
     "agent_network_architect.hocon": false,
     "news_sentiment_analysis.hocon": false,
+    "now_agents.hocon": true,
 }
