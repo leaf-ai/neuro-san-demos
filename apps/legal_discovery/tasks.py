@@ -203,8 +203,9 @@ def run_case_analysis(case_id: int, iterations: int = 3) -> Dict[str, Any]:
             for i in range(iterations):
                 pass_result: Dict[str, Any] = {"iteration": i + 1}
                 try:
-                    ga.enrich_relationships()
-                    pass_result["graph"] = "enriched"
+                    deltas = ga.enrich_relationships()
+                    pass_result["graph_deltas"] = deltas
+                    pass_result["timeline_paths"] = ga.analyze_timeline_paths()
                 except Exception as exc:
                     logger.exception("graph enrichment failed: %s", exc)
                     pass_result["graph_error"] = str(exc)
