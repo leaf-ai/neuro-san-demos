@@ -3,40 +3,47 @@
 <!-- TOC -->
 
 * [User guide](#user-guide)
-    * [Simple agent network](#simple-agent-network)
-    * [Hocon files](#hocon-files)
-        * [Import and Substitution](#import-and-substitution)
-        * [Manifest](#manifest)
-        * [Agent network](#agent-network)
-            * [Agent specifications](#agent-specifications)
-            * [Tool specifications](#tool-specifications)
-            * [LLM specifications](#llm-specifications)
-    * [LLM configuration](#llm-configuration)
-        * [OpenAI](#openai)
-        * [AzureOpenAI](#azureopenai)
-        * [Anthropic](#anthropic)
-        * [Bedrock](#bedrock)
-        * [Gemini](#gemini)
-        * [Ollama](#ollama)
-    * [Using custom or non-default LLMs](#using-custom-or-non-default-llms)
-        * [Using the class key](#using-the-class-key)
-        * [Extending the default llm info file](#extending-the-default-llm-info-file)
-            * [Registering custom llm info file](#registering-custom-llm-info-file)
-    * [Coded tools](#coded-tools)
-        * [Simple tool](#simple-tool)
-        * [API calling tool](#api-calling-tool)
-        * [Sly data](#sly-data)
-    * [Toolbox](#toolbox)
-        * [Default tools in toolbox](#default-tools-in-toolbox)
-            * [Langchain tools](#langchain-tools-in-toolbox)
-            * [Coded tools](#coded-tools-in-toolbox)
-        * [Usage in agent network config](#usage-in-agent-network-config)
-        * [Adding tools in toolbox](#adding-tools-in-toolbox)
-    * [Logging and debugging](#logging-and-debugging)
-    * [Advanced](#advanced)
-        * [Subnetworks](#subnetworks)
-        * [AAOSA](#aaosa)
-    * [Connect with other agent frameworks](#connect-with-other-agent-frameworks)
+  * [Simple agent network](#simple-agent-network)
+  * [Hocon files](#hocon-files)
+    * [Import and substitution](#import-and-substitution)
+    * [Manifest](#manifest)
+    * [Agent network](#agent-network)
+      * [Agent specifications](#agent-specifications)
+      * [Tool specifications](#tool-specifications)
+      * [LLM specifications](#llm-specifications)
+  * [LLM configuration](#llm-configuration)
+    * [OpenAI](#openai)
+    * [AzureOpenAI](#azureopenai)
+    * [Anthropic](#anthropic)
+    * [Bedrock](#bedrock)
+      * [Default Bedrock models](#default-bedrock-models)
+    * [Gemini](#gemini)
+    * [Ollama](#ollama)
+      * [Prerequisites](#prerequisites)
+      * [Configuration](#configuration)
+      * [Using Ollama in Docker or Remote Server](#using-ollama-in-docker-or-remote-server)
+      * [Example agent network](#example-agent-network)
+    * [See also](#see-also)
+  * [LLM Fallbacks](#llm-fallbacks)
+  * [Using custom or non-default LLMs](#using-custom-or-non-default-llms)
+    * [Using the `class` Key](#using-the-class-key)
+    * [Extending the default LLM info file](#extending-the-default-llm-info-file)
+      * [Registering custom LLM info file](#registering-custom-llm-info-file)
+  * [Coded tools](#coded-tools)
+    * [Simple tool](#simple-tool)
+    * [API calling tool](#api-calling-tool)
+    * [Sly data](#sly-data)
+  * [Toolbox](#toolbox)
+    * [Default tools in toolbox](#default-tools-in-toolbox)
+      * [Langchain tools in toolbox](#langchain-tools-in-toolbox)
+      * [Coded tools in toolbox](#coded-tools-in-toolbox)
+    * [Usage in agent network config](#usage-in-agent-network-config)
+    * [Adding tools in toolbox](#adding-tools-in-toolbox)
+  * [Logging and debugging](#logging-and-debugging)
+  * [Advanced](#advanced)
+    * [Subnetworks](#subnetworks)
+    * [AAOSA](#aaosa)
+  * [Connect with other agent frameworks](#connect-with-other-agent-frameworks)
 
 <!-- TOC -->
 
@@ -197,7 +204,9 @@ You can specify it at two levels:
 * **Agent-level**: Overrides the network-level configuration for a specific agent.
 
 Neuro-SAN includes several predefined LLM providers and models. To use one of these, set the `model_name` key to
-the name of the model you want. A full list of available models can be found in the
+the name of the model you want. In addition, model-specific parameters (such as `temperature`, `max_tokens`, etc.)
+can be set alongside `model_name`.
+A full list of available models and parameters can be found in the
 [default LLM info file](https://github.com/cognizant-ai-lab/neuro-san/blob/main/neuro_san/internals/run_context/langchain/llms/default_llm_info.hocon).
 
 > ⚠️ Different providers may require unique configurations or environment variables.
@@ -503,6 +512,32 @@ see [this page](https://python.langchain.com/docs/integrations/chat/ollama/)
 
 For a full description of `llm_config`, please refer to the [LLM config](
     https://github.com/cognizant-ai-lab/neuro-san/blob/main/docs/agent_hocon_reference.md#llm_config) documentation.
+
+## LLM Fallbacks
+
+Neuro-SAN supports LLM fallbacks, which allow you to specify a list of LLMs to use in case the primary LLM fails.
+In the `llm_config` block, put each LLM configuration in a `fallbacks` list.
+The list of LLM configs is tried in order until one succeeds.
+
+In this example, as seen in [./examples/music_nerd_llm_fallbacks.md](./examples/music_nerd_llm_fallbacks.md),
+the agent network will use OpenAI's `gpt-4o` model first,
+and if that fails (for example, due to rate limits or service outages),
+it will automatically fall back to Anthropic's `claude-3-7-sonnet` model:
+
+```hocon
+    "llm_config": {
+        "fallbacks": [
+            {
+                # Try OpenAI first
+                "model_name": "gpt-4o",
+            },
+            {
+                # Fall back to Anthropic Claude if OpenAI is unavailable.
+                "model_name": "claude-3-7-sonnet",
+            }
+        ]
+    },
+```
 
 ## Using custom or non-default LLMs
 

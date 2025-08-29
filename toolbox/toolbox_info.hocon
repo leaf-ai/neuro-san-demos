@@ -224,6 +224,26 @@
         }      
     },
 
+    # To use this tool, start by installing the required package:
+    #     pip install langchain-docling
+    "docling_rag": {
+        # This is a coded tool for RAG on multiple file format.
+        # See https://python.langchain.com/docs/integrations/document_loaders/docling/ and
+        # https://docling-project.github.io/docling/
+        "class": "docling_rag.DoclingRag", 
+        "description": "Retrieve information from the given files",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Query for retrieval"
+                }
+            },
+            "required": ["query"]
+        }
+    },
+
     "pdf_rag": {
         # This is a coded tool for RAG on PDF files.
         "class": "pdf_rag.PdfRag", 
@@ -281,13 +301,30 @@
     # You can also configure the request timeout (in seconds) using BRAVE_TIMEOUT; the default is 30 seconds.
     "brave_search": {
         "class": "brave_search.BraveSearch",
-        "description": "Assist caller with searching an url on the web by using your tool.",
+        "description": "Performs a web search using Brave Search.",
         "parameters": {
             "type": "object",
             "properties": {
                 "search_terms": {
                     "type": "string",
-                    "description": "Search terms to return options."
+                    "description": "The query string or keywords to search for."
+                },
+            },
+            "required": ["search_terms"]
+        }
+    },
+
+    # This search tool requires no API key.
+    # Reference: https://github.com/deedy5/ddgs
+    "ddgs_search": {
+        "class": "ddgs_search.DdgsSearch",
+        "description": "Performs a web search using DDGS Search.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "search_terms": {
+                    "type": "string",
+                    "description": "The query string or keywords to search for."
                 },
             },
             "required": ["search_terms"]
@@ -312,17 +349,34 @@
     # Otherwise, the default values of "https://www.googleapis.com/customsearch/v1" and "30" are used, respectively
     "google_search": {
         "class": "google_search.GoogleSearch",
-        "description": "Assist caller with searching an url on the web by using your tool.",
+        "description": "Performs a web search using Google Search.",
         "parameters": {
             "type": "object",
             "properties": {
                 "search_terms": {
                     "type": "string",
-                    "description": "Search terms to return options."
+                    "description": "The query string or keywords to search for."
                 },
             },
             "required": ["search_terms"]
         }
-    }
+    },
+
+    # To use this search tool, obtain an API key from: https://serper.dev/
+    # Once you have the API key, set it using the SERPER_API_KEY environment variable.
+    "google_serper": {
+        "class": "google_serper.GoogleSerper",
+        "description": "Search the web using a keyword-based query.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "The search term or question to look up online."
+                }
+            },
+            "required": ["query"]
+        }
+    },
 
 }

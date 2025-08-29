@@ -9,7 +9,7 @@
 #
 # END COPYRIGHT
 
-include "registries/aaosa.hocon"
+include "registries/aaosa_basic.hocon"
 
 llm_config {
     class = "openai"
@@ -32,6 +32,7 @@ Be as succinct as possible in your response, while explaining the reasoning proc
 Ask the user back if you need additional information.
 """ ${aaosa_instructions}
         tools = ["CoffeeShop", "FastFoodChain", "GasStation", "LiquorStore"]
+        "structure_formats": "json"
     }
     {
         name = "CoffeeShop",
@@ -46,7 +47,7 @@ Any other time, you're closed.
 You must know the time of day to provide an answer.
 """ ${aaosa_instructions},
         command = ${aaosa_command}
-    },
+    }
     {
         name = "FastFoodChain",
         function = ${aaosa_call}
@@ -60,7 +61,7 @@ Any other time, you're closed.
 You must know the time of day to provide an answer.
 """ ${aaosa_instructions}
         command = ${aaosa_command}
-    },
+    }
     {
         name = "GasStation"
         function = ${aaosa_call}
@@ -71,7 +72,7 @@ You have a single location.
 You can provide coffee at any time.
 """ ${aaosa_instructions},
         command = ${aaosa_command}
-    },
+    }
     {
         name = "LiquorStore"
         function = ${aaosa_call}

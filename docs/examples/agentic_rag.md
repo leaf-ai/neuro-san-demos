@@ -68,11 +68,9 @@ in the RFP.
 ### Supporting Tools
 
 1. **website_search**
-   - Powered by `Bing Search` via LangChain.
-   - Required an environment variable `BING_SUBSCRIPTION_KEY`.
+   - Powered by `ddgs_search`.
    - Retrieves up-to-date web results based on the query.
-   - Configured to return the top 3 search results.
-   - Additional info on [Bing Search](https://python.langchain.com/docs/integrations/tools/bing_search/).
+   - Additional info on [DDGS Search](https://github.com/deedy5/ddgs).
 
 2. **rag_retriever**
    - Uses a Retrieval-Augmented Generation pipeline.

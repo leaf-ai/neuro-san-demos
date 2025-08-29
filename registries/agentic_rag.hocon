@@ -42,7 +42,7 @@
         # LangChain search tool using Bing; no need to define "function" since "args_schema" is pre-defined.
         {
             "name": "website_search",
-            "toolbox": "bing_search"
+            "toolbox": "ddgs_search"
             "args": {
                 "num_results": 3
             }

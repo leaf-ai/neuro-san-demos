@@ -98,6 +98,14 @@ a **tool-calling** LLM that runs locally with Ollama.
 
 **Tags:** `tool`, `sly_data`, `llm_config`
 
+### Music Nerd LLM Fallbacks
+
+[Music Nerd LLM Fallbacks](./examples/music_nerd_llm_fallbacks.md) is a copy of
+[Music Nerd Pro](./examples/music_nerd_pro.md) that uses a `fallbacks` list in
+its `llm_config` to automatically try another LLM config if the first one fails.
+
+**Tags:** `llm_config` `llm_fallbacks`
+
 ### Coffee Finder
 
 [Coffee Finder](./examples/coffee_finder.md) is an agent network that helps
