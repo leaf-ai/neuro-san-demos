@@ -29,6 +29,7 @@ Here are a few examples ordered by level of complexity.
     * [Agentic RAG Assistant](#agentic-rag-assistant)
     * [Wikipedia RAG Assistant](#wikipedia-rag-assistant)
     * [ArXiv RAG Assistant](#arxiv-rag-assistant)
+    * [ServiceNow AI Agents](#servicenow-ai-agents)
   * [🏢 Industry-Specific Examples](#-industry-specific-examples)
     * [Intranet Agents](#intranet-agents)
     * [Intranet Agents With Tools](#intranet-agents-with-tools)
@@ -234,6 +235,15 @@ relevant articles, and synthesizing their content into accurate, detailed answer
 research papers (abstracts or full text) and produces accurate responses to user queries (no vector store needed).
 
 **Tags:** `tool`, `RAG`
+
+### ServiceNow AI Agents
+
+[ServiceNow AI Agents](./examples/now_agents.md) is a comprehensive integration system that enables natural language
+interaction with ServiceNow's Agentic AI platform. It provides discovery, communication, and response retrieval
+capabilities for 100+ specialized AI agents within ServiceNow instances for IT service management, HR operations,
+procurement, and other enterprise processes.
+
+**Tags:** `tool`, `API`, `ServiceNow`, `Enterprise`
 
 ## 🏢 Industry-Specific Examples
 
