@@ -110,3 +110,107 @@ class GraphAnalyzer(CodedTool):
         finally:
             kg.close()
         return out
+
+    def enrich_causation_and_timeline(self) -> dict:
+        """Infer legal causation and timeline relationships.
+
+        Adds the following graph structures:
+        - CAUSES between Facts based on predicate/actions/text heuristics
+        - OCCURS_BEFORE between consecutive TimelineEvent by date (per case)
+        - CAUSES between TimelineEvent when the earlier description suggests causation
+        - SAME_TRANSACTION between TimelineEvent that are within 1 day and share >=3 tokens
+        Returns a dict of deltas per relationship created.
+        """
+        kg = KnowledgeGraphManager()
+        deltas: dict[str, int] = {}
+
+        def _count(label: str) -> int:
+            rows = kg.run_query(f"MATCH ()-[r:{label}]->() RETURN count(r) AS c", {})
+            return int(rows[0]["c"]) if rows else 0
+
+        def _delta(rel: str, cypher: str, params: dict | None = None) -> None:
+            before = _count(rel)
+            kg.run_query(cypher, params or {}, cache=False)
+            after = _count(rel)
+            deltas[rel] = max(0, after - before)
+
+        # 1) Fact -> Fact CAUSES based on predicate/actions/text
+        _delta(
+            "CAUSES",
+            (
+                "MATCH (f1:Fact), (f2:Fact) "
+                "WHERE id(f1) < id(f2) "
+                "AND (toLower(coalesce(f1.predicate,'')) IN ['causes','caused','results_in','leads_to'] "
+                "  OR any(a IN coalesce(f1.actions,[]) WHERE toLower(a) IN ['cause','caused','resulted','led'])) "
+                "AND any(p IN coalesce(f1.parties,[]) WHERE p IN coalesce(f2.parties,[])) "
+                "MERGE (f1)-[:CAUSES]->(f2)"
+            ),
+        )
+
+        # 2) Consecutive OCCURS_BEFORE edges between TimelineEvent per case
+        _delta(
+            "OCCURS_BEFORE",
+            (
+                "MATCH (t:TimelineEvent) WITH t.case_id AS cid, collect(t) AS ts "
+                "WITH cid, [x IN ts | x] AS ts ORDER BY cid "
+                "UNWIND CASE WHEN size(ts)>1 THEN range(0, size(ts)-2) ELSE [] END AS i "
+                "WITH ts[i] AS a, ts[i+1] AS b "
+                "WITH a,b WHERE a.date IS NOT NULL AND b.date IS NOT NULL AND date(a.date) < date(b.date) "
+                "MERGE (a)-[:OCCURS_BEFORE]->(b)"
+            ),
+        )
+
+        # 3) TimelineEvent CAUSES based on description hints and order
+        _delta(
+            "CAUSES",
+            (
+                "MATCH (a:TimelineEvent),(b:TimelineEvent) "
+                "WHERE a.case_id=b.case_id AND a<>b AND a.date IS NOT NULL AND b.date IS NOT NULL "
+                "AND date(a.date) < date(b.date) "
+                "AND (toLower(a.description) CONTAINS 'cause' OR toLower(a.description) CONTAINS 'lead to' OR toLower(a.description) CONTAINS 'result in') "
+                "MERGE (a)-[:CAUSES]->(b)"
+            ),
+        )
+
+        # 4) SAME_TRANSACTION between TimelineEvent within 1 day and token overlap >= 3
+        _delta(
+            "SAME_TRANSACTION",
+            (
+                "MATCH (t1:TimelineEvent),(t2:TimelineEvent) "
+                "WHERE t1.case_id=t2.case_id AND id(t1) < id(t2) AND t1.date IS NOT NULL AND t2.date IS NOT NULL "
+                "WITH t1,t2, date(t1.date) AS d1, date(t2.date) AS d2, "
+                "split(toLower(t1.description),' ') AS w1, split(toLower(t2.description),' ') AS w2 "
+                "WITH t1,t2,d1,d2, [x IN w1 WHERE x IN w2 AND size(x)>=4] AS inter "
+                "WHERE abs(duration.between(d1,d2).days) <= 1 AND size(inter) >= 3 "
+                "MERGE (t1)-[:SAME_TRANSACTION]->(t2)"
+            ),
+        )
+
+        kg.close()
+        return deltas
+
+    def analyze_timeline_sequences(self) -> dict:
+        """Analyze timeline OCCURS_BEFORE paths and return simple stats."""
+        kg = KnowledgeGraphManager()
+        stats: dict[str, int | float] = {}
+        try:
+            # Longest path length across cases
+            rows = kg.run_query(
+                "MATCH p=(a:TimelineEvent)-[:OCCURS_BEFORE*]->(b:TimelineEvent) "
+                "RETURN coalesce(max(length(p)),0) AS maxlen"
+            )
+            stats["max_timeline_chain"] = int(rows[0]["maxlen"]) if rows else 0
+        except Exception:
+            stats["max_timeline_chain"] = 0
+        try:
+            # Count of 3-hop sequences
+            rows = kg.run_query(
+                "MATCH p=(a:TimelineEvent)-[:OCCURS_BEFORE]->(:TimelineEvent)-[:OCCURS_BEFORE]->(c:TimelineEvent) "
+                "RETURN count(p) AS c"
+            )
+            stats["three_hop_sequences"] = int(rows[0]["c"]) if rows else 0
+        except Exception:
+            stats["three_hop_sequences"] = 0
+        finally:
+            kg.close()
+        return stats
