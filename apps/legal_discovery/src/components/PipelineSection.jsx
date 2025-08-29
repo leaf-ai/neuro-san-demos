@@ -5,6 +5,7 @@ function PipelineSection() {
   const [metrics,setMetrics] = useState({files:0,vectors:0,graph:0,tasks:0,logs:0});
   const [live,setLive] = useState(true);
   const [passes,setPasses] = useState([]);
+  const [detailPass,setDetailPass] = useState(null);
   const sockRef = useRef(null);
   const refresh = () => {
     fetchJSON('/api/metrics').then(d=>{
@@ -32,6 +33,7 @@ function PipelineSection() {
         graphDeltaTotal: (()=>{ const d=p.graph_deltas||{}; return Object.values(d).reduce((a,b)=>a+(parseInt(b,10)||0),0); })(),
         timeline: p.timeline_sequences || p.timeline_paths || {},
         theories: p.theories || [],
+        raw: p,
       }, ...prev].slice(0,10));
     });
     sockRef.current = s;
@@ -95,8 +97,49 @@ function PipelineSection() {
                     {p.theories.slice(0,3).map((t,i)=>(<li key={i}>{t.name || t.title || 'theory'}</li>))}
                   </ul>
                 )}
+                <div className="mt-2">
+                  <button className="button-secondary text-xs" onClick={()=>setDetailPass(p.raw)}>Details</button>
+                </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+      {detailPass && (
+        <div className="modal" role="dialog" aria-modal="true" onClick={(e)=>{ if(e.target.classList.contains('modal')) setDetailPass(null); }}>
+          <div className="modal-content" style={{maxWidth:'720px'}}>
+            <button className="close-btn" onClick={()=>setDetailPass(null)} aria-label="Close details">&times;</button>
+            <h3 className="text-lg font-semibold mb-2">Pass Details (Iteration {detailPass.iteration || detailPass?.raw?.iteration || ''})</h3>
+            {detailPass.graph_deltas && (
+              <div className="mb-3">
+                <h4 className="text-sm font-semibold mb-1">Graph Deltas</h4>
+                <ul className="text-xs list-disc list-inside">
+                  {Object.entries(detailPass.graph_deltas).map(([k,v]) => (
+                    <li key={k}>{k}: {v}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {(detailPass.timeline_sequences || detailPass.timeline_paths) && (
+              <div className="mb-3">
+                <h4 className="text-sm font-semibold mb-1">Timeline</h4>
+                <pre className="text-xs overflow-x-auto" style={{background:'rgba(0,0,0,0.3)', padding:'8px'}}>{JSON.stringify(detailPass.timeline_sequences || detailPass.timeline_paths, null, 2)}</pre>
+              </div>
+            )}
+            {detailPass.theories && detailPass.theories.length > 0 && (
+              <div className="mb-3">
+                <h4 className="text-sm font-semibold mb-1">Theories</h4>
+                <ul className="text-xs list-disc list-inside">
+                  {detailPass.theories.map((t,i)=> (
+                    <li key={i}><span className="font-semibold">{t.name || t.title || 'theory'}</span>{t.description? ': '+t.description: ''}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <div>
+              <h4 className="text-sm font-semibold mb-1">Raw</h4>
+              <pre className="text-xs overflow-x-auto" style={{background:'rgba(0,0,0,0.3)', padding:'8px'}}>{JSON.stringify(detailPass, null, 2)}</pre>
+            </div>
           </div>
         </div>
       )}

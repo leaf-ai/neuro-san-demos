@@ -16,6 +16,8 @@ function GraphSection() {
   const [timelineStats,setTimelineStats] = useState(null);
   const [enrichDeltas,setEnrichDeltas] = useState(null);
   const [loading,setLoading] = useState(true);
+  const [pathFrom,setPathFrom] = useState("");
+  const [pathTo,setPathTo] = useState("");
   const load = useCallback(() => {
     setLoading(true);
     const url = '/api/graph' + (subnet?`?subnet=${encodeURIComponent(subnet)}`:'');
@@ -54,6 +56,7 @@ function GraphSection() {
         { selector:'edge[type = "CO_SUPPORTS"]', style:{ 'line-color':'#3b82f6' } },
         { selector:'edge[type = "RELATED_TO"]', style:{ 'line-color':'#94a3b8' } },
         { selector:'edge[type = "TEMPORALLY_NEAR"]', style:{ 'line-color':'#f59e0b' } },
+        { selector:'.trace', style:{ 'background-color':'#22d3ee', 'line-color':'#22d3ee', 'width': 6, 'z-index': 9999 } },
         { selector:'.highlight', style:{ 'background-color':'#f97316', color:'#fff' } }
       ]
     });
@@ -93,6 +96,35 @@ function GraphSection() {
     if(!query) return;
     fetch('/api/graph/cypher',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query})})
       .then(r=>r.json()).then(d=>setCypherResult(d.data||d.error||null));
+  };
+  const clearTrace = () => {
+    if(!cyRef.current) return;
+    cyRef.current.elements().removeClass('trace');
+  };
+  const tracePath = () => {
+    if (!pathFrom || !pathTo) return;
+    clearTrace();
+    const src = parseInt(pathFrom,10);
+    const dst = parseInt(pathTo,10);
+    if (Number.isNaN(src) || Number.isNaN(dst)) return;
+    const q = `MATCH p=(a)-[:CAUSES*1..5]->(b) WHERE id(a)=${src} AND id(b)=${dst} RETURN [n IN nodes(p) | id(n)] AS nodes, [r IN relationships(p) | {src:id(startNode(r)), dst:id(endNode(r)), type:type(r)}] AS rels, length(p) AS len ORDER BY len LIMIT 1`;
+    fetch('/api/graph/cypher',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q})})
+      .then(r=>r.json()).then(d=>{
+        const rows = d.data || [];
+        if (!rows.length || !cyRef.current) return;
+        const r0 = rows[0];
+        const nodeIds = r0.nodes || r0["nodes"] || [];
+        const rels = r0.rels || [];
+        nodeIds.forEach(id => {
+          const el = cyRef.current.getElementById(String(id));
+          if (el && el.length) el.addClass('trace');
+        });
+        rels.forEach(rel => {
+          const edgeId = `${rel.src}_${rel.dst}_${rel.type||''}`;
+          const el = cyRef.current.getElementById(edgeId);
+          if (el && el.length) el.addClass('trace');
+        });
+      });
   };
   if (loading) {
     return (
@@ -152,6 +184,12 @@ function GraphSection() {
         <span className="mr-3"><span style={{display:'inline-block',width:10,height:10,background:'#3b82f6',borderRadius:2,marginRight:4}}></span>CO_SUPPORTS</span>
         <span className="mr-3"><span style={{display:'inline-block',width:10,height:10,background:'#94a3b8',borderRadius:2,marginRight:4}}></span>RELATED_TO</span>
         <span className="mr-3"><span style={{display:'inline-block',width:10,height:10,background:'#f59e0b',borderRadius:2,marginRight:4}}></span>TEMPORALLY_NEAR</span>
+      </div>
+      <div className="flex flex-wrap items-center" style={{ gap: theme.spacing.sm, marginBottom: theme.spacing.sm }}>
+        <input type="number" value={pathFrom} onChange={e=>setPathFrom(e.target.value)} placeholder="path from node id" style={{ padding: theme.spacing.xs, borderRadius: theme.spacing.xs, width:140 }} />
+        <input type="number" value={pathTo} onChange={e=>setPathTo(e.target.value)} placeholder="to node id" style={{ padding: theme.spacing.xs, borderRadius: theme.spacing.xs, width:120 }} />
+        <button className="button-secondary" style={{ padding: theme.spacing.xs }} onClick={tracePath}><i className="fa fa-route mr-1"></i>Trace Path</button>
+        <button className="button-secondary" style={{ padding: theme.spacing.xs }} onClick={clearTrace}><i className="fa fa-eraser mr-1"></i>Clear</button>
       </div>
       {cypherResult && (
         <pre
