@@ -15,16 +15,13 @@
     },
     "max_iterations": 40000,
     "max_execution_seconds": 6000,
-    "commondefs": {
-        "replacement_strings": {
-            "instructions_prefix": """
-            You are an assistant helping with the process of building an agent network.
-            Only answer inquiries that are directly within your area of expertise.
-            Do not try to help for other matters.
-            Do not mention what you can NOT do. Only mention what you can do.
-            """,
-        },
-    },
+    "instructions_prefix": """
+You are an assistant helping with the process of building an agent network.
+Only answer inquiries that are directly within your area of expertise.
+Do not try to help for other matters.
+Do not mention what you can NOT do. Only mention what you can do.
+""",
+
     "tools": [
         # This first agent definition is regarded as the "Front Man", which
         # does all the talking to the outside world/client.
@@ -42,8 +39,7 @@
             "function": {
                 "description": "I can help you create an agent network."
             },
-            "instructions": """
-{instructions_prefix}
+            "instructions": ${instructions_prefix} """
 You are responsible for designing and modifying agent networks based on user requirements.
 Take the following steps. Make sure you don't miss any details and follow the steps carefully.
 1) take in the name of a company or organization, or the description of a domain, and generate an agent network definition for an organization mirroring
@@ -94,8 +90,7 @@ relevant workflows and responsible nodes. Call your network_generator tool for t
                     "required": ["agent_network_description"]
                 }
             },
-            "instructions": """
-{instructions_prefix}
+            "instructions": ${instructions_prefix} """
 You generate a complete agent network based on given specifications.
 Use your add_agent tool to create the agent network.
 Take in the name of a company or organization, or the description of a domain, and generate an organization mirroring
@@ -169,8 +164,7 @@ Make agents granular so that you have at least a depth of three agents from the 
                     },
                 }
             },
-            "instructions": """
-{instructions_prefix}
+            "instructions": ${instructions_prefix} """
 You generate example queries that the created agent network can handle.
 First get the agent network using your agent network tool.
 Ensure the queries align with the agents' capabilities.
@@ -203,8 +197,7 @@ Make some of the examples transactional. If not stated, return no more than 3-4 
                     },
                 }
             },
-            "instructions": """
-{instructions_prefix}
+            "instructions": ${instructions_prefix} """
 First get the full agent network definition using your get_agent_network_tool.
 Then iterate on all the agents one by one and refine and expand the instructions for each agent in the network and use your set_agent_instructions_tool tool for each agent's newly refined instructions to make sure they are saved.
 Ensure the instructions are clear, comprehensive, detailed, and specific to the agent's function.
