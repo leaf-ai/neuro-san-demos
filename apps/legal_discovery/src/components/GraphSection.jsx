@@ -46,12 +46,19 @@ function GraphSection() {
       container: document.getElementById('graph'),
       elements: [],
       style:[
-        { selector:'node', style:{ label:'data(label)', 'background-color':'#64748b', color:'#fff' } },
+        { selector:'node', style:{ label:'data(label)', 'background-color':'#334155', color:'#fff', 'font-size':'10px' } },
+        { selector:'edge', style:{ 'line-color':'#64748b', 'width':'mapData(weight, 0, 5, 1, 6)', 'curve-style':'bezier' } },
+        { selector:'edge[type = "CAUSES"]', style:{ 'line-color':'#f97316' } },
+        { selector:'edge[type = "OCCURS_BEFORE"]', style:{ 'line-color':'#06b6d4' } },
+        { selector:'edge[type = "SAME_TRANSACTION"]', style:{ 'line-color':'#a855f7' } },
+        { selector:'edge[type = "CO_SUPPORTS"]', style:{ 'line-color':'#3b82f6' } },
+        { selector:'edge[type = "RELATED_TO"]', style:{ 'line-color':'#94a3b8' } },
+        { selector:'edge[type = "TEMPORALLY_NEAR"]', style:{ 'line-color':'#f59e0b' } },
         { selector:'.highlight', style:{ 'background-color':'#f97316', color:'#fff' } }
       ]
     });
     cy.add(nodes.map(n => ({ data:{ id:n.id, label:(n.labels||[''])[0] }})));
-    cy.add(edges.map(e => ({ data:{ id:e.source+'_'+e.target, source:e.source, target:e.target }})));
+    cy.add(edges.map(e => ({ data:{ id:(e.source+'_'+e.target+'_'+(e.type||'')), source:e.source, target:e.target, type:e.type||'EDGE', weight:(e.properties&&e.properties.weight)||1 }})));
     cy.layout({ name:'breadthfirst', directed:true }).run();
     cyRef.current = cy;
   }, [nodes,edges]);
@@ -137,7 +144,15 @@ function GraphSection() {
         </div>
       </div>
       {exporting && <p style={{ fontSize: theme.typography.sizeSm, marginBottom: theme.spacing.xs }}>Exporting...</p>}
-      <div id="graph" style={{height:'300px', border:`1px solid ${theme.colors.border}`}}></div>
+      <div id="graph" style={{height:'360px', border:`1px solid ${theme.colors.border}`, borderRadius: theme.spacing.xs }}></div>
+      <div className="text-xs mt-2" style={{ color:'#94a3b8' }}>
+        <span className="mr-3"><span style={{display:'inline-block',width:10,height:10,background:'#f97316',borderRadius:2,marginRight:4}}></span>CAUSES</span>
+        <span className="mr-3"><span style={{display:'inline-block',width:10,height:10,background:'#06b6d4',borderRadius:2,marginRight:4}}></span>OCCURS_BEFORE</span>
+        <span className="mr-3"><span style={{display:'inline-block',width:10,height:10,background:'#a855f7',borderRadius:2,marginRight:4}}></span>SAME_TRANSACTION</span>
+        <span className="mr-3"><span style={{display:'inline-block',width:10,height:10,background:'#3b82f6',borderRadius:2,marginRight:4}}></span>CO_SUPPORTS</span>
+        <span className="mr-3"><span style={{display:'inline-block',width:10,height:10,background:'#94a3b8',borderRadius:2,marginRight:4}}></span>RELATED_TO</span>
+        <span className="mr-3"><span style={{display:'inline-block',width:10,height:10,background:'#f59e0b',borderRadius:2,marginRight:4}}></span>TEMPORALLY_NEAR</span>
+      </div>
       {cypherResult && (
         <pre
           className="overflow-x-auto"

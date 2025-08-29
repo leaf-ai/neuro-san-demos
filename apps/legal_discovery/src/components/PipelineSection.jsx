@@ -1,7 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { fetchJSON } from "../utils";
+import { io } from "socket.io-client";
 function PipelineSection() {
   const [metrics,setMetrics] = useState({files:0,vectors:0,graph:0,tasks:0,logs:0});
+  const [live,setLive] = useState(true);
+  const [passes,setPasses] = useState([]);
+  const sockRef = useRef(null);
   const refresh = () => {
     fetchJSON('/api/metrics').then(d=>{
       const m=d.data||{};
@@ -15,6 +19,24 @@ function PipelineSection() {
     });
   };
   useEffect(refresh, []);
+  useEffect(() => {
+    if (!live) {
+      if (sockRef.current) { try { sockRef.current.disconnect(); } catch {} }
+      sockRef.current = null;
+      return;
+    }
+    const s = io('/chat', { transports:['websocket'] });
+    s.on('pipeline_pass', (p) => {
+      setPasses(prev => [{
+        iteration: p.iteration,
+        graphDeltaTotal: (()=>{ const d=p.graph_deltas||{}; return Object.values(d).reduce((a,b)=>a+(parseInt(b,10)||0),0); })(),
+        timeline: p.timeline_sequences || p.timeline_paths || {},
+        theories: p.theories || [],
+      }, ...prev].slice(0,10));
+    });
+    sockRef.current = s;
+    return () => { try { s.disconnect(); } catch {} };
+  }, [live]);
   return (
     <section className="card">
       <h2>
@@ -55,7 +77,29 @@ function PipelineSection() {
           <span className="count">{metrics.tasks}</span>
         </div>
       </div>
-      <button className="button-secondary mt-2" onClick={refresh}><i className="fa fa-sync mr-1"></i>Refresh</button>
+      <div className="flex items-center gap-2 mt-2">
+        <button className="button-secondary" onClick={refresh}><i className="fa fa-sync mr-1"></i>Refresh</button>
+        <label className="text-sm flex items-center gap-2"><input type="checkbox" checked={live} onChange={e=>setLive(e.target.checked)} /> Live</label>
+      </div>
+      {!!passes.length && (
+        <div className="mt-3">
+          <h3 className="text-sm font-semibold mb-1">Recent Analysis Passes</h3>
+          <div className="grid" style={{gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))', gap:'8px'}}>
+            {passes.map((p,idx) => (
+              <div key={idx} className="p-2 rounded" style={{background:'rgba(0,0,0,0.3)', border:'1px solid rgba(255,255,255,0.08)'}}>
+                <div className="text-xs opacity-80">Iteration {p.iteration}</div>
+                <div className="text-sm">Graph Δ: <span className="font-semibold">{p.graphDeltaTotal}</span></div>
+                <div className="text-xs">Timeline max chain: {(p.timeline && p.timeline.max_timeline_chain) || 0}</div>
+                {!!(p.theories && p.theories.length) && (
+                  <ul className="text-xs list-disc list-inside mt-1">
+                    {p.theories.slice(0,3).map((t,i)=>(<li key={i}>{t.name || t.title || 'theory'}</li>))}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 }
