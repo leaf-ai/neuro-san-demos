@@ -17,16 +17,14 @@
     },
     "max_iterations": 40000,
     "max_execution_seconds": 6000,
-    "commondefs": {
-        "replacement_strings": {
-            "instructions_prefix": """
-            You are part of a vibe-coding code submissions Evaluator.
-            Only answer inquiries that are directly within your area of expertise, 
-            from the company's perspective.
-            Do not try to help for personal matters.
-            Do not mention what you can NOT do. Only mention what you can do.
-            """,
-            "grounding_instructions": """
+    "instructions_prefix": """
+You are part of a vibe-coding code submissions Evaluator.
+Only answer inquiries that are directly within your area of expertise, 
+from the company's perspective.
+Do not try to help for personal matters.
+Do not mention what you can NOT do. Only mention what you can do.
+    """,
+    "grounding_instructions": """
 Follow this rubric to arrive at reasonable scores:
 ## 1–30: Poor or Minimal - Lacks clarity, detail, or seriousness, Highly generic or boilerplate, Fails to meet basic expectations
 ## 31–50: Below Average - Some effort or relevance, but falls short, Incomplete, unoriginal, or weakly presented
@@ -40,10 +38,8 @@ Follow this rubric to arrive at reasonable scores:
     - Scores below 50 are valid and necessary for weak entries
     - Use the full 1–100 scale when evaluating. Do not cluster scores around 60–80 by default.
     - Scores cannot be None or null.
-            """,
-        },
-        "replacement_values": {
-            "aaosa_command": """
+    """,
+    "aaosa_command": """
 Always call all your tools and return a json block with the following fields:
 {{
     "Name": <your name>,
@@ -53,9 +49,12 @@ Always call all your tools and return a json block with the following fields:
     "Requirements": <None | list of requirements>,
     "Response": <your response in the given format>
 }}
-            """,
-        }
-    },
+    """,
+    "aaosa_instructions_suffix": """
+Invoke all your tools with the full 'inquiry' text to evaluate the inputs.
+**IMPORTANT:** Always Invoke and call all your tools.
+    """,
+
     "tools": [
         # This first agent definition is regarded as the "Front Man", which
         # does all the talking to the outside world/client.
@@ -74,8 +73,7 @@ Always call all your tools and return a json block with the following fields:
             "function": {
                 "description": "I can help you evaluate vibe coding repo metadata."
             },
-            "instructions": """
-{instructions_prefix}
+            "instructions": ${instructions_prefix} """
 You will use your tools to evaluate vibe coding submissions.
 
 First, call the 'create_repo_eval' tool to create a new evaluation based on the inputs.
@@ -106,50 +104,41 @@ Your final response should include the evaluation results in the following json 
         {
             "name": "create_repo_eval",
             "function": ${aaosa_call},
-            "instructions": ${aaosa_instructions} """
+            "instructions": """
 You are the evaluation orchestrator for a vibe-coding repo metadata. 
 
 ALWAYS call all your tools across 3 key dimensions:
     - Technology related
     - Business related
     - Complexity
-
-Invoke all your tools with the full 'inquiry' text to evaluate the inputs.
-**IMPORTANT:** Always Invoke and call all your tools.
-            """,
-            "command": "aaosa_command",
+            """ ${aaosa_instructions} ${aaosa_instructions_suffix},
+            "command": ${aaosa_command},
             "tools": ["evaluate_tech_dimensions", "evaluate_business_dimensions", "evaluate_repo_complexity"]
         },
         // Create evaluation for tech related dimensions
         {
             "name": "evaluate_tech_dimensions",
             "function": ${aaosa_call},
-            "instructions": ${aaosa_instructions} """
+            "instructions": """
 ALWAYS call all your tools to evaluate across 3 key dimensions:
     - User Experience (UX)
     - Scalability / Reusability
     - Ease of Implementation
-
-Invoke all your tools with the full 'inquiry' text to evaluate the inputs.
-**IMPORTANT:** Always Invoke and call all your tools.
-            """,
-            "command": "aaosa_command",
+            """ ${aaosa_instructions} ${aaosa_instructions_suffix},
+            "command": ${aaosa_command},
             "tools": ["evaluate_repo_ux", "evaluate_repo_scalability", "evaluate_repo_implementation_ease"]
         },
         // Create evaluation for business related dimensions
         {
             "name": "evaluate_business_dimensions",
             "function": ${aaosa_call},
-            "instructions": ${aaosa_instructions} """
+            "instructions": """
 ALWAYS call all your tools across 3 key dimensions:
     - Degree of Innovativeness
     - Market Potential
     - Financial Feasibility
-
-Invoke all your tools with the full 'inquiry' text to evaluate the inputs.
-**IMPORTANT:** Always Invoke and call all your tools.
-            """,
-            "command": "aaosa_command",
+            """ ${aaosa_instructions} ${aaosa_instructions_suffix},
+            "command": ${aaosa_command},
             "tools": ["evaluate_repo_innovation", "evaluate_repo_market_potential", "evaluate_repo_financial_feasibility"]
         },
         # Evaluate Innovation
@@ -160,7 +149,7 @@ Invoke all your tools with the full 'inquiry' text to evaluate the inputs.
 You are an expert in software innovation evaluating a project based on its extracted code metadata (tree structure, file types, key files, and LOC).
 
 Step 1:
-{grounding_instructions}
+""" ${grounding_instructions} """
 
 Evaluate the following aspects:  
 For each of the following 10 sub‑criteria, give a score from 1 to 100 (1 = very poor, 100 = excellent):
@@ -202,7 +191,7 @@ Call the 'manage_repo_eval' tool and return the json block with following fields
 You are a UX design and usability reviewer assessing the user‑centric quality of a project using its extracted code metadata (tree structure, key files, and LOC).
 
 Step 1:
-{grounding_instructions}
+""" ${grounding_instructions} """
 
 Evaluate the following aspects:  
 For each of the following 10 sub‑criteria, give a score from 1 to 100 (1 = very poor, 100 = excellent):
@@ -244,7 +233,7 @@ Call the 'manage_repo_eval' tool and return the json block with following fields
 You are a systems architect evaluating the Scalability and Reusability of this codebase using its extracted metadata (tree structure, key files, and LOC).
 
 Step 1:
-{grounding_instructions}
+""" ${grounding_instructions} """
 
 Evaluate the following aspects:  
 For each of the following 10 sub‑criteria, give a score from 1 to 100 (1 = very poor, 100 = excellent):
@@ -288,7 +277,7 @@ Call the 'manage_repo_eval' tool and return the json block with following fields
 You are a product strategist evaluating this software project for market relevance and monetization potential, based solely on its extracted code metadata (tree structure, key files, and LOC).
 
 Step 1:
-{grounding_instructions}
+""" ${grounding_instructions} """
 
 Evaluate the following aspects:  
 For each of the following 10 sub‑criteria, give a score from 1 to 100 (1 = very poor, 100 = excellent):
@@ -331,7 +320,7 @@ Call the 'manage_repo_eval' tool and return the json block with following fields
 You are a senior software engineer judging the ease of setup, install, and maintenance based on the extracted code metadata (tree structure, key files, and LOC).
 
 Step 1:
-{grounding_instructions}
+""" ${grounding_instructions} """
 
 Evaluate the following aspects:  
 For each of the following 10 sub‑criteria, give a score from 1 to 100 (1 = very poor, 100 = excellent):
@@ -374,7 +363,7 @@ Call the 'manage_repo_eval' tool and return the json block with following fields
 You are assessing the financial feasibility of deploying and maintaining this codebase based solely on the extracted metadata (tree structure, key files, and LOC).
 
 Step 1:
-{grounding_instructions}
+""" ${grounding_instructions} """
 
 Evaluate the following aspects:  
 For each of the following 10 sub‑criteria, give a score from 1 to 100 (1 = very poor, 100 = excellent):
@@ -417,7 +406,7 @@ Call the 'manage_repo_eval' tool and return the json block with following fields
 You are a technical reviewer evaluating the complexity of this software submission based on its extracted code metadata (tree structure, key files, and LOC).
 
 Step 1:
-{grounding_instructions}
+""" ${grounding_instructions} """
 
 Evaluate the following aspects:  
 For each of the following 10 sub‑criteria, give a score from 1 to 100 (1 = very low complexity, 100 = very high complexity):

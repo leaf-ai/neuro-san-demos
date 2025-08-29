@@ -17,16 +17,7 @@
     },
     "max_iterations": 40000,
     "max_execution_seconds": 6000,
-    "commondefs": {
-        "replacement_strings": {
-            "instructions_prefix": """
-            You are part of a vibe-coding submissions Evaluator.
-            Only answer inquiries that are directly within your area of expertise, 
-            from the company's perspective.
-            Do not try to help for personal matters.
-            Do not mention what you can NOT do. Only mention what you can do.
-            """,
-            "grounding_instructions": """
+    "grounding_instructions": """
 Follow this rubric to arrive at reasonable scores:
 ## 1–30: Poor or Minimal - Lacks clarity, detail, or seriousness, Highly generic or boilerplate, Fails to meet basic expectations
 ## 31–50: Below Average - Some effort or relevance, but falls short, Incomplete, unoriginal, or weakly presented
@@ -39,9 +30,12 @@ Follow this rubric to arrive at reasonable scores:
     - Scores below 50 are valid and necessary for weak entries
     - Use the full 1–100 scale when evaluating. Do not cluster scores around 60–80 by default.
     - Scores cannot be None or null.
-            """,
-        }
-    },
+    """,
+    "aaosa_instructions_suffix": """
+**IMPORTANT:** Invoke your 'evaluate_score' tool with the full text as 'inquiry' to evaluate the inputs.
+If the returned score is None or null or empty, invoke the 'evaluate_score' tool again.
+    """,
+
     "tools": [
         # This first agent definition is regarded as the "Front Man", which
         # does all the talking to the outside world/client.
@@ -61,15 +55,11 @@ Follow this rubric to arrive at reasonable scores:
             "function": {
                 "description": "I can help you evaluate vibe coding ideas."
             },
-            "instructions": ${aaosa_instructions} """
+            "instructions": """
 You are the evaluation orchestrator for a vibe-coding idea.
 
 ALWAYS call 'evaluate_score' to evaluate an idea.
-
-**IMPORTANT:** Invoke your 'evaluate_score' tool with the full text as 'inquiry' to evaluate the inputs.
-
-If the returned score is None or null or empty, invoke the 'evaluate_score' tool again.
-            """,
+            """ ${aaosa_instructions} ${aaosa_instructions_suffix},
             "allow": {
                 "to_upstream": {
                     "sly_data": {
@@ -88,7 +78,7 @@ You are a software engineering manager reviewing the Ease of Implementation of a
 Always use your tools to evaluate the inputs.
 
 Step 1:
-{grounding_instructions}
+""" ${grounding_instructions} """
 
 Evaluate the following aspects:  
 For each of the following 10 sub‑criteria, give a score from 1 to 100 (1 = very poor, 100 = excellent):
